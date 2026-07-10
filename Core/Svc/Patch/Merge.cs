@@ -59,29 +59,75 @@ public sealed class PatchCatalogMergeService
             return true;
         }
 
-        return ComparePatchVersions(candidate.PatchVersion, existing.PatchVersion) > 0;
+        return TryComparePatchVersions(
+                   candidate.PatchVersion,
+                   existing.PatchVersion,
+                   out var comparison) &&
+               comparison > 0;
     }
 
-    private static int ComparePatchVersions(string? left, string? right)
+    private static bool TryComparePatchVersions(
+        string? left,
+        string? right,
+        out int comparison)
     {
-        var normalizedLeft = NormalizePatchVersion(left);
-        var normalizedRight = NormalizePatchVersion(right);
+        comparison = 0;
 
-        if (Version.TryParse(normalizedLeft, out var leftVersion) &&
-            Version.TryParse(normalizedRight, out var rightVersion))
+        var leftValue = left ?? string.Empty;
+        var rightValue = right ?? string.Empty;
+
+        if (!IsRpcS3ComparableVersion(leftValue) ||
+            !IsRpcS3ComparableVersion(rightValue))
         {
-            return leftVersion.CompareTo(rightVersion);
+            return false;
         }
 
-        return StringComparer.OrdinalIgnoreCase.Compare(normalizedLeft, normalizedRight);
+        var leftParts = leftValue.Split('.');
+        var rightParts = rightValue.Split('.');
+        var partCount = Math.Max(leftParts.Length, rightParts.Length);
+
+        for (var index = 0; index < partCount; index++)
+        {
+            var leftPart = NormalizeNumericPart(
+                index < leftParts.Length ? leftParts[index] : string.Empty);
+            var rightPart = NormalizeNumericPart(
+                index < rightParts.Length ? rightParts[index] : string.Empty);
+
+            if (leftPart.Length != rightPart.Length)
+            {
+                comparison = leftPart.Length.CompareTo(rightPart.Length);
+                return true;
+            }
+
+            var partComparison = string.CompareOrdinal(leftPart, rightPart);
+            if (partComparison != 0)
+            {
+                comparison = partComparison;
+                return true;
+            }
+        }
+
+        return true;
     }
 
-    private static string NormalizePatchVersion(string? value)
+    private static bool IsRpcS3ComparableVersion(string value)
     {
-        var normalized = value?.Trim() ?? string.Empty;
-        return normalized.StartsWith("v", StringComparison.OrdinalIgnoreCase)
-            ? normalized[1..].TrimStart('.')
-            : normalized;
+        return value.All(character =>
+            character == '.' ||
+            character is >= '0' and <= '9');
+    }
+
+    private static string NormalizeNumericPart(string value)
+    {
+        var firstNonZero = 0;
+        while (firstNonZero < value.Length && value[firstNonZero] == '0')
+        {
+            firstNonZero++;
+        }
+
+        return firstNonZero == value.Length
+            ? "0"
+            : value[firstNonZero..];
     }
 
     private static string EntryKey(Rpcs3PatchEntry entry)

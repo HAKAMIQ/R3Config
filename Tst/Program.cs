@@ -1442,6 +1442,111 @@ PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
     Assert(merged.MergeDiagnostics.Count == 2,
         "Expected every dropped or superseded duplicate patch to be reported.");
 
+    var mergeService = new PatchCatalogMergeService();
+    var versionBase = multiTargetPatch with
+    {
+        PatchVersion = "1.2",
+        Source = PatchSourceOrigin.Official,
+        SourcePath = "patch.yml"
+    };
+
+    var higherVersionMerge = mergeService.Merge(
+        new Rpcs3PatchCatalog("1.2", [versionBase]),
+        new Rpcs3PatchCatalog("1.2",
+        [
+            versionBase with
+            {
+                PatchVersion = "1.10",
+                Source = PatchSourceOrigin.Imported,
+                SourcePath = "imported_patch.yml"
+            }
+        ]));
+    Assert(higherVersionMerge.Entries.Single() is
+        { PatchVersion: "1.10", Source: PatchSourceOrigin.Imported },
+        "Expected a valid numerically higher RPCS3 patch version to replace the existing duplicate.");
+    Assert(higherVersionMerge.MergeDiagnostics.Single().Code == "PATCH_VERSION_OVERRIDE",
+        "Expected a valid higher patch version to be reported as an override.");
+
+    var equalVersionMerge = mergeService.Merge(
+        new Rpcs3PatchCatalog("1.2", [versionBase]),
+        new Rpcs3PatchCatalog("1.2",
+        [
+            versionBase with
+            {
+                PatchVersion = "1.2.0",
+                Source = PatchSourceOrigin.Imported,
+                SourcePath = "imported_patch.yml"
+            }
+        ]));
+    Assert(equalVersionMerge.Entries.Single().Source == PatchSourceOrigin.Official,
+        "Expected RPCS3-equivalent patch versions to keep the entry loaded first.");
+    Assert(equalVersionMerge.MergeDiagnostics.Single().Code == "PATCH_DUPLICATE_SKIPPED",
+        "Expected an equal patch version to be reported as a skipped duplicate.");
+
+    var lowerVersionMerge = mergeService.Merge(
+        new Rpcs3PatchCatalog("1.2", [versionBase]),
+        new Rpcs3PatchCatalog("1.2",
+        [
+            versionBase with
+            {
+                PatchVersion = "1.1",
+                Source = PatchSourceOrigin.Imported,
+                SourcePath = "imported_patch.yml"
+            }
+        ]));
+    Assert(lowerVersionMerge.Entries.Single().Source == PatchSourceOrigin.Official,
+        "Expected a lower patch version to keep the entry loaded first.");
+
+    var invalidVersionMerge = mergeService.Merge(
+        new Rpcs3PatchCatalog("1.2", [versionBase]),
+        new Rpcs3PatchCatalog("1.2",
+        [
+            versionBase with
+            {
+                PatchVersion = "9.0-beta",
+                Source = PatchSourceOrigin.Imported,
+                SourcePath = "imported_patch.yml"
+            }
+        ]));
+    Assert(invalidVersionMerge.Entries.Single().Source == PatchSourceOrigin.Official,
+        "Expected an incomparable patch version to keep the entry loaded first instead of using lexical order.");
+
+    var prefixedVersionMerge = mergeService.Merge(
+        new Rpcs3PatchCatalog("1.2", [versionBase]),
+        new Rpcs3PatchCatalog("1.2",
+        [
+            versionBase with
+            {
+                PatchVersion = "v9.0",
+                Source = PatchSourceOrigin.Imported,
+                SourcePath = "imported_patch.yml"
+            }
+        ]));
+    Assert(prefixedVersionMerge.Entries.Single().Source == PatchSourceOrigin.Official,
+        "Expected RPCS3-incomparable v-prefixed patch versions not to override an existing entry.");
+
+    var residentOverPreviewMerge = mergeService.Merge(
+        new Rpcs3PatchCatalog("1.2",
+        [
+            versionBase with
+            {
+                PatchVersion = "99.0",
+                Source = PatchSourceOrigin.BundledCanary,
+                SourcePath = "can.yml"
+            }
+        ]),
+        new Rpcs3PatchCatalog("1.2",
+        [
+            versionBase with
+            {
+                PatchVersion = "1.0",
+                Source = PatchSourceOrigin.Official,
+                SourcePath = "patch.yml"
+            }
+        ]));
+    Assert(residentOverPreviewMerge.Entries.Single().Source == PatchSourceOrigin.Official,
+        "Expected an RPCS3-resident source to remain authoritative over the bundled Canary preview.");
+
     var duplicateHashPatch = multiTargetPatch with { Hash = primaryHash };
     var previewMatches = new[]
     {
