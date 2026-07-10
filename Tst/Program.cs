@@ -103,7 +103,6 @@ static void RunLangKeyTests()
         "Dialog.Ok",
         "Dialog.Cancel",
         "Patch.PrepareCanary",
-        "Patch.PrepareCanaryTip",
         "Patch.PrepareCanarySuccess",
         "Patch.PrepareCanarySelectedSuccess",
         "Patch.PrepareCanaryAlreadyReady",
@@ -202,12 +201,14 @@ static void RunAppPatchPresentationSourceTests()
     var bundledCanaryServicePath = Path.Combine(appRoot, "Svc", "BCan.cs");
     var bundledCanaryDataPath = Path.Combine(appRoot, "Data", "can.yml");
     var planVmPath = Path.Combine(appRoot, "Vm", "Plan.cs");
+    var mainVmPath = Path.Combine(appRoot, "Vm", "Main.cs");
     var patchViewPath = Path.Combine(appRoot, "Ctrl", "Pat.xaml");
     var appDialogPath = Path.Combine(appRoot, "View", "Dlg", "AppDialog.xaml");
     Assert(File.Exists(noteServicePath), "Expected PatchNoteTranslationService to exist in App layer.");
     Assert(File.Exists(importServicePath), "Expected CanaryPatchImportService to exist in App layer.");
     Assert(File.Exists(bundledCanaryServicePath), "Expected BundledCanaryPatchService to exist in App layer.");
     Assert(File.Exists(bundledCanaryDataPath), "Expected bundled Canary patch data to exist in App/Data.");
+    Assert(File.Exists(mainVmPath), "Expected MainVm source to exist in App/Vm.");
     Assert(File.ReadAllText(planVmPath).Contains("_showApplied = true", StringComparison.Ordinal),
         "Expected plan view to show applied recommendations by default.");
     Assert(File.ReadAllText(appDialogPath).Contains("AllowsTransparency=\"True\"", StringComparison.Ordinal),
@@ -220,6 +221,10 @@ static void RunAppPatchPresentationSourceTests()
         "Expected each patch tab to execute only its own selected items.");
     Assert(!patchView.Contains("Command=\"{Binding PrepareCanaryPatchesCommand}\"", StringComparison.Ordinal),
         "Expected Canary preparation to be an internal enable step instead of a competing primary workflow.");
+    var mainVm = File.ReadAllText(mainVmPath);
+    Assert(!mainVm.Contains("PrepareCanaryPatchesCommand", StringComparison.Ordinal) &&
+           !mainVm.Contains("private void PrepareCanaryPatches()", StringComparison.Ordinal),
+        "Expected the obsolete standalone Canary preparation command and handler to be removed.");
     Assert(patchView.Contains("DirectStatusText", StringComparison.Ordinal) &&
            patchView.Contains("InstalledVersionDisplay", StringComparison.Ordinal) == false,
         "Expected patch rows to render a direct actionable status without leaking internal property scaffolding.");

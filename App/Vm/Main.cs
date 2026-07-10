@@ -75,7 +75,6 @@ public sealed class MainVm : VmBase
         CopyLogCommand = new RelayCommand(CopyLog, () => !string.IsNullOrWhiteSpace(Advanced.LogText));
         ShowAdvancedCommand = new RelayCommand(ShowAdvanced);
         ToggleLanguageCommand = new RelayCommand(ToggleLanguage);
-        PrepareCanaryPatchesCommand = new RelayCommand(PrepareCanaryPatches, () => _install is not null && PatchPreview.HasSelectedCanaryPatches);
         RemoveCanaryPatchesCommand = new RelayCommand(RemoveCanaryPatches, () => _install is not null && HasPreparedCanaryPatches);
         ImportCanaryPatchCommand = new RelayCommand(ImportCanaryPatch, () => _install is not null);
 
@@ -155,8 +154,6 @@ public sealed class MainVm : VmBase
     public RelayCommand ShowAdvancedCommand { get; }
 
     public RelayCommand ToggleLanguageCommand { get; }
-
-    public RelayCommand PrepareCanaryPatchesCommand { get; }
 
     public RelayCommand RemoveCanaryPatchesCommand { get; }
 
@@ -360,56 +357,6 @@ public sealed class MainVm : VmBase
         RefreshLanguageText();
     }
 
-    private void PrepareCanaryPatches()
-    {
-        try
-        {
-            if (_install is null)
-            {
-                UiDlg.Warn(UiText.T("Patch.ImportCanaryNoRpcs3Path"), UiText.T("Patch.PrepareCanary"));
-                return;
-            }
-
-            if (Rpcs3InstallService.IsRpcs3Running())
-            {
-                UiDlg.Warn(UiText.T("Msg.BlockedRpcs3"), UiText.T("Dialog.Rpcs3Running"));
-                Log(UiText.T("Msg.BlockedApplyRunning"));
-                return;
-            }
-
-            var selectedCanaryMatches = PatchPreview.SelectedCanaryMatches();
-            if (selectedCanaryMatches.Count == 0)
-            {
-                UiDlg.Info(UiText.T("Patch.PrepareCanaryNoSelection"), UiText.T("Patch.PrepareCanary"));
-                return;
-            }
-
-            var result = _flow.PrepareBundledCanaryPatch(_install, selectedCanaryMatches);
-            if (!result.Succeeded)
-            {
-                UiDlg.Error(result.Error ?? result.Message, UiText.T("Patch.PrepareCanary"));
-                Log(result.Error ?? result.Message);
-                return;
-            }
-
-            Log(result.Message);
-            UiDlg.Info(result.Message, UiText.T("Patch.PrepareCanary"));
-            PatchPreview.ShowExpertPatches = true;
-            RefreshCanaryState();
-            LoadPatchCatalog();
-            BuildCurrentPatchPreview();
-        }
-        catch (Exception ex)
-        {
-            UiDlg.Error(ex.Message, UiText.T("Patch.PrepareCanary"));
-            Log(ex.Message);
-        }
-        finally
-        {
-            RaiseCommandStates();
-        }
-    }
-
     private void RemoveCanaryPatches()
     {
         try
@@ -470,7 +417,6 @@ public sealed class MainVm : VmBase
         {
             Log(viewModel.ResultMessage);
             UiDlg.Info(viewModel.ResultMessage, UiText.T("Patch.ImportCanaryTitle"));
-            RefreshCanaryState();
             PatchPreview.ShowExpertPatches = true;
             RefreshCanaryState();
             LoadPatchCatalog();
@@ -1427,7 +1373,6 @@ public sealed class MainVm : VmBase
         DisableCanaryPatchesCommand.RaiseCanExecuteChanged();
         ApplyCheatPatchesCommand.RaiseCanExecuteChanged();
         DisableCheatPatchesCommand.RaiseCanExecuteChanged();
-        PrepareCanaryPatchesCommand.RaiseCanExecuteChanged();
         RemoveCanaryPatchesCommand.RaiseCanExecuteChanged();
         ImportCanaryPatchCommand.RaiseCanExecuteChanged();
         RestoreBackupCommand.RaiseCanExecuteChanged();

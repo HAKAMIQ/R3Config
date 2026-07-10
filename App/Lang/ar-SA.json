@@ -261,7 +261,6 @@
   "Patch.PrepareCanaryNoSelection": "حدد باتش Canary واحداً على الأقل من القائمة.",
   "Patch.PrepareCanarySelectedSuccess": "تم تجهيز باتشات Canary المحددة داخل imported_patch.yml.",
   "Patch.PrepareCanarySuccess": "تم تجهيز باتشات Canary المحددة داخل imported_patch.yml.",
-  "Patch.PrepareCanaryTip": "ينسخ باتشات Canary المحددة فقط إلى imported_patch.yml ثم يعيد تحليل الباتشات.",
   "Patch.RemoveCanary": "إزالة المجهّز",
   "Patch.RemoveCanaryConfirm": "إزالة باتشات Canary التي جهزها R3Config من imported_patch.yml؟\n\nلن يتم لمس patch.yml أو الباتشات اليدوية خارج كتلة R3Config.",
   "Patch.RemoveCanaryNothing": "لا توجد باتشات Canary مدارة بواسطة R3Config لإزالتها.",

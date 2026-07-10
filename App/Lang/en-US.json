@@ -261,7 +261,6 @@
   "Patch.PrepareCanaryNoSelection": "Select at least one Canary patch in the list.",
   "Patch.PrepareCanarySelectedSuccess": "Selected Canary patches were prepared in imported_patch.yml.",
   "Patch.PrepareCanarySuccess": "Selected Canary patches were prepared in imported_patch.yml.",
-  "Patch.PrepareCanaryTip": "Copies only checked Canary patches to imported_patch.yml, then reloads patches.",
   "Patch.RemoveCanary": "Remove prepared",
   "Patch.RemoveCanaryConfirm": "Remove the Canary patches prepared by R3Config from imported_patch.yml?\n\npatch.yml and manual patches outside the R3Config block will not be touched.",
   "Patch.RemoveCanaryNothing": "There are no R3Config-managed Canary patches to remove.",
