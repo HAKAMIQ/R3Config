@@ -99,9 +99,11 @@ public sealed record PatchCatalogReadResult(
     Rpcs3PatchCatalog Catalog,
     string? Error)
 {
-    public static PatchCatalogReadResult Success(Rpcs3PatchCatalog catalog)
+    public static PatchCatalogReadResult Success(
+        Rpcs3PatchCatalog catalog,
+        string? warning = null)
     {
-        return new PatchCatalogReadResult(true, catalog, null);
+        return new PatchCatalogReadResult(true, catalog, warning);
     }
 
     public static PatchCatalogReadResult Failure(string error)

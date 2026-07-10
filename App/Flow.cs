@@ -122,6 +122,7 @@ public sealed class AppFlow
             if (read.Succeeded)
             {
                 catalogs.Add(read.Catalog);
+                AddPatchReadWarning(errors, read.Error, isImported: false);
             }
             else
             {
@@ -136,6 +137,7 @@ public sealed class AppFlow
             {
                 importedCatalog = read.Catalog;
                 catalogs.Add(importedCatalog);
+                AddPatchReadWarning(errors, read.Error, isImported: true);
             }
             else
             {
@@ -149,6 +151,7 @@ public sealed class AppFlow
             if (read.Succeeded)
             {
                 catalogs.Add(read.Catalog);
+                AddPatchReadWarning(errors, read.Error, isImported: true);
             }
             else
             {
@@ -173,6 +176,7 @@ public sealed class AppFlow
                     {
                         bundledCanaryCatalog = read.Catalog;
                         catalogs.Add(bundledCanaryCatalog);
+                        AddPatchReadWarning(errors, read.Error, isImported: true);
                     }
                     else
                     {
@@ -339,6 +343,17 @@ public sealed class AppFlow
     private static string PatchIdentity(Rpcs3PatchEntry entry)
     {
         return $"{entry.HashKind}|{entry.Hash}|{entry.Title}";
+    }
+
+    private static void AddPatchReadWarning(
+        ICollection<string> errors,
+        string? warning,
+        bool isImported)
+    {
+        if (!string.IsNullOrWhiteSpace(warning))
+        {
+            errors.Add(FormatPatchReadError(warning, isImported));
+        }
     }
 
     private static string FormatPatchReadError(string? rawError, bool isImported)

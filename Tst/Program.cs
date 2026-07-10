@@ -1298,6 +1298,129 @@ OVL-4444444444444444444444444444444444444444:
       - [ be32, 0x00000020, 0x60000000 ]
 """;
     var reader = new PatchCatalogReader();
+
+    var missingVersionRead = reader.ReadText(
+        """
+PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
+  "Missing Version":
+    Games:
+      Contract Game:
+        BLUS31465: [ 01.02 ]
+    Patch:
+      - [ be32, 0x00000010, 0x60000000 ]
+""",
+        PatchSourceOrigin.Official,
+        "patch.yml");
+    Assert(!missingVersionRead.Succeeded &&
+           missingVersionRead.Error?.Contains("Version", StringComparison.Ordinal) == true,
+        "Expected RPCS3 patch files without Version: 1.2 to be rejected.");
+
+    var unsupportedVersionRead = reader.ReadText(
+        """
+Version: 1.1
+PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
+  "Unsupported Version":
+    Games:
+      Contract Game:
+        BLUS31465: [ 01.02 ]
+    Patch:
+      - [ be32, 0x00000010, 0x60000000 ]
+""",
+        PatchSourceOrigin.Official,
+        "patch.yml");
+    Assert(!unsupportedVersionRead.Succeeded &&
+           unsupportedVersionRead.Error?.Contains("1.2", StringComparison.Ordinal) == true,
+        "Expected patch engine versions other than 1.2 to be rejected.");
+
+    var scalarVersionRead = reader.ReadText(
+        """
+Version: 1.2
+PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
+  "Scalar Version":
+    Games:
+      Contract Game:
+        BLUS31465: 01.02
+    Patch:
+      - [ be32, 0x00000010, 0x60000000 ]
+""",
+        PatchSourceOrigin.Official,
+        "patch.yml");
+    Assert(scalarVersionRead.Succeeded &&
+           scalarVersionRead.Catalog.Entries.Count == 0 &&
+           scalarVersionRead.Error?.Contains("sequence", StringComparison.OrdinalIgnoreCase) == true,
+        "Expected scalar app versions to be excluded and surfaced as RPCS3 contract warnings.");
+
+    var invalidAllRead = reader.ReadText(
+        """
+Version: 1.2
+PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
+  "Invalid All Pair":
+    Games:
+      Contract Game:
+        All: [ All ]
+    Patch:
+      - [ be32, 0x00000010, 0x60000000 ]
+""",
+        PatchSourceOrigin.Official,
+        "patch.yml");
+    Assert(invalidAllRead.Succeeded &&
+           invalidAllRead.Catalog.Entries.Count == 0 &&
+           invalidAllRead.Error?.Contains("serial All", StringComparison.Ordinal) == true,
+        "Expected serial All to be rejected outside the All title.");
+
+    var alphanumericSerialRead = reader.ReadText(
+        """
+Version: 1.2
+PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
+  "Alphanumeric Serial":
+    Games:
+      Contract Game:
+        AB12C34D5: [ 01.02 ]
+    Patch:
+      - [ be32, 0x00000010, 0x60000000 ]
+""",
+        PatchSourceOrigin.Official,
+        "patch.yml");
+    Assert(alphanumericSerialRead.Succeeded &&
+           alphanumericSerialRead.Catalog.Entries.Single().GameTargets.Single().Serial == "AB12C34D5" &&
+           string.IsNullOrWhiteSpace(alphanumericSerialRead.Error),
+        "Expected RPCS3's nine-character alphanumeric serial contract to be accepted.");
+
+    var invalidInstructionRead = reader.ReadText(
+        """
+Version: 1.2
+PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
+  "Invalid Instruction":
+    Games:
+      Contract Game:
+        BLUS31465: [ 01.02 ]
+    Patch:
+      - [ not_a_patch_type, 0x00000010, 0x60000000 ]
+""",
+        PatchSourceOrigin.Official,
+        "patch.yml");
+    Assert(invalidInstructionRead.Succeeded &&
+           invalidInstructionRead.Catalog.Entries.Count == 0 &&
+           invalidInstructionRead.Error?.Contains("not_a_patch_type", StringComparison.Ordinal) == true,
+        "Expected patches containing unsupported RPCS3 instruction types to be excluded with a warning.");
+
+    var invalidPatchShapeRead = reader.ReadText(
+        """
+Version: 1.2
+PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
+  "Invalid Patch Shape":
+    Games:
+      Contract Game:
+        BLUS31465: [ 01.02 ]
+    Patch: be32
+""",
+        PatchSourceOrigin.Official,
+        "patch.yml");
+    Assert(invalidPatchShapeRead.Succeeded &&
+           invalidPatchShapeRead.Catalog.Entries.Count == 0 &&
+           invalidPatchShapeRead.Error?.Contains("Patch must be a YAML sequence", StringComparison.Ordinal) == true,
+        "Expected non-sequence Patch nodes to be excluded with a warning.");
+
     var extendedRead = reader.ReadText(extendedHashCatalog, PatchSourceOrigin.Official, "patch.yml");
     Assert(extendedRead.Succeeded, "Expected PRX/OVL RPCS3 patch keys to parse.");
     Assert(extendedRead.Catalog.Entries.Any(entry => entry.HashKind == PatchHashKind.Prx) &&
