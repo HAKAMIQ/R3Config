@@ -1,0 +1,101 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="AppBackgroundColor">#FF1D1F22</Color>
+    <Color x:Key="SidebarBackgroundColor">#FF202327</Color>
+    <Color x:Key="SurfaceColor">#FF24272B</Color>
+    <Color x:Key="SurfaceAltColor">#FF282B30</Color>
+    <Color x:Key="SurfaceHoverColor">#FF30343A</Color>
+    <Color x:Key="SurfacePressedColor">#FF23262B</Color>
+    <Color x:Key="BorderColor">#FF42464D</Color>
+    <Color x:Key="BorderSubtleColor">#FF34383E</Color>
+    <Color x:Key="TextPrimaryColor">#FFF4F6F8</Color>
+    <Color x:Key="TextSecondaryColor">#FFD2D7DD</Color>
+    <Color x:Key="TextMutedColor">#FF9BA3AC</Color>
+    <Color x:Key="AccentColor">#FF5E8FBA</Color>
+    <Color x:Key="AccentHoverColor">#FF76A6CF</Color>
+    <Color x:Key="WarningColor">#FFF1CF74</Color>
+    <Color x:Key="DangerColor">#FFFFB1AB</Color>
+    <Color x:Key="SuccessColor">#FF7BC79A</Color>
+    <Color x:Key="OnAccentColor">#FFFFFFFF</Color>
+
+    <Color x:Key="HeaderSurfaceColor">#FF24272B</Color>
+    <Color x:Key="HeaderBorderColor">#FF3A3E45</Color>
+    <Color x:Key="TabStripBackgroundColor">#00000000</Color>
+    <Color x:Key="TabSelectedBackgroundColor">#FF2D3137</Color>
+    <Color x:Key="TabHoverColor">#FF30343A</Color>
+    <Color x:Key="CardBackgroundColor">#FF25282D</Color>
+    <Color x:Key="CardBorderColor">#FF3A3E45</Color>
+    <Color x:Key="SubtleTextColor">#FFD2D7DD</Color>
+    <Color x:Key="SelectionColor">#242F3A44</Color>
+    <Color x:Key="SelectionInactiveColor">#22363A3F</Color>
+    <Color x:Key="ScrollTrackColor">#FF2A2D32</Color>
+    <Color x:Key="ScrollThumbColor">#FF808890</Color>
+    <Color x:Key="ScrollThumbHoverColor">#FFA0A7AF</Color>
+    <Color x:Key="ScrollThumbPressedColor">#FF5E8FBA</Color>
+    <Color x:Key="EmptyStateBackgroundColor">#1F2A2D31</Color>
+    <Color x:Key="ToolTipSurfaceColor">#FF2B2F34</Color>
+    <Color x:Key="WarningBadgeBackgroundColor">#334A3C14</Color>
+    <Color x:Key="WarningBadgeBorderColor">#66D2A148</Color>
+    <Color x:Key="BadgeBackgroundColor">#33383C41</Color>
+
+    <Color x:Key="ChipNeutralBackgroundColor">#FF31353A</Color>
+    <Color x:Key="ChipNeutralBorderColor">#FF4A4F56</Color>
+    <Color x:Key="ChipAutoBackgroundColor">#FF173327</Color>
+    <Color x:Key="ChipAutoBorderColor">#FF3E6E58</Color>
+    <Color x:Key="ChipInfoBackgroundColor">#FF1C3142</Color>
+    <Color x:Key="ChipInfoBorderColor">#FF4F7EA4</Color>
+    <Color x:Key="ChipWarningBackgroundColor">#FF3A321E</Color>
+    <Color x:Key="ChipWarningBorderColor">#FF8B7340</Color>
+
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}" />
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{StaticResource SidebarBackgroundColor}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="{StaticResource SurfaceHoverColor}" />
+    <SolidColorBrush x:Key="SurfacePressedBrush" Color="{StaticResource SurfacePressedColor}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="BorderBrushSoft" Color="{StaticResource BorderSubtleColor}" />
+    <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+    <SolidColorBrush x:Key="OnAccentBrush" Color="{StaticResource OnAccentColor}" />
+
+    <SolidColorBrush x:Key="HeaderSurfaceBrush" Color="{StaticResource HeaderSurfaceColor}" />
+    <SolidColorBrush x:Key="HeaderBorderBrush" Color="{StaticResource HeaderBorderColor}" />
+    <SolidColorBrush x:Key="TabStripBackgroundBrush" Color="{StaticResource TabStripBackgroundColor}" />
+    <SolidColorBrush x:Key="TabSelectedBackgroundBrush" Color="{StaticResource TabSelectedBackgroundColor}" />
+    <SolidColorBrush x:Key="TabHoverBrush" Color="{StaticResource TabHoverColor}" />
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}" />
+    <SolidColorBrush x:Key="CardBorderBrush" Color="{StaticResource CardBorderColor}" />
+    <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource SurfaceHoverColor}" />
+    <SolidColorBrush x:Key="SelectedTabBrush" Color="{StaticResource TabSelectedBackgroundColor}" />
+    <SolidColorBrush x:Key="SelectedTabBorderBrush" Color="{StaticResource CardBorderColor}" />
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="SubtleTextBrush" Color="{StaticResource SubtleTextColor}" />
+    <SolidColorBrush x:Key="SelectionBrush" Color="{StaticResource SelectionColor}" />
+    <SolidColorBrush x:Key="SelectionInactiveBrush" Color="{StaticResource SelectionInactiveColor}" />
+    <SolidColorBrush x:Key="ScrollTrackBrush" Color="{StaticResource ScrollTrackColor}" />
+    <SolidColorBrush x:Key="ScrollThumbBrush" Color="{StaticResource ScrollThumbColor}" />
+    <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="{StaticResource ScrollThumbHoverColor}" />
+    <SolidColorBrush x:Key="ScrollThumbPressedBrush" Color="{StaticResource ScrollThumbPressedColor}" />
+    <SolidColorBrush x:Key="EmptyStateBackgroundBrush" Color="{StaticResource EmptyStateBackgroundColor}" />
+    <SolidColorBrush x:Key="ToolTipSurfaceBrush" Color="{StaticResource ToolTipSurfaceColor}" />
+    <SolidColorBrush x:Key="WarningBadgeBackgroundBrush" Color="{StaticResource WarningBadgeBackgroundColor}" />
+    <SolidColorBrush x:Key="WarningBadgeBorderBrush" Color="{StaticResource WarningBadgeBorderColor}" />
+    <SolidColorBrush x:Key="BadgeBackgroundBrush" Color="{StaticResource BadgeBackgroundColor}" />
+
+    <SolidColorBrush x:Key="ChipNeutralBackgroundBrush" Color="{StaticResource ChipNeutralBackgroundColor}" />
+    <SolidColorBrush x:Key="ChipNeutralBorderBrush" Color="{StaticResource ChipNeutralBorderColor}" />
+    <SolidColorBrush x:Key="ChipAutoBackgroundBrush" Color="{StaticResource ChipAutoBackgroundColor}" />
+    <SolidColorBrush x:Key="ChipAutoBorderBrush" Color="{StaticResource ChipAutoBorderColor}" />
+    <SolidColorBrush x:Key="ChipInfoBackgroundBrush" Color="{StaticResource ChipInfoBackgroundColor}" />
+    <SolidColorBrush x:Key="ChipInfoBorderBrush" Color="{StaticResource ChipInfoBorderColor}" />
+    <SolidColorBrush x:Key="ChipWarningBackgroundBrush" Color="{StaticResource ChipWarningBackgroundColor}" />
+    <SolidColorBrush x:Key="ChipWarningBorderBrush" Color="{StaticResource ChipWarningBorderColor}" />
+</ResourceDictionary>

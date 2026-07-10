@@ -1,0 +1,2033 @@
+# R3Config bundled RPCS3 Canary patches.
+# Source: RPCS3 Wiki Help:Game_Patches/Canary snapshot supplied by user.
+# Contract: copied to <RPCS3 folder>\patches\imported_patch.yml when Canary is prepared.
+Version: 1.2
+
+PPU-17a273d69dad20980377e405809f7d888b6c6dce:
+  "Green artifacts fix":
+    Games:
+      "Army of TWO The Devil's Cartel Demo":
+        NPEB90470: [ 01.00 ]
+        NPUB90862: [ 01.00 ]
+    Author: "ZEROx"
+    Notes: "Fixes annoying non-working effect."
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x01732be8, 0x995f ]
+
+PPU-fdfcb78c6a8830e27a4a11400048c1b741ed4593:
+  "ACB - TaskThread Deadlock Fix [Updated]":
+    Games:
+      "Assassin's Creed: Brotherhood":
+        NPUB30522: [ All ]
+    Author: "UCipher"
+    Patch Version: 1.1
+    Notes: >
+      Fixes a threading deadlock/livelock that causes the game to freeze
+      during gameplay under RPCS3's PPU LLVM recompiler.
+
+      Changes from v1.0:
+        - Introduces use of sys_ppu_thread_yield (syscall 0x4C)
+
+      Certain RPCS3 settings can reintroduce sensitivity to this issue.
+      Avoid changing the following from their defaults where possible:
+        - Clock speed (PPU/SPU)
+        - VBlank frequency
+        - Sleep timers accuracy
+        - SPU XFloat accuracy
+        - Accurate RSX reservations
+        - ZCull accuracy
+
+      Remove PPU cache after applying.
+
+    Patch:
+      # -------------------------------------------------------
+      # Fix 1: Event queue watchdog (50ms timeout for TaskThread)
+      # -------------------------------------------------------
+      - [ be32, 0x0001C0F0, 0x49E5ED10 ]  # b 0x01E7AE00
+      - [ be32, 0x0001C0F4, 0x495AA885 ]  # bl 0x015C6978
+      - [ be32, 0x0001C0F8, 0x39600082 ]  # li r11,0x82
+
+      # Codecave @ 0x01E7AE00
+      - [ be32, 0x01E7AE00, 0x78090020 ]  # clrldi r9,r0,32
+      - [ be32, 0x01E7AE04, 0x3D600050 ]  # lis r11,0x0050
+      - [ be32, 0x01E7AE08, 0x396B4B18 ]  # addi r11,r11,0x4B18
+      - [ be32, 0x01E7AE0C, 0x7C095800 ]  # cmpw cr0,r9,r11
+      - [ be32, 0x01E7AE10, 0x40820010 ]  # bne +0x10
+      - [ be32, 0x01E7AE14, 0x38A00000 ]  # li r5,0
+      - [ be32, 0x01E7AE18, 0x60A5C350 ]  # ori r5,r5,0xC350
+      - [ be32, 0x01E7AE1C, 0x4801C0F6 ]  # ba 0x0001C0F4
+      - [ be32, 0x01E7AE20, 0x38A00000 ]  # li r5,0
+      - [ be32, 0x01E7AE24, 0x4801C0F6 ]  # ba 0x0001C0F4
+
+      # -------------------------------------------------------
+      # Fix 2: Wrapper spin-wait ��� yield + sleep
+      # -------------------------------------------------------
+      - [ be32, 0x003932F8, 0x49E7AF42 ]  # ba 0x01E7AF40
+
+      # YIELD_AND_SLEEP_WRAPPER @ 0x01E7AF40
+      - [ be32, 0x01E7AF40, 0x3960004C ]  # li r11,0x4C
+      - [ be32, 0x01E7AF44, 0x44000002 ]  # sc              (sys_ppu_thread_yield)
+      - [ be32, 0x01E7AF48, 0x386009C4 ]  # li r3,2500
+      - [ be32, 0x01E7AF4C, 0x3960008D ]  # li r11,0x8D
+      - [ be32, 0x01E7AF50, 0x44000002 ]  # sc              (usleep(2500))
+      - [ be32, 0x01E7AF54, 0x483932FE ]  # ba 0x003932FC
+
+      # -------------------------------------------------------
+      # Fix 3: Inlined TaskThread usleep ��� yield + sleep
+      # -------------------------------------------------------
+      - [ be32, 0x00504818, 0x49E7AF02 ]  # ba 0x01E7AF00
+      - [ be32, 0x0050481C, 0x60000000 ]  # nop
+      - [ be32, 0x00504820, 0x60000000 ]  # nop
+
+      # YIELD_AND_SLEEP_INLINED @ 0x01E7AF00
+      - [ be32, 0x01E7AF00, 0x3960004C ]  # li r11,0x4C
+      - [ be32, 0x01E7AF04, 0x44000002 ]  # sc              (sys_ppu_thread_yield)
+      - [ be32, 0x01E7AF08, 0x386009C4 ]  # li r3,2500
+      - [ be32, 0x01E7AF0C, 0x3960008D ]  # li r11,0x8D
+      - [ be32, 0x01E7AF10, 0x44000002 ]  # sc              (usleep(2500))
+      - [ be32, 0x01E7AF14, 0x48504826 ]  # ba 0x00504824
+
+PPU-e99e8ed3a9dc1773c1a288d86c53a50bfde3ced1:
+  "60 FPS":
+    Games:
+      "Bakugan Battle Brawlers���":
+        BLES00758: [ 01.00 ]
+    Author: "FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x006c1dbc, 0x3c888889 ] # 006c1d70, 006f19c8, 006c1dc4
+
+Anchors:
+  bf3_109_title: &bf3_109_title
+    "Battlefield 3":
+      BLES01275: [ 01.09 ]
+      BLUS30762: [ 01.09 ]
+
+PPU-fbb251a511c29cb38f33da72675bdf041ceadf4e:
+  " Fix Rainbow Graphics":
+    Games: *bf3_109_title
+    Author: "ZEROx"
+    Notes: "Compromises visuals for extra performance."
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x012bc140, 0x9b1f ]
+
+Anchors:
+  bf4120_title: &bf4120_title
+    "Battlefield 4":
+      BLES01832: [ 01.20 ]
+      BLUS31162: [ 01.20 ]
+      NPUB31148: [ 01.20 ]
+      NPEB01303: [ 01.20 ]
+
+PPU-f7ff4ca5d07f753244f290dc5e54907948e03613:
+  "Fix Graphics issues": # unorganized mess! needs cleanup.
+    Games: *bf4120_title
+    Author: "illusion"
+    Notes: "Compromises visuals for extra performance."
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x01499a74, 0x98bf ] # lights shafts
+      - [ be16, 0x01499a78, 0x98bf ] # i forgot half of what these do.
+      - [ be16, 0x01499a7c, 0x98bf ]
+      - [ be16, 0x01499ab4, 0x98bf ] # casted shadows
+      - [ be16, 0x01499b10, 0x98bf ]
+      - [ be16, 0x01499b14, 0x98bf ]
+
+PPU-900e4d225f95c89cb7998d2c632f2f326d9b5706:
+  "1280x720 Resolution":
+    Games:
+      "Call Of Duty�� 4: Modern Warfare (Singleplayer)":
+        NPUB30588: [ 01.40 ]
+        NPEB00740: [ 01.40 ]
+    Author: "Margen67"
+    Notes: "Original resolution is 1024x600. Causes rendering bugs."
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x100ba436, 1280 ]
+      - [ be16, 0x100ba43a, 720 ]
+
+PPU-9f96803487f5a18dc96d68e398d767fc8717effb: # sp.self 1.00
+  "1280x720 Resolution":
+    Games:
+      "Call of Duty: World at War (Singleplayer)":
+        BLES00457: [ 01.00 ]
+    Author: "FlexBy"
+    Notes: "Original resolution is 960x540. Causes rendering bugs."
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x008c6bfa, 1280 ]
+      - [ be16, 0x008c6bfe, 720 ]
+
+PPU-a57a6ec21cefcf2274ac1ed7dd61711da9f85504: # sp.self 1.07/1.08
+  "1280x720 Resolution":
+    Games:
+      "Call of Duty: World at War (Singleplayer)":
+        BLES00354: [ 01.07 ]
+        BLES00355: [ 01.07 ]
+        BLES00357: [ 01.07 ]
+        BLES00404: [ 01.07 ]
+        BLUS30192: [ 01.07 ]
+        BLKS20098: [ 01.07 ]
+        BLES00457: [ 01.08 ]
+    Author: "FlexBy"
+    Notes: "Original resolution is 960x540. Causes rendering bugs."
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x008e8722, 1280 ]
+      - [ be16, 0x008e8726, 720 ]
+
+PPU-4909c02cae0f37fab78a5642a3e9ba9aff45b5b0:
+  "Infinite Health":
+    Games:
+      "Dark Souls II":
+        BLET50006: [ All ]
+    Author: "FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x003aa4cc, 0x60000000 ] # affects both player and enemies
+
+PPU-93aed31e80e0a91e11fdcff1b83d42c235bc3548:
+  "60 FPS":
+    Games:
+      "Dragon Ball Z: Burst Limit":
+        BLUS30117: [ All ]
+    Author: "illusion, ZEROx"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ byte, 0x004c4383, 0x01 ]       # 60 FPS
+      - [ be32, 0x00162228, 0x60000000 ] # No reset
+      - [ be32, 0x001633e8, 0x60000000 ] # Pause fix
+
+PPU-49aef7eecc248bf85af210bdca336bce8c9272e4:
+  "60 FPS":
+    Games:
+      "Dragon Ball Z: Burst Limit":
+        BLES00231: [ All ]
+    Author: "illusion"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ byte, 0x004c4383, 0x01 ]       # 60 FPS
+      - [ be32, 0x001622dc, 0x60000000 ] # No reset
+      - [ be32, 0x0016349c, 0x60000000 ] # Pause fix
+
+Anchors:
+  #rb2_cams: &rb2_cams
+  #  - [ be32, 0x00093884, 0x60000000 ] # all cameras
+
+  rb2_stutter: &rb2_stutter
+  #  - [ be32, 0x0004a514, 0x60000000 ]
+    - [ be32, 0x0004a6f4, 0x60000000 ]
+
+  rb2_manual_v: &rb2_manual_v
+    - [ be32, 0x0003b03c, 0x60000000 ]
+
+  rb2_ground_debris: &rb2_ground_debris
+    - [ be32, 0x00383a98, 0x60000000 ]
+    - [ be32, 0x00383bf0, 0x60000000 ]
+    - [ be32, 0x00383a08, 0x60000000 ]
+
+  #rb2_fb: &rb2_fb
+  #  - [ be32, 0x0006dde8, 0x60000000 ]
+  #  - [ be32, 0x0006ccc4, 0x60000000 ]
+
+  rb2_misc: &rb2_misc
+    - [ be32, 0x0036f610, 0x60000000 ]
+
+  rb2_dash: &rb2_dash
+    - [ be32, 0x00043a84, 0x60000000 ]
+
+  rb2_cancels: &rb2_cancels
+    - [ be32, 0x0003b384, 0x808b00ff ] #public build
+
+PPU-07e7ef2b34549f3c879306f6c255ded2daec21f4:
+  "NFiK RB3 Patch":
+    Games:
+      "Dragon Ball: Raging Blast 2":
+        BLUS30581: [ 01.00 ]
+    Author: "NFiK"
+    Patch Version: 1.4
+    Group: "Games"
+    Notes: "WIP. Contact me for patch revisions."
+    Patch:
+    #  - [ load, *rb2_cams ]
+      - [ load, *rb2_stutter ]
+      - [ load, *rb2_manual_v ]
+      - [ load, *rb2_ground_debris ]
+    #  - [ load, *rb2_fb ]
+      - [ load, *rb2_cancels ]
+      - [ load, *rb2_misc ]
+      - [ load, *rb2_dash ]
+
+  "No HUD Toggle":
+    Games:
+      "Dragon Ball: Raging Blast 2":
+        BLUS30581: [ 01.00 ]
+    Author: "KeepTryin"
+    Patch Version: 1.0
+    Group: "Games"
+    Notes: "HUD toggle with Select in-game."
+    Patch:
+      - [ be32, 0x000B6918, 0x485376B0 ]
+      - [ be32, 0x005EDFC8, 0xF821FF71 ]
+      - [ be32, 0x005EDFCC, 0x7C0802A6 ]
+      - [ be32, 0x005EDFD0, 0xFB810070 ]
+      - [ be32, 0x005EDFD4, 0xF80100A0 ]
+      - [ be32, 0x005EDFD8, 0xFBA10078 ]
+      - [ be32, 0x005EDFDC, 0xFBC10080 ]
+      - [ be32, 0x005EDFE0, 0xFBE10088 ]
+      - [ be32, 0x005EDFE4, 0x7C7C1B78 ]
+      - [ be32, 0x005EDFE8, 0x7C7E1B78 ]
+      - [ be32, 0x005EDFEC, 0x893C0115 ]
+      - [ be32, 0x005EDFF0, 0x2C0900A5 ]
+      - [ be32, 0x005EDFF4, 0x41820018 ]
+      - [ be32, 0x005EDFF8, 0x392000A5 ]
+      - [ be32, 0x005EDFFC, 0x993C0115 ]
+      - [ be32, 0x005EE000, 0x39200000 ]
+      - [ be32, 0x005EE004, 0x993C0116 ]
+      - [ be32, 0x005EE008, 0x993C0117 ]
+      - [ be32, 0x005EE00C, 0x4830AF1F ]
+      - [ be32, 0x005EE010, 0x60000000 ]
+      - [ be32, 0x005EE014, 0x38800000 ]
+      - [ be32, 0x005EE018, 0x78630020 ]
+      - [ be32, 0x005EE01C, 0x4830BEBB ]
+      - [ be32, 0x005EE020, 0x60000000 ]
+      - [ be32, 0x005EE024, 0x2C030000 ]
+      - [ be32, 0x005EE028, 0x41820020 ]
+      - [ be32, 0x005EE02C, 0x787F0020 ]
+      - [ be32, 0x005EE030, 0x7FE3FB78 ]
+      - [ be32, 0x005EE034, 0x3C800080 ]
+      - [ be32, 0x005EE038, 0x485D95BF ]
+      - [ be32, 0x005EE03C, 0xE8410028 ]
+      - [ be32, 0x005EE040, 0x7C7D1B78 ]
+      - [ be32, 0x005EE044, 0x48000008 ]
+      - [ be32, 0x005EE048, 0x3BA00000 ]
+      - [ be32, 0x005EE04C, 0x881C0117 ]
+      - [ be32, 0x005EE050, 0x2C1D0000 ]
+      - [ be32, 0x005EE054, 0x4182002C ]
+      - [ be32, 0x005EE058, 0x2C000000 ]
+      - [ be32, 0x005EE05C, 0x40820010 ]
+      - [ be32, 0x005EE060, 0x893C0116 ]
+      - [ be32, 0x005EE064, 0x69290001 ]
+      - [ be32, 0x005EE068, 0x993C0116 ]
+      - [ be32, 0x005EE06C, 0x9BBC0117 ]
+      - [ be32, 0x005EE070, 0x881C0116 ]
+      - [ be32, 0x005EE074, 0x2C000000 ]
+      - [ be32, 0x005EE078, 0x41820020 ]
+      - [ be32, 0x005EE07C, 0x4800002C ]
+      - [ be32, 0x005EE080, 0x39200000 ]
+      - [ be32, 0x005EE084, 0x993C0117 ]
+      - [ be32, 0x005EE088, 0x881C0116 ]
+      - [ be32, 0x005EE08C, 0x2C000000 ]
+      - [ be32, 0x005EE090, 0x41820008 ]
+      - [ be32, 0x005EE094, 0x48000014 ]
+      - [ be32, 0x005EE098, 0x801C0078 ]
+      - [ be32, 0x005EE09C, 0x7F9EE378 ]
+      - [ be32, 0x005EE0A0, 0x2F800000 ]
+      - [ be32, 0x005EE0A4, 0x480B6946 ]
+      - [ be32, 0x005EE0A8, 0xE80100A0 ]
+      - [ be32, 0x005EE0AC, 0xEB810070 ]
+      - [ be32, 0x005EE0B0, 0xEBA10078 ]
+      - [ be32, 0x005EE0B4, 0x7C0803A6 ]
+      - [ be32, 0x005EE0B8, 0xEBC10080 ]
+      - [ be32, 0x005EE0BC, 0xEBE10088 ]
+      - [ be32, 0x005EE0C0, 0x38210090 ]
+      - [ be32, 0x005EE0C4, 0x4E800020 ]
+
+PPU-da76bae72f6d8fef4865e63c4e75e91d8b7204ac:
+  "Fix Memory Access Violation error":
+    Games:
+      "Dynasty Warriors: Gundam Reborn":
+        BLES02057: [ All ]
+    Author: "Juhn"
+    Notes: "Fixes Memory Access Violation error when trying to play certain stages or going into certain areas of the maps."
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00212494, 0x63e30000 ]
+
+PPU-d526f54bfa95c26ecb612318f58a49c62ea53915:
+  "Fix Memory Access Violation error":
+    Games:
+      "Dynasty Warriors: Gundam Reborn":
+        NPUB31531: [ All ]
+    Author: "Juhn"
+    Notes: "Fixes Memory Access Violation error when trying to play certain stages or going into certain areas of the maps."
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00212464, 0x63e30000 ]
+
+Anchors:
+  gow3_fps_notes: &gow3_fps_notes
+    "WARNING: Causes physics issues with harpies, you will need to disable this patch to get past some sections of the game.\n\nUnlocks internal timestep calculation and fixes IGC timing issues at 60 FPS and above. Increase vblank to match your desired framerate."
+
+  gow3_100_title: &gow3_100_title
+    "God of War 3 (God of War III)":
+      BCES00510: [ 01.00 ]
+      BCES00799: [ 01.00 ]
+      BCUS98111: [ 01.00 ]
+      BCJS37001: [ 01.00 ]
+
+  gow3_103_title: &gow3_103_title
+    "God of War 3 (God of War III)":
+      BCES00510: [ 01.03 ]
+      BCES00799: [ 01.03 ]
+      BCUS98111: [ 01.03 ]
+      BCJS37001: [ 01.03 ]
+      BCAS25003: [ 01.03 ]
+      BCKS15003: [ 01.03 ]
+
+GOW3_AR_Configurable_Values: &GOW3_AR_Configurable_Values
+    "Aspect Ratio":
+      Type: double_enum
+      Value: &16_9_value 1.77777777778
+      Allowed Values:
+        "16:9 (Default)": *16_9_value
+        "32:9": 3.555555555555556
+        "21:9 (3840x1600)": 2.4
+        "21:9 (3440x1440)": 2.388888888888889
+        "21:9 (2560x1080)": 2.37037037037037
+        "16:10": 1.6
+        "4:3": 1.333333333333333
+        "5:4": 1.25
+
+PPU-4d5c51503a81a327c2a99427390a395b8dcb3767: # God of War 3 1.00
+  "Unlock FPS":
+    Games: *gow3_100_title
+    Author: "ZEROx, illusion"
+    Notes: *gow3_fps_notes
+    Patch Version: 2.0
+    Patch:
+      - [ bef32, 0x00528560, 1000 ]
+      - [ bef32, 0x005284b8, 100000 ]
+      - [ be32, 0x0026b528, 0x60000000 ] # Don't write to target FPS
+      - [ bef32, 0x0052bee4, 60 ] # Target FPS # read max of 60 for physics stuff
+      - [ be16, 0x0026b6e6, 0xe7a8 ] # 1000.0f sync stuff
+      - [ be16, 0x0026b74a, 0xe7a8 ] # 1000.0f sync stuff
+      - [ be16, 0x0026b75e, 0xe7a8 ] # 1000.0f sync stuff
+      - [ be16, 0x001e51b6, 0xe7a8 ] # 1000.0f gameplay speed scaling
+      - [ be16, 0x002710f6, 0xe7a8 ] # 1000.0f video player speed scaling
+
+PPU-19724fde16a5b111b7b4d2a065f5dccaf8e01962: # God of War 3 1.03
+  "Unlock FPS":
+    Games: *gow3_103_title
+    Author: "ZEROx, illusion"
+    Notes: *gow3_fps_notes
+    Patch Version: 1.0
+    Patch:
+      - [ bef32, 0x00528560, 1000 ]
+      - [ bef32, 0x005284b8, 50000 ] # Min FPS of 2
+      - [ be16, 0x000c7b0a, 0xccc8 ] # Chainswing fix
+      - [ be16, 0x000ea0fe, 0xccc8 ] # Water freeze fix
+  "Aspect Ratio":
+    Games: *gow3_103_title
+    Author: "FlexBy"
+    Notes:
+    Configurable Values: *GOW3_AR_Configurable_Values
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0026c950, 0x60000000 ]
+      - [ be32, 0x0026dfa8, 0x60000000 ]
+      - [ bef32, 0x00640a80, "Aspect Ratio" ]
+
+PPU-cc23d46d671458b37f34e08b6e06d1751084a34e:
+  "Aspect Ratio":
+    Games:
+      "God of War 3 (God of War III)":
+        BCAS25003: [ 01.00 ]
+    Author: "FlexBy"
+    Notes:
+    Configurable Values: *GOW3_AR_Configurable_Values
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0026c914, 0x60000000 ]
+      - [ be32, 0x0026df6c, 0x60000000 ]
+      - [ bef32, 0x00640a80, "Aspect Ratio" ]
+
+PPU-3a0b43e4a5f4bfea64f53612ee7c5d990f88129c:
+  "Unlock FPS":
+    Games:
+      "God of War: Ascension":
+        BCES01741: [ 01.12 ]
+        BCES01742: [ 01.12 ]
+        BCUS98232: [ 01.12 ]
+        BCAS25016: [ 01.12 ]
+        NPEA00445: [ 01.12 ]
+        NPUA80918: [ 01.12 ]
+        NPHA80258: [ 01.12 ]
+    Author: "ZEROx, illusion"
+    Notes: "Unlocks internal timestep calculation. Increase vblank to match your desired framerate."
+    Patch Version: 1.0
+    Patch:
+      - [ bef32, 0x003a52b4, 1000 ]
+      - [ bef32, 0x002d024c, 6667 ]
+
+Anchors:
+  gta5_EU127title: &gta5_EU127title
+    "Grand Theft Auto V (Grand Theft Auto 5)":
+      BLES01807: [ 01.27 ]
+      NPEB01283: [ 01.27 ]
+
+  gta5_US127title: &gta5_US127title
+    "Grand Theft Auto V (Grand Theft Auto 5)":
+      BLUS31156: [ 01.27 ]
+      NPUB31154: [ 01.27 ]
+
+  gta5_JP123title: &gta5_JP123title
+    "Grand Theft Auto V (Grand Theft Auto 5)":
+      BLJM61019: [ 02.24 ]
+      NPJB00516: [ 01.23 ]
+
+PPU-e2d0208186c8a9456d5eb143bb695ec356b195a0:
+  "GTA:OG Custom Server":
+    Games: *gta5_JP123title
+    Author: "logan, Byrom, FlexBy"
+    Notes: "GTA:OG - GTA Online server revival project"
+    Group: CustomServer
+    Patch Version: 1.3
+    Patch:
+      - [ utf8, 0x01851328, "http://\0" ]
+      - [ utf8, 0x0184f95c, "http://\0" ]
+      - [ utf8, 0x01850d1c, "ros.gtao.gg\0" ]
+      - [ byte, 0x00d4d9cf, 0x00 ]
+      - [ be16, 0x012de6e6, 0x03 ]
+      - [ be32, 0x012d1480, 0x38600001 ]
+      - [ be32, 0x012d1484, 0x4E800020 ]
+      - [ be32, 0x00d2e8a0, 0x39200001 ]
+      - [ be32, 0x00d2e8b0, 0x38C0001B ]
+
+PPU-33546066628b10ec09f08a3c29c15611f9e65493:
+  "GTA:OG Custom Server":
+    Games: *gta5_US127title
+    Author: "logan, Byrom"
+    Notes: "GTA:OG - GTA Online server revival project"
+    Group: CustomServer
+    Patch Version: 1.3
+    Patch:
+      - [ utf8, 0x0186BFA8, "http://\0" ]
+      - [ utf8, 0x0186A5DC, "http://\0" ]
+      - [ utf8, 0x0186B99C, "ros.gtao.gg\0" ]
+      - [ byte, 0x00D5DBA7, 0x00 ]
+      - [ be16, 0x012F6466, 0x03 ]
+      - [ be32, 0x012E9100, 0x38600001 ]
+      - [ be32, 0x012E9104, 0x4E800020 ]
+      - [ be32, 0x00D3EA40, 0x39200001 ]
+      - [ be32, 0x00D3EA50, 0x38C0001B ]
+
+PPU-70a481398fc3e934446bc53c8e888d92cbcc62be:
+  "GTA:OG Custom Server":
+    Games: *gta5_EU127title
+    Author: "logan, Byrom"
+    Notes: "GTA:OG - GTA Online server revival project"
+    Group: CustomServer
+    Patch Version: 1.3
+    Patch:
+      - [ utf8, 0x018512A8, "http://\0" ]
+      - [ utf8, 0x0184F8DC, "http://\0" ]
+      - [ utf8, 0x01850C9C, "ros.gtao.gg\0" ]
+      - [ byte, 0x00D4DA3F, 0x00 ]
+      - [ be16, 0x012DE786, 0x03 ]
+      - [ be32, 0x012D1520, 0x38600001 ]
+      - [ be32, 0x012D1524, 0x4E800020 ]
+      - [ be32, 0x00D2E910, 0x39200001 ]
+      - [ be32, 0x00D2E920, 0x38C0001B ]
+
+Anchors:
+  inFam1_PSNalltitle: &Infam1_PSNalltitle
+    "inFamous":
+      NPUA80480: [ All ]
+      NPEA00252: [ All ]
+      NPHA80103: [ All ]
+
+  inFam1_EUdiscalltitle: &Infam1_EUdiscalltitle
+    "inFamous":
+      BCES00220: [ 01.00 ]
+      BCES00591: [ All ]
+      BCES00609: [ All ]
+
+  inFam1_unst_light_notes: &Infam1_unst_light_notes
+    "Increases FPS by around 50% in certain parts by disabling some shadows and lighting.\nDoesn't help much in sewer areas.\nMay break sunlight completely on AMD GPUs using Vulkan.\nMay cause glitches with some other effects like lightning."
+
+  inFam1_disable_vfx_notes: &Infam1_disable_vfx_notes
+    "Disables Visual Effects.\nGives just a tiny bit more fps than the 'Unstable VFX' patch.\nUse only as the last resort."
+
+  inFam1_unst_vfx: &Infam1_unst_vfx
+    "Increases FPS by about 50% by partially breaking fire, lightning and (some) lighting effects.\nCauses projectiles to become partially invisible."
+
+  inFam1_unst_audio: &Infam1_unst_audio
+    "Improves sound cackling by disabling some functions related to the audio.\nLightning sounds might be distorted.\nPlease, report any other side effects."
+
+PPU-1fb2d518fd8f29063f45344d1a83735c5094edec:
+  "(Experimental) Disable visual effects":
+    Games: *Infam1_PSNalltitle
+    Author: "Hasster"
+    Notes: *Infam1_disable_vfx_notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x001939dc, 0x60000000 ]
+  "(Experimental) Unstable visual effects":
+    Games: *Infam1_PSNalltitle
+    Author: "Hasster"
+    Notes: *Infam1_unst_vfx
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00220634, 0x60000000 ]
+  "(Experimental) Unstable lighting":
+    Games: *Infam1_PSNalltitle
+    Author: "Hasster"
+    Notes: *Infam1_unst_light_notes
+    Patch Version: 1.1
+    Patch:
+      - [ be32, 0x00254c0c, 0x60000000 ]
+      - [ be32, 0x00258db0, 0x60000000 ]
+  "(Experimental) Unstable audio":
+    Games: *Infam1_PSNalltitle
+    Author: "Hasster"
+    Notes: *Infam1_unst_audio
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00283ed8, 0x4e800020 ]
+      - [ be32, 0x0028b608, 0x4e800020 ]
+      - [ be32, 0x0028c7d0, 0x60000000 ]
+      - [ be32, 0x00504950, 0x4e800020 ]
+      - [ be32, 0x0050b6e8, 0x4e800020 ]
+      - [ be32, 0x0050fa18, 0x4e800020 ]
+      - [ be32, 0x00510510, 0x60000000 ]
+      - [ be32, 0x005105cc, 0x60000000 ]
+      - [ be32, 0x00519848, 0x4e800020 ]
+      - [ be32, 0x0051a654, 0x60000000 ]
+      - [ be32, 0x0051a778, 0x60000000 ]
+      - [ be32, 0x00552068, 0x4e800020 ]
+      - [ be32, 0x0051a610, 0x60000000 ]
+
+PPU-d0c3e2a107c47d20d3316325ce6f75464a8f4f1d:
+  "(Experimental) Disable visual effects":
+    Games: *Infam1_EUdiscalltitle
+    Author: "Hasster"
+    Notes: *Infam1_disable_vfx_notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00192f54, 0x60000000 ]
+  "(Experimental) Unstable visual effects":
+    Games: *Infam1_EUdiscalltitle
+    Author: "Hasster"
+    Notes: *Infam1_unst_vfx
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0021fa64, 0x60000000 ]
+  "(Experimental) Unstable lighting":
+    Games: *Infam1_EUdiscalltitle
+    Author: "Hasster"
+    Notes: *Infam1_unst_light_notes
+    Patch Version: 1.1
+    Patch:
+      - [ be32, 0x00253f6c, 0x60000000 ]
+      - [ be32, 0x00258110, 0x60000000 ]
+  "(Experimental) Unstable audio":
+    Games: *Infam1_EUdiscalltitle
+    Author: "Hasster"
+    Notes: *Infam1_unst_audio
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x002833e0, 0x4e800020 ]
+      - [ be32, 0x0028ab28, 0x4e800020 ]
+      - [ be32, 0x0028bcf0, 0x60000000 ]
+      - [ be32, 0x00503ad8, 0x4e800020 ]
+      - [ be32, 0x0050a870, 0x4e800020 ]
+      - [ be32, 0x0050eba0, 0x4e800020 ]
+      - [ be32, 0x0050f698, 0x60000000 ]
+      - [ be32, 0x0050f754, 0x60000000 ]
+      - [ be32, 0x005189d0, 0x4e800020 ]
+      - [ be32, 0x005197dc, 0x60000000 ]
+      - [ be32, 0x00519900, 0x60000000 ]
+      - [ be32, 0x005511f0, 0x4e800020 ]
+      - [ be32, 0x00519798, 0x60000000 ]
+
+PPU-4cf9e6e807b5f270164147ab8f4df3533c7ff1e8:
+  "(Experimental) Disable visual effects":
+    Games:
+      "inFamous":
+        BCES00220: [ 01.02 ]
+    Author: "Hasster"
+    Notes: *Infam1_disable_vfx_notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00192fa4, 0x60000000 ]
+  "(Experimental) Unstable visual effects":
+    Games:
+      "inFamous":
+        BCES00220: [ 01.02 ]
+    Author: "Hasster"
+    Notes: *Infam1_unst_vfx
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0021fa84, 0x60000000 ]
+  "(Experimental) Unstable lighting":
+    Games:
+      "inFamous":
+        BCES00220: [ 01.02 ]
+    Author: "Hasster"
+    Notes: *Infam1_unst_light_notes
+    Patch Version: 1.1
+    Patch:
+      - [ be32, 0x00253f84, 0x60000000 ]
+      - [ be32, 0x00258128, 0x60000000 ]
+  "(Experimental) Unstable audio":
+    Games:
+      "inFamous":
+        BCES00220: [ 01.02 ]
+    Author: "Hasster"
+    Notes: *Infam1_unst_audio
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x002833f8, 0x4e800020 ]
+      - [ be32, 0x0028ab40, 0x4e800020 ]
+      - [ be32, 0x0028bd08, 0x60000000 ]
+      - [ be32, 0x00503b40, 0x4e800020 ]
+      - [ be32, 0x0050a8d8, 0x4e800020 ]
+      - [ be32, 0x0050ec08, 0x4e800020 ]
+      - [ be32, 0x0050f700, 0x60000000 ]
+      - [ be32, 0x0050f7bc, 0x60000000 ]
+      - [ be32, 0x00518a38, 0x4e800020 ]
+      - [ be32, 0x00519844, 0x60000000 ]
+      - [ be32, 0x00519968, 0x60000000 ]
+      - [ be32, 0x00551258, 0x4e800020 ]
+      - [ be32, 0x00519800, 0x60000000 ]
+
+PPU-412a9bf323b4743de21658a286f71dbe82cad807:
+  "(Experimental) Disable visual effects":
+    Games:
+      "inFamous":
+        BCUS98119: [ All ]
+    Author: "Hasster"
+    Notes: *Infam1_disable_vfx_notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x001930ec, 0x60000000 ]
+  "(Experimental) Unstable visual effects":
+    Games:
+      "inFamous":
+        BCUS98119: [ All ]
+    Author: "Hasster"
+    Notes: *Infam1_unst_vfx
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0021fbec, 0x60000000 ]
+  "(Experimental) Unstable lighting":
+    Games:
+      "inFamous":
+        BCUS98119: [ All ]
+    Author: "Hasster"
+    Notes: *Infam1_unst_light_notes
+    Patch Version: 1.1
+    Patch:
+      - [ be32, 0x0025410c, 0x60000000 ]
+      - [ be32, 0x002582b0, 0x60000000 ]
+  "(Experimental) Unstable audio":
+    Games:
+      "inFamous":
+        BCUS98119: [ All ]
+    Author: "Hasster"
+    Notes: *Infam1_unst_audio
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00283380, 0x4e800020 ]
+      - [ be32, 0x0028aad8, 0x4e800020 ]
+      - [ be32, 0x0028bca0, 0x60000000 ]
+      - [ be32, 0x00503bf0, 0x4e800020 ]
+      - [ be32, 0x0050a988, 0x4e800020 ]
+      - [ be32, 0x0050ecb8, 0x4e800020 ]
+      - [ be32, 0x0050f7b0, 0x60000000 ]
+      - [ be32, 0x0050f86c, 0x60000000 ]
+      - [ be32, 0x00518ae8, 0x4e800020 ]
+      - [ be32, 0x005198f4, 0x60000000 ]
+      - [ be32, 0x00519a18, 0x60000000 ]
+      - [ be32, 0x00551308, 0x4e800020 ]
+      - [ be32, 0x005198b0, 0x60000000 ]
+
+PPU-76ad15d03cfe46e1fed60082e3ef7966ded38906:
+  "Unlock FPS":
+    Games:
+      "Katamari Forever Demo":
+        NPEB90185: [ 01.00 ]
+    Author: "FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x003661a0, 0x60000000 ]
+
+PPU-043ec8903128e165d4fa06045a9524746b369b89:
+  "Unlock FPS":
+    Games:
+      "Legends of War: Patton's Campaign":
+        BLUS31079: [ 01.00 ]
+    Author: "FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x001bd5fc, 0x60000000 ]
+
+Version: 1.2
+Anchors:
+  MGS4_All_Games: &MGS4_All_Games
+    "Metal Gear Solid 4: Guns of the Patriots":
+      BLES00246: [ All ]
+      BLUS30109: [ All ]
+      BLJM67001: [ All ]
+      NPUB31633: [ All ]
+      NPEB02182: [ All ]
+      NPJB00698: [ All ]
+
+  MGS4_CrashWorkaround_Notes: &MGS4_CrashWorkaround_Notes
+    "Workaround for 0x68 crash."
+
+  MGS4_FlickerWorkaround_Notes: &MGS4_FlickerWorkaround_Notes
+    "Workaround for flickering ground textures."
+
+PPU-33e09a0bd8fa2a3b28780a3feeb7b0e018bae381:
+  "Crash fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        BLUS30109: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_CrashWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x001409f8, 0x60000000 ]
+      - [ be32, 0x00140a10, 0x60000000 ]
+      - [ be32, 0x00140a44, 0x60000000 ]
+  "Flickering textures fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        BLUS30109: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_FlickerWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x000eaac8, 0x60003000 ]
+
+PPU-c937999ea44fb6260455b85c9f25eea55b1208b9:
+  "Crash fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        BLES00246: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_CrashWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x001409f8, 0x60000000 ]
+      - [ be32, 0x00140a10, 0x60000000 ]
+      - [ be32, 0x00140a44, 0x60000000 ]
+  "Flickering textures fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        BLES00246: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_FlickerWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x000eaac8, 0x60003000 ]
+
+PPU-c19b3b57017488d9bd126a4b6cfba3566e0905fb:
+  "Crash fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        BLJM67001: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_CrashWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x001409f8, 0x60000000 ]
+      - [ be32, 0x00140a10, 0x60000000 ]
+      - [ be32, 0x00140a44, 0x60000000 ]
+  "Flickering textures fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        BLJM67001: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_FlickerWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x000eaac8, 0x60003000 ]
+
+PPU-bbf4c85f1c01e182e7f96d34f734772c4430a426:
+  "Crash fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        NPUB31633: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_CrashWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0013f298, 0x60000000 ]
+      - [ be32, 0x0013f2b0, 0x60000000 ]
+      - [ be32, 0x0013f2e4, 0x60000000 ]
+  "Flickering textures fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        NPUB31633: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_FlickerWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x000e9388, 0x60003000 ]
+
+PPU-347d16fbdb0a12f1083c0fb98343c4642d4641cb:
+  "Crash fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        NPEB02182: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_CrashWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0013f298, 0x60000000 ]
+      - [ be32, 0x0013f2b0, 0x60000000 ]
+      - [ be32, 0x0013f2e4, 0x60000000 ]
+  "Flickering textures fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        NPEB02182: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_FlickerWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x000e9388, 0x60003000 ]
+
+PPU-2b65154021bb8c3b25616324975af795720c5f78:
+  "Crash fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        NPJB00698: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_CrashWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0013f298, 0x60000000 ]
+      - [ be32, 0x0013f2b0, 0x60000000 ]
+      - [ be32, 0x0013f2e4, 0x60000000 ]
+  "Flickering textures fix":
+    Games:
+      "Metal Gear Solid 4: Guns of the Patriots":
+        NPJB00698: [ 02.00 ]
+    Author: "TriggerHappy"
+    Notes: *MGS4_FlickerWorkaround_Notes
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x000e9388, 0x60003000 ]
+
+PPU-544fcc57bf587323d6347b6b695f73f99f76ec55:
+  "Skip Commerce":
+    Games:
+      "Minecraft":
+        NPEB01899: [ 01.00 ]
+        NPUB31419: [ 01.00 ]
+    Author: "Clienthax"
+    Notes:
+    Patch Version: 0.1
+    Patch:
+      - [ be32, 0x001fa154, 0x2c1e0001 ] # assume sceNpCommerce2GetContentInfo errored
+      - [ be32, 0x001fa018, 0x2c1e0001 ] # assume sceNpCommerce2GetContentInfo errored
+
+PPU-cada3232afafb29325ffdd5d79a865fbf3ac0fc7:
+  "Skip Commerce":
+    Games:
+      "Minecraft":
+        NPEB01899: [ 01.84 ]
+        NPJB00549: [ 01.84 ]
+        NPUB31419: [ 01.84 ]
+        BLUS31426: [ 01.84 ]
+        BLES01976: [ 01.84 ]
+    Author: "Clienthax"
+    Notes:
+    Patch Version: 0.1
+    Patch:
+      - [ be32, 0x00c8c6d0, 0x2c1d0001 ] # assume sceNpCommerce2GetContentInfo errored
+      - [ be32, 0x00c8d178, 0x2c1e0001 ] # assume sceNpCommerce2GetContentInfo errored
+      - [ be32, 0x00c8c4dc, 0x2c1e0001 ] # assume sceNpCommerce2GetCategoryInfo errored
+      - [ be32, 0x00c8d0f0, 0x2c1f0001 ] # assume sceNpCommerce2GetCategoryInfo errored
+
+PPU-534e146dfb4206ec2ae9272e00ff73c7739451f8:
+  "Blocky Depth fix":
+    Games:
+      "Need for Speed Rivals":
+        BLES01894: [ 01.00 ]
+        BLUS31201: [ 01.00 ]
+        NPUB31252: [ 01.00 ]
+        NPEB01412: [ 01.00 ]
+    Author: "ZEROx"
+    Notes: "Fixes square artifacts on particles."
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x012b3330, 0x987f ]
+  "Half-screen glitches fix":
+    Games:
+      "Need for Speed Rivals":
+        BLES01894: [ 01.00 ]
+        BLUS31201: [ 01.00 ]
+        NPUB31252: [ 01.00 ]
+        NPEB01412: [ 01.00 ]
+    Author: "ZEROx"
+    Notes: "Fixes half-screen bugs. Great speed improvement."
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x012b3650, 0x98bf ]
+      - [ be16, 0x012b3290, 0x993f ]
+      - [ be16, 0x012b35f0, 0x98bf ]
+
+Anchors:
+  p5_CommunityPatches_Author: &p5_CommunityPatches_Author
+    "DeathChaos"
+  p5_CommunityPatches_Notes: &p5_CommunityPatches_Notes
+    "A collection of QoL patches to help make some game mods possible. Currently includes:\n Single Combat GAP\n Expand DLC BGM IDs\n Forcibly Enable motionse.dat/acb on All Enemies\n Disable Player Swordtrack Loading\n Load Proper Boss Voices"
+  p5_CommunityPatches_PatVer: &p5_CommunityPatches_PatVer 1.0
+  p5_CommunityPatches: &p5_CommunityPatches
+  # Force Single GAP Combat Animations
+  # Break Comparison with split "a" GAP file so it is always false
+    - [ be32, 0x006717e0, 0x3be00000 ]
+    - [ be32, 0x0067195c, 0x3be00000 ]
+  # Prevent "b" GAP files from loading
+    - [ be32, 0x006750e4, 0x60000000 ]
+    - [ be32, 0x00675100, 0x60000000 ]
+    - [ be32, 0x0067510c, 0x60000000 ]
+    - [ be32, 0x00675118, 0x60000000 ]
+    - [ be32, 0x00675124, 0x60000000 ]
+  # Prevent "b" GAP files from loading (alt)
+    - [ be32, 0x00675308, 0x60000000 ]
+    - [ be32, 0x00675328, 0x60000000 ]
+    - [ be32, 0x00675330, 0x60000000 ]
+    - [ be32, 0x0067533c, 0x60000000 ]
+    - [ be32, 0x00675348, 0x60000000 ]
+  # Expand DLC Outfit BGM List
+  # Patch table to redirect to new one
+    - [ be32, 0x0006cd00, 0x3fe000b4 ] # lis r31, 0xb4
+    - [ be32, 0x0006cd0c, 0x33ff4bf8 ] # addic r31, r31, 0x4bf8
+  # Patch table size to new size 0x15
+    - [ be32, 0x0006cd5c, 0x2c1e0015 ] # cmpwi r30, 0x15
+  # expand the table
+  # Default BGM
+    - [ be32, 0x00b44bf8, 0x0000ffff ]
+    - [ be32, 0x00b44bfc, 0x00000000 ]
+  # bgm_01
+    - [ be16, 0x00b44c00, 0x0001 ]
+    - [ be16, 0x00b44c02, 0x7053 ]
+    - [ be16, 0x00b44c04, 0x0000 ]
+    - [ be16, 0x00b44c06, 0x2290 ]
+  # bgm_02
+    - [ be16, 0x00b44c08, 0x0002 ]
+    - [ be16, 0x00b44c0a, 0x704a ]
+    - [ be16, 0x00b44c0c, 0x0000 ]
+    - [ be16, 0x00b44c0e, 0x2291 ]
+  # bgm_03
+    - [ be16, 0x00b44c10, 0x0003 ]
+    - [ be16, 0x00b44c12, 0x7065 ]
+    - [ be16, 0x00b44c14, 0x0000 ]
+    - [ be16, 0x00b44c16, 0x2292 ]
+  # bgm_04
+    - [ be16, 0x00b44c18, 0x0004 ]
+    - [ be16, 0x00b44c1a, 0x705c ]
+    - [ be16, 0x00b44c1c, 0x0000 ]
+    - [ be16, 0x00b44c1e, 0x2293 ]
+  # bgm_05
+    - [ be16, 0x00b44c20, 0x0005 ]
+    - [ be16, 0x00b44c22, 0x7077 ]
+    - [ be16, 0x00b44c24, 0x0000 ]
+    - [ be16, 0x00b44c26, 0x2294 ]
+  # bgm_06
+    - [ be16, 0x00b44c28, 0x0006 ]
+    - [ be16, 0x00b44c2a, 0x7092 ]
+    - [ be16, 0x00b44c2c, 0x0000 ]
+    - [ be16, 0x00b44c2e, 0x2295 ]
+  # bgm_07
+    - [ be16, 0x00b44c30, 0x0007 ]
+    - [ be16, 0x00b44c32, 0x709b ]
+    - [ be16, 0x00b44c34, 0x0000 ]
+    - [ be16, 0x00b44c36, 0x2296 ]
+  # bgm_08
+    - [ be16, 0x00b44c38, 0x0008 ]
+    - [ be16, 0x00b44c3a, 0x70a4 ]
+    - [ be16, 0x00b44c3c, 0x0000 ]
+    - [ be16, 0x00b44c3e, 0x2297 ]
+  # bgm_09
+    - [ be16, 0x00b44c40, 0x0009 ]
+    - [ be16, 0x00b44c42, 0x70ad ]
+    - [ be16, 0x00b44c44, 0x0000 ]
+    - [ be16, 0x00b44c46, 0x2298 ]
+  # bgm_10 - Original List ends here
+    - [ be16, 0x00b44c48, 0x000a ]
+    - [ be16, 0x00b44c4a, 0x706e ]
+    - [ be16, 0x00b44c4c, 0x0000 ]
+    - [ be16, 0x00b44c4e, 0x2299 ]
+  # bgm_11 - Starlight (c0001_170_00.GMD)
+    - [ be16, 0x00b44c50, 0x000b ]
+    - [ be16, 0x00b44c52, 0x70b6 ]
+    - [ be16, 0x00b44c54, 0x0000 ]
+    - [ be16, 0x00b44c56, 0x229a ]
+  # bgm_12 - Midwinter (c0001_171_00.GMD)
+    - [ be16, 0x00b44c58, 0x000c ]
+    - [ be16, 0x00b44c5a, 0x70bf ]
+    - [ be16, 0x00b44c5c, 0x0000 ]
+    - [ be16, 0x00b44c5e, 0x229b ]
+  # bgm_13 - Ultramarine (Velvet Room) (c0001_172_00.GMD)
+    - [ be16, 0x00b44c60, 0x000d ]
+    - [ be16, 0x00b44c62, 0x70c8 ]
+    - [ be16, 0x00b44c64, 0x0000 ]
+    - [ be16, 0x00b44c66, 0x229c ]
+  # bgm_14 - Featherman (c0001_173_00.GMD)
+    - [ be16, 0x00b44c68, 0x000e ]
+    - [ be16, 0x00b44c6a, 0x70d1 ]
+    - [ be16, 0x00b44c6c, 0x0000 ]
+    - [ be16, 0x00b44c6e, 0x229d ]
+  # bgm_15 - Demonica Helmet (c0001_174_00.GMD)
+    - [ be16, 0x00b44c70, 0x000f ]
+    - [ be16, 0x00b44c72, 0x70da ]
+    - [ be16, 0x00b44c74, 0x0000 ]
+    - [ be16, 0x00b44c76, 0x229e ]
+  # bgm_16 - Demonica Suit (No Helmet) (c0001_175_00.GMD)
+    - [ be16, 0x00b44c78, 0x0010 ]
+    - [ be16, 0x00b44c7a, 0x70e3 ]
+    - [ be16, 0x00b44c7c, 0x0000 ]
+    - [ be16, 0x00b44c7e, 0x229f ]
+  # bgm_17 - New Cinema (c0001_176_00.GMD)
+    - [ be16, 0x00b44c80, 0x0011 ]
+    - [ be16, 0x00b44c82, 0x70ec ]
+    - [ be16, 0x00b44c84, 0x0000 ]
+    - [ be16, 0x00b44c86, 0x22a0 ]
+  # bgm_18 - RESERVE (Never hurts to have extras) (c0001_177_00.GMD)
+    - [ be16, 0x00b44c88, 0x0012 ]
+    - [ be16, 0x00b44c8a, 0x70f5 ]
+    - [ be16, 0x00b44c8c, 0x0000 ]
+    - [ be16, 0x00b44c8e, 0x22a1 ]
+  # bgm_19 - RESERVE (c0001_178_00.GMD)
+    - [ be16, 0x00b44c90, 0x0013 ]
+    - [ be16, 0x00b44c92, 0x70fe ]
+    - [ be16, 0x00b44c94, 0x0000 ]
+    - [ be16, 0x00b44c96, 0x22a2 ]
+  # bgm_20 - RESERVE (c0001_179_00.GMD)
+    - [ be16, 0x00b44c98, 0x0014 ]
+    - [ be16, 0x00b44c9a, 0x7107 ]
+    - [ be16, 0x00b44c9c, 0x0000 ]
+    - [ be16, 0x00b44c9e, 0x22a3 ]
+  # Forcibly Enable motionse.dat/acb On All Enemies
+    - [ be32, 0x0002d91c, 0x38600001 ] # li   param_1,0x1
+    - [ be32, 0x0002d97c, 0x38600001 ] # li   param_1,0x1
+    - [ be32, 0x0002d998, 0x3860ffff ] # li   param_1,-1
+    - [ be32, 0x0002da04, 0x3860001e ] # li   param_1,0x1e
+  # Disable Player Swordtrack Loading
+    - [ be32, 0x000265cc, 0x38600000 ] # li   param_1,0x0
+  # Boss Voice Stuff
+    - [ be32, 0x006a87ac, 0x281c00e6 ] # cmplwi   r28,0xe6
+    - [ be32, 0x006a87b0, 0x41810878 ] # bgt   LAB_006a9028
+
+  p5_4K_Author: &p5_4K_Author
+    "rexis"
+  p5_4K_Notes: &p5_4K_Notes
+    "A special patch that scales down some UI elements. Rexis's 4K Mod requires this patch. Don't enable it if you don't use the 4K Mod."
+  p5_4K_PatVer: &p5_4K_PatVer 1.0
+  p5_4K: &p5_4K
+    - [ be32, 0x001cffb0, 0x48b45007 ] # bustups A
+    - [ be32, 0x001d027c, 0x48b45007 ]
+    - [ be32, 0x001d039c, 0x48b45007 ]
+    - [ be32, 0x001cffd4, 0x48b45007 ]
+    - [ be32, 0x001d02a0, 0x48b45007 ]
+    - [ be32, 0x001d03c0, 0x48b45007 ]
+
+    - [ be32, 0x00b45004, 0x38a00003 ] # li     r5,0x3
+    - [ be32, 0x00b45008, 0x7c632bd2 ] # divd   r3,r3,r5
+    - [ be32, 0x00b4500c, 0x4e800020 ] # blr
+
+  p5_Title_US: &p5_Title_US
+    "Persona 5":
+      BLUS31604: [ All ]
+      NPUB31848: [ All ]
+
+  p5_Title_EU: &p5_Title_EU
+    "Persona 5":
+      BLES02247: [ All ]
+      NPEB02436: [ All ]
+
+  p5_Title_JP_100: &p5_Title_JP_100
+    "Persona 5":
+      BLJM61346: [ 01.00 ]
+
+  p5_Title_JP_103: &p5_Title_JP_103
+    "Persona 5":
+      BLJM61346: [ 01.03 ]
+
+PPU-e72e715d646a94770d1902364bc66fe33b1b6606:
+  "P5 Modding Community Patches":
+    Games: *p5_Title_US
+    Author: *p5_CommunityPatches_Author
+    Notes: *p5_CommunityPatches_Notes
+    Patch Version: *p5_CommunityPatches_PatVer
+    Patch:
+      - [ load, *p5_CommunityPatches ]
+  "4K Mod Patch":
+    Games: *p5_Title_US
+    Author: *p5_4K_Author
+    Notes: *p5_4K_Notes
+    Patch Version: *p5_4K_PatVer
+    Patch:
+      - [ load, *p5_4K ]
+
+PPU-b8c34f774adb367761706a7f685d4f8d9d355426:
+  "P5 Modding Community Patches":
+    Games: *p5_Title_EU
+    Author: *p5_CommunityPatches_Author
+    Notes: *p5_CommunityPatches_Notes
+    Patch Version: *p5_CommunityPatches_PatVer
+    Patch:
+      - [ load, *p5_CommunityPatches ]
+  "4K Mod Patch":
+    Games: *p5_Title_EU
+    Author: *p5_4K_Author
+    Notes: *p5_4K_Notes
+    Patch Version: *p5_4K_PatVer
+    Patch:
+      - [ load, *p5_4K ]
+
+PPU-3b394da7912181d308bf08505009b3578521c756:
+  "P5 Modding Community Patches":
+    Games: *p5_Title_JP_100
+    Author: *p5_CommunityPatches_Author
+    Notes: *p5_CommunityPatches_Notes
+    Patch Version: *p5_CommunityPatches_PatVer
+    Patch:
+      - [ load, *p5_CommunityPatches ]
+  "4K Mod Patch":
+    Games: *p5_Title_JP_100
+    Author: *p5_4K_Author
+    Notes: *p5_4K_Notes
+    Patch Version: *p5_4K_PatVer
+    Patch:
+      - [ load, *p5_4K ]
+
+PPU-9da9b988693598fbe1e2d316d1e927c37ad666bc:
+  "P5 Modding Community Patches":
+    Games: *p5_Title_JP_103
+    Author: *p5_CommunityPatches_Author
+    Notes: *p5_CommunityPatches_Notes
+    Patch Version: *p5_CommunityPatches_PatVer
+    Patch:
+      - [ load, *p5_CommunityPatches ]
+  "4K Mod Patch":
+    Games: *p5_Title_JP_103
+    Author: *p5_4K_Author
+    Notes: *p5_4K_Notes
+    Patch Version: *p5_4K_PatVer
+    Patch:
+      - [ load, *p5_4K ]
+
+PPU-301488b15ab0e31e7c5b284da437c5047eabd025:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: A Crack in Time":
+        BCES00511: [ 01.00 ]
+    Author: "Juhn"
+    Notes: "Fixes game crashes/freezes."
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x005cb7ec, 0x409efff4 ]
+
+PPU-d4c05d9af92fcedd667375d06ae698fdb51557db:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: A Crack in Time":
+        BCES00511: [ 01.20 ]
+    Author: "Juhn"
+    Notes: "Fixes game crashes/freezes."
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x005cbb2c, 0x409efff4 ]
+
+PPU-a3ed375ea1044d5abe734a4aa3a740f7673a4274:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: A Crack in Time":
+        BCES00748: [ 01.00 ]
+    Author: "Juhn, Snowy"
+    Notes: "Fixes game crashes/freezes."
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x005cb7ec, 0x409efff4 ]
+
+PPU-d4c05d9af92fcedd667375d06ae698fdb51557db:
+  "Freeze fix":
+    Games:
+      "Ratchet & Clank Future: A Crack in Time":
+        BCES00748: [01.20]
+    Author: "Juhn, Pappapatu"
+    Patch Version: 1.0
+    Notes: "Fixes game crashes/freezes."
+    Patch:
+      - [be32, 0x005cbb2c, 0x409efff4]
+
+PPU-0997e35d2b6738f5cecfda1d76380acca0828365:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: A Crack in Time":
+        BCUS98124: [ 01.00 ]
+    Author: "Juhn, Jonathan44062"
+    Notes: "Fixes game crashes/freezes."
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x005cb1c4, 0x409efff4 ]
+
+PPU-2811d9292fb4a664f9cf9050dabbe0cae6fd6a44:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: A Crack in Time":
+        BCUS98124: [ 01.20 ]
+    Author: "Juhn, Jonathan44062"
+    Notes: "Fixes game crashes/freezes."
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x005cba64, 0x409efff4 ]
+
+PPU-139ccf98a8417bd91a222f3d61d6de0860b8c436:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: A Crack in Time":
+        NPUA80966: [ 01.20 ]
+    Author: "Juhn, clabe"
+    Notes: "Fixes game crashes/freezes."
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x005cb2c4, 0x409efff4 ]
+
+PPU-f07f7086588a4ea86a28bd768f0cbe710f5b813b:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: Quest for Booty":
+        BCAS20052: [ All ]
+        BCES00301: [ All ]
+        NPEA00088: [ All ]
+        NPEA00106: [ All ]
+    Author: "Juhn"
+    Notes: "Fixes game crashes/freezes."
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x003eb8b0, 0x409efff0 ]
+
+PPU-1d9e99e1f091cfbdf1714d04e690d9cd816e2971:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: Quest for Booty":
+        NPUA80145: [ All ]
+    Author: "Juhn"
+    Notes: "Fixes game crashes/freezes."
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x003eb730, 0x409efff0 ]
+
+Anchors:
+  rftod_freezeworkaround_notes: &rftod_freezeworkaround_notes
+    "Fixes game crashes/freezes."
+
+PPU-c4e26433d1eed9166eb0c67b6f66b2268f3704e2:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: Tools of Destruction":
+        BCES00052: [ All ]
+    Author: "Juhn"
+    Notes: *rftod_freezeworkaround_notes
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x005056f0, 0x409efff0 ]
+
+PPU-ec77eaf73a4f55d1c4ece532c3be6db0011e49ca:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: Tools of Destruction":
+        NPEA00452: [ All ]
+    Author: "Juhn"
+    Notes: *rftod_freezeworkaround_notes
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x00539ee8, 0x409efff4 ]
+
+PPU-f67f3e99077ba256728ffa16800c75e006661158: # 1.00 game version
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: Tools of Destruction (1.0)":
+        BCUS98127: [ 01.00 ]
+    Author: "Juhn, Alexis"
+    Notes: *rftod_freezeworkaround_notes
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x005056d0, 0x409efff0 ]
+
+PPU-c14042df6304d3e420a9917e6f8e5fc05cc38b4c: # 2.00 game version
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: Tools of Destruction (2.0)":
+        BCUS98127: [ 01.00 ]
+    Author: "Juhn, Epicalman"
+    Notes: *rftod_freezeworkaround_notes
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x00505948, 0x409efff0 ]
+
+PPU-16506d9d5bf692d615645accd24bca1ee1f8f9a6:
+  "Freeze Fix":
+    Games:
+      "Ratchet & Clank Future: Tools of Destruction":
+        NPUA80965: [ All ]
+    Author: "Juhn, Epicalman"
+    Notes: *rftod_freezeworkaround_notes
+    Patch Version: 1.2
+    Patch:
+      - [ be32, 0x0053a208, 0x409efff4 ]
+  "Remove Black Bars":
+    Games:
+      "Ratchet and Clank Future: Tools of Destruction":
+        NPUA80965: [ 01.00 ]
+    Author: "Margen67"
+    Notes: "Transitions/fadeouts are cut off on the bottom. Does not increase resolution. Makes screen blurry even with 1280x704 patch."
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x0053f44a, 720 ]
+
+PPU-4c819c69904784a56685c31df12f5d492bc0ed64:
+   "Freeze Fix":
+    Games:
+      "Ratchet & Clank: All 4 One":
+        BCAS20200: [ 01.03 ]
+        BCES01141: [ 01.03 ]
+        BCES01142: [ 01.03 ]
+        BCUS98175: [ 01.03 ]
+    Author: "Juhn, Hasster"
+    Notes: "Fixes game crashes/freezes"
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x006910f8, 0x4082fff4 ]
+      - [ be32, 0x006910fc, 0x42800018 ]
+
+PPU-ed460e668a491f5e39f6547f3a24c2f20e2cb39b:
+  "Freeze fix":
+    Games:
+      "Ratchet & Clank: Nexus":
+        BCES01908: [ 01.00 ]
+        BCES01949: [ 01.00 ]
+    Author: "Juhn, Joenn"
+    Notes: "Fixes game crashes/freezes."
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x005f7128, 0x4082fff4 ]
+
+PPU-fadb0af6fb7bd0113e88fb9af3eb78fe3be05d08:
+  "Freeze fix":
+    Games:
+      "Ratchet & Clank: Into the Nexus":
+        BCUS99245: [ 01.01 ]
+        NPUA80908: [ 01.01 ]
+      "Ratchet & Clank: Nexus":
+        BCES01908: [ 01.01 ]
+        BCES01949: [ 01.01 ]
+        NPEA00457: [ 01.01 ]
+    Author: "Juhn"
+    Notes: "Fixes game crashes/freezes."
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x005f8ca8, 0x4082fff4 ]
+
+PPU-f267260d0219b8bc667b41876e98a49a37b5475f:
+  "Unlock FPS":
+    Games:
+      "Resident Evil 6 Demo":
+        NPEB90464: [ 01.00 ]
+    Author: "FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0106ee08, 0x60000000 ]
+      - [ be32, 0x0106ee1c, 0x60000000 ]
+
+PPU-b15c79dd1571e3c40c54a00c0d11813f0020e8a7:
+  "Unlock FPS":
+    Games:
+      "Resident Evil: Revelations 2":
+        NPEB02128: [ 01.00 ]
+    Author: "FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00eee45c, 0x60000000 ]
+      - [ be32, 0x00eee470, 0x60000000 ]
+
+PPU-ee9b56c6efe40f0c610c1801aa07019ec7bd4dcd:
+  "Unlock FPS":
+    Games:
+      "Resident Evil: Revelations 2":
+        NPEB02128: [ 01.04 ]
+    Author: "FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00f2e77c, 0x60000000 ]
+      - [ be32, 0x00f2e78c, 0x60000000 ]
+
+PPU-a1eb91ade5146ff62f3b5a054ae691e6079abe98:
+  "Unlock FPS":
+    Games:
+      "Resident Evil: Revelations 2":
+        BLUS31444: [ 01.00 ]
+    Author: "dyno0"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00ef0ccc, 0x60000000 ]
+      - [ be32, 0x00ef0ce0, 0x60000000 ]
+
+PPU-b34a07c8bc8ee4018657a36539d9d7b1f28bd9bb:
+  "1280x720 Resolution":
+    Games:
+      "Skate 3":
+        BLUS30464: [ 01.00 ]
+    Author: "Margen67"
+    Notes: "Original resolution is 1152x640. Breaks shadows."
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x005bbe96, 1280 ] # 0x0480
+      - [ be16, 0x005bbea2, 720 ] # 0x0280
+
+Anchors:
+  sonic06_graphics_fix_notes: &sonic06_graphics_fix_notes
+    "Fixes missing graphics."
+  sonic06_graphics_fix: &sonic06_graphics_fix
+    - [ be32, 0x00000000, 0x38800003 ] # li r4, 3
+    - [ jumpf, 0x00000000, "RPCS3_HLE_LIBRARY:WaitForSPUsToEmptySNRs" ] # Args: (SPU ID, 3)
+    - [ be32, 0x00000000, 0x38800000 ] # li r4, 0
+    - [ be32, 0x00000000, 0x44000002 ] # sc
+
+PPU-4b46d0161ca657ab16b0a779d9062810ea5ea2dd:
+  "Graphics Fix":
+    Games:
+      "SONIC THE HEDGEHOG":
+        BLUS30008: [ 01.01 ]
+    Author: "elad335"
+    Notes: *sonic06_graphics_fix_notes
+    Patch Version: 1.0
+    Patch:
+      - [ calloc, 0x00f07714, 0x04 ]
+      - [ load, *sonic06_graphics_fix ]
+
+PPU-c1be5dc25994c9b4006295882516c829f8c63707:
+  "Graphics Fix":
+    Games:
+      "SONIC THE HEDGEHOG":
+        BLJM60006: [ 01.01 ]
+    Author: "elad335, FlexBy"
+    Notes: *sonic06_graphics_fix_notes
+    Patch Version: 1.0
+    Patch:
+      - [ calloc, 0x00f06c64, 0x04 ]
+      - [ load, *sonic06_graphics_fix ]
+
+PPU-5fa63817d4349e8b47e6ddd2425fadfd2914a1fa:
+  "Graphics Fix":
+    Games:
+      "SONIC THE HEDGEHOG":
+        BLES00028: [ 02.01 ]
+    Author: "elad335, FlexBy"
+    Notes: *sonic06_graphics_fix_notes
+    Patch Version: 1.0
+    Patch:
+      - [ calloc, 0x00f06c68, 0x04 ]
+      - [ load, *sonic06_graphics_fix ]
+
+PPU-10847518eb618b57777bc2df9d5e9a26eb58f9e3:
+  "Graphics Fix":
+    Games:
+      "SONIC THE HEDGEHOG":
+        BLES00028: [ 01.01 ]
+    Author: "elad335, FlexBy"
+    Notes: *sonic06_graphics_fix_notes
+    Patch Version: 1.0
+    Patch:
+      - [ calloc, 0x00f06c64, 0x04 ]
+      - [ load, *sonic06_graphics_fix ]
+
+PPU-ca1f38fe2396cb3c99cac50faffca4ed340b3748:
+  "Crash workaround":
+    Games:
+      "Stuntman Ignition":
+        BLUS30073: [ 01.02 ]
+    Author: "Silent"
+    Notes: "Fixes a crash when starting first career mission. The game will randomly crash later on, which may or may not be related."
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0040b848, 0x4e800020 ]
+
+PPU-b164fd1b55e47b0eda65b974777274ca0f0a545d:
+  "Crash workaround":
+    Games:
+      "Stuntman Ignition":
+        BLUS30073: [ 01.11 ]
+    Author: "Silent"
+    Notes: "Fixes a crash when starting first career mission. The game will randomly crash later on, which may or may not be related."
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0040b2c0, 0x4e800020 ]
+
+PPU-4faf006392317e05263779a09ae580c094372458:
+  "Crash workaround":
+    Games:
+      "Stuntman Ignition":
+        BLES00135: [ 01.11 ]
+    Author: "Silent, FlexBy"
+    Notes: "Fixes a crash when starting first career mission. The game will randomly crash later on, which may or may not be related."
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0040b2fc, 0x4e800020 ]
+
+PPU-c945ba504e5cecb338bfce2f7329fa78110a5738:
+  "Unlock FPS":
+    Games:
+      "Super Street Fighter IV Kiosk Demo":
+        NPUB90379: [ 01.00 ]
+    Author: "FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x006b7310, 0x60000000 ]
+
+Anchors:
+  ico_60fps_notes: &ico_60fps_notes "Only recommended for gameplay. Needs vblank rate set to 120hz.\nMost IGC (in-game cinematics) Camera movements are still tied to 30 FPS and are sped up as a result."
+
+PPU-1b40cda726a12a28393206edcd63252df76ca39c: # ICO eboot.bin
+  "60 FPS":
+    Games:
+      "ICO":
+        NPEA00279: [ 01.00 ]
+    Author: "illusion"
+    Notes: *ico_60fps_notes
+    Patch Version: 1.0
+    Patch:
+      - [ byte, 0x004d1e6f, 0x01 ] # Set Framestep to 1 in debug menu
+
+PPU-9a604c56796a32bf86ff037b682b0a744eb6a0dd: # ICO.self
+  "60 FPS":
+    Games:
+      "ICO":
+        BCES01097: [ 01.00 ]
+    Author: "illusion"
+    Notes: *ico_60fps_notes
+    Patch Version: 1.0
+    Patch:
+      - [ byte, 0x004d1ddf, 0x01 ] # Set Framestep to 1 in debug menu
+
+PPU-20445ff41192238543f15e956926d03f93d23878: # ICO.self 1.01
+  "60 FPS":
+    Games:
+      "ICO":
+        BCES01097: [ 01.01 ]
+        NPEA00279: [ 01.01 ]
+        NPUA80676: [ 01.01 ]
+    Author: "illusion"
+    Notes: *ico_60fps_notes
+    Patch Version: 1.0
+    Patch:
+      - [ byte, 0x004e1eff, 0x01 ] # Set Framestep to 1 in debug menu
+
+PPU-cfa4d1b380b8ebfa5acd59fa9378c50e3059865c:
+  "Fix pad initialization":
+    Games:
+      "The Simpsons Game":
+        BLES00142: [ 01.00 ]
+        BLES00146: [ 01.00 ]
+        BLUS30065: [ 01.00 ]
+    Author: "nastys"
+    Notes: "Fixes pad initialization when using the keyboard handler."
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0044eba0, 0x60000000 ]
+
+PPU-e9aaed0f182d2505da70e1b9ec8741ca843fe0dd:
+  "60 FPS":
+    Games:
+      "The Walking Dead: Survival Instinct":
+        NPEB01215: [ 01.00 ]
+    Author: "FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x004a15d4, 0x60000000 ]
+      - [ be32, 0x004a164c, 0x60000000 ] # unlocks fps to 60 and allows vblank to work but gamespeed is increased
+      #- [ be32, 0x004a15d8, 0x60000000 ] # unlock fps to 60 in menu but crashes ingame
+
+PPU-b9c74fb35c83fb86268e79532966761d30a0b98e:
+  "OpenSpy Online":
+    Games:
+      "UFC Undisputed 2010":
+        BLES00842: [ 01.36 ]
+    Author: "FlexBy"
+    Notes: "Updates references from gamespy.com to openspy.net. UNTESTED"
+    Patch Version: 1.0
+    Patch:
+      - [ utf8, 0x010e6615, "openspy.net" ]
+      - [ utf8, 0x010e818f, "openspy.net" ]
+      - [ utf8, 0x010e81f7, "openspy.net" ]
+      - [ utf8, 0x010e827f, "openspy.net" ]
+      - [ utf8, 0x010e9f54, "openspy.net" ]
+      - [ utf8, 0x010e9fad, "openspy.net" ]
+      - [ utf8, 0x010ea356, "openspy.net" ]
+      - [ utf8, 0x0130588d, "openspy.net" ]
+      - [ utf8, 0x013058f5, "openspy.net" ]
+      - [ utf8, 0x010e8ff0, "http://%s.auth.pubsvs.openspy.net/AuthService/AuthService.asmx\0" ]
+      - [ utf8, 0x00f14400, "afb5818995b3708d0656a5bdd20760aee76537907625f6d23f40bf17029e56808d36966c0804e1d797e310fedd8c06e6c4121d963863d765811fc9baeb2315c9a6eaeb125fad694d9ea4d4a928f223d9f4514533f18a5432dd0435c5c6ac8e276cf29489cb5ac880f16b0d7832ee927d4e27d622d6a450cd1560d7fa882c6c13" ]
+
+PPU-7b8a70c24456205b776915643a2acacb6ef6ea56:
+  "Approximate ZCull graphic fixes":
+    Games:
+      "Uncharted 2: Among Thieves":
+        BCES00509: [ 01.00 ]
+        BCES00727: [ 01.00 ]
+        BCES00757: [ 01.00 ]
+        BCJS30035: [ 01.00 ]
+        BCAS20097: [ 01.00 ]
+    Author: "ZEROx"
+    Patch Version: 2.0
+    Group: ""
+    Notes: "Version 1.0 - Fixes flickering water reflections under Approximate ZCull, normally this effect requires Precise ZCull, but Precise ZCull has a big speed impact.\\nVersion 2.0 - Enables rendering of Heat Wave effect under Approximate ZCull, again, normally works with Precise ZCull only."
+    Patch:
+      - [be32, 0x0006a958, 0x38000001]  # Reflections
+      - [be32, 0x0077f970, 0x3a400001]  # Heat waves
+
+PPU-a3a5789c12711291dfe16a7d5d81c906d2b4c0c2:
+  "Approximate ZCull graphic fixes":
+    Games:
+      "Uncharted 2: Among Thieves":
+        BCES00509: [ 01.09 ]
+        BCES00727: [ 01.09 ]
+        BCES00757: [ 01.09 ]
+        BCUS98123: [ 01.09 ]
+        BCJS30035: [ 01.09 ]
+        BCAS20097: [ 01.09 ]
+    Author: "ZEROx"
+    Patch Version: 2.0
+    Group: ""
+    Notes: "Version 1.0 - Fixes flickering water reflections under Approximate ZCull, normally this effect requires Precise ZCull, but Precise ZCull has a big speed impact.\\nVersion 2.0 - Enables rendering of Heat Wave effect under Approximate ZCull, again, normally works with Precise ZCull only."
+    Patch:
+      - [be32, 0x000688f4, 0x38000001]  # Reflections
+      - [be32, 0x0077e1e8, 0x3a400001]  # Heat waves
+
+PPU-599461c6c88935ff0ed26ef20e649c8c38b7be9c:
+  "Approximate ZCull graphic fixes":
+    Games:
+      "Uncharted 2: Among Thieves":
+        NPEA00364: [ 01.10 ]
+        NPEA00365: [ 01.10 ]
+        NPHA80194: [ 01.10 ]
+        NPUA80698: [ 01.10 ]
+    Author: "ZEROx"
+    Patch Version: 2.0
+    Group: ""
+    Notes: "Version 1.0 - Fixes flickering water reflections under Approximate ZCull, normally this effect requires Precise ZCull, but Precise ZCull has a big speed impact.\\nVersion 2.0 - Enables rendering of Heat Wave effect under Approximate ZCull, again, normally works with Precise ZCull only."
+    Patch:
+      - [be32, 0x00071b0c, 0x38000001]  # Reflections
+      - [be32, 0x00786508, 0x3a400001]  # Heat waves
+
+PPU-49c96996b6f3c0b32422375978c41e0c7ed95183:
+  "Performance (WCB)":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCES01175: [ 01.00 ]
+        BCES01176: [ 01.00 ]
+        BCES01692: [ 01.00 ]
+        BCUS98233: [ 01.00 ]
+    Author: "ZEROx, illusion"
+    Patch Version: 1.0
+    Group: ""
+    Notes: "Enable this patch if you are using \"Write Color Buffers\" to restore performance."
+    Patch:
+      - [be32, 0x0093b44c, 0x9b830081]  # Speedup (WCB)          (mem address: 0x1346de9)
+  "Depth Buffer Viewport":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCES01175: [ 01.00 ]
+        BCES01176: [ 01.00 ]
+        BCES01692: [ 01.00 ]
+        BCUS98233: [ 01.00 ]
+    Author: "ZEROx, illusion"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0093b6b8, 0x9b6302f9 ] # Depth buffer viewport  (mem address: 0x1347061)
+  "Depth Border Fix":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCES01175: [ 01.00 ]
+        BCES01176: [ 01.00 ]
+        BCES01692: [ 01.00 ]
+        BCUS98233: [ 01.00 ]
+    Author: "ZEROx, illusion"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0093b6f8, 0x9b83031d ] # Depth border fix       (mem address: 0x1347085)
+
+PPU-48fa849dfeaef2f36ec042a576f29bda19ec1de0:
+  "Performance (WCB)":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCJS37004: [ 01.00 ]
+    Author: "ZEROx, illusion"
+    Patch Version: 1.0
+    Group: ""
+    Notes: "Enable this patch if you are using \"Write Color Buffers\" to restore performance."
+    Patch:
+      - [be32, 0x0093b474, 0x9b830081]  # Speedup (WCB)
+  "Depth Buffer Viewport":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCJS37004: [ 01.00 ]
+    Author: "ZEROx, illusion"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0093b6e0, 0x9b6302f9 ] # Depth buffer viewport
+  "Depth Border Fix":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCJS37004: [ 01.00 ]
+    Author: "ZEROx, illusion"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0093b720, 0x9b83031d ] # Depth border fix
+
+PPU-664fb0e4a94c62c15a6474841c202fb2bf80ce16:
+  "Performance (WCB)":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCES01670: [ 01.10 ]
+        BCAS25014: [ 01.10 ]
+    Author: "ZEROx, illusion"
+    Patch Version: 1.0
+    Group: ""
+    Notes: "Enable this patch if you are using \"Write Color Buffers\" to restore performance."
+    Patch:
+      - [be32, 0x0094d830, 0x9b830081] # Speedup (WCB)          (mem address: 0x1377019)
+  "Depth Buffer Viewport":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCES01670: [ 01.10 ]
+        BCAS25014: [ 01.10 ]
+    Author: "ZEROx, illusion"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0094da9c, 0x9b6302f9 ] # Depth buffer viewport  (mem address: 0x1377291)
+  "Depth Border Fix":
+    Games:
+      "Uncharted 3: Drake's Deception":
+          BCES01670: [ 01.10 ]
+          BCAS25014: [ 01.10 ]
+    Author: "ZEROx, illusion"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0094dadc, 0x9b83031d ] # Depth border fix       (mem address: 0x13772b5)
+
+PPU-02a88c3c6cd415b0bb81f1606bc743835881a4ba:
+  "Performance (WCB)":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCES01175: [ 01.19 ]
+        BCES01176: [ 01.19 ]
+        BCES01670: [ 01.19 ]
+        BCES01692: [ 01.19 ]
+        BCUS98233: [ 01.19 ]
+        BCJS37004: [ 02.17 ]
+        NPEA00422: [ 01.19 ]
+        NPUA80858: [ 01.19 ]
+        BCUS99086: [ 01.19 ]
+        BCAS25014: [ 01.19 ]
+        BCAS25009: [ 01.19 ]
+    Author: "ZEROx, illusion"
+    Patch Version: 1.0
+    Group: ""
+    Notes: "Enable this patch if you are using \"Write Color Buffers\" to restore performance."
+    Patch:
+       - [be32, 0x0096ea80, 0x9b830081] # Speedup (WCB)          (mem address: 0x13865e9)
+  "Depth Buffer Viewport":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCES01175: [ 01.19 ]
+        BCES01176: [ 01.19 ]
+        BCES01670: [ 01.19 ]
+        BCES01692: [ 01.19 ]
+        BCUS98233: [ 01.19 ]
+        BCJS37004: [ 02.17 ]
+        NPEA00422: [ 01.19 ]
+        NPUA80858: [ 01.19 ]
+        BCUS99086: [ 01.19 ]
+        BCAS25014: [ 01.19 ]
+        BCAS25009: [ 01.19 ]
+    Author: "ZEROx, illusion"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0096ecec, 0x9b6302f9 ] # Depth buffer viewport  (mem address: 0x1386861)
+  "Depth Border Fix":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCES01175: [ 01.19 ]
+        BCES01176: [ 01.19 ]
+        BCES01670: [ 01.19 ]
+        BCES01692: [ 01.19 ]
+        BCUS98233: [ 01.19 ]
+        BCJS37004: [ 02.17 ]
+        NPEA00422: [ 01.19 ]
+        NPUA80858: [ 01.19 ]
+        BCUS99086: [ 01.19 ]
+        BCAS25014: [ 01.19 ]
+        BCAS25009: [ 01.19 ]
+    Author: "ZEROx, illusion"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0096ed2c, 0x9b83031d ] # Depth border fix       (mem address: 0x1386885)
+
+PPU-9584776e7fca409ed410f8a713832267020d8ac3:
+  "Performance (WCB)":
+    Games:
+      "Uncharted 3: Drake's Deception Multiplayer Beta":
+        NPUA70153: [ 01.04 ]
+        NPHA80158: [ 01.04 ]
+        BCET70034: [ 01.04 ]
+    Author: "ZEROx, illusion"
+    Patch Version: 1.0
+    Group: ""
+    Notes: "Enable this patch if you are using \"Write Color Buffers\" to restore performance."
+    Patch:
+      - [be16, 0x00897620, 0x9b83] # reload depth buffer = 0
+  "Depth Buffer Viewport":
+    Games:
+      "Uncharted 3: Drake's Deception Multiplayer Beta":
+        NPUA70153: [ 01.04 ]
+        NPHA80158: [ 01.04 ]
+        BCET70034: [ 01.04 ]
+    Author: "illusion, ZEROx"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x00897880, 0x9b63 ] # depth viewport      = 1
+  "Depth Border Fix":
+    Games:
+      "Uncharted 3: Drake's Deception Multiplayer Beta":
+        NPUA70153: [ 01.04 ]
+        NPHA80158: [ 01.04 ]
+        BCET70034: [ 01.04 ]
+    Author: "illusion, ZEROx"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x008978c0, 0x9b83 ] # depth border        = 0
+
+PPU-40958bda5885891f0a4eb69f2c87ed4942dfa5e7:
+  "Performance (WCB)":
+    Games:
+      "Uncharted 3: Drake's Deception Demo":
+        NPUA70183: [ 01.00 ]
+    Author: "ZEROx, illusion, FlexBy"
+    Patch Version: 1.0
+    Group: ""
+    Notes: "Enable this patch if you are using \"Write Color Buffers\" to restore performance."
+    Patch:
+      - [be32, 0x0093a960, 0x9b830081]
+  "Depth Buffer Viewport":
+    Games:
+      "Uncharted 3: Drake's Deception Demo":
+        NPUA70183: [ 01.00 ]
+    Author: "ZEROx, illusion, FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0093abcc, 0x9b6302f9 ]
+  "Depth Border Fix":
+    Games:
+      "Uncharted 3: Drake's Deception Demo":
+        NPUA70183: [ 01.00 ]
+    Author: "ZEROx, illusion, FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0093ac0c, 0x9b83031d ]
+
+PPU-0ff0b00602e5ffc67f32ab69840bbb2c7df735fe:
+  "Performance (WCB)":
+    Games:
+      "Uncharted 3: Drake's Deception Preview":
+        BCUS98233: [ 01.00 ]
+    Author: "ZEROx, illusion, FlexBy"
+    Patch Version: 1.0
+    Group: ""
+    Notes: "Enable this patch if you are using \"Write Color Buffers\" to restore performance."
+    Patch:
+      - [be32, 0x0093a60c, 0x9b830081]
+  "Depth Buffer Viewport":
+    Games:
+      "Uncharted 3: Drake's Deception Preview":
+        BCUS98233: [ 01.00 ]
+    Author: "ZEROx, illusion, FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0093a878, 0x9b6302f9 ]
+  "Depth Border Fix":
+    Games:
+      "Uncharted 3: Drake's Deception Preview":
+        BCUS98233: [ 01.00 ]
+    Author: "ZEROx, illusion, FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0093a8b8, 0x9b83031d ]
+
+PPU-02a88c3c6cd415b0bb81f1606bc743835881a4ba:
+  "Heat waves Approximate ZCull fix":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCES01175: [ 01.19 ]
+        BCES01176: [ 01.19 ]
+        BCES01670: [ 01.19 ]
+        BCES01692: [ 01.19 ]
+        BCUS98233: [ 01.19 ]
+        BCJS37004: [ 02.17 ]
+        NPEA00422: [ 01.19 ]
+        NPUA80858: [ 01.19 ]
+        BCUS99086: [ 01.19 ]
+        BCAS25014: [ 01.19 ]
+        BCAS25009: [ 01.19 ]
+    Author: "ZEROx"
+    Patch Version: 1.0
+    Group: ""
+    Notes: "Enables rendering of Heat Wave effect under Approximate ZCull, normally works with Precise ZCull only, but Precise ZCull has a big speed impact"
+    Patch:
+    - [ be32, 0x0078c7d0, 0x3a800001 ] # Heat waves
+    - [ byte, 0x0078c7f3, 0x00 ] # Disable broken blur effect
+  # This patch cycles through various post-processing modes. Values accepted are:
+  #    0 = None
+  #    1 = Bloom
+  #    2 = Depth of Field
+  #    3 = ??? (Tonemapping)
+  #    4 = Bloom & Depth of Field
+  #    5 = Bloom & Depth of Field & Tonemapping (Default)
+
+PPU-8363904e0b8fc276380a8f0e158dd81d7a9cefc5:
+  "Fix Blur":
+    Games:
+      "Uncharted: Drake's Fortune":
+        BCES00065: [ 01.01 ]
+    Author: "FlexBy"
+    Notes:
+    Patch Version: 1.0
+    Patch:
+      - [ be16, 0x000e5204, 0x995d ] # reflection color buffer (mem: 00bb43c8)
+      - [ be32, 0x00086c40, 0x60000000 ] # disable bottom right corner screen

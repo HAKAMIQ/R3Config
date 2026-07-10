@@ -1,0 +1,65 @@
+<UserControl x:Class="R3Config.Ctrl.StatusBarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}">
+	<Border Background="{StaticResource SurfaceAltBrush}"
+            BorderBrush="{StaticResource BorderSubtleBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="4">
+		<UniformGrid Columns="5"
+                     FlowDirection="{DynamicResource App.FlowDirection}">
+			<Border Style="{StaticResource StatusMetricPill}">
+				<TextBlock Text="{Binding Rpcs3Status}"
+                           Style="{StaticResource StatusText}"
+                           FlowDirection="{DynamicResource App.FlowDirection}"
+                           TextAlignment="{DynamicResource App.DefaultTextAlignment}"
+                           HorizontalAlignment="Stretch"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{lang:Text Key=Status.Rpcs3Tip}" />
+			</Border>
+
+			<Border Style="{StaticResource StatusMetricPill}">
+				<TextBlock Text="{Binding DataStatus}"
+                           Style="{StaticResource StatusText}"
+                           FlowDirection="{DynamicResource App.FlowDirection}"
+                           TextAlignment="{DynamicResource App.DefaultTextAlignment}"
+                           HorizontalAlignment="Stretch"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{lang:Text Key=Status.DataTip}" />
+			</Border>
+
+			<Border Style="{StaticResource StatusMetricPill}">
+				<TextBlock Text="{Binding RecommendationsStatus}"
+                           Style="{StaticResource StatusText}"
+                           FlowDirection="{DynamicResource App.FlowDirection}"
+                           TextAlignment="{DynamicResource App.DefaultTextAlignment}"
+                           HorizontalAlignment="Stretch"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{lang:Text Key=Status.RecTip}" />
+			</Border>
+
+			<Border Style="{StaticResource StatusMetricPill}">
+				<TextBlock Text="{Binding HardwareStatus}"
+                           Style="{StaticResource StatusText}"
+                           FlowDirection="{DynamicResource App.FlowDirection}"
+                           TextAlignment="{DynamicResource App.DefaultTextAlignment}"
+                           HorizontalAlignment="Stretch"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding HardwareTooltip}" />
+			</Border>
+
+			<Border Style="{StaticResource StatusMetricPill}">
+				<TextBlock Text="{Binding BackupsStatus}"
+                           Style="{StaticResource StatusText}"
+                           FlowDirection="{DynamicResource App.FlowDirection}"
+                           TextAlignment="{DynamicResource App.DefaultTextAlignment}"
+                           HorizontalAlignment="Stretch"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{lang:Text Key=Status.BkpTip}" />
+			</Border>
+		</UniformGrid>
+	</Border>
+</UserControl>
