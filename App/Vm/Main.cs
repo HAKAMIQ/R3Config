@@ -83,12 +83,19 @@ public sealed class MainVm : VmBase
             if (e.PropertyName == nameof(GameListVm.SelectedGame))
             {
                 BuildCurrentPlan();
+                HCanary.SetContext(_install, GameList.SelectedGame?.Game);
                 RefreshSelectedGameDisplay();
             }
         };
 
         Plan.SelectionStateChanged += (_, _) => RaiseCommandStates();
         PatchPreview.SelectionStateChanged += (_, _) => RaiseCommandStates();
+        HCanary.CatalogChanged += (_, _) =>
+        {
+            LoadPatchCatalog();
+            BuildCurrentPatchPreview();
+            RefreshBackups();
+        };
 
         var settings = _settingsService.Load();
         if (!string.IsNullOrWhiteSpace(settings.LastRpcs3ExePath) && File.Exists(settings.LastRpcs3ExePath))
@@ -98,6 +105,7 @@ public sealed class MainVm : VmBase
         }
 
         LoadBuiltInCatalog();
+        HCanary.Load(AppContext.BaseDirectory);
         Log(UiText.T("Msg.Ready"));
     }
 
@@ -110,6 +118,8 @@ public sealed class MainVm : VmBase
     public PatchPreviewVm PatchPreview { get; } = new();
 
     public AdvancedVm Advanced { get; } = new();
+
+    public HCanaryVm HCanary { get; } = new();
 
     public RelayCommand BrowseRpcs3Command { get; }
 
@@ -1303,6 +1313,7 @@ public sealed class MainVm : VmBase
         Plan.RefreshLanguage();
         PatchPreview.RefreshLanguage();
         Advanced.RefreshLanguage();
+        HCanary.RefreshLanguage();
     }
 
     private string FormatHardwareStatus()

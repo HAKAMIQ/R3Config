@@ -25,6 +25,7 @@ public sealed class AppFlow
     private readonly HwProbe _hw = new();
     private readonly PatchHashProbeService _patchHash = new();
     private readonly BundledCanaryPatchService _bundledCanary = new();
+    private readonly HCanaryPatchAuthoringService _hCanaryAuthoring = new();
 
     public CatLoadResult LoadBuiltInCat(string baseDir)
     {
@@ -135,7 +136,7 @@ public sealed class AppFlow
             var read = _patchCat.Read(importedPath, PatchSourceOrigin.Imported);
             if (read.Succeeded)
             {
-                importedCatalog = read.Catalog;
+                importedCatalog = _hCanaryAuthoring.ApplyLocalMetadata(read.Catalog, importedPath);
                 catalogs.Add(importedCatalog);
                 AddPatchReadWarning(errors, read.Error, isImported: true);
             }
@@ -321,6 +322,34 @@ public sealed class AppFlow
     public static string BkpRoot(Rpcs3InstallDescriptor install)
     {
         return Path.Combine(install.ConfigPath, "R3ConfigBackups");
+    }
+    public IReadOnlyList<HCanaryStoredPatch> LoadHCanaryPatches(Rpcs3InstallDescriptor install)
+    {
+        return _hCanaryAuthoring.Load(Path.Combine(install.PatchesPath, "imported_patch.yml"));
+    }
+
+    public HCanarySaveResult SaveHCanaryPatch(
+        Rpcs3InstallDescriptor install,
+        HCanaryPatchDraft draft,
+        string? originalIdentity = null,
+        bool saveAsNew = false)
+    {
+        return _hCanaryAuthoring.Save(
+            Path.Combine(install.PatchesPath, "imported_patch.yml"),
+            BkpRoot(install),
+            draft,
+            originalIdentity,
+            saveAsNew);
+    }
+
+    public HCanarySaveResult DeleteHCanaryPatch(
+        Rpcs3InstallDescriptor install,
+        string identity)
+    {
+        return _hCanaryAuthoring.Delete(
+            Path.Combine(install.PatchesPath, "imported_patch.yml"),
+            BkpRoot(install),
+            identity);
     }
 
     private static Rpcs3PatchCatalog ClassifyImportedCanaryEntries(

@@ -19,6 +19,7 @@ try
     RunLangKeyTests();
     RunAppPatchPresentationSourceTests();
     RunPatchCatalogReaderDuplicateTopLevelHashTests();
+    HCanTests.Run();
     RunGameListSearchTests();
     RunAdvancedDialogXamlSmokeTest();
     var env = CreateEnv(tempRoot);

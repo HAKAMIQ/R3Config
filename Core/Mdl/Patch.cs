@@ -141,6 +141,20 @@ public sealed record PatchApplyPlan(
     public bool HasChanges => Changes.Count > 0;
 }
 
+public enum PatchPreparedFileKind
+{
+    PatchCatalog,
+    PatchConfig,
+    JsonMetadata
+}
+
+public sealed record PatchPreparedFile(
+    string TargetPath,
+    string Content,
+    PatchPreparedFileKind Kind,
+    PatchSourceOrigin CatalogSource = PatchSourceOrigin.Unknown,
+    int? ExpectedEntryCount = null);
+
 public sealed record PatchApplyResult(
     BackupManifest Backup,
     IReadOnlyList<PatchApplyChange> AppliedChanges);

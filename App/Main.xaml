@@ -225,6 +225,10 @@
                                                         HorizontalAlignment="Stretch"
                                                         VerticalAlignment="Stretch" />
                                 </TabItem>
+                                <TabItem Header="{lang:Text Key=Tab.HCanary}">
+                                    <controls:HCanaryView HorizontalAlignment="Stretch"
+                                                          VerticalAlignment="Stretch" />
+                                </TabItem>
                             </TabControl>
 						</Grid>
 
