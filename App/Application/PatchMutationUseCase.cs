@@ -110,31 +110,6 @@ public sealed class PatchMutationUseCase(
             Rpcs3AppPaths.BackupRoot(install));
     }
 
-    public CanaryPatchWriteResult PrepareCanary(
-        Rpcs3InstallDescriptor install,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
-    {
-        mutationGuard.EnsureCanMutate(
-            install,
-            [Rpcs3AppPaths.ImportedPatch(install)]);
-
-        return bundledCanary.PrepareImportedPatch(
-            install.PatchesPath,
-            AppContext.BaseDirectory,
-            selectedMatches);
-    }
-
-    public CanaryPatchRemoveResult RemovePreparedCanary(
-        Rpcs3InstallDescriptor install)
-    {
-        mutationGuard.EnsureCanMutate(
-            install,
-            [Rpcs3AppPaths.ImportedPatch(install)]);
-
-        return bundledCanary.RemovePreparedCanary(
-            install.PatchesPath);
-    }
-
     public PatchLibraryWriteResult PrepareCheats(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)

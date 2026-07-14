@@ -37,45 +37,6 @@ public sealed class BundledCanaryPatchService
         return File.ReadAllText(path, Encoding.UTF8);
     }
 
-    public CanaryPatchWriteResult PrepareImportedPatch(
-        string patchesPath,
-        string baseDirectory,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
-    {
-        var selectedCanary = selectedMatches
-            .Where(match => match.Patch.Risk == PatchRisk.Canary)
-            .ToArray();
-
-        if (selectedCanary.Length == 0)
-        {
-            return new CanaryPatchWriteResult(
-                true,
-                string.Empty,
-                null,
-                UiText.T("Patch.PrepareCanaryNoSelection"),
-                null);
-        }
-
-        var bundledText = ReadText(baseDirectory);
-        var selectedText = BuildSelectedCanaryText(
-            bundledText,
-            selectedCanary);
-
-        if (string.IsNullOrWhiteSpace(selectedText))
-        {
-            return new CanaryPatchWriteResult(
-                true,
-                string.Empty,
-                null,
-                UiText.T("Patch.PrepareCanaryAlreadyInImported"),
-                null);
-        }
-
-        return _importService.WriteManagedImportedPatch(
-            patchesPath,
-            selectedText);
-    }
-
     public CanaryPatchStageResult PrepareImportedPatchFile(
         string patchesPath,
         string baseDirectory,
@@ -113,11 +74,6 @@ public sealed class BundledCanaryPatchService
         return _importService.PrepareManagedImportedPatchFile(
             patchesPath,
             selectedText);
-    }
-
-    public CanaryPatchRemoveResult RemovePreparedCanary(string patchesPath)
-    {
-        return _importService.RemoveManagedImportedPatch(patchesPath);
     }
 
     private static string BuildSelectedCanaryText(

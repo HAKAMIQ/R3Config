@@ -140,12 +140,136 @@ public sealed class CanaryImportUseCase(
         }
     }
 
+    public CanaryPatchRemoveResult Remove(
+        Rpcs3InstallDescriptor install)
+    {
+        ArgumentNullException.ThrowIfNull(install);
+
+        var targetPath = Rpcs3AppPaths.ImportedPatch(install);
+        mutationGuard.EnsureCanMutate(
+            install,
+            [targetPath]);
+
+        var prepared = importService
+            .PrepareManagedImportedPatchRemoval(
+                install.PatchesPath);
+        if (!prepared.Succeeded)
+        {
+            return RemoveFail(
+                targetPath,
+                prepared.Error ?? prepared.Message);
+        }
+
+        if (prepared.PreparedFile is null)
+        {
+            return new CanaryPatchRemoveResult(
+                true,
+                targetPath,
+                null,
+                prepared.Message,
+                null);
+        }
+
+        BackupManifest? committedBackup = null;
+        try
+        {
+            committedBackup = transaction.Commit(
+                Rpcs3AppPaths.BackupRoot(install),
+                [prepared.PreparedFile],
+                targets => mutationGuard.EnsureCanMutate(
+                    install,
+                    targets));
+
+            if (prepared.PreparedFile.DeleteTarget)
+            {
+                if (File.Exists(targetPath))
+                {
+                    throw new IOException(
+                        "The managed Canary target still exists after transactional deletion.");
+                }
+            }
+            else
+            {
+                var readBack = importService.ReadImportedPatchText(
+                    targetPath);
+                if (!string.Equals(
+                        readBack,
+                        prepared.PreparedFile.Content,
+                        StringComparison.Ordinal))
+                {
+                    throw new InvalidDataException(
+                        "The imported patch file changed during removal read-back.");
+                }
+
+                var catalog = catalogReader.ReadText(
+                    readBack,
+                    PatchSourceOrigin.Imported,
+                    targetPath);
+                if (!catalog.Succeeded ||
+                    prepared.PreparedFile.ExpectedEntryCount is int expected &&
+                    catalog.Catalog.Entries.Count != expected)
+                {
+                    throw new InvalidDataException(
+                        catalog.Error ??
+                        "The imported patch file is invalid after managed Canary removal.");
+                }
+            }
+
+            return new CanaryPatchRemoveResult(
+                true,
+                targetPath,
+                SnapshotPath(committedBackup),
+                prepared.Message,
+                null);
+        }
+        catch (Exception commitOrReadBackException)
+        {
+            Exception failure = commitOrReadBackException;
+
+            if (committedBackup is not null)
+            {
+                try
+                {
+                    backupService.Restore(committedBackup);
+                }
+                catch (Exception rollbackException)
+                {
+                    failure = new InvalidOperationException(
+                        "Canary removal validation failed and rollback also failed.",
+                        new AggregateException(
+                            commitOrReadBackException,
+                            rollbackException));
+                }
+            }
+
+            return RemoveFail(
+                targetPath,
+                failure.Message,
+                committedBackup is null
+                    ? null
+                    : SnapshotPath(committedBackup));
+        }
+    }
+
     private static CanaryPatchWriteResult Failure(
         string targetPath,
         string error,
         string? backupPath = null)
     {
         return new CanaryPatchWriteResult(
+            false,
+            targetPath,
+            backupPath,
+            error,
+            error);
+    }
+
+    private static CanaryPatchRemoveResult RemoveFail(
+        string targetPath,
+        string error,
+        string? backupPath = null)
+    {
+        return new CanaryPatchRemoveResult(
             false,
             targetPath,
             backupPath,

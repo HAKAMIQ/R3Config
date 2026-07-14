@@ -14,7 +14,8 @@ public sealed class PatchFileTransactionService(
     BackupService? backupService = null,
     PatchCatalogReader? catalogReader = null,
     PatchConfigReader? configReader = null,
-    Action<string, string>? commitFile = null)
+    Action<string, string>? commitFile = null,
+    Action<string>? deleteFile = null)
 {
     private static readonly Encoding Utf8NoBom =
         new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
@@ -30,6 +31,9 @@ public sealed class PatchFileTransactionService(
 
     private readonly Action<string, string> _commitFile =
         commitFile ?? CommitStagedFile;
+
+    private readonly Action<string> _deleteFile =
+        deleteFile ?? CommitDelete;
 
     public BackupManifest Commit(
         string backupRootPath,
@@ -67,9 +71,17 @@ public sealed class PatchFileTransactionService(
             {
                 foreach (var file in staged)
                 {
-                    _commitFile(
-                        file.StagedPath,
-                        file.Prepared.TargetPath);
+                    if (file.Prepared.DeleteTarget)
+                    {
+                        _deleteFile(file.Prepared.TargetPath);
+                    }
+                    else
+                    {
+                        _commitFile(
+                            file.StagedPath ?? throw new InvalidOperationException(
+                                "A staged patch file is missing."),
+                            file.Prepared.TargetPath);
+                    }
                 }
 
                 return backup;
@@ -118,7 +130,15 @@ public sealed class PatchFileTransactionService(
                     "A transaction target path is empty.");
             }
 
-            if (string.IsNullOrWhiteSpace(file.Content))
+            if (file.DeleteTarget &&
+                !string.IsNullOrEmpty(file.Content))
+            {
+                throw new InvalidDataException(
+                    $"A prepared delete operation contains file content: {file.TargetPath}");
+            }
+
+            if (!file.DeleteTarget &&
+                string.IsNullOrWhiteSpace(file.Content))
             {
                 throw new InvalidDataException(
                     $"Prepared patch file is empty: {file.TargetPath}");
@@ -144,6 +164,13 @@ public sealed class PatchFileTransactionService(
     private StagedPatchFile StageAndValidate(
         PatchPreparedFile prepared)
     {
+        if (prepared.DeleteTarget)
+        {
+            return new StagedPatchFile(
+                prepared,
+                stagedPath: null);
+        }
+
         var directory = Path.GetDirectoryName(prepared.TargetPath)
             ?? throw new InvalidOperationException(
                 $"Transaction target has no parent directory: {prepared.TargetPath}");
@@ -261,8 +288,21 @@ public sealed class PatchFileTransactionService(
         }
     }
 
-    private static void TryDelete(string path)
+    private static void CommitDelete(string targetPath)
     {
+        if (File.Exists(targetPath))
+        {
+            File.Delete(targetPath);
+        }
+    }
+
+    private static void TryDelete(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
         try
         {
             if (File.Exists(path))
@@ -277,11 +317,11 @@ public sealed class PatchFileTransactionService(
 
     private sealed class StagedPatchFile(
         PatchPreparedFile prepared,
-        string stagedPath)
+        string? stagedPath)
     {
         public PatchPreparedFile Prepared { get; } = prepared;
 
-        public string StagedPath { get; } = stagedPath;
+        public string? StagedPath { get; } = stagedPath;
     }
 }
 

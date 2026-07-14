@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -45,13 +44,14 @@ public sealed class CanaryPatchImportService
 
     private const long MaxImportedPatchBytes = 128L * 1024L * 1024L;
 
-    private const string ManagedBlockBegin = "# R3Config managed Canary patches - begin";
-    private const string ManagedBlockEnd = "# R3Config managed Canary patches - end";
-    private const string BundledSourceMarker = "R3Config bundled RPCS3 Canary patches";
-
-    private static readonly Encoding Utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+    private const string ManagedBlockBegin = "# R3Config managed Canary patches v1 - begin";
+    private const string ManagedBlockEnd = "# R3Config managed Canary patches v1 - end";
 
     private static readonly Regex TopLevelKeyRegex = new(@"^(?<key>[^\s:#][^:#]*):(?:\s.*)?$", RegexOptions.Compiled);
+
+    private static readonly Regex ManagedMarkerRegex = new(
+        @"^  # R3Config managed Canary patches(?<version> v[0-9]+)? - (?<edge>begin|end)$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private readonly PatchCatalogReader _catalogReader;
 
@@ -257,11 +257,9 @@ public sealed class CanaryPatchImportService
                 }
             }
 
-            var preservedText = !string.IsNullOrWhiteSpace(existingText) &&
-                                (!LooksR3ConfigGenerated(existingText) ||
-                                 ContainsManagedBlock(existingText))
-                ? RemoveManagedBlock(existingText)
-                : string.Empty;
+            var preservedText = string.IsNullOrWhiteSpace(existingText)
+                ? string.Empty
+                : RemoveManagedBlock(existingText);
 
             var finalText = ComposeManagedImportedPatch(
                 preservedText,
@@ -321,132 +319,31 @@ public sealed class CanaryPatchImportService
         }
     }
 
-    public CanaryPatchWriteResult WriteManagedImportedPatch(
-        string patchesPath,
-        string sourceText)
+    public CanaryPatchStageResult PrepareManagedImportedPatchRemoval(
+        string patchesPath)
     {
         string targetPath = string.Empty;
-        string? backupPath = null;
-        string? tempPath = null;
 
         try
         {
-            var staged = PrepareManagedImportedPatchFile(
+            var validation = ValidateTargetPath(
                 patchesPath,
-                sourceText);
-            targetPath = staged.TargetPath;
-
-            if (!staged.Succeeded)
-            {
-                return WriteFailure(
-                    targetPath,
-                    null,
-                    staged.Error ?? staged.Message);
-            }
-
-            if (staged.PreparedFile is null)
-            {
-                return new CanaryPatchWriteResult(
-                    true,
-                    targetPath,
-                    null,
-                    staged.Message,
-                    null);
-            }
-
-            var patchesDir = Path.GetDirectoryName(targetPath)
-                ?? throw new InvalidOperationException(
-                    "The managed Canary target has no parent directory.");
-            Directory.CreateDirectory(patchesDir);
-
-            if (File.Exists(targetPath))
-            {
-                backupPath = CreateBackupPath(patchesDir);
-                File.Copy(
-                    targetPath,
-                    backupPath,
-                    overwrite: false);
-            }
-
-            tempPath = targetPath + ".tmp";
-            File.WriteAllText(
-                tempPath,
-                staged.PreparedFile.Content,
-                Utf8NoBom);
-
-            var tempReadBack = File.ReadAllText(
-                tempPath,
-                Encoding.UTF8);
-            if (!tempReadBack.StartsWith(
-                    RequiredVersionHeader,
-                    StringComparison.Ordinal) ||
-                !Normalize(tempReadBack).Succeeded)
-            {
-                TryDeleteFile(tempPath);
-                return WriteFailure(
-                    targetPath,
-                    backupPath,
-                    UiText.T("Patch.ImportCanaryInvalidYaml"));
-            }
-
-            File.Move(
-                tempPath,
-                targetPath,
-                overwrite: true);
-            tempPath = null;
-
-            var readBack = File.ReadAllText(
-                targetPath,
-                Encoding.UTF8);
-            if (!string.Equals(
-                    readBack,
-                    staged.PreparedFile.Content,
-                    StringComparison.Ordinal))
-            {
-                return WriteFailure(
-                    targetPath,
-                    backupPath,
-                    UiText.T("Patch.ImportCanaryInvalidYaml"));
-            }
-
-            return new CanaryPatchWriteResult(
-                true,
-                targetPath,
-                backupPath,
-                staged.Message,
-                null);
-        }
-        catch (Exception ex)
-        {
-            if (!string.IsNullOrWhiteSpace(tempPath))
-            {
-                TryDeleteFile(tempPath);
-            }
-
-            return WriteFailure(
-                targetPath,
-                backupPath,
-                SafeErrorMessage(ex));
-        }
-    }
-
-    public CanaryPatchRemoveResult RemoveManagedImportedPatch(string patchesPath)
-    {
-        string targetPath = string.Empty;
-        string? backupPath = null;
-        string? tempPath = null;
-
-        try
-        {
-            var validation = ValidateTargetPath(patchesPath, out var patchesDir, out targetPath, out var validationError);
+                out _,
+                out targetPath,
+                out var validationError);
             if (!validation)
             {
-                return RemoveFailure(targetPath, null, validationError);
+                return new CanaryPatchStageResult(
+                    false,
+                    targetPath,
+                    null,
+                    validationError,
+                    validationError);
             }
 
             if (!File.Exists(targetPath))
             {
-                return new CanaryPatchRemoveResult(
+                return new CanaryPatchStageResult(
                     true,
                     targetPath,
                     null,
@@ -454,20 +351,27 @@ public sealed class CanaryPatchImportService
                     null);
             }
 
-            var existingText = File.ReadAllText(targetPath, Encoding.UTF8);
-            string finalText;
+            var existingText = ReadImportedPatchText(targetPath);
+            var existingCatalog = _catalogReader.ReadText(
+                existingText,
+                PatchSourceOrigin.Imported,
+                targetPath);
+            if (!existingCatalog.Succeeded)
+            {
+                var error = existingCatalog.Error ??
+                            UiText.T("Patch.ImportCanaryInvalidYaml");
+                return new CanaryPatchStageResult(
+                    false,
+                    targetPath,
+                    null,
+                    error,
+                    error);
+            }
 
-            if (LooksR3ConfigGenerated(existingText))
+            var scan = ScanManagedBlocks(existingText);
+            if (!scan.HasManagedBlock)
             {
-                finalText = string.Empty;
-            }
-            else if (ContainsManagedBlock(existingText))
-            {
-                finalText = ComposeManagedImportedPatch(RemoveManagedBlock(existingText), string.Empty);
-            }
-            else
-            {
-                return new CanaryPatchRemoveResult(
+                return new CanaryPatchStageResult(
                     true,
                     targetPath,
                     null,
@@ -475,46 +379,62 @@ public sealed class CanaryPatchImportService
                     null);
             }
 
-            backupPath = CreateBackupPath(patchesDir);
-            File.Copy(targetPath, backupPath, overwrite: false);
+            var finalText = ComposeManagedImportedPatch(
+                scan.RemovedText,
+                string.Empty);
 
             if (string.IsNullOrWhiteSpace(BodyWithoutVersion(finalText)))
             {
-                File.Delete(targetPath);
-                return new CanaryPatchRemoveResult(
+                return new CanaryPatchStageResult(
                     true,
                     targetPath,
-                    backupPath,
+                    new PatchPreparedFile(
+                        targetPath,
+                        string.Empty,
+                        PatchPreparedFileKind.PatchCatalog,
+                        PatchSourceOrigin.Imported,
+                        DeleteTarget: true),
                     UiText.T("Patch.RemoveCanarySuccess"),
                     null);
             }
 
-            tempPath = targetPath + ".tmp";
-            File.WriteAllText(tempPath, finalText, Utf8NoBom);
-            if (!Normalize(File.ReadAllText(tempPath, Encoding.UTF8)).Succeeded)
+            var finalCatalog = _catalogReader.ReadText(
+                finalText,
+                PatchSourceOrigin.Imported,
+                targetPath);
+            if (!finalCatalog.Succeeded)
             {
-                TryDeleteFile(tempPath);
-                return RemoveFailure(targetPath, backupPath, UiText.T("Patch.ImportCanaryInvalidYaml"));
+                var error = finalCatalog.Error ??
+                            UiText.T("Patch.ImportCanaryInvalidYaml");
+                return new CanaryPatchStageResult(
+                    false,
+                    targetPath,
+                    null,
+                    error,
+                    error);
             }
 
-            File.Move(tempPath, targetPath, overwrite: true);
-            tempPath = null;
-
-            return new CanaryPatchRemoveResult(
+            return new CanaryPatchStageResult(
                 true,
                 targetPath,
-                backupPath,
+                new PatchPreparedFile(
+                    targetPath,
+                    finalText,
+                    PatchPreparedFileKind.PatchCatalog,
+                    PatchSourceOrigin.Imported,
+                    finalCatalog.Catalog.Entries.Count),
                 UiText.T("Patch.RemoveCanarySuccess"),
                 null);
         }
         catch (Exception ex)
         {
-            if (!string.IsNullOrWhiteSpace(tempPath))
-            {
-                TryDeleteFile(tempPath);
-            }
-
-            return RemoveFailure(targetPath, backupPath, SafeErrorMessage(ex));
+            var error = SafeErrorMessage(ex);
+            return new CanaryPatchStageResult(
+                false,
+                targetPath,
+                null,
+                error,
+                error);
         }
     }
 
@@ -532,7 +452,7 @@ public sealed class CanaryPatchImportService
                 targetPath,
                 Rpcs3InputLimits.PatchCatalogYamlBytes,
                 "imported_patch.yml");
-            return ContainsManagedBlock(text) || LooksR3ConfigGenerated(text);
+            return ScanManagedBlocks(text).HasManagedBlock;
         }
         catch
         {
@@ -543,11 +463,6 @@ public sealed class CanaryPatchImportService
     private static CanaryPatchNormalizeResult Failure(string error)
     {
         return new CanaryPatchNormalizeResult(false, string.Empty, false, error, error);
-    }
-
-    private static CanaryPatchWriteResult WriteFailure(string targetPath, string? backupPath, string error)
-    {
-        return new CanaryPatchWriteResult(false, targetPath, backupPath, error, error);
     }
 
     private static bool IsTopLevelKey(string line)
@@ -715,34 +630,6 @@ public sealed class CanaryPatchImportService
         return false;
     }
 
-    private static string CreateBackupPath(string patchesDir)
-    {
-        var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
-        var backupPath = Path.Combine(patchesDir, ImportedPatchFileName + ".bak-" + timestamp);
-
-        if (!File.Exists(backupPath))
-        {
-            return backupPath;
-        }
-
-        for (var index = 1; index <= 999; index++)
-        {
-            var candidate = Path.Combine(
-                patchesDir,
-                ImportedPatchFileName + ".bak-" + timestamp + "-" + index.ToString("000", CultureInfo.InvariantCulture));
-
-            if (!File.Exists(candidate))
-            {
-                return candidate;
-            }
-        }
-
-        return Path.Combine(
-            patchesDir,
-            ImportedPatchFileName + ".bak-" + DateTime.Now.Ticks.ToString(CultureInfo.InvariantCulture));
-    }
-
-
     private static bool ValidateTargetPath(string patchesPath, out string patchesDir, out string targetPath, out string error)
     {
         patchesDir = string.Empty;
@@ -774,16 +661,13 @@ public sealed class CanaryPatchImportService
         return true;
     }
 
-    private static CanaryPatchRemoveResult RemoveFailure(string targetPath, string? backupPath, string error)
-    {
-        return new CanaryPatchRemoveResult(false, targetPath, backupPath, error, error);
-    }
-
     private string ComposeManagedImportedPatch(string preservedText, string managedText)
     {
+        var cleanPreservedText = RemoveManagedBlock(preservedText);
         var preservedPrefix = ExtractNormalizedPrefixLines(
-            RemoveManagedBlock(preservedText));
-        var preservedSections = ExtractNormalizedHashSections(RemoveManagedBlock(preservedText));
+            cleanPreservedText);
+        var preservedSections = ExtractNormalizedHashSections(
+            cleanPreservedText);
         var managedSections = ExtractNormalizedHashSections(managedText);
 
         var order = new List<string>();
@@ -857,47 +741,127 @@ public sealed class CanaryPatchImportService
 
     private static string RemoveManagedBlock(string text)
     {
+        return ScanManagedBlocks(text).RemovedText;
+    }
+
+    private static ManagedBlockScan ScanManagedBlocks(string text)
+    {
         if (string.IsNullOrWhiteSpace(text))
         {
-            return string.Empty;
+            return new ManagedBlockScan(false, string.Empty);
         }
 
         var lines = SplitLines(text);
         var output = new List<string>();
         var inside = false;
+        var found = false;
+        var activeVersion = string.Empty;
+        var activeHash = string.Empty;
+        string? currentHash = null;
 
         foreach (var line in lines)
         {
-            if (string.Equals(line.Trim(), ManagedBlockBegin, StringComparison.Ordinal))
+            var topKey = TryReadTopLevelKey(line);
+            if (topKey is not null)
             {
+                currentHash = IsPatchRuntimeKey(topKey)
+                    ? topKey
+                    : null;
+            }
+
+            if (!TryReadManagedMarker(
+                    line,
+                    out var version,
+                    out var isBegin))
+            {
+                if (!inside)
+                {
+                    output.Add(line);
+                }
+
+                continue;
+            }
+
+            if (currentHash is null)
+            {
+                throw new InvalidDataException(
+                    "A managed Canary marker is outside a patch hash block.");
+            }
+
+            if (version is not "legacy" and not "v1")
+            {
+                throw new InvalidDataException(
+                    $"Unsupported managed Canary marker version: {version}");
+            }
+
+            if (isBegin)
+            {
+                if (inside)
+                {
+                    throw new InvalidDataException(
+                        "A managed Canary marker block is nested or duplicated.");
+                }
+
                 inside = true;
+                found = true;
+                activeVersion = version;
+                activeHash = currentHash;
                 continue;
             }
 
-            if (string.Equals(line.Trim(), ManagedBlockEnd, StringComparison.Ordinal))
+            if (!inside ||
+                !string.Equals(
+                    activeVersion,
+                    version,
+                    StringComparison.Ordinal) ||
+                !string.Equals(
+                    activeHash,
+                    currentHash,
+                    StringComparison.OrdinalIgnoreCase))
             {
-                inside = false;
-                continue;
+                throw new InvalidDataException(
+                    "A managed Canary marker block is incomplete or mismatched.");
             }
 
-            if (!inside)
-            {
-                output.Add(line);
-            }
+            inside = false;
+            activeVersion = string.Empty;
+            activeHash = string.Empty;
         }
 
-        return string.Join("\r\n", output).TrimEnd() + "\r\n";
+        if (inside)
+        {
+            throw new InvalidDataException(
+                "A managed Canary marker block is missing its end marker.");
+        }
+
+        return new ManagedBlockScan(
+            found,
+            string.Join("\r\n", output).TrimEnd() + "\r\n");
     }
 
-    private static bool ContainsManagedBlock(string text)
+    private static bool TryReadManagedMarker(
+        string line,
+        out string version,
+        out bool isBegin)
     {
-        return text.Contains(ManagedBlockBegin, StringComparison.Ordinal) &&
-               text.Contains(ManagedBlockEnd, StringComparison.Ordinal);
-    }
+        version = string.Empty;
+        isBegin = false;
 
-    private static bool LooksR3ConfigGenerated(string text)
-    {
-        return text.Contains(BundledSourceMarker, StringComparison.OrdinalIgnoreCase);
+        var match = ManagedMarkerRegex.Match(line);
+        if (!match.Success)
+        {
+            return false;
+        }
+
+        var markerVersion = match.Groups["version"].Value.Trim();
+        version = string.IsNullOrEmpty(markerVersion)
+            ? "legacy"
+            : markerVersion;
+        isBegin = string.Equals(
+            match.Groups["edge"].Value,
+            "begin",
+            StringComparison.Ordinal);
+        return true;
     }
 
     private static string BodyWithoutVersion(string text)
@@ -1105,21 +1069,6 @@ public sealed class CanaryPatchImportService
 
     private sealed record PatchHashTextSection(string HashKey, IReadOnlyList<string> BodyLines);
 
-    private static void TryDeleteFile(string path)
-    {
-        try
-        {
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
-        }
-        catch
-        {
-            // Best-effort cleanup for temporary import files.
-        }
-    }
-
     private static string SafeErrorMessage(Exception exception)
     {
         return string.IsNullOrWhiteSpace(exception.Message)
@@ -1138,4 +1087,8 @@ public sealed class CanaryPatchImportService
                    normalizedDirectory.TrimEnd(Path.DirectorySeparatorChar),
                    StringComparison.OrdinalIgnoreCase);
     }
+
+    private sealed record ManagedBlockScan(
+        bool HasManagedBlock,
+        string RemovedText);
 }

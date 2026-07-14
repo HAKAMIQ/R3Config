@@ -345,7 +345,8 @@ public sealed record PatchPreparedFile(
     string Content,
     PatchPreparedFileKind Kind,
     PatchSourceOrigin CatalogSource = PatchSourceOrigin.Unknown,
-    int? ExpectedEntryCount = null);
+    int? ExpectedEntryCount = null,
+    bool DeleteTarget = false);
 
 public sealed record PatchApplyResult(
     BackupManifest Backup,
