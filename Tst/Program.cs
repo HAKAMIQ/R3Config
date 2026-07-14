@@ -28,6 +28,7 @@ try
     RunBundledCheatCompilerTests(tempRoot);
     RunPatchTransactionTests(tempRoot);
     RunCanaryImportTransactionTests(tempRoot);
+    RunBackupRestoreTransactionTests(tempRoot);
     RunMutationGuardTests(tempRoot);
     RunGameListSearchTests();
     RunAdvancedDialogXamlSmokeTest();
@@ -2356,6 +2357,410 @@ static int CountOccurrences(
     }
 
     return count;
+}
+
+static void RunBackupRestoreTransactionTests(string tempRoot)
+{
+    var root = Path.Combine(tempRoot, "backup-restore-transaction");
+    var configPath = Path.Combine(root, "config");
+    var customConfigsPath = Path.Combine(configPath, "custom_configs");
+    var patchesPath = Path.Combine(root, "patches");
+    var exePath = Path.Combine(root, "rpcs3.exe");
+    Directory.CreateDirectory(customConfigsPath);
+    Directory.CreateDirectory(patchesPath);
+    File.WriteAllBytes(exePath, []);
+
+    var install = Rpcs3InstallService.FromExePath(exePath);
+    var backupRoot = Rpcs3AppPaths.BackupRoot(install);
+    var firstTarget = Path.Combine(
+        customConfigsPath,
+        "config_BLUS10001.yml");
+    var secondTarget = Path.Combine(
+        patchesPath,
+        "imported_patch.yml");
+    var missingTarget = Path.Combine(
+        configPath,
+        "patch_config.yml");
+
+    File.WriteAllBytes(firstTarget, Encoding.UTF8.GetBytes("backup-first"));
+    File.WriteAllBytes(secondTarget, Encoding.UTF8.GetBytes("backup-second"));
+    var backupService = new BackupService();
+    var snapshot = CreateBackupSnapshot(
+        backupService,
+        backupRoot,
+        [firstTarget, secondTarget, missingTarget]);
+
+    Assert(snapshot.Files.Count == 3 &&
+           snapshot.Files.Where(file => file.Existed).All(file =>
+               file.Length is > 0 &&
+               file.Sha256 is { Length: 64 }) &&
+           snapshot.Files.Single(file => !file.Existed) is
+           { Length: null, Sha256: null },
+        "Expected new backup manifests to record length and SHA-256 for every existing file.");
+
+    File.WriteAllBytes(firstTarget, Encoding.UTF8.GetBytes("current-first"));
+    File.WriteAllBytes(secondTarget, Encoding.UTF8.GetBytes("current-second"));
+    File.WriteAllBytes(missingTarget, Encoding.UTF8.GetBytes("created-after-backup"));
+    var restoreUseCase = new BackupUseCase(
+        backupService,
+        new Rpcs3MutationGuard(() => false));
+    restoreUseCase.Restore(install, snapshot);
+
+    Assert(File.ReadAllText(firstTarget, Encoding.UTF8) == "backup-first" &&
+           File.ReadAllText(secondTarget, Encoding.UTF8) == "backup-second" &&
+           !File.Exists(missingTarget),
+        "Expected one transactional restore to recover multiple files and remove a target that was originally absent.");
+
+    var replayFirst = File.ReadAllBytes(firstTarget);
+    var replaySecond = File.ReadAllBytes(secondTarget);
+    restoreUseCase.Restore(install, snapshot);
+    Assert(File.ReadAllBytes(firstTarget).SequenceEqual(replayFirst) &&
+           File.ReadAllBytes(secondTarget).SequenceEqual(replaySecond) &&
+           !File.Exists(missingTarget),
+        "Expected restoring the same snapshot again to be idempotent.");
+
+    File.WriteAllText(firstTarget, "before-first-commit-failure", Encoding.UTF8);
+    File.WriteAllText(secondTarget, "before-first-commit-failure-2", Encoding.UTF8);
+    var firstFailureBefore = new[]
+    {
+        File.ReadAllBytes(firstTarget),
+        File.ReadAllBytes(secondTarget)
+    };
+    var firstCommitFailure = new BackupService(
+        commitRestoreOperation: (_, _, _) =>
+            throw new IOException("Simulated first restore commit failure."));
+    try
+    {
+        new BackupUseCase(
+            firstCommitFailure,
+            new Rpcs3MutationGuard(() => false))
+            .Restore(install, snapshot);
+        throw new InvalidOperationException(
+            "Expected the first restore commit to fail.");
+    }
+    catch (IOException ex) when (ex.Message.Contains(
+        "first restore commit",
+        StringComparison.Ordinal))
+    {
+        Assert(File.ReadAllBytes(firstTarget).SequenceEqual(firstFailureBefore[0]) &&
+               File.ReadAllBytes(secondTarget).SequenceEqual(firstFailureBefore[1]),
+            "Expected first-commit failure to preserve every current target byte-for-byte.");
+    }
+
+    File.WriteAllText(firstTarget, "before-middle-failure", Encoding.UTF8);
+    File.WriteAllText(secondTarget, "before-middle-failure-2", Encoding.UTF8);
+    var middleFailureBefore = new[]
+    {
+        File.ReadAllBytes(firstTarget),
+        File.ReadAllBytes(secondTarget)
+    };
+    var commitIndex = 0;
+    var middleCommitFailure = new BackupService(
+        commitRestoreOperation: (stagePath, targetPath, shouldExist) =>
+        {
+            commitIndex++;
+            if (commitIndex == 2)
+            {
+                throw new IOException(
+                    "Simulated middle restore commit failure.");
+            }
+
+            ApplyRestoreOperationForTest(
+                stagePath,
+                targetPath,
+                shouldExist);
+        });
+    try
+    {
+        new BackupUseCase(
+            middleCommitFailure,
+            new Rpcs3MutationGuard(() => false))
+            .Restore(install, snapshot);
+        throw new InvalidOperationException(
+            "Expected the middle restore commit to fail.");
+    }
+    catch (IOException ex) when (ex.Message.Contains(
+        "middle restore commit",
+        StringComparison.Ordinal))
+    {
+        Assert(File.ReadAllBytes(firstTarget).SequenceEqual(middleFailureBefore[0]) &&
+               File.ReadAllBytes(secondTarget).SequenceEqual(middleFailureBefore[1]),
+            "Expected successful rollback to undo every target after a middle commit failure.");
+    }
+
+    var rollbackFailureCommitIndex = 0;
+    var rollbackFailureService = new BackupService(
+        commitRestoreOperation: (stagePath, targetPath, shouldExist) =>
+        {
+            rollbackFailureCommitIndex++;
+            if (rollbackFailureCommitIndex == 2)
+            {
+                throw new IOException(
+                    "Simulated restore commit error for aggregate test.");
+            }
+
+            ApplyRestoreOperationForTest(
+                stagePath,
+                targetPath,
+                shouldExist);
+        },
+        rollbackRestoreOperation: (_, _, _) =>
+            throw new UnauthorizedAccessException(
+                "Simulated restore rollback error."));
+    try
+    {
+        new BackupUseCase(
+            rollbackFailureService,
+            new Rpcs3MutationGuard(() => false))
+            .Restore(install, snapshot);
+        throw new InvalidOperationException(
+            "Expected restore rollback failure to be surfaced.");
+    }
+    catch (AggregateException ex)
+    {
+        var messages = ex.Flatten().InnerExceptions
+            .Select(error => error.Message)
+            .ToArray();
+        Assert(messages.Any(message => message.Contains(
+                   "commit error",
+                   StringComparison.Ordinal)) &&
+               messages.Any(message => message.Contains(
+                   "rollback error",
+                   StringComparison.Ordinal)),
+            "Expected aggregate restore failure to retain both commit and rollback errors.");
+    }
+
+    var validationTarget = Path.Combine(
+        customConfigsPath,
+        "config_BLUS10002.yml");
+    File.WriteAllText(validationTarget, "validation-backup", Encoding.UTF8);
+
+    var outsideSnapshot = CreateBackupSnapshot(
+        new BackupService(),
+        backupRoot,
+        [validationTarget]);
+    var outsideBackupFile = Path.Combine(root, "outside-backup.bin");
+    File.Copy(
+        outsideSnapshot.Files.Single().BackupPath,
+        outsideBackupFile,
+        overwrite: true);
+    var outsideManifest = new BackupManifest(
+        outsideSnapshot.CreatedAt,
+        [outsideSnapshot.Files.Single() with { BackupPath = outsideBackupFile }]);
+    WriteBackupManifest(outsideSnapshot.DirectoryPath, outsideManifest);
+    var outsideRequest = new BackupSnapshot(
+        outsideSnapshot.DirectoryPath,
+        outsideManifest.CreatedAt,
+        outsideManifest.Files);
+    var outsideBefore = File.ReadAllBytes(validationTarget);
+    AssertThrows<InvalidDataException>(
+        () => new BackupUseCase(
+                new BackupService(),
+                new Rpcs3MutationGuard(() => false))
+            .Restore(install, outsideRequest),
+        "Expected a BackupPath outside its snapshot to be rejected.");
+    Assert(File.ReadAllBytes(validationTarget).SequenceEqual(outsideBefore),
+        "Expected outside-snapshot validation failure before target mutation.");
+
+    var duplicateSnapshot = CreateBackupSnapshot(
+        new BackupService(),
+        backupRoot,
+        [firstTarget, secondTarget]);
+    var duplicateEntries = duplicateSnapshot.Files.ToArray();
+    duplicateEntries[1] = duplicateEntries[1] with
+    {
+        BackupPath = duplicateEntries[0].BackupPath
+    };
+    var duplicateManifest = new BackupManifest(
+        duplicateSnapshot.CreatedAt,
+        duplicateEntries);
+    WriteBackupManifest(
+        duplicateSnapshot.DirectoryPath,
+        duplicateManifest);
+    AssertThrows<InvalidDataException>(
+        () => new BackupService().Restore(new BackupSnapshot(
+            duplicateSnapshot.DirectoryPath,
+            duplicateManifest.CreatedAt,
+            duplicateManifest.Files)),
+        "Expected a duplicate BackupPath to be rejected before restore.");
+
+    var badHashSnapshot = CreateBackupSnapshot(
+        new BackupService(),
+        backupRoot,
+        [validationTarget]);
+    var badHashManifest = new BackupManifest(
+        badHashSnapshot.CreatedAt,
+        [badHashSnapshot.Files.Single() with { Sha256 = new string('0', 64) }]);
+    WriteBackupManifest(
+        badHashSnapshot.DirectoryPath,
+        badHashManifest);
+    var badHashBefore = File.ReadAllBytes(validationTarget);
+    AssertThrows<InvalidDataException>(
+        () => new BackupService().Restore(new BackupSnapshot(
+            badHashSnapshot.DirectoryPath,
+            badHashManifest.CreatedAt,
+            badHashManifest.Files)),
+        "Expected a mismatched backup SHA-256 to be rejected.");
+    Assert(File.ReadAllBytes(validationTarget).SequenceEqual(badHashBefore) &&
+           !HasRestoreStages(configPath, patchesPath),
+        "Expected hash validation to fail before stages or target writes.");
+
+    var missingBackupSnapshot = CreateBackupSnapshot(
+        new BackupService(),
+        backupRoot,
+        [validationTarget]);
+    File.Delete(missingBackupSnapshot.Files.Single().BackupPath);
+    AssertThrows<FileNotFoundException>(
+        () => new BackupService().Restore(missingBackupSnapshot),
+        "Expected a missing backup payload to be rejected before restore.");
+
+    var legacySnapshot = CreateBackupSnapshot(
+        new BackupService(),
+        backupRoot,
+        [validationTarget]);
+    var legacyManifest = new BackupManifest(
+        legacySnapshot.CreatedAt,
+        [legacySnapshot.Files.Single() with { Length = null, Sha256 = null }]);
+    WriteBackupManifest(
+        legacySnapshot.DirectoryPath,
+        legacyManifest);
+    File.WriteAllText(validationTarget, "changed-after-legacy-backup", Encoding.UTF8);
+    new BackupUseCase(
+        new BackupService(),
+        new Rpcs3MutationGuard(() => false))
+        .Restore(install, new BackupSnapshot(
+            legacySnapshot.DirectoryPath,
+            legacyManifest.CreatedAt,
+            legacyManifest.Files));
+    Assert(File.ReadAllText(validationTarget, Encoding.UTF8) == "validation-backup",
+        "Expected a legacy manifest without length or SHA-256 to restore with basic validation.");
+
+    var runningSnapshot = CreateBackupSnapshot(
+        new BackupService(),
+        backupRoot,
+        [validationTarget]);
+    File.WriteAllText(validationTarget, "running-process-current", Encoding.UTF8);
+    var runningBefore = File.ReadAllBytes(validationTarget);
+    AssertMutationBlocked(
+        () => new BackupUseCase(
+                new BackupService(),
+                new Rpcs3MutationGuard(() => true))
+            .Restore(install, runningSnapshot),
+        Rpcs3MutationBlockReason.Rpcs3Running,
+        "Expected RPCS3 running to block restore before staging.");
+    Assert(File.ReadAllBytes(validationTarget).SequenceEqual(runningBefore) &&
+           !HasRestoreStages(configPath, patchesPath),
+        "Expected a running-process block to leave targets and stage state unchanged.");
+
+    var outsideTarget = Path.Combine(root, "outside-target.yml");
+    File.WriteAllText(outsideTarget, "outside-backup", Encoding.UTF8);
+    var outsideTargetSnapshot = CreateBackupSnapshot(
+        new BackupService(),
+        backupRoot,
+        [outsideTarget]);
+    File.WriteAllText(outsideTarget, "outside-current", Encoding.UTF8);
+    AssertMutationBlocked(
+        () => new BackupUseCase(
+                new BackupService(),
+                new Rpcs3MutationGuard(() => false))
+            .Restore(install, outsideTargetSnapshot),
+        Rpcs3MutationBlockReason.UnsafeTarget,
+        "Expected restore targets outside RPCS3 config/patches to be rejected by the central guard.");
+    Assert(File.ReadAllText(outsideTarget, Encoding.UTF8) == "outside-current",
+        "Expected an unsafe restore target to remain unchanged.");
+
+    Assert(!HasRestoreStages(configPath, patchesPath),
+        "Expected every restore path to clean .r3restore and .r3rollback files.");
+    Console.WriteLine("Validated transactional backup restore tests PASS.");
+}
+
+static BackupSnapshot CreateBackupSnapshot(
+    BackupService service,
+    string backupRoot,
+    IReadOnlyList<string> targets)
+{
+    var manifest = service.CreateBackup(backupRoot, targets);
+    var directory = Path.GetDirectoryName(
+        manifest.Files.First().BackupPath)
+        ?? throw new InvalidOperationException(
+            "Expected a snapshot directory for the backup manifest.");
+
+    return new BackupSnapshot(
+        directory,
+        manifest.CreatedAt,
+        manifest.Files);
+}
+
+static void WriteBackupManifest(
+    string directory,
+    BackupManifest manifest)
+{
+    File.WriteAllText(
+        Path.Combine(directory, "manifest.json"),
+        JsonSerializer.Serialize(
+            manifest,
+            new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                DefaultIgnoreCondition =
+                    System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            }),
+        Encoding.UTF8);
+}
+
+static void ApplyRestoreOperationForTest(
+    string? stagePath,
+    string targetPath,
+    bool shouldExist)
+{
+    if (!shouldExist)
+    {
+        if (File.Exists(targetPath))
+        {
+            File.Delete(targetPath);
+        }
+
+        return;
+    }
+
+    if (string.IsNullOrWhiteSpace(stagePath))
+    {
+        throw new FileNotFoundException(
+            "The test restore stage is missing.",
+            stagePath);
+    }
+
+    File.Copy(stagePath, targetPath, overwrite: true);
+}
+
+static bool HasRestoreStages(params string[] roots)
+{
+    return roots.Any(root =>
+        Directory.Exists(root) &&
+        Directory.EnumerateFiles(
+                root,
+                "*",
+                SearchOption.AllDirectories)
+            .Any(path =>
+                path.EndsWith(".r3restore", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".r3rollback", StringComparison.OrdinalIgnoreCase)));
+}
+
+static void AssertThrows<TException>(
+    Action action,
+    string message)
+    where TException : Exception
+{
+    try
+    {
+        action();
+    }
+    catch (TException)
+    {
+        return;
+    }
+
+    throw new InvalidOperationException(message);
 }
 
 static string BuildTransactionPatchCatalog(
