@@ -280,7 +280,7 @@ public sealed class BackupService(
                 $"Backup snapshot directory not found: {snapshotPath}");
         }
 
-        var canonicalSnapshotPath = ResolveCanonicalExistingPath(
+        var canonicalSnapshotPath = Rpcs3CanonicalPath.ResolveCanonicalExistingPath(
             snapshotPath);
         if (!PathsEqual(
                 snapshotPath,
@@ -300,7 +300,7 @@ public sealed class BackupService(
                 manifestPath);
         }
 
-        var canonicalManifestPath = ResolveCanonicalExistingPath(
+        var canonicalManifestPath = Rpcs3CanonicalPath.ResolveCanonicalExistingPath(
             manifestPath);
         if (!IsChildPath(
                 canonicalSnapshotPath,
@@ -388,7 +388,7 @@ public sealed class BackupService(
                         backupPath);
                 }
 
-                var canonicalBackupPath = ResolveCanonicalExistingPath(
+                var canonicalBackupPath = Rpcs3CanonicalPath.ResolveCanonicalExistingPath(
                     backupPath);
                 if (!IsChildPath(
                         canonicalSnapshotPath,
@@ -727,49 +727,6 @@ public sealed class BackupService(
         {
             File.Move(rollbackStagePath, targetPath);
         }
-    }
-
-    private static string ResolveCanonicalExistingPath(
-        string path)
-    {
-        var fullPath = Path.GetFullPath(path);
-        var root = Path.GetPathRoot(fullPath)
-            ?? throw new InvalidDataException(
-                $"A path has no filesystem root: {fullPath}");
-        var current = root;
-        var relative = fullPath[root.Length..];
-
-        foreach (var segment in relative.Split(
-                     [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
-                     StringSplitOptions.RemoveEmptyEntries))
-        {
-            current = Path.Combine(current, segment);
-            var isDirectory = Directory.Exists(current);
-            var isFile = File.Exists(current);
-            if (!isDirectory && !isFile)
-            {
-                throw new FileNotFoundException(
-                    "A canonical path component does not exist.",
-                    current);
-            }
-
-            if ((File.GetAttributes(current) &
-                 FileAttributes.ReparsePoint) == 0)
-            {
-                continue;
-            }
-
-            FileSystemInfo info = isDirectory
-                ? new DirectoryInfo(current)
-                : new FileInfo(current);
-            var resolved = info.ResolveLinkTarget(
-                returnFinalTarget: true)
-                ?? throw new InvalidDataException(
-                    $"A reparse point could not be resolved safely: {current}");
-            current = Path.GetFullPath(resolved.FullName);
-        }
-
-        return Path.GetFullPath(current);
     }
 
     private static bool ContainsParentTraversal(string path)

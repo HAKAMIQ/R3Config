@@ -1,6 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Collections.Specialized;
+using System.Diagnostics;
 
 using System.Text;
 using System.Text.Json;
@@ -29,6 +30,7 @@ try
     RunPatchTransactionTests(tempRoot);
     RunCanaryImportTransactionTests(tempRoot);
     RunBackupRestoreTransactionTests(tempRoot);
+    RunMutationGuardReparseTests(tempRoot);
     RunMutationGuardTests(tempRoot);
     RunGameListSearchTests();
     RunAdvancedDialogXamlSmokeTest();
@@ -268,6 +270,7 @@ static void RunMutationGuardTests(string tempRoot)
         Path.Combine(config, "custom_configs"),
         patches,
         Path.Combine(config, "patch_config.yml"));
+    File.WriteAllBytes(install.ExePath, []);
     var safeGuard = new Rpcs3MutationGuard(() => false);
 
     safeGuard.EnsureCanMutate(
@@ -322,6 +325,8 @@ static void RunMutationGuardTests(string tempRoot)
         "mutation-guard-external-data");
     var externalConfig = Path.Combine(externalDataRoot, "config");
     var externalPatches = Path.Combine(externalDataRoot, "patches");
+    Directory.CreateDirectory(externalConfig);
+    Directory.CreateDirectory(externalPatches);
     var externalInstall = install with
     {
         ConfigPath = externalConfig,
@@ -351,6 +356,247 @@ static void RunMutationGuardTests(string tempRoot)
         "Expected a descriptor path outside its declared RPCS3 data-root layout to be rejected.");
 
     Console.WriteLine("Central RPCS3 mutation guard smoke PASS.");
+}
+
+static void RunMutationGuardReparseTests(string tempRoot)
+{
+    var suiteRoot = Path.Combine(
+        tempRoot,
+        "mutation-guard-reparse");
+    var root = Path.Combine(suiteRoot, "rpcs3");
+    var config = Path.Combine(root, "config");
+    var patches = Path.Combine(root, "patches");
+    Directory.CreateDirectory(config);
+    Directory.CreateDirectory(patches);
+
+    var install = new Rpcs3InstallDescriptor(
+        root,
+        Path.Combine(root, "rpcs3.exe"),
+        config,
+        Path.Combine(config, "custom_configs"),
+        patches,
+        Path.Combine(config, "patch_config.yml"),
+        root);
+    File.WriteAllBytes(install.ExePath, []);
+
+    var guard = new Rpcs3MutationGuard(() => false);
+    guard.EnsureCanMutate(
+        install,
+        [Path.Combine(config, "custom_configs", "config_TEST00001.yml")]);
+
+    var externalDataRoot = Path.Combine(suiteRoot, "external-data-root");
+    var externalConfig = Path.Combine(externalDataRoot, "config");
+    var externalPatches = Path.Combine(externalDataRoot, "patches");
+    Directory.CreateDirectory(externalConfig);
+    Directory.CreateDirectory(externalPatches);
+    var externalInstall = install with
+    {
+        ConfigPath = externalConfig,
+        CustomConfigsPath = Path.Combine(
+            externalConfig,
+            "custom_configs"),
+        PatchesPath = externalPatches,
+        PatchConfigPath = Path.Combine(
+            externalConfig,
+            "patch_config.yml"),
+        DataRootPath = externalDataRoot
+    };
+    guard.EnsureCanMutate(
+        externalInstall,
+        [Path.Combine(externalPatches, "imported_patch.yml")]);
+
+    AssertMutationBlocked(
+        () => guard.EnsureCanMutate(
+            install with
+            {
+                ExePath = Path.Combine(root, "missing", "rpcs3.exe")
+            },
+            [install.PatchConfigPath]),
+        Rpcs3MutationBlockReason.InvalidInstall,
+        "Expected a missing rpcs3.exe to invalidate the installation.");
+
+    var directoryExeRoot = Path.Combine(suiteRoot, "directory-exe");
+    var directoryExeConfig = Path.Combine(directoryExeRoot, "config");
+    var directoryExePatches = Path.Combine(directoryExeRoot, "patches");
+    Directory.CreateDirectory(directoryExeConfig);
+    Directory.CreateDirectory(directoryExePatches);
+    Directory.CreateDirectory(Path.Combine(directoryExeRoot, "rpcs3.exe"));
+    var directoryExeInstall = new Rpcs3InstallDescriptor(
+        directoryExeRoot,
+        Path.Combine(directoryExeRoot, "rpcs3.exe"),
+        directoryExeConfig,
+        Path.Combine(directoryExeConfig, "custom_configs"),
+        directoryExePatches,
+        Path.Combine(directoryExeConfig, "patch_config.yml"),
+        directoryExeRoot);
+    AssertMutationBlocked(
+        () => guard.EnsureCanMutate(
+            directoryExeInstall,
+            [directoryExeInstall.PatchConfigPath]),
+        Rpcs3MutationBlockReason.InvalidInstall,
+        "Expected a directory named rpcs3.exe to be rejected.");
+
+    var spoofedPatches = Path.Combine(suiteRoot, "spoofed-patches");
+    Directory.CreateDirectory(spoofedPatches);
+    AssertMutationBlocked(
+        () => guard.EnsureCanMutate(
+            install with
+            {
+                PatchesPath = spoofedPatches
+            },
+            [Path.Combine(spoofedPatches, "imported_patch.yml")]),
+        Rpcs3MutationBlockReason.InvalidInstall,
+        "Expected a patches path that does not match DataRoot to be rejected.");
+    AssertMutationBlocked(
+        () => guard.EnsureCanMutate(
+            install,
+            [Path.Combine(suiteRoot, "outside.yml")]),
+        Rpcs3MutationBlockReason.UnsafeTarget,
+        "Expected a canonical target outside config and patches to be rejected.");
+    AssertMutationBlocked(
+        () => guard.EnsureCanMutate(
+            install,
+            [install.PatchConfigPath, install.PatchConfigPath]),
+        Rpcs3MutationBlockReason.UnsafeTarget,
+        "Expected duplicate canonical mutation targets to be rejected.");
+
+    if (!OperatingSystem.IsWindows())
+    {
+        Console.WriteLine(
+            "Mutation guard junction cases SKIP (Windows-only); canonical non-junction cases PASS.");
+        return;
+    }
+
+    var externalEscapeRoot = Path.Combine(
+        suiteRoot,
+        "junction-escape-targets");
+    var configEscapeTarget = Path.Combine(
+        externalEscapeRoot,
+        "config");
+    var patchesEscapeTarget = Path.Combine(
+        externalEscapeRoot,
+        "patches");
+    Directory.CreateDirectory(configEscapeTarget);
+    Directory.CreateDirectory(patchesEscapeTarget);
+
+    var configJunction = Path.Combine(config, "escape");
+    CreateDirectoryJunction(configJunction, configEscapeTarget);
+    AssertMutationBlocked(
+        () => guard.EnsureCanMutate(
+            install,
+            [Path.Combine(configJunction, "escaped.yml")]),
+        Rpcs3MutationBlockReason.UnsafeTarget,
+        "Expected a junction inside config that resolves outside DataRoot to be rejected.");
+
+    var patchesJunction = Path.Combine(patches, "escape");
+    CreateDirectoryJunction(patchesJunction, patchesEscapeTarget);
+    AssertMutationBlocked(
+        () => guard.EnsureCanMutate(
+            install,
+            [Path.Combine(patchesJunction, "escaped.yml")]),
+        Rpcs3MutationBlockReason.UnsafeTarget,
+        "Expected a junction inside patches that resolves outside DataRoot to be rejected.");
+
+    var swapParent = Path.Combine(patches, "swap");
+    var swapEscapeTarget = Path.Combine(
+        externalEscapeRoot,
+        "swap");
+    Directory.CreateDirectory(swapParent);
+    Directory.CreateDirectory(swapEscapeTarget);
+    var swapTarget = Path.Combine(swapParent, "prepared_patch.yml");
+    var prepared = new PatchPreparedFile(
+        swapTarget,
+        BuildTransactionPatchCatalog(
+            new string('e', 40),
+            "TOCTOU Patch",
+            "TOCTOU Game",
+            "BLUS30000",
+            "01.00",
+            "0x00002000"),
+        PatchPreparedFileKind.PatchCatalog,
+        PatchSourceOrigin.Imported,
+        ExpectedEntryCount: 1);
+    var transaction = new PatchFileTransactionService();
+
+    AssertMutationBlocked(
+        () => transaction.Commit(
+            Path.Combine(config, "R3ConfigBackups"),
+            [prepared],
+            targets =>
+            {
+                var stagePath = Directory.EnumerateFiles(
+                        swapParent,
+                        "*.r3stage",
+                        SearchOption.TopDirectoryOnly)
+                    .Single();
+                File.Delete(stagePath);
+                Directory.Delete(swapParent);
+                CreateDirectoryJunction(
+                    swapParent,
+                    swapEscapeTarget);
+                guard.EnsureCanMutate(install, targets);
+            }),
+        Rpcs3MutationBlockReason.UnsafeTarget,
+        "Expected the transaction's final guard to reject a parent swapped to a junction after staging.");
+    Assert(!File.Exists(Path.Combine(
+               swapEscapeTarget,
+               Path.GetFileName(swapTarget))),
+        "A rejected TOCTOU transaction must not write through the replacement junction.");
+
+    Directory.Delete(configJunction);
+    Directory.Delete(patchesJunction);
+    Directory.Delete(swapParent);
+    Assert(!Directory.EnumerateFiles(
+            patches,
+            "*.r3stage",
+            SearchOption.AllDirectories).Any(),
+        "A rejected TOCTOU transaction must clean every patch transaction stage.");
+
+    Console.WriteLine(
+        "Canonical RPCS3 mutation guard and Windows junction smoke PASS.");
+}
+
+static void CreateDirectoryJunction(
+    string junctionPath,
+    string targetPath)
+{
+    if (!OperatingSystem.IsWindows())
+    {
+        throw new PlatformNotSupportedException(
+            "Directory junctions are only used by the Windows mutation-guard tests.");
+    }
+
+    var startInfo = new ProcessStartInfo
+    {
+        FileName = Path.Combine(
+            Environment.SystemDirectory,
+            "cmd.exe"),
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
+    };
+    startInfo.ArgumentList.Add("/d");
+    startInfo.ArgumentList.Add("/c");
+    startInfo.ArgumentList.Add("mklink");
+    startInfo.ArgumentList.Add("/J");
+    startInfo.ArgumentList.Add(junctionPath);
+    startInfo.ArgumentList.Add(targetPath);
+
+    using var process = Process.Start(startInfo)
+        ?? throw new InvalidOperationException(
+            "Could not start cmd.exe to create a test junction.");
+    var standardOutput = process.StandardOutput.ReadToEnd();
+    var standardError = process.StandardError.ReadToEnd();
+    process.WaitForExit();
+
+    if (process.ExitCode != 0 ||
+        !Directory.Exists(junctionPath))
+    {
+        throw new InvalidOperationException(
+            "Creating a required Windows test junction failed. " +
+            $"Exit code: {process.ExitCode}. Output: {standardOutput} Error: {standardError}");
+    }
 }
 
 static void RunArchitectureBoundaryTests()

@@ -60,7 +60,10 @@ public sealed class CanaryImportUseCase(
         {
             committedBackup = transaction.Commit(
                 Rpcs3AppPaths.BackupRoot(install),
-                [prepared.PreparedFile]);
+                [prepared.PreparedFile],
+                targets => mutationGuard.EnsureCanMutate(
+                    install,
+                    targets));
 
             var readBack = importService.ReadImportedPatchText(
                 targetPath);

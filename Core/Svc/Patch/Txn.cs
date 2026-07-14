@@ -6,41 +6,44 @@ using System.Text;
 using System.Text.Json;
 using R3Config.Mdl;
 
+#pragma warning disable IDE0130
+
 namespace R3Config.Svc;
 
-public sealed class PatchFileTransactionService
+public sealed class PatchFileTransactionService(
+    BackupService? backupService = null,
+    PatchCatalogReader? catalogReader = null,
+    PatchConfigReader? configReader = null,
+    Action<string, string>? commitFile = null)
 {
     private static readonly Encoding Utf8NoBom =
         new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
-    private readonly BackupService _backupService;
-    private readonly PatchCatalogReader _catalogReader;
-    private readonly PatchConfigReader _configReader;
-    private readonly Action<string, string> _commitFile;
+    private readonly BackupService _backupService =
+        backupService ?? new BackupService();
 
-    public PatchFileTransactionService(
-        BackupService? backupService = null,
-        PatchCatalogReader? catalogReader = null,
-        PatchConfigReader? configReader = null,
-        Action<string, string>? commitFile = null)
-    {
-        _backupService = backupService ?? new BackupService();
-        _catalogReader = catalogReader ?? new PatchCatalogReader();
-        _configReader = configReader ?? new PatchConfigReader();
-        _commitFile = commitFile ?? CommitStagedFile;
-    }
+    private readonly PatchCatalogReader _catalogReader =
+        catalogReader ?? new PatchCatalogReader();
+
+    private readonly PatchConfigReader _configReader =
+        configReader ?? new PatchConfigReader();
+
+    private readonly Action<string, string> _commitFile =
+        commitFile ?? CommitStagedFile;
 
     public BackupManifest Commit(
         string backupRootPath,
-        IReadOnlyList<PatchPreparedFile> preparedFiles)
+        IReadOnlyList<PatchPreparedFile> preparedFiles,
+        Action<IReadOnlyList<string>>? validateTargetsBeforeCommit = null)
     {
         if (preparedFiles.Count == 0)
         {
-            throw new InvalidOperationException("Patch file transaction is empty.");
+            throw new InvalidOperationException(
+                "Patch file transaction is empty.");
         }
 
         var files = NormalizeAndValidateTargets(preparedFiles);
-        var staged = new List<StagedPatchFile>();
+        List<StagedPatchFile> staged = [];
 
         try
         {
@@ -51,13 +54,22 @@ public sealed class PatchFileTransactionService
 
             var backup = _backupService.CreateBackup(
                 backupRootPath,
-                files.Select(file => file.TargetPath).ToArray());
+                [
+                    .. files.Select(file => file.TargetPath)
+                ]);
+
+            validateTargetsBeforeCommit?.Invoke(
+                [
+                    .. files.Select(file => file.TargetPath)
+                ]);
 
             try
             {
                 foreach (var file in staged)
                 {
-                    _commitFile(file.StagedPath, file.Prepared.TargetPath);
+                    _commitFile(
+                        file.StagedPath,
+                        file.Prepared.TargetPath);
                 }
 
                 return backup;
@@ -72,7 +84,9 @@ public sealed class PatchFileTransactionService
                 {
                     throw new InvalidOperationException(
                         "Patch file transaction failed and rollback also failed.",
-                        new AggregateException(commitException, restoreException));
+                        new AggregateException(
+                            commitException,
+                            restoreException));
                 }
 
                 throw;
@@ -87,17 +101,21 @@ public sealed class PatchFileTransactionService
         }
     }
 
-    private static IReadOnlyList<PatchPreparedFile> NormalizeAndValidateTargets(
+    private static List<PatchPreparedFile> NormalizeAndValidateTargets(
         IReadOnlyList<PatchPreparedFile> preparedFiles)
     {
-        var output = new List<PatchPreparedFile>(preparedFiles.Count);
-        var seenTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var output = new List<PatchPreparedFile>(
+            preparedFiles.Count);
+
+        var seenTargets = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
 
         foreach (var file in preparedFiles)
         {
             if (string.IsNullOrWhiteSpace(file.TargetPath))
             {
-                throw new ArgumentException("A transaction target path is empty.");
+                throw new ArgumentException(
+                    "A transaction target path is empty.");
             }
 
             if (string.IsNullOrWhiteSpace(file.Content))
@@ -107,19 +125,24 @@ public sealed class PatchFileTransactionService
             }
 
             var targetPath = Path.GetFullPath(file.TargetPath);
+
             if (!seenTargets.Add(targetPath))
             {
                 throw new InvalidOperationException(
                     $"Duplicate transaction target: {targetPath}");
             }
 
-            output.Add(file with { TargetPath = targetPath });
+            output.Add(file with
+            {
+                TargetPath = targetPath
+            });
         }
 
         return output;
     }
 
-    private StagedPatchFile StageAndValidate(PatchPreparedFile prepared)
+    private StagedPatchFile StageAndValidate(
+        PatchPreparedFile prepared)
     {
         var directory = Path.GetDirectoryName(prepared.TargetPath)
             ?? throw new InvalidOperationException(
@@ -133,17 +156,29 @@ public sealed class PatchFileTransactionService
 
         try
         {
-            File.WriteAllText(stagedPath, prepared.Content, Utf8NoBom);
+            File.WriteAllText(
+                stagedPath,
+                prepared.Content,
+                Utf8NoBom);
 
-            var readBack = File.ReadAllText(stagedPath, Encoding.UTF8);
-            if (!string.Equals(readBack, prepared.Content, StringComparison.Ordinal))
+            var readBack = File.ReadAllText(
+                stagedPath,
+                Encoding.UTF8);
+
+            if (!string.Equals(
+                    readBack,
+                    prepared.Content,
+                    StringComparison.Ordinal))
             {
                 throw new InvalidDataException(
                     $"Staged file read-back mismatch: {prepared.TargetPath}");
             }
 
             ValidateStagedFile(stagedPath, prepared);
-            return new StagedPatchFile(prepared, stagedPath);
+
+            return new StagedPatchFile(
+                prepared,
+                stagedPath);
         }
         catch
         {
@@ -159,41 +194,47 @@ public sealed class PatchFileTransactionService
         switch (prepared.Kind)
         {
             case PatchPreparedFileKind.PatchCatalog:
-            {
-                var read = _catalogReader.Read(
-                    stagedPath,
-                    prepared.CatalogSource);
-
-                if (!read.Succeeded)
                 {
-                    throw new InvalidDataException(
-                        read.Error ??
-                        $"Staged patch catalog is invalid: {prepared.TargetPath}");
-                }
+                    var read = _catalogReader.Read(
+                        stagedPath,
+                        prepared.CatalogSource);
 
-                if (prepared.ExpectedEntryCount is int expected &&
-                    read.Catalog.Entries.Count != expected)
-                {
-                    throw new InvalidDataException(
-                        $"Staged patch catalog entry count mismatch for {prepared.TargetPath}. " +
-                        $"Expected {expected}, actual {read.Catalog.Entries.Count}.");
-                }
+                    if (!read.Succeeded)
+                    {
+                        throw new InvalidDataException(
+                            read.Error ??
+                            $"Staged patch catalog is invalid: {prepared.TargetPath}");
+                    }
 
-                break;
-            }
+                    if (prepared.ExpectedEntryCount is int expected &&
+                        read.Catalog.Entries.Count != expected)
+                    {
+                        throw new InvalidDataException(
+                            $"Staged patch catalog entry count mismatch for {prepared.TargetPath}. " +
+                            $"Expected {expected}, actual {read.Catalog.Entries.Count}.");
+                    }
+
+                    break;
+                }
 
             case PatchPreparedFileKind.PatchConfig:
                 _configReader.Load(stagedPath);
                 break;
 
             case PatchPreparedFileKind.JsonMetadata:
-                using (var document = JsonDocument.Parse(File.ReadAllText(stagedPath, Encoding.UTF8)))
+                using (var document = JsonDocument.Parse(
+                           File.ReadAllText(
+                               stagedPath,
+                               Encoding.UTF8)))
                 {
-                    if (document.RootElement.ValueKind != JsonValueKind.Object)
+                    if (document.RootElement.ValueKind !=
+                        JsonValueKind.Object)
                     {
-                        throw new InvalidDataException("R3Config Patch metadata root must be a JSON object.");
+                        throw new InvalidDataException(
+                            "R3Config Patch metadata root must be a JSON object.");
                     }
                 }
+
                 break;
 
             default:
@@ -202,7 +243,9 @@ public sealed class PatchFileTransactionService
         }
     }
 
-    private static void CommitStagedFile(string stagedPath, string targetPath)
+    private static void CommitStagedFile(
+        string stagedPath,
+        string targetPath)
     {
         if (File.Exists(targetPath))
         {
@@ -229,22 +272,17 @@ public sealed class PatchFileTransactionService
         }
         catch
         {
-            // Best-effort staging cleanup. A transaction result never depends on it.
         }
     }
 
-    private sealed class StagedPatchFile
+    private sealed class StagedPatchFile(
+        PatchPreparedFile prepared,
+        string stagedPath)
     {
-        public StagedPatchFile(
-            PatchPreparedFile prepared,
-            string stagedPath)
-        {
-            Prepared = prepared;
-            StagedPath = stagedPath;
-        }
+        public PatchPreparedFile Prepared { get; } = prepared;
 
-        public PatchPreparedFile Prepared { get; }
-
-        public string StagedPath { get; }
+        public string StagedPath { get; } = stagedPath;
     }
 }
+
+#pragma warning restore IDE0130
