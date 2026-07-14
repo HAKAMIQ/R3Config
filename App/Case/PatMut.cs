@@ -60,6 +60,15 @@ public sealed class PatMut(
             ChtBndl.GetPaths(
                 install.PatPath,
                 selectedMatches));
+        if (selectedMatches.Any(match =>
+                match.Patch.Source ==
+                PatSrc.Cht))
+        {
+            declaredTargets.Add(
+                ChtBndl.GetPath(install.PatPath));
+            declaredTargets.Add(
+                ChtBndl.OldPath(install.PatPath));
+        }
         mutationGuard.CheckCan(
             install,
             declaredTargets,
@@ -195,6 +204,10 @@ public sealed class PatMut(
             result.Error,
             preparedFiles,
             messages);
+        foreach (var file in result.Extra)
+        {
+            preparedFiles.Add(file);
+        }
     }
 
     private static void AddPrep(

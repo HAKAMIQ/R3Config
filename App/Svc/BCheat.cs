@@ -14,14 +14,16 @@ public sealed record LibStRes(
     PrepFile? PrepFile,
     int PatNum,
     string Message,
-    string? Error);
+    string? Error,
+    IReadOnlyList<PrepFile> Extra);
 
 public sealed class ChtBndl
 {
     public const string BndlName = "cheats.yml";
-    // Kept only so older R3Config-owned libraries can be migrated. RPCS3 does
-    // not load this arbitrary filename while booting a game.
-    public const string ManName = "r3config_cheats_patch.yml";
+    // RPCS3 does not load either managed library name at game boot. The
+    // title-specific file remains the runtime target.
+    public const string ManName = "r3cht.yml";
+    public const string OldName = "r3config_cheats_patch.yml";
 
     public const string ManMark =
         "# R3Config managed RPCS3 cheat patches - do not edit while R3Config is running";
@@ -42,6 +44,13 @@ public sealed class ChtBndl
         return Path.Combine(
             patchesPath,
             ManName);
+    }
+
+    public static string OldPath(string patchesPath)
+    {
+        return Path.Combine(
+            patchesPath,
+            OldName);
     }
 
     public static string GetPath(
@@ -145,6 +154,7 @@ public sealed class ChtBndl
             [
                 .. bundledSelections
             ];
+            var extra = new List<PrepFile>();
 
             var existingText = string.Empty;
             if (File.Exists(targetPath))
@@ -182,33 +192,69 @@ public sealed class ChtBndl
                         Exact));
             }
 
-            // R3Config versions before the title-specific runtime fix wrote an
-            // inert r3config_cheats_patch.yml. RPCS3 only loads patch.yml,
-            // imported_patch.yml and <TITLE_ID>_patch.yml at game boot. Reuse
-            // compatible entries from the owned legacy file when the user next
-            // enables a cheat, but never treat an unmarked file as ours.
+            // Reuse compatible entries from the managed library. If only the
+            // legacy library exists, stage an exact validated copy under the
+            // new name in the same transaction as the runtime patch.
             var targetSerial = GetSer(bundledSelections[0])!;
-            var legacyPath = GetPath(patchesPath);
-            if (!legacyPath.Equals(
-                    targetPath,
-                    StringComparison.OrdinalIgnoreCase) &&
-                File.Exists(legacyPath) &&
-                IsMan(legacyPath))
+            var libraryPath = GetPath(patchesPath);
+            var legacyPath = OldPath(patchesPath);
+            string? readPath = null;
+            if (File.Exists(libraryPath) && IsMan(libraryPath))
             {
-                var legacyRead = _reader.Read(
-                    legacyPath,
-                    PatSrc.ManCht);
-
-                if (legacyRead.IsOk)
+                readPath = libraryPath;
+            }
+            else if (File.Exists(legacyPath) && IsMan(legacyPath))
+            {
+                if (File.Exists(libraryPath))
                 {
-                    selections.AddRange(
-                        legacyRead.Catalog.Entries
-                            .Where(entry => entry.GameTgt.Any(target =>
-                                string.Equals(
-                                    target.Serial,
-                                    targetSerial,
-                                    StringComparison.OrdinalIgnoreCase)))
-                            .Select(Exact));
+                    return Failure(
+                        targetPath,
+                        UiText.GetText(
+                            "Patch.CheatLibrary.UnmanagedConflict"));
+                }
+
+                readPath = legacyPath;
+            }
+
+            if (readPath is not null)
+            {
+                var libraryText = R3Bound.ReadUtf8(
+                    readPath,
+                    R3Limits.PatCatBy,
+                    Path.GetFileName(readPath));
+                var libraryRead = _reader.ReadText(
+                    libraryText,
+                    PatSrc.ManCht,
+                    readPath);
+
+                if (!libraryRead.IsOk)
+                {
+                    return Failure(
+                        targetPath,
+                        libraryRead.Error ??
+                        UiText.GetText(
+                            "Patch.ImportCanaryInvalidYaml"));
+                }
+
+                selections.AddRange(
+                    libraryRead.Catalog.Entries
+                        .Where(entry => entry.GameTgt.Any(target =>
+                            string.Equals(
+                                target.Serial,
+                                targetSerial,
+                                StringComparison.OrdinalIgnoreCase)))
+                        .Select(Exact));
+
+                if (readPath.Equals(
+                        legacyPath,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    extra.Add(new PrepFile(
+                        libraryPath,
+                        libraryText,
+                        PrepKind.PatCat,
+                        PatSrc.ManCht,
+                        libraryRead.Catalog.Entries.Count));
                 }
             }
 
@@ -256,7 +302,8 @@ public sealed class ChtBndl
                     compiled.SelNum,
                     UiText.Fmt(
                         "Patch.CheatLibrary.Ready",
-                        compiled.SelNum));
+                        compiled.SelNum),
+                    extra);
             }
 
             var validation = _reader.ReadText(
@@ -286,7 +333,8 @@ public sealed class ChtBndl
                 UiText.Fmt(
                     "Patch.CheatLibrary.Prepared",
                     bundledSelections.Length,
-                    compiled.SelNum));
+                    compiled.SelNum),
+                extra);
         }
         catch (Exception ex) when (
             ex is IOException or
@@ -443,7 +491,8 @@ public sealed class ChtBndl
         string targetPath,
         PrepFile? preparedFile,
         int patchCount,
-        string message)
+        string message,
+        IReadOnlyList<PrepFile>? extra = null)
     {
         return new LibStRes(
             true,
@@ -451,7 +500,8 @@ public sealed class ChtBndl
             preparedFile,
             patchCount,
             message,
-            null);
+            null,
+            extra ?? []);
     }
 
     private static LibStRes Failure(
@@ -464,7 +514,8 @@ public sealed class ChtBndl
             null,
             0,
             error,
-            error);
+            error,
+            []);
     }
 
 }

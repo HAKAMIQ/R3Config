@@ -11,6 +11,14 @@ public static class R3Paths
     {
         return Path.Combine(
             install.CfgPath,
+            "R3Bkp");
+    }
+
+    public static string OldBkp(
+        R3Inst install)
+    {
+        return Path.Combine(
+            install.CfgPath,
             "R3ConfigBackups");
     }
 
@@ -28,5 +36,13 @@ public static class R3Paths
         return Path.Combine(
             install.PatPath,
             PatAuth.MetaName);
+    }
+
+    public static string HCanOld(
+        R3Inst install)
+    {
+        return Path.Combine(
+            install.PatPath,
+            PatAuth.OldName);
     }
 }

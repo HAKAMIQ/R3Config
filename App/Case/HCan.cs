@@ -57,7 +57,8 @@ public sealed class HCanCase(
             install,
             [
                 R3Paths.ImpPat(install),
-                R3Paths.HCanMeta(install)
+                R3Paths.HCanMeta(install),
+                R3Paths.HCanOld(install)
             ],
             [R3Paths.BkpRoot(install)]);
     }

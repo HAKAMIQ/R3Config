@@ -1535,7 +1535,8 @@ public sealed class HashExt
 public sealed class PatAuth
 {
     public const string PatVer = "1.2";
-    public const string MetaName = "r3config_hcanary.json";
+    public const string MetaName = "r3hcan.json";
+    public const string OldName = "r3config_hcanary.json";
 
     private static readonly Regex Pattern = new(
         @"^(?<kind>PPU|SPU)-(?<hash>[0-9a-fA-F]{40})$",
@@ -1800,7 +1801,7 @@ public sealed class PatAuth
         var root = (YamlMappingNode)yaml.Documents[0].RootNode;
         var anchors = ReadAnc(root);
         var output = new List<HCanStor>();
-        var metadata = ReadMeta(MetaPath(path));
+        var metadata = ReadMeta(path);
         foreach (var (keyNode, valueNode) in root.Children)
         {
             var hashKey = Scalar(keyNode);
@@ -1899,7 +1900,7 @@ public sealed class PatAuth
         }
 
         var metadataPath = MetaPath(importedPatchPath);
-        var metadata = ReadMeta(metadataPath);
+        var metadata = ReadMeta(importedPatchPath);
         if (!saveAsNew && !string.IsNullOrWhiteSpace(originalIdentity)) metadata.Remove(originalIdentity);
         metadata[newIdentity] = new LocMeta(
             draft.PatType,
@@ -1942,7 +1943,7 @@ public sealed class PatAuth
             throw new InvalidDataException(read.Error ?? "Updated imported_patch.yml is invalid.");
         }
         var metadataPath = MetaPath(importedPatchPath);
-        var metadata = ReadMeta(metadataPath);
+        var metadata = ReadMeta(importedPatchPath);
         metadata.Remove(identity);
         var backup = _Txn.Commit(backupRootPath,
         [
@@ -1978,7 +1979,7 @@ public sealed class PatAuth
 
     public PatCat Apply(PatCat catalog, string importedPatchPath)
     {
-        var metadata = ReadMeta(MetaPath(importedPatchPath));
+        var metadata = ReadMeta(importedPatchPath);
         if (metadata.Count == 0) return catalog;
         return catalog with
         {
@@ -1999,7 +2000,18 @@ public sealed class PatAuth
     private static string MetaPath(string importedPatchPath) =>
         Path.Combine(Path.GetDirectoryName(Path.GetFullPath(importedPatchPath))!, MetaName);
 
-    private static Dictionary<string, LocMeta> ReadMeta(string path)
+    private static string OldMeta(string importedPatchPath) =>
+        Path.Combine(Path.GetDirectoryName(Path.GetFullPath(importedPatchPath))!, OldName);
+
+    private static Dictionary<string, LocMeta> ReadMeta(string importedPatchPath)
+    {
+        var current = MetaPath(importedPatchPath);
+        return File.Exists(current)
+            ? ReadOne(current)
+            : ReadOne(OldMeta(importedPatchPath));
+    }
+
+    private static Dictionary<string, LocMeta> ReadOne(string path)
     {
         if (!File.Exists(path) || new FileInfo(path).Length == 0)
         {

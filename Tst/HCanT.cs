@@ -140,6 +140,9 @@ internal static class HCanTst
             first.Ins.Add(new HCanInst { Op = "load", Address = "SharedCode", Value = string.Empty });
             var saved = service.Save(path, backup, first);
             Assert(saved.PatNum == 1 && File.Exists(path), "Saving should create imported_patch.yml.");
+            Assert(File.Exists(Path.Combine(patches, PatAuth.MetaName)) &&
+                   !File.Exists(Path.Combine(patches, PatAuth.OldName)),
+                "A new H-Canary save must write only r3hcan.json.");
 
             var bytes = File.ReadAllBytes(path);
             Assert(!(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF), "imported_patch.yml must be UTF-8 without BOM.");
@@ -179,6 +182,24 @@ internal static class HCanTst
 
             service.Delete(path, backup, merged.Single(item => item.Draft.PatName == "Other Patch").Identity);
             Assert(service.Load(path).Count == 1, "Deleting one custom Patch must preserve other patches.");
+
+            var oldDir = Path.Combine(temp, "old");
+            Directory.CreateDirectory(oldDir);
+            var oldPat = Path.Combine(oldDir, "imported_patch.yml");
+            var oldBkp = Path.Combine(temp, "old-bkp");
+            service.Save(oldPat, oldBkp, GoodDrft());
+            var newMeta = Path.Combine(oldDir, PatAuth.MetaName);
+            var oldMeta = Path.Combine(oldDir, PatAuth.OldName);
+            File.Move(newMeta, oldMeta);
+            var oldLoad = service.Load(oldPat).Single();
+            Assert(oldLoad.Draft.PatName == GoodDrft().PatName,
+                "Legacy r3config_hcanary.json metadata must remain readable.");
+            oldLoad.Draft.Notes = "migrated";
+            service.Save(oldPat, oldBkp, oldLoad.Draft, oldLoad.Identity);
+            Assert(File.Exists(newMeta) && File.Exists(oldMeta),
+                "Saving legacy H-Canary data must transactionally write r3hcan.json without deleting the old file.");
+            Assert(service.Load(oldPat).Single().Draft.Notes == "migrated",
+                "Once written, r3hcan.json must be authoritative over the retained legacy metadata.");
         }
         finally { Directory.Delete(temp, true); }
     }
@@ -193,6 +214,10 @@ internal static class HCanTst
             var baseline = new PatAuth();
             baseline.Save(path, backupRoot, GoodDrft());
             var original = File.ReadAllText(path);
+            var newMeta = Path.Combine(temp, PatAuth.MetaName);
+            var oldMeta = Path.Combine(temp, PatAuth.OldName);
+            File.Move(newMeta, oldMeta);
+            var oldBytes = File.ReadAllBytes(oldMeta);
             Assert(Directory.EnumerateFiles(backupRoot, "manifest.json", SearchOption.AllDirectories).Any(), "Save should create a Backup manifest.");
 
             var failingTransaction = new PatTxn(commitFile: (_, _) => throw new IOException("simulated atomic replace failure"));
@@ -200,6 +225,10 @@ internal static class HCanTst
             var changed = GoodDrft(); changed.PatName = "Rollback Patch"; changed.ExeHash = "PPU-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
             MustFail<IOException>(() => failing.Save(path, backupRoot, changed), "A failed atomic commit should surface the original failure.");
             Assert(File.ReadAllText(path) == original, "Transaction failure must roll back imported_patch.yml exactly.");
+            Assert(!File.Exists(newMeta) &&
+                   File.Exists(oldMeta) &&
+                   File.ReadAllBytes(oldMeta).SequenceEqual(oldBytes),
+                "A failed H-Canary migration must leave the legacy metadata byte-for-byte unchanged.");
         }
         finally { Directory.Delete(temp, true); }
     }

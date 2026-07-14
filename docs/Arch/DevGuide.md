@@ -183,7 +183,8 @@ sequenceDiagram
 | `<TITLE_ID>_patch.yml` | Title-specific resident loaded at boot | قراءة؛ R3Config يكتب cheats فقط مع managed marker ويرفض ملف مستخدم غير معلّم |
 | `can.yml` | Bundled Canary preview | بيانات مشحونة؛ لا تُنسخ إلا للمختار |
 | `cheats.yml` | Bundled Cheats preview | third-party catalog مع provenance |
-| `r3config_cheats_patch.yml` | Legacy migration input | قراءة للترحيل فقط؛ RPCS3 لا يحمّله عند إقلاع اللعبة |
+| `r3cht.yml` | Managed migration library | يكتب داخل المعاملة؛ RPCS3 لا يحمّله عند إقلاع اللعبة |
+| `r3config_cheats_patch.yml` | Legacy migration input | قراءة للترحيل فقط ولا يُحذف تلقائيًا |
 
 `PatchCatResult.SourceStatuses` هو مصدر تشخيص الواجهة لكل ملف على حدة. كل حالة
 تحتفظ بالاسم والمسار والملكية والوجود ونجاح القراءة وعدد الإدخالات ورسالة الخطأ.

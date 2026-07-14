@@ -228,8 +228,12 @@ manifest واحد. يسجل أيضًا أن الملف لم يكن موجودً�
 | `config/patch_config.yml` | تفعيل أو تعطيل الاختيار | يحافظ على الإدخالات والقيم الأخرى |
 | `patches/imported_patch.yml` | تعريفات Canary أو H-Canary المختارة | YAML صالح ومعاملة ونسخة احتياطية |
 | `patches/<TITLE_ID>_patch.yml` | تعريفات الغش المختارة | لا يكتب فوق ملف مستخدم غير معلّم |
-| `patches/r3config_hcanary.json` | metadata لمسودات H-Canary | مع `imported_patch.yml` في معاملة واحدة |
-| `config/R3ConfigBackups/` | manifests ومحتوى النسخ | استعادة كاملة للحالة السابقة |
+| `patches/r3hcan.json` | metadata لمسودات H-Canary | مع `imported_patch.yml` في معاملة واحدة |
+| `patches/r3config_hcanary.json` | metadata قديمة | قراءة عند غياب الاسم الجديد، ولا تُحذف تلقائيًا |
+| `patches/r3cht.yml` | مكتبة الغش المُدارة | ترحيل آمن؛ ملف `<TITLE_ID>_patch.yml` هو هدف runtime |
+| `patches/r3config_cheats_patch.yml` | مكتبة غش قديمة | قراءة للترحيل فقط، ولا تُحذف تلقائيًا |
+| `config/R3Bkp/` | manifests ومحتوى النسخ الجديدة | استعادة كاملة للحالة السابقة |
+| `config/R3ConfigBackups/` | نسخ قديمة | تبقى قابلة للعرض والاستعادة |
 
 ### 10.3 تحديد مجلد بيانات RPCS3
 

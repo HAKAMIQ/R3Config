@@ -9,11 +9,14 @@
 | `patches/patch.yml` | RPCS3 | read-only دائمًا |
 | `patches/imported_patch.yml` | مشترك | تعديل محافظ، backup، validation |
 | `patches/<TITLE_ID>_patch.yml` | R3Config فقط إذا marker صحيح | selected exact cheats للعبة واحدة؛ يرفض الملف غير المعلّم |
-| `patches/r3config_cheats_patch.yml` | R3Config legacy إذا marker صحيح | قراءة للترحيل فقط؛ لا يُعامل كملف runtime |
+| `patches/r3cht.yml` | R3Config إذا marker صحيح | مكتبة مُدارة؛ لا يُعامل كملف runtime |
+| `patches/r3config_cheats_patch.yml` | R3Config legacy إذا marker صحيح | قراءة للترحيل فقط؛ لا يُحذف تلقائيًا |
 | `config/patch_config.yml` | مشترك | enabled state فقط مع حفظ الباقي |
 | `config/custom_configs/config_<SERIAL>.yml` | مشترك | selected config paths فقط |
-| `patches/r3config_hcanary.json` | R3Config | metadata متزامن مع authored catalog |
-| `config/R3ConfigBackups/` | R3Config | manifests والاستعادة |
+| `patches/r3hcan.json` | R3Config | metadata متزامن مع authored catalog |
+| `patches/r3config_hcanary.json` | R3Config legacy | fallback عند غياب الاسم الجديد؛ لا يُحذف تلقائيًا |
+| `config/R3Bkp/` | R3Config | manifests الجديدة والاستعادة |
+| `config/R3ConfigBackups/` | R3Config legacy | العرض والاستعادة فقط |
 
 ملف بلا owner وعقد واضح لا يجوز أن يصبح mutation target.
 

@@ -12,7 +12,12 @@ public sealed class BkpCase(
         R3Inst install)
     {
         return backupService.ListBkp(
-            R3Paths.BkpRoot(install));
+                R3Paths.BkpRoot(install))
+            .Concat(backupService.ListBkp(
+                R3Paths.OldBkp(install)))
+            .OrderByDescending(item => item.MadeAt)
+            .ThenBy(item => item.DirPath, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     public void Restore(
@@ -23,10 +28,13 @@ public sealed class BkpCase(
             R3Paths.BkpRoot(install));
         var snapshotPath = Path.GetFullPath(
             snapshot.DirPath);
-        if (!IsChild(backupRoot, snapshotPath))
+        var oldRoot = Path.GetFullPath(
+            R3Paths.OldBkp(install));
+        if (!IsChild(backupRoot, snapshotPath) &&
+            !IsChild(oldRoot, snapshotPath))
         {
             throw new InvalidDataException(
-                "The selected backup snapshot is outside this RPCS3 installation's R3ConfigBackups directory.");
+                "The selected backup snapshot is outside this RPCS3 installation's managed backup directories.");
         }
 
         mutationGuard.CheckCan(

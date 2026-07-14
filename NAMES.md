@@ -115,6 +115,9 @@ RPCS3_CONFIG_DIR
 | `Script/Verify-PortableRelease.ps1` | `Script/PortChk.ps1` |
 | `Script/Verify-SourceClean.ps1` | `Script/SrcChk.ps1` |
 | `Script/Verify-SourceClean.cmd` | `Script/SrcChk.cmd` |
+| `config/R3ConfigBackups` | `config/R3Bkp` |
+| `patches/r3config_hcanary.json` | `patches/r3hcan.json` |
+| `patches/r3config_cheats_patch.yml` | `patches/r3cht.yml` |
 
 Source-file and symbol mappings are appended to this registry before each
 semantic rename layer is applied.

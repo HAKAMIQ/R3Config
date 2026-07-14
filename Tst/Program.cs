@@ -913,7 +913,7 @@ static void Mut_Cmd(string tempRoot)
     main.Advanced.LoadBkp(
     [
         new BkpSnap(
-            Path.Combine(configPath, "R3ConfigBackups", "snapshot"),
+            Path.Combine(configPath, "R3Bkp", "snapshot"),
             DateTimeOffset.UtcNow,
             [new BkpEntry(plan.CfgPath, "backup.yml", true)])
     ]);
@@ -1397,7 +1397,7 @@ static void Mut_Link(string tempRoot)
         EntNum: 1);
     MutFails(
         () => new PatTxn().Commit(
-            Path.Combine(config, "R3ConfigBackups"),
+            Path.Combine(config, "R3Bkp"),
             [stagePrepared],
             (_, backupRoot, targets) =>
                 guard.CheckCan(
@@ -1499,7 +1499,7 @@ static void Mut_Link(string tempRoot)
 
     MutFails(
         () => transaction.Commit(
-            Path.Combine(config, "R3ConfigBackups"),
+            Path.Combine(config, "R3Bkp"),
             [prepared],
             (phase, backupRoot, targets) =>
             {
@@ -3138,6 +3138,9 @@ static void Cht_Bndl(string tempRoot)
     Directory.CreateDirectory(dataPath);
     Directory.CreateDirectory(patchesPath);
     File.WriteAllText(Path.Combine(dataPath, ChtBndl.BndlName), sourceText);
+    var oldLib = Path.Combine(patchesPath, ChtBndl.OldName);
+    var oldText = ChtBndl.ManMark + "\r\n" + compiled.PatText;
+    File.WriteAllText(oldLib, oldText);
 
     var service = new ChtBndl();
     var managedPath = Path.Combine(
@@ -3156,32 +3159,40 @@ static void Cht_Bndl(string tempRoot)
         [matches.Single(match => match.Patch.Title == "Infinite Health")]);
     Assert(stagedFirst.IsOk &&
            stagedFirst.PrepFile is not null &&
+           stagedFirst.Extra.Count == 1 &&
+           stagedFirst.Extra[0].TgtPath.Equals(
+               ChtBndl.GetPath(patchesPath),
+               StringComparison.OrdinalIgnoreCase) &&
            !File.Exists(managedPath),
-        "Expected Cheat preparation to produce validated staged content without touching the target.");
+        $"Expected Cheat preparation to stage both the runtime target and legacy-library migration without touching disk. Error={stagedFirst.Error}; Extra={stagedFirst.Extra.Count}");
 
     var cheatTxn = new PatTxn();
     var cheatBackupRoot = Path.Combine(
         libraryRoot,
         "rpcs3",
         "config",
-        "R3ConfigBackups");
+        "R3Bkp");
     var firstBackup = cheatTxn.Commit(
         cheatBackupRoot,
-        [stagedFirst.PrepFile!]);
+        [stagedFirst.PrepFile!, .. stagedFirst.Extra]);
     Assert(File.Exists(managedPath) &&
-           firstBackup.Files.Single().Existed == false,
+           firstBackup.Files.Single(file => file.TgtPath.Equals(
+               managedPath,
+               StringComparison.OrdinalIgnoreCase)).Existed == false,
         "Expected first exact cheat preparation to commit through the transaction with Existed=false backup state.");
-    Assert(!File.Exists(Path.Combine(
-            patchesPath,
-            ChtBndl.ManName)),
-        "Expected Cheat preparation not to create the legacy filename that RPCS3 ignores at boot.");
+    var newLib = ChtBndl.GetPath(patchesPath);
+    Assert(File.Exists(newLib) &&
+           File.Exists(oldLib) &&
+           File.ReadAllBytes(newLib).SequenceEqual(File.ReadAllBytes(oldLib)),
+        "Expected r3cht.yml to migrate byte-for-byte inside the transaction while retaining the old library.");
 
     var stagedSecond = service.Prep(
         patchesPath,
         libraryRoot,
         [matches.Single(match => match.Patch.Title == "Max Orbs")]);
     Assert(stagedSecond.IsOk &&
-           stagedSecond.PrepFile is not null,
+           stagedSecond.PrepFile is not null &&
+           stagedSecond.Extra.Count == 0,
         "Expected second exact cheat preparation to produce transaction content: " + stagedSecond.Error);
     var secondBackup = cheatTxn.Commit(
         cheatBackupRoot,
@@ -3205,7 +3216,7 @@ static void Pat_Txn(string tempRoot)
     var root = Path.Combine(tempRoot, "patch-transaction-smoke");
     var patchesPath = Path.Combine(root, "patches");
     var configPath = Path.Combine(root, "config");
-    var backupRoot = Path.Combine(configPath, "R3ConfigBackups");
+    var backupRoot = Path.Combine(configPath, "R3Bkp");
     Directory.CreateDirectory(patchesPath);
     Directory.CreateDirectory(configPath);
 
@@ -4913,10 +4924,13 @@ static void Bkp_All(
     IReadOnlyList<CfgChg> selectedChanges)
 {
     var backupService = new BkpSvc();
-    var backup = backupService.BuildBkp(Path.Combine(install.CfgPath, "R3ConfigBackups"), [plan.CfgPath]);
-    var secondBackup = backupService.BuildBkp(Path.Combine(install.CfgPath, "R3ConfigBackups"), [plan.CfgPath]);
-    Assert(backupService.ListBkp(Path.Combine(install.CfgPath, "R3ConfigBackups")).Count == 2,
-        "Expected two backups created within the same second to have unique directories.");
+    var oldRoot = R3Paths.OldBkp(install);
+    var newRoot = R3Paths.BkpRoot(install);
+    var backup = backupService.BuildBkp(oldRoot, [plan.CfgPath]);
+    var secondBackup = backupService.BuildBkp(newRoot, [plan.CfgPath]);
+    var backupCase = new BkpCase(backupService, new MutGuard());
+    Assert(backupCase.List(install).Count == 2,
+        "Expected backups from both R3Bkp and R3ConfigBackups to remain discoverable.");
     Assert(backup.Files[0].BkpPath != secondBackup.Files[0].BkpPath,
         "Expected backup file paths to be unique.");
     R3Yaml.Apply(plan.CfgPath, selectedChanges);
@@ -4934,10 +4948,12 @@ static void Bkp_All(
     Assert(R3Yaml.ReadVal(plan.CfgPath, "Video", "Vblank Rate") is null,
         "Expected unchecked Vblank not to be written.");
 
-    var backups = backupService.ListBkp(Path.Combine(install.CfgPath, "R3ConfigBackups"));
-    Assert(backups.Count == 2, "Expected persisted backups to be discoverable.");
+    var backups = backupCase.List(install);
+    Assert(backups.Count == 2, "Expected legacy and current persisted backups to be discoverable together.");
 
-    backupService.Restore(backup);
+    backupCase.Restore(
+        install,
+        backupService.ListBkp(oldRoot).Single());
     Assert(!File.Exists(plan.CfgPath), "Expected restore to remove a file that did not exist before backup.");
 }
 
@@ -4962,7 +4978,7 @@ static void Cfg_All(
     });
     try
     {
-        failingConfigApply.Apply(existingCustomPlan, selectedChanges, Path.Combine(install.CfgPath, "R3ConfigBackups"));
+        failingConfigApply.Apply(existingCustomPlan, selectedChanges, R3Paths.BkpRoot(install));
         throw new InvalidOperationException("Expected config apply failure to be surfaced.");
     }
     catch (UnauthorizedAccessException)
@@ -5496,7 +5512,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     var backupService = new BkpSvc();
     var missingPatchConfigApplyResult = new PatApply().Apply(
         missingPatchConfigApplyPlan,
-        Path.Combine(env.Install.CfgPath, "R3ConfigBackups"));
+        R3Paths.BkpRoot(env.Install));
     Assert(!missingPatchConfigApplyResult.Backup.Files.Single().Existed,
         "Expected missing patch_config.yml backup entry to record Existed=false.");
     Assert(new CfgRead().IsOn(patchConfigPreviewPath, missingPatchConfigApplyPlan.Changes.Single()),
@@ -5550,7 +5566,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         "Expected exact Canary patches to be planned when explicitly selected by the user.");
 
     var patchApplyService = new PatApply();
-    var patchBackupRoot = Path.Combine(env.Install.CfgPath, "R3ConfigBackups");
+    var patchBackupRoot = R3Paths.BkpRoot(env.Install);
     var patchApplyResult = patchApplyService.Apply(patchApplyPlan, patchBackupRoot);
     Assert(patchApplyResult.Backup.Files.Single().TgtPath == patchConfigPreviewPath,
         "Expected patch_config.yml to be backed up before write.");
