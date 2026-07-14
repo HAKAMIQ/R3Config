@@ -1009,6 +1009,98 @@ static void RunMutationGuardReparseTests(string tempRoot)
         install,
         [Path.Combine(config, "custom_configs", "config_TEST00001.yml")]);
 
+    var configOnlyRoot = Path.Combine(
+        suiteRoot,
+        "config-only");
+    Directory.CreateDirectory(Path.Combine(configOnlyRoot, "config"));
+    File.WriteAllBytes(
+        Path.Combine(configOnlyRoot, "rpcs3.exe"),
+        []);
+    var configOnly = Rpcs3InstallService.FromExePath(
+        Path.Combine(configOnlyRoot, "rpcs3.exe"));
+    guard.EnsureCanMutate(
+        configOnly,
+        [Path.Combine(
+            configOnly.CustomConfigsPath,
+            "config_TEST00002.yml")]);
+    var configOnlyTarget = Path.Combine(
+        configOnly.CustomConfigsPath,
+        "config_TEST00002.yml");
+    var configOnlyChange = new ConfigChange(
+        "Video",
+        "Write Color Buffers",
+        "true",
+        "Write Color Buffers",
+        null,
+        RecommendationRisk.Required);
+    var configOnlyPlan = new ConfigPlan(
+        "TEST00002",
+        "Config Only Game",
+        configOnlyTarget,
+        [],
+        new RecStateSummary(
+            "TEST00002",
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            []),
+        RequiresBackup: true);
+    new ConfigUseCase(
+            new PlanService(),
+            new ConfigApplyService(),
+            guard)
+        .Apply(
+            configOnlyPlan,
+            [configOnlyChange],
+            configOnly);
+    Assert(File.Exists(configOnlyTarget),
+        "Expected a config mutation to succeed when patches does not exist.");
+    Assert(!Directory.Exists(configOnly.PatchesPath),
+        "Expected config mutation validation not to require or create patches.");
+
+    var patchOnlyRoot = Path.Combine(
+        suiteRoot,
+        "patch-only");
+    Directory.CreateDirectory(Path.Combine(patchOnlyRoot, "patches"));
+    File.WriteAllBytes(
+        Path.Combine(patchOnlyRoot, "rpcs3.exe"),
+        []);
+    var patchOnly = Rpcs3InstallService.FromExePath(
+        Path.Combine(patchOnlyRoot, "rpcs3.exe"));
+    guard.EnsureCanMutate(
+        patchOnly,
+        [Path.Combine(
+            patchOnly.PatchesPath,
+            "imported_patch.yml")]);
+    var patchOnlyTarget = Path.Combine(
+        patchOnly.PatchesPath,
+        "imported_patch.yml");
+    var patchOnlyPrepared = new PatchPreparedFile(
+        patchOnlyTarget,
+        BuildTransactionPatchCatalog(
+            new string('f', 40),
+            "Patch Only Test",
+            "Patch Only Game",
+            "BLUS30003",
+            "01.00",
+            "0x00002030"),
+        PatchPreparedFileKind.PatchCatalog,
+        PatchSourceOrigin.Imported,
+        ExpectedEntryCount: 1);
+    new PatchFileTransactionService().Commit(
+        Rpcs3AppPaths.BackupRoot(patchOnly),
+        [patchOnlyPrepared],
+        (_, backupRoot, targets) =>
+            guard.EnsureCanMutate(
+                patchOnly,
+                targets,
+                [backupRoot]));
+    Assert(File.Exists(patchOnlyTarget),
+        "Expected a patch mutation to succeed without a pre-existing config directory.");
+
     var externalDataRoot = Path.Combine(suiteRoot, "external-data-root");
     var externalConfig = Path.Combine(externalDataRoot, "config");
     var externalPatches = Path.Combine(externalDataRoot, "patches");
@@ -1122,6 +1214,106 @@ static void RunMutationGuardReparseTests(string tempRoot)
         Rpcs3MutationBlockReason.UnsafeTarget,
         "Expected a junction inside patches that resolves outside DataRoot to be rejected.");
 
+    var stageEscapeTarget = Path.Combine(
+        externalEscapeRoot,
+        "before-stage");
+    Directory.CreateDirectory(stageEscapeTarget);
+    var stageParent = Path.Combine(patches, "before-stage");
+    CreateDirectoryJunction(stageParent, stageEscapeTarget);
+    var stageTarget = Path.Combine(stageParent, "stage_patch.yml");
+    var stagePrepared = new PatchPreparedFile(
+        stageTarget,
+        BuildTransactionPatchCatalog(
+            new string('d', 40),
+            "Stage Guard Patch",
+            "Stage Guard Game",
+            "BLUS30001",
+            "01.00",
+            "0x00002010"),
+        PatchPreparedFileKind.PatchCatalog,
+        PatchSourceOrigin.Imported,
+        ExpectedEntryCount: 1);
+    AssertMutationBlocked(
+        () => new PatchFileTransactionService().Commit(
+            Path.Combine(config, "R3ConfigBackups"),
+            [stagePrepared],
+            (_, backupRoot, targets) =>
+                guard.EnsureCanMutate(
+                    install,
+                    targets,
+                    [backupRoot])),
+        Rpcs3MutationBlockReason.UnsafeTarget,
+        "Expected a junction present before staging to be rejected before any external stage file is created.");
+    Assert(!Directory.EnumerateFileSystemEntries(
+            stageEscapeTarget)
+            .Any(),
+        "Expected before-stage rejection to leave the external junction target untouched.");
+    Directory.Delete(stageParent);
+
+    var backupPhaseParent = Path.Combine(
+        patches,
+        "backup-phase");
+    Directory.CreateDirectory(backupPhaseParent);
+    var backupPhaseTarget = Path.Combine(
+        backupPhaseParent,
+        "backup_patch.yml");
+    File.WriteAllText(
+        backupPhaseTarget,
+        BuildTransactionPatchCatalog(
+            new string('c', 40),
+            "Original Backup Guard Patch",
+            "Backup Guard Game",
+            "BLUS30002",
+            "01.00",
+            "0x00002020"));
+    var backupPrepared = new PatchPreparedFile(
+        backupPhaseTarget,
+        BuildTransactionPatchCatalog(
+            new string('c', 40),
+            "Updated Backup Guard Patch",
+            "Backup Guard Game",
+            "BLUS30002",
+            "01.00",
+            "0x00002024"),
+        PatchPreparedFileKind.PatchCatalog,
+        PatchSourceOrigin.Imported,
+        ExpectedEntryCount: 1);
+    var unsafeBackupRoot = Path.Combine(
+        config,
+        "UnsafeBkp");
+    var externalBackupRoot = Path.Combine(
+        externalEscapeRoot,
+        "backup-root");
+    Directory.CreateDirectory(externalBackupRoot);
+    var backupBefore = File.ReadAllBytes(backupPhaseTarget);
+    AssertMutationBlocked(
+        () => new PatchFileTransactionService().Commit(
+            unsafeBackupRoot,
+            [backupPrepared],
+            (phase, backupRoot, targets) =>
+            {
+                if (phase == PatchTransactionPhase.BeforeBackup &&
+                    !Directory.Exists(unsafeBackupRoot))
+                {
+                    CreateDirectoryJunction(
+                        unsafeBackupRoot,
+                        externalBackupRoot);
+                }
+
+                guard.EnsureCanMutate(
+                    install,
+                    targets,
+                    [backupRoot]);
+            }),
+        Rpcs3MutationBlockReason.UnsafeTarget,
+        "Expected a backup root changed to a junction before backup to be rejected before external reads or writes.");
+    Assert(File.ReadAllBytes(backupPhaseTarget).SequenceEqual(
+               backupBefore) &&
+           !Directory.EnumerateFileSystemEntries(
+               externalBackupRoot).Any(),
+        "Expected before-backup rejection to preserve the target and leave the external backup directory untouched.");
+    Directory.Delete(unsafeBackupRoot);
+
     var swapParent = Path.Combine(patches, "swap");
     var swapEscapeTarget = Path.Combine(
         externalEscapeRoot,
@@ -1147,8 +1339,17 @@ static void RunMutationGuardReparseTests(string tempRoot)
         () => transaction.Commit(
             Path.Combine(config, "R3ConfigBackups"),
             [prepared],
-            targets =>
+            (phase, backupRoot, targets) =>
             {
+                if (phase != PatchTransactionPhase.BeforeCommit)
+                {
+                    guard.EnsureCanMutate(
+                        install,
+                        targets,
+                        [backupRoot]);
+                    return;
+                }
+
                 var stagePath = Directory.EnumerateFiles(
                         swapParent,
                         "*.r3stage",
@@ -1159,7 +1360,10 @@ static void RunMutationGuardReparseTests(string tempRoot)
                 CreateDirectoryJunction(
                     swapParent,
                     swapEscapeTarget);
-                guard.EnsureCanMutate(install, targets);
+                guard.EnsureCanMutate(
+                    install,
+                    targets,
+                    [backupRoot]);
             }),
         Rpcs3MutationBlockReason.UnsafeTarget,
         "Expected the transaction's final guard to reject a parent swapped to a junction after staging.");
@@ -2793,24 +2997,37 @@ static void RunBundledCheatCompilerTests(string tempRoot)
            !File.Exists(managedPath),
         "Expected Cheat preparation to produce validated staged content without touching the target.");
 
-    var first = service.PrepareManagedPatch(
-        patchesPath,
+    var cheatTxn = new PatchFileTransactionService();
+    var cheatBackupRoot = Path.Combine(
         libraryRoot,
-        [matches.Single(match => match.Patch.Title == "Infinite Health")]);
-    Assert(first.Succeeded, "Expected first exact cheat preparation to succeed: " + first.Error);
-    Assert(first.BackupPath is null, "Expected first managed cheat creation not to need a backup.");
+        "rpcs3",
+        "config",
+        "R3ConfigBackups");
+    var firstBackup = cheatTxn.Commit(
+        cheatBackupRoot,
+        [stagedFirst.PreparedFile!]);
+    Assert(File.Exists(managedPath) &&
+           firstBackup.Files.Single().Existed == false,
+        "Expected first exact cheat preparation to commit through the transaction with Existed=false backup state.");
     Assert(!File.Exists(Path.Combine(
             patchesPath,
             BundledCheatPatchService.ManagedFileName)),
         "Expected Cheat preparation not to create the legacy filename that RPCS3 ignores at boot.");
 
-    var second = service.PrepareManagedPatch(
+    var stagedSecond = service.PrepareManagedPatchFile(
         patchesPath,
         libraryRoot,
         [matches.Single(match => match.Patch.Title == "Max Orbs")]);
-    Assert(second.Succeeded, "Expected second exact cheat preparation to succeed: " + second.Error);
-    Assert(second.BackupPath is not null && File.Exists(second.BackupPath),
-        "Expected an existing managed cheat file to be backed up before extension.");
+    Assert(stagedSecond.Succeeded &&
+           stagedSecond.PreparedFile is not null,
+        "Expected second exact cheat preparation to produce transaction content: " + stagedSecond.Error);
+    var secondBackup = cheatTxn.Commit(
+        cheatBackupRoot,
+        [stagedSecond.PreparedFile!]);
+    Assert(secondBackup.Files.Single() is
+           { Existed: true, BackupPath: not null } &&
+           File.Exists(secondBackup.Files.Single().BackupPath),
+        "Expected the central transaction to back up an existing managed cheat file before extension.");
 
     var managedRead = reader.Read(managedPath, PatchSourceOrigin.ManagedCheats);
     Assert(managedRead.Succeeded, "Expected managed cheat file to read back: " + managedRead.Error);
@@ -4575,8 +4792,9 @@ static void RunCfgApplyTests(
     Assert(existingCustomPlan.Items.Single(item => item.Key == "Write Color Buffers").CurrentValue == "false",
         "Expected existing custom config value to be detected.");
     var originalCustomConfigText = File.ReadAllText(plan.TargetConfigPath);
-    var failingConfigApply = new ConfigApplyService(applyChanges: (path, changes) =>
+    var failingConfigApply = new ConfigApplyService(applyChanges: (path, changes, beforeCommit) =>
     {
+        beforeCommit?.Invoke();
         File.WriteAllText(path, "Video: [partial write");
         throw new UnauthorizedAccessException("Simulated permission denied.");
     });
@@ -5203,11 +5421,18 @@ static void RunPatchTests(SmokeEnv env, Rpcs3GameDescriptor rogue)
     Assert(!restoredPatchConfigText.Contains("Skip Intro Videos", StringComparison.Ordinal),
         "Expected restore to remove applied patch entry.");
 
-    var failingPatchApplyService = new PatchApplyService(writeChanges: (path, changes) =>
-    {
-        File.WriteAllText(path, "partial patch_config write");
-        throw new UnauthorizedAccessException("Simulated permission denied.");
-    });
+    var failingPatchBackup = new BackupService();
+    var failingPatchTransaction = new PatchFileTransactionService(
+        failingPatchBackup,
+        commitFile: (stagePath, targetPath) =>
+        {
+            File.Copy(stagePath, targetPath, overwrite: true);
+            throw new UnauthorizedAccessException(
+                "Simulated permission denied.");
+        });
+    var failingPatchApplyService = new PatchApplyService(
+        failingPatchBackup,
+        transaction: failingPatchTransaction);
     try
     {
         failingPatchApplyService.Apply(patchApplyPlan, patchBackupRoot);

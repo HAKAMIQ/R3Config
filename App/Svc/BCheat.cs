@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -8,14 +7,6 @@ using R3Config.Lang;
 using R3Config.Mdl;
 
 namespace R3Config.Svc;
-
-public sealed record PatchLibraryWriteResult(
-    bool Succeeded,
-    string TargetPath,
-    string? BackupPath,
-    int PatchCount,
-    string Message,
-    string? Error);
 
 public sealed record PatchLibraryStageResult(
     bool Succeeded,
@@ -34,9 +25,6 @@ public sealed class BundledCheatPatchService
 
     public const string ManagedMarker =
         "# R3Config managed RPCS3 cheat patches - do not edit while R3Config is running";
-
-    private static readonly Encoding Utf8NoBom =
-        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
     private readonly PatchSelectionCompiler _compiler = new();
     private readonly PatchCatalogReader _reader = new();
@@ -312,126 +300,6 @@ public sealed class BundledCheatPatchService
         }
     }
 
-    public PatchLibraryWriteResult PrepareManagedPatch(
-        string patchesPath,
-        string baseDirectory,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
-    {
-        string targetPath = string.Empty;
-        string? backupPath = null;
-        string? tempPath = null;
-
-        try
-        {
-            var staged = PrepareManagedPatchFile(
-                patchesPath,
-                baseDirectory,
-                selectedMatches);
-
-            targetPath = staged.TargetPath;
-
-            if (!staged.Succeeded)
-            {
-                return Failure(
-                    targetPath,
-                    null,
-                    staged.Error ?? staged.Message);
-            }
-
-            if (staged.PreparedFile is null)
-            {
-                return Success(
-                    targetPath,
-                    null,
-                    staged.PatchCount,
-                    staged.Message);
-            }
-
-            var patchesDirectory =
-                Path.GetDirectoryName(targetPath)
-                ?? throw new InvalidOperationException(
-                    "The managed cheat target has no parent directory.");
-
-            Directory.CreateDirectory(
-                patchesDirectory);
-
-            if (File.Exists(targetPath))
-            {
-                backupPath =
-                    CreateBackupPath(
-                        patchesDirectory,
-                        targetPath);
-
-                File.Copy(
-                    targetPath,
-                    backupPath,
-                    overwrite: false);
-            }
-
-            tempPath =
-                targetPath +
-                ".tmp-" +
-                Guid.NewGuid().ToString("N");
-
-            File.WriteAllText(
-                tempPath,
-                staged.PreparedFile.Content,
-                Utf8NoBom);
-
-            var validation = _reader.Read(
-                tempPath,
-                PatchSourceOrigin.ManagedCheats);
-
-            if (!validation.Succeeded ||
-                validation.Catalog.Entries.Count !=
-                staged.PatchCount)
-            {
-                throw new InvalidDataException(
-                    validation.Error ??
-                    "The managed cheat patch failed read-back validation.");
-            }
-
-            File.Move(
-                tempPath,
-                targetPath,
-                overwrite: true);
-
-            tempPath = null;
-
-            return Success(
-                targetPath,
-                backupPath,
-                staged.PatchCount,
-                staged.Message);
-        }
-        catch (Exception ex) when (
-            ex is IOException or
-            UnauthorizedAccessException or
-            ArgumentException or
-            InvalidDataException or
-            InvalidOperationException)
-        {
-            if (tempPath is not null)
-            {
-                TryDelete(tempPath);
-            }
-
-            if (backupPath is not null &&
-                File.Exists(backupPath) &&
-                !string.IsNullOrWhiteSpace(targetPath))
-            {
-                TryRestoreBackup(
-                    backupPath,
-                    targetPath);
-            }
-
-            return Failure(
-                targetPath,
-                backupPath,
-                ex.Message);
-        }
-    }
-
     private static Rpcs3PatchMatchResult ToExactMatch(
         Rpcs3PatchEntry entry)
     {
@@ -548,33 +416,6 @@ public sealed class BundledCheatPatchService
         return true;
     }
 
-    private static string CreateBackupPath(
-        string patchesDirectory,
-        string targetPath)
-    {
-        var timestamp = DateTime.Now.ToString(
-            "yyyyMMdd-HHmmss",
-            CultureInfo.InvariantCulture);
-
-        var candidate = Path.Combine(
-            patchesDirectory,
-            Path.GetFileName(targetPath) +
-            ".bak-" +
-            timestamp);
-
-        if (!File.Exists(candidate))
-        {
-            return candidate;
-        }
-
-        return Path.Combine(
-            patchesDirectory,
-            Path.GetFileName(targetPath) +
-            ".bak-" +
-            DateTime.Now.Ticks.ToString(
-                CultureInfo.InvariantCulture));
-    }
-
     private static string? MatchedSerial(
         Rpcs3PatchMatchResult match)
     {
@@ -626,62 +467,4 @@ public sealed class BundledCheatPatchService
             error);
     }
 
-    private static PatchLibraryWriteResult Success(
-        string targetPath,
-        string? backupPath,
-        int patchCount,
-        string message)
-    {
-        return new PatchLibraryWriteResult(
-            true,
-            targetPath,
-            backupPath,
-            patchCount,
-            message,
-            null);
-    }
-
-    private static PatchLibraryWriteResult Failure(
-        string targetPath,
-        string? backupPath,
-        string error)
-    {
-        return new PatchLibraryWriteResult(
-            false,
-            targetPath,
-            backupPath,
-            0,
-            error,
-            error);
-    }
-
-    private static void TryRestoreBackup(
-        string backupPath,
-        string targetPath)
-    {
-        try
-        {
-            File.Copy(
-                backupPath,
-                targetPath,
-                overwrite: true);
-        }
-        catch
-        {
-        }
-    }
-
-    private static void TryDelete(string path)
-    {
-        try
-        {
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
-        }
-        catch
-        {
-        }
-    }
 }

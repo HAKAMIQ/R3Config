@@ -28,14 +28,18 @@ public sealed class ConfigUseCase(
         Rpcs3InstallDescriptor install)
     {
         EnsurePlanBelongsToInstall(plan, install);
-        mutationGuard.EnsureCanMutate(
-            install,
+        var backupRoot = Rpcs3AppPaths.BackupRoot(install);
+        var validator = Validator(install);
+        validator(
+            PatchTransactionPhase.BeforeStage,
+            backupRoot,
             [plan.TargetConfigPath]);
 
         return applyService.Apply(
             plan,
             changes,
-            Rpcs3AppPaths.BackupRoot(install));
+            backupRoot,
+            validator);
     }
 
     public ConfigApplyResult Remove(
@@ -44,14 +48,18 @@ public sealed class ConfigUseCase(
         Rpcs3InstallDescriptor install)
     {
         EnsurePlanBelongsToInstall(plan, install);
-        mutationGuard.EnsureCanMutate(
-            install,
+        var backupRoot = Rpcs3AppPaths.BackupRoot(install);
+        var validator = Validator(install);
+        validator(
+            PatchTransactionPhase.BeforeStage,
+            backupRoot,
             [plan.TargetConfigPath]);
 
         return applyService.Remove(
             plan,
             changes,
-            Rpcs3AppPaths.BackupRoot(install));
+            backupRoot,
+            validator);
     }
 
     private static void EnsurePlanBelongsToInstall(
@@ -70,5 +78,15 @@ public sealed class ConfigUseCase(
                 Rpcs3MutationBlockReason.UnsafeTarget,
                 "The config plan target does not match its RPCS3 installation and game serial.");
         }
+    }
+
+    private PatchPathValidator Validator(
+        Rpcs3InstallDescriptor install)
+    {
+        return (_, backupRoot, targets) =>
+            mutationGuard.EnsureCanMutate(
+                install,
+                targets,
+                [backupRoot]);
     }
 }

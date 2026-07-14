@@ -24,7 +24,8 @@ public interface IRpcs3MutationGuard
 {
     void EnsureCanMutate(
         Rpcs3InstallDescriptor install,
-        IReadOnlyList<string> targetPaths);
+        IReadOnlyList<string> targetPaths,
+        IReadOnlyList<string>? workPaths = null);
 }
 
 public static class Rpcs3CanonicalPath
@@ -156,6 +157,32 @@ public static class Rpcs3CanonicalPath
             ResolveCanonicalParentForTarget(fullTargetPath),
             Path.GetFileName(fullTargetPath));
     }
+
+    public static string ResolveCanonicalDirectoryPath(
+        string directoryPath)
+    {
+        if (string.IsNullOrWhiteSpace(directoryPath))
+        {
+            throw new ArgumentException(
+                "A canonical directory path is empty.",
+                nameof(directoryPath));
+        }
+
+        var fullPath = Path.GetFullPath(directoryPath);
+        if (File.Exists(fullPath))
+        {
+            throw new InvalidDataException(
+                $"A mutation directory path is a file: {fullPath}");
+        }
+
+        if (Directory.Exists(fullPath))
+        {
+            return ResolveCanonicalExistingPath(fullPath);
+        }
+
+        return ResolveCanonicalParentForTarget(
+            Path.Combine(fullPath, ".r3guard"));
+    }
 }
 
 public sealed class Rpcs3MutationGuard(
@@ -166,7 +193,8 @@ public sealed class Rpcs3MutationGuard(
 
     public void EnsureCanMutate(
         Rpcs3InstallDescriptor install,
-        IReadOnlyList<string> targetPaths)
+        IReadOnlyList<string> targetPaths,
+        IReadOnlyList<string>? workPaths = null)
     {
         ArgumentNullException.ThrowIfNull(install);
         ArgumentNullException.ThrowIfNull(targetPaths);
@@ -189,19 +217,10 @@ public sealed class Rpcs3MutationGuard(
                 throw UnsafeTarget("A mutation target path is empty.");
             }
 
-            string target;
-            try
-            {
-                target = Rpcs3CanonicalPath.ResolveCanonicalTarget(
-                    targetPath);
-            }
-            catch (Exception ex) when (
-                ex is ArgumentException or IOException or NotSupportedException or UnauthorizedAccessException)
-            {
-                throw UnsafeTarget(
-                    $"A mutation target could not be resolved safely: {targetPath}",
-                    ex);
-            }
+            var target = ResolveAllowedPath(
+                roots,
+                targetPath,
+                isDirectory: false);
 
             if (!seen.Add(target))
             {
@@ -209,12 +228,19 @@ public sealed class Rpcs3MutationGuard(
                     $"A mutation target is duplicated: {target}");
             }
 
-            if (!IsChildPath(roots.ConfigPath, target) &&
-                !IsChildPath(roots.PatchesPath, target))
+        }
+
+        foreach (var workPath in workPaths ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(workPath))
             {
-                throw UnsafeTarget(
-                    $"Refusing to modify a file outside the RPCS3 config and patches directories: {target}");
+                throw UnsafeTarget("A mutation work path is empty.");
             }
+
+            _ = ResolveAllowedPath(
+                roots,
+                workPath,
+                isDirectory: true);
         }
 
         if (_isRpcs3Running())
@@ -265,12 +291,10 @@ public sealed class Rpcs3MutationGuard(
 
             if (!Directory.Exists(root) ||
                 !File.Exists(exe) ||
-                !Directory.Exists(dataRoot) ||
-                !Directory.Exists(config) ||
-                !Directory.Exists(patches))
+                !Directory.Exists(dataRoot))
             {
                 throw InvalidInstall(
-                    "The RPCS3 installation, executable, data root, config, and patches directories must exist.");
+                    "The RPCS3 installation, executable, and data root must exist.");
             }
 
             var canonicalRoot =
@@ -279,28 +303,18 @@ public sealed class Rpcs3MutationGuard(
                 Rpcs3CanonicalPath.ResolveCanonicalExistingPath(exe);
             var canonicalDataRoot =
                 Rpcs3CanonicalPath.ResolveCanonicalExistingPath(dataRoot);
-            var canonicalConfig =
-                Rpcs3CanonicalPath.ResolveCanonicalExistingPath(config);
-            var canonicalPatches =
-                Rpcs3CanonicalPath.ResolveCanonicalExistingPath(patches);
-
             if (!PathsEqual(
                     Path.GetDirectoryName(canonicalExe) ?? string.Empty,
-                    canonicalRoot) ||
-                !PathsEqual(
-                    canonicalConfig,
-                    Path.Combine(canonicalDataRoot, "config")) ||
-                !PathsEqual(
-                    canonicalPatches,
-                    Path.Combine(canonicalDataRoot, "patches")))
+                    canonicalRoot))
             {
                 throw InvalidInstall(
-                    "The RPCS3 installation resolves outside its declared root or data-root layout.");
+                    "The RPCS3 executable resolves outside its declared installation root.");
             }
 
             return new CanonicalInstallRoots(
-                canonicalConfig,
-                canonicalPatches);
+                canonicalDataRoot,
+                config,
+                patches);
         }
         catch (Rpcs3MutationBlockedException)
         {
@@ -312,6 +326,69 @@ public sealed class Rpcs3MutationGuard(
             throw new Rpcs3MutationBlockedException(
                 Rpcs3MutationBlockReason.InvalidInstall,
                 "The RPCS3 installation descriptor could not be resolved safely.",
+                ex);
+        }
+    }
+
+    private static string ResolveAllowedPath(
+        CanonicalInstallRoots roots,
+        string path,
+        bool isDirectory)
+    {
+        var fullPath = Path.GetFullPath(path);
+        var declaredRoot = IsChildPath(
+                roots.ConfigPath,
+                fullPath)
+            ? roots.ConfigPath
+            : IsChildPath(
+                roots.PatchesPath,
+                fullPath)
+                ? roots.PatchesPath
+                : null;
+
+        if (declaredRoot is null)
+        {
+            throw UnsafeTarget(
+                $"Refusing a mutation path outside the RPCS3 config and patches directories: {fullPath}");
+        }
+
+        try
+        {
+            var canonicalRoot =
+                Rpcs3CanonicalPath.ResolveCanonicalDirectoryPath(
+                    declaredRoot);
+            var expectedRoot = Path.Combine(
+                roots.DataRootPath,
+                Path.GetFileName(declaredRoot));
+            if (!PathsEqual(canonicalRoot, expectedRoot))
+            {
+                throw UnsafeTarget(
+                    $"A mutation root resolves outside the RPCS3 data root: {declaredRoot}");
+            }
+
+            var canonicalPath = isDirectory
+                ? Rpcs3CanonicalPath.ResolveCanonicalDirectoryPath(
+                    fullPath)
+                : Rpcs3CanonicalPath.ResolveCanonicalTarget(
+                    fullPath);
+
+            if (!IsChildPath(canonicalRoot, canonicalPath))
+            {
+                throw UnsafeTarget(
+                    $"A mutation path resolves outside its RPCS3 data directory: {fullPath}");
+            }
+
+            return canonicalPath;
+        }
+        catch (Rpcs3MutationBlockedException)
+        {
+            throw;
+        }
+        catch (Exception ex) when (
+            ex is ArgumentException or IOException or NotSupportedException or UnauthorizedAccessException)
+        {
+            throw UnsafeTarget(
+                $"A mutation path could not be resolved safely: {fullPath}",
                 ex);
         }
     }
@@ -362,6 +439,7 @@ public sealed class Rpcs3MutationGuard(
     }
 
     private sealed record CanonicalInstallRoots(
+        string DataRootPath,
         string ConfigPath,
         string PatchesPath);
 }

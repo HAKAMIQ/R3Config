@@ -85,15 +85,6 @@ public sealed class AppFlow
         return _useCases.CanaryImport.Remove(install);
     }
 
-    public PatchLibraryWriteResult PrepareBundledCheatPatch(
-        Rpcs3InstallDescriptor install,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
-    {
-        return _useCases.PatchMutation.PrepareCheats(
-            install,
-            selectedMatches);
-    }
-
     public CanaryPatchNormalizeResult NormalizeCanaryPatch(
         string? sourceText)
     {

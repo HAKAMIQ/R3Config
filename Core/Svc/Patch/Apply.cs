@@ -6,71 +6,36 @@ namespace R3Config.Svc;
 
 public sealed class PatchApplyService
 {
-    private readonly BackupService _backupService;
     private readonly PatchConfigWriter _writer;
     private readonly PatchFileTransactionService _transaction;
-    private readonly Action<string, IReadOnlyList<PatchApplyChange>> _writeChanges;
 
     public PatchApplyService(
         BackupService? backupService = null,
         PatchConfigWriter? writer = null,
-        Action<string, IReadOnlyList<PatchApplyChange>>? writeChanges = null,
         PatchFileTransactionService? transaction = null)
     {
-        _backupService = backupService ?? new BackupService();
+        var backup = backupService ?? new BackupService();
         _writer = writer ?? new PatchConfigWriter();
-        _transaction = transaction ?? new PatchFileTransactionService(_backupService);
-        _writeChanges = writeChanges ?? ((path, changes) => _writer.Write(path, changes));
+        _transaction = transaction ?? new PatchFileTransactionService(backup);
     }
 
     public PatchApplyResult Apply(
         PatchApplyPlan plan,
-        string backupRootPath)
+        string backupRootPath,
+        PatchPathValidator? validatePaths = null)
     {
-        if (!plan.HasChanges)
-        {
-            throw new InvalidOperationException(
-                "Patch apply plan is empty.");
-        }
-
-        var backup = _backupService.CreateBackup(
+        return ApplyState(
+            plan,
             backupRootPath,
-            [plan.PatchConfigPath]);
-
-        try
-        {
-            _writeChanges(
-                plan.PatchConfigPath,
-                plan.Changes);
-
-            return new PatchApplyResult(
-                backup,
-                plan.Changes);
-        }
-        catch (Exception writeException)
-        {
-            try
-            {
-                _backupService.Restore(backup);
-            }
-            catch (Exception restoreException)
-            {
-                throw new InvalidOperationException(
-                    "Patch apply failed and automatic restore failed.",
-                    new AggregateException(
-                        writeException,
-                        restoreException));
-            }
-
-            throw;
-        }
+            enabled: true,
+            validatePaths);
     }
 
     public PatchApplyResult ApplyTransaction(
         PatchApplyPlan plan,
         string backupRootPath,
         IReadOnlyList<PatchPreparedFile> preparedFiles,
-        Action<IReadOnlyList<string>>? validateTargetsBeforeCommit = null)
+        PatchPathValidator? validatePaths = null)
     {
         if (!plan.HasChanges)
         {
@@ -94,7 +59,7 @@ public sealed class PatchApplyService
         var backup = _transaction.Commit(
             backupRootPath,
             transactionFiles,
-            validateTargetsBeforeCommit);
+            validatePaths);
 
         return new PatchApplyResult(
             backup,
@@ -103,7 +68,21 @@ public sealed class PatchApplyService
 
     public PatchApplyResult Disable(
         PatchApplyPlan plan,
-        string backupRootPath)
+        string backupRootPath,
+        PatchPathValidator? validatePaths = null)
+    {
+        return ApplyState(
+            plan,
+            backupRootPath,
+            enabled: false,
+            validatePaths);
+    }
+
+    private PatchApplyResult ApplyState(
+        PatchApplyPlan plan,
+        string backupRootPath,
+        bool enabled,
+        PatchPathValidator? validatePaths)
     {
         if (!plan.HasChanges)
         {
@@ -111,37 +90,24 @@ public sealed class PatchApplyService
                 "Patch apply plan is empty.");
         }
 
-        var backup = _backupService.CreateBackup(
+        var patchConfigText = _writer.BuildText(
+            plan.PatchConfigPath,
+            plan.Changes,
+            enabled);
+        PatchConfigWriter.ValidateText(patchConfigText);
+
+        var backup = _transaction.Commit(
             backupRootPath,
-            [plan.PatchConfigPath]);
+            [
+                new PatchPreparedFile(
+                    plan.PatchConfigPath,
+                    patchConfigText,
+                    PatchPreparedFileKind.PatchConfig)
+            ],
+            validatePaths);
 
-        try
-        {
-            _writer.Write(
-                plan.PatchConfigPath,
-                plan.Changes,
-                enabled: false);
-
-            return new PatchApplyResult(
-                backup,
-                plan.Changes);
-        }
-        catch (Exception writeException)
-        {
-            try
-            {
-                _backupService.Restore(backup);
-            }
-            catch (Exception restoreException)
-            {
-                throw new InvalidOperationException(
-                    "Patch disable failed and automatic restore failed.",
-                    new AggregateException(
-                        writeException,
-                        restoreException));
-            }
-
-            throw;
-        }
+        return new PatchApplyResult(
+            backup,
+            plan.Changes);
     }
 }

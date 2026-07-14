@@ -70,9 +70,10 @@ public sealed class CanaryImportUseCase(
             committedBackup = transaction.Commit(
                 Rpcs3AppPaths.BackupRoot(install),
                 [prepared.PreparedFile],
-                targets => mutationGuard.EnsureCanMutate(
+                (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
                     install,
-                    targets));
+                    targets,
+                    [backupRoot]));
 
             var readBack = importService.ReadImportedPatchText(
                 targetPath);
@@ -176,9 +177,10 @@ public sealed class CanaryImportUseCase(
             committedBackup = transaction.Commit(
                 Rpcs3AppPaths.BackupRoot(install),
                 [prepared.PreparedFile],
-                targets => mutationGuard.EnsureCanMutate(
+                (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
                     install,
-                    targets));
+                    targets,
+                    [backupRoot]));
 
             if (prepared.PreparedFile.DeleteTarget)
             {

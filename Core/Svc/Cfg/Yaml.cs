@@ -81,7 +81,8 @@ public static class Rpcs3ConfigYaml
 
     public static void ApplyChanges(
         string path,
-        IReadOnlyList<ConfigChange> changes)
+        IReadOnlyList<ConfigChange> changes,
+        Action? validateBeforeCommit = null)
     {
         var yaml = LoadYaml(path);
         var root = GetRootMapping(yaml);
@@ -102,12 +103,16 @@ public static class Rpcs3ConfigYaml
             }
         }
 
-        SaveAtomically(path, yaml);
+        SaveAtomically(
+            path,
+            yaml,
+            validateBeforeCommit);
     }
 
     public static void RemoveChanges(
         string path,
-        IReadOnlyList<ConfigChange> changes)
+        IReadOnlyList<ConfigChange> changes,
+        Action? validateBeforeCommit = null)
     {
         if (!File.Exists(path) || changes.Count == 0)
         {
@@ -138,11 +143,15 @@ public static class Rpcs3ConfigYaml
 
         if (root.Children.Count == 0)
         {
+            validateBeforeCommit?.Invoke();
             File.Delete(path);
             return;
         }
 
-        SaveAtomically(path, yaml);
+        SaveAtomically(
+            path,
+            yaml,
+            validateBeforeCommit);
     }
 
     private static YamlStream LoadYaml(string path)
@@ -353,7 +362,8 @@ public static class Rpcs3ConfigYaml
 
     private static void SaveAtomically(
         string path,
-        YamlStream yaml)
+        YamlStream yaml,
+        Action? validateBeforeCommit)
     {
         var fullPath = Path.GetFullPath(path);
         var directory = Path.GetDirectoryName(fullPath)
@@ -393,6 +403,8 @@ public static class Rpcs3ConfigYaml
                 }
                 _ = GetRootMapping(validationYaml);
             }
+
+            validateBeforeCommit?.Invoke();
 
             if (File.Exists(fullPath))
             {

@@ -10,6 +10,18 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
+public enum PatchTransactionPhase
+{
+    BeforeStage,
+    BeforeBackup,
+    BeforeCommit
+}
+
+public delegate void PatchPathValidator(
+    PatchTransactionPhase phase,
+    string backupRootPath,
+    IReadOnlyList<string> targetPaths);
+
 public sealed class PatchFileTransactionService(
     BackupService? backupService = null,
     PatchCatalogReader? catalogReader = null,
@@ -38,7 +50,7 @@ public sealed class PatchFileTransactionService(
     public BackupManifest Commit(
         string backupRootPath,
         IReadOnlyList<PatchPreparedFile> preparedFiles,
-        Action<IReadOnlyList<string>>? validateTargetsBeforeCommit = null)
+        PatchPathValidator? validatePaths = null)
     {
         if (preparedFiles.Count == 0)
         {
@@ -47,25 +59,36 @@ public sealed class PatchFileTransactionService(
         }
 
         var files = NormalizeAndValidateTargets(preparedFiles);
+        var targets = files
+            .Select(file => file.TargetPath)
+            .ToArray();
         List<StagedPatchFile> staged = [];
 
         try
         {
+            validatePaths?.Invoke(
+                PatchTransactionPhase.BeforeStage,
+                backupRootPath,
+                targets);
+
             foreach (var file in files)
             {
                 staged.Add(StageAndValidate(file));
             }
 
+            validatePaths?.Invoke(
+                PatchTransactionPhase.BeforeBackup,
+                backupRootPath,
+                targets);
+
             var backup = _backupService.CreateBackup(
                 backupRootPath,
-                [
-                    .. files.Select(file => file.TargetPath)
-                ]);
+                targets);
 
-            validateTargetsBeforeCommit?.Invoke(
-                [
-                    .. files.Select(file => file.TargetPath)
-                ]);
+            validatePaths?.Invoke(
+                PatchTransactionPhase.BeforeCommit,
+                backupRootPath,
+                targets);
 
             try
             {

@@ -1847,7 +1847,7 @@ public sealed class HCanaryPatchAuthoringService
         HCanaryPatchDraft draft,
         string? originalIdentity = null,
         bool saveAsNew = false,
-        Action<IReadOnlyList<string>>? validateTargetsBeforeCommit = null)
+        PatchPathValidator? validatePaths = null)
     {
         var validation = Validate(draft);
         if (!validation.IsValid)
@@ -1895,7 +1895,7 @@ public sealed class HCanaryPatchAuthoringService
             new PatchPreparedFile(importedPatchPath, text, PatchPreparedFileKind.PatchCatalog,
                 PatchSourceOrigin.Imported, read.Catalog.Entries.Count),
             new PatchPreparedFile(metadataPath, metadataText, PatchPreparedFileKind.JsonMetadata)
-        ], validateTargetsBeforeCommit);
+        ], validatePaths);
         return new HCanarySaveResult(importedPatchPath, backup, read.Catalog.Entries.Count, replaced);
     }
 
@@ -1903,7 +1903,7 @@ public sealed class HCanaryPatchAuthoringService
         string importedPatchPath,
         string backupRootPath,
         string identity,
-        Action<IReadOnlyList<string>>? validateTargetsBeforeCommit = null)
+        PatchPathValidator? validatePaths = null)
     {
         if (!File.Exists(importedPatchPath))
         {
@@ -1929,7 +1929,7 @@ public sealed class HCanaryPatchAuthoringService
             new PatchPreparedFile(importedPatchPath, text, PatchPreparedFileKind.PatchCatalog,
                 PatchSourceOrigin.Imported, read.Catalog.Entries.Count),
             new PatchPreparedFile(metadataPath, SerializeMetadata(metadata), PatchPreparedFileKind.JsonMetadata)
-        ], validateTargetsBeforeCommit);
+        ], validatePaths);
         return new HCanarySaveResult(importedPatchPath, backup, read.Catalog.Entries.Count, true);
     }
 

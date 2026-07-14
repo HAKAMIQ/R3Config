@@ -43,9 +43,27 @@ public sealed class PatchMutationUseCase(
         IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
     {
         EnsurePlanBelongsToInstall(plan, install);
+        var backupRoot = Rpcs3AppPaths.BackupRoot(install);
+        var declaredTargets = new List<string>
+        {
+            plan.PatchConfigPath
+        };
+        if (selectedMatches.Any(match =>
+                match.Patch.Source ==
+                PatchSourceOrigin.BundledCanary))
+        {
+            declaredTargets.Add(
+                Rpcs3AppPaths.ImportedPatch(install));
+        }
+
+        declaredTargets.AddRange(
+            BundledCheatPatchService.GetManagedPaths(
+                install.PatchesPath,
+                selectedMatches));
         mutationGuard.EnsureCanMutate(
             install,
-            [plan.PatchConfigPath]);
+            declaredTargets,
+            [backupRoot]);
 
         var preparedFiles = new List<PatchPreparedFile>();
         var messages = new List<string>();
@@ -66,15 +84,14 @@ public sealed class PatchMutationUseCase(
             [
                 plan.PatchConfigPath,
                 .. preparedFiles.Select(file => file.TargetPath)
-            ]);
+            ],
+            [backupRoot]);
 
         var result = applyService.ApplyTransaction(
             plan,
-            Rpcs3AppPaths.BackupRoot(install),
+            backupRoot,
             preparedFiles,
-            targets => mutationGuard.EnsureCanMutate(
-                install,
-                targets));
+            Validator(install));
 
         return result with
         {
@@ -87,13 +104,17 @@ public sealed class PatchMutationUseCase(
         Rpcs3InstallDescriptor install)
     {
         EnsurePlanBelongsToInstall(plan, install);
-        mutationGuard.EnsureCanMutate(
-            install,
+        var backupRoot = Rpcs3AppPaths.BackupRoot(install);
+        var validator = Validator(install);
+        validator(
+            PatchTransactionPhase.BeforeStage,
+            backupRoot,
             [plan.PatchConfigPath]);
 
         return applyService.Apply(
             plan,
-            Rpcs3AppPaths.BackupRoot(install));
+            backupRoot,
+            validator);
     }
 
     public PatchApplyResult Disable(
@@ -101,31 +122,17 @@ public sealed class PatchMutationUseCase(
         Rpcs3InstallDescriptor install)
     {
         EnsurePlanBelongsToInstall(plan, install);
-        mutationGuard.EnsureCanMutate(
-            install,
+        var backupRoot = Rpcs3AppPaths.BackupRoot(install);
+        var validator = Validator(install);
+        validator(
+            PatchTransactionPhase.BeforeStage,
+            backupRoot,
             [plan.PatchConfigPath]);
 
         return applyService.Disable(
             plan,
-            Rpcs3AppPaths.BackupRoot(install));
-    }
-
-    public PatchLibraryWriteResult PrepareCheats(
-        Rpcs3InstallDescriptor install,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
-    {
-        var targets = BundledCheatPatchService.GetManagedPaths(
-            install.PatchesPath,
-            selectedMatches);
-
-        mutationGuard.EnsureCanMutate(
-            install,
-            targets);
-
-        return bundledCheats.PrepareManagedPatch(
-            install.PatchesPath,
-            AppContext.BaseDirectory,
-            selectedMatches);
+            backupRoot,
+            validator);
     }
 
     private void PrepareBundledCanary(
@@ -227,5 +234,15 @@ public sealed class PatchMutationUseCase(
                 Rpcs3MutationBlockReason.UnsafeTarget,
                 "The patch plan target does not match its RPCS3 installation.");
         }
+    }
+
+    private PatchPathValidator Validator(
+        Rpcs3InstallDescriptor install)
+    {
+        return (_, backupRoot, targets) =>
+            mutationGuard.EnsureCanMutate(
+                install,
+                targets,
+                [backupRoot]);
     }
 }

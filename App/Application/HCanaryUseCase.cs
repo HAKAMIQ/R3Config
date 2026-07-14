@@ -28,9 +28,10 @@ public sealed class HCanaryUseCase(
             draft,
             originalIdentity,
             saveAsNew,
-            targets => mutationGuard.EnsureCanMutate(
+            (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
                 install,
-                targets));
+                targets,
+                [backupRoot]));
     }
 
     public HCanarySaveResult Delete(
@@ -43,9 +44,10 @@ public sealed class HCanaryUseCase(
             Rpcs3AppPaths.ImportedPatch(install),
             Rpcs3AppPaths.BackupRoot(install),
             identity,
-            targets => mutationGuard.EnsureCanMutate(
+            (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
                 install,
-                targets));
+                targets,
+                [backupRoot]));
     }
 
     private void EnsureCanWrite(
@@ -56,6 +58,7 @@ public sealed class HCanaryUseCase(
             [
                 Rpcs3AppPaths.ImportedPatch(install),
                 Rpcs3AppPaths.HCanaryMetadata(install)
-            ]);
+            ],
+            [Rpcs3AppPaths.BackupRoot(install)]);
     }
 }
