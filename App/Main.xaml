@@ -199,7 +199,8 @@
 								</Grid>
 							</Border>
 
-							<TabControl Grid.Row="1"
+							<TabControl x:Name="DetailsTabControl"
+                                        Grid.Row="1"
                                         Style="{StaticResource Win11TabControl}"
                                         ItemContainerStyle="{StaticResource Win11TabItem}"
                                         Margin="0"
@@ -210,24 +211,23 @@
                                     <controls:RecPlanView HorizontalAlignment="Stretch"
                                                           VerticalAlignment="Stretch" />
                                 </TabItem>
-                                <TabItem Header="{lang:Text Key=Tab.Official}">
-                                    <controls:PatchView Mode="Official"
+                                <TabItem x:Name="PatchesTab"
+                                         Header="{lang:Text Key=Tab.Patches}">
+                                    <controls:PatchView Mode="Patches"
                                                         HorizontalAlignment="Stretch"
                                                         VerticalAlignment="Stretch" />
                                 </TabItem>
-                                <TabItem Header="{lang:Text Key=Tab.Canary}">
+                                <TabItem x:Name="CanaryPatchTab"
+                                         Header="{lang:Text Key=Tab.Canary}">
                                     <controls:PatchView Mode="Canary"
                                                         HorizontalAlignment="Stretch"
                                                         VerticalAlignment="Stretch" />
                                 </TabItem>
-                                <TabItem Header="{lang:Text Key=Tab.Cheats}">
+                                <TabItem x:Name="CheatPatchTab"
+                                         Header="{lang:Text Key=Tab.Cheats}">
                                     <controls:PatchView Mode="Cheat"
                                                         HorizontalAlignment="Stretch"
                                                         VerticalAlignment="Stretch" />
-                                </TabItem>
-                                <TabItem Header="{lang:Text Key=Tab.HCanary}">
-                                    <controls:HCanaryView HorizontalAlignment="Stretch"
-                                                          VerticalAlignment="Stretch" />
                                 </TabItem>
                             </TabControl>
 						</Grid>

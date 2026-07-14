@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using AppSvc;
+using R3Config.Svc;
 using R3Config.Lang;
 using R3Config.Mdl;
-using R3Config.Svc;
 
 namespace R3Config.Vm;
 
@@ -13,6 +12,7 @@ public enum PatchSourceKind
 {
     Official,
     Canary,
+    CheatLibrary,
     Local,
     Custom,
     Missing,
@@ -32,8 +32,8 @@ public sealed class PatchItemVm : VmBase
         _displayTitle = match.Patch.Title;
         _sourceLabel = sourceLabel;
         _isEnabled = isEnabled;
-        CanEnable = !isEnabled && PatchRiskPolicy.CanSelectInPreview(match.Patch.Risk, match.Status);
-        CanDisable = isEnabled && PatchRiskPolicy.CanDisableCheckedPatch(match.Patch.Risk, match.Status);
+        CanEnable = !isEnabled && PatchRiskPolicy.CanSelectInPreview(match);
+        CanDisable = isEnabled && PatchRiskPolicy.CanDisableCheckedPatch(match);
         IsSelectable = CanEnable || CanDisable;
         _isSelected = !isEnabled && PatchRiskPolicy.ShouldSelectByDefaultInPreview(match.Patch.Risk, match.Status);
     }
@@ -82,6 +82,7 @@ public sealed class PatchItemVm : VmBase
     {
         PatchSourceKind.Official => "Game",
         PatchSourceKind.Canary => "Canary",
+        PatchSourceKind.CheatLibrary => "Custom",
         PatchSourceKind.Custom => "Custom",
         PatchSourceKind.Local => "Local",
         PatchSourceKind.Missing => "Warning",
@@ -104,11 +105,42 @@ public sealed class PatchItemVm : VmBase
 
     public bool IsCanary => PatchSourceKind == PatchSourceKind.Canary;
 
+    public bool IsExperimentalPatch =>
+        IsCanary ||
+        Risk is PatchRisk.Experimental or PatchRisk.Canary;
+
     public bool IsLocal => PatchSourceKind == PatchSourceKind.Local;
 
     public bool IsCustom => PatchSourceKind == PatchSourceKind.Custom;
 
     public bool IsAvailable => PatchSourceKind is not PatchSourceKind.Missing and not PatchSourceKind.Unknown;
+
+    public bool IsDefinitionResident => Match.Patch.Source is
+        PatchSourceOrigin.Official or
+        PatchSourceOrigin.Imported or
+        PatchSourceOrigin.ManagedCheats or
+        PatchSourceOrigin.TitleSpecific;
+
+    public bool HasDefinitionState => Match.Patch.Source switch
+    {
+        PatchSourceOrigin.BundledCanary => true,
+        PatchSourceOrigin.Imported => IsExperimentalPatch,
+        PatchSourceOrigin.BundledCheats or PatchSourceOrigin.ManagedCheats => true,
+        PatchSourceOrigin.TitleSpecific => Risk == PatchRisk.Cheat,
+        _ => false
+    };
+
+    public string DefinitionStateDisplay => Match.Patch.Source switch
+    {
+        PatchSourceOrigin.BundledCanary => UiText.T("Patch.Definition.NotMerged"),
+        PatchSourceOrigin.Imported when IsExperimentalPatch => UiText.T("Patch.Definition.Merged"),
+        PatchSourceOrigin.BundledCheats => UiText.T("Patch.Definition.NotPrepared"),
+        PatchSourceOrigin.ManagedCheats => UiText.T("Patch.Definition.Prepared"),
+        PatchSourceOrigin.TitleSpecific when Risk == PatchRisk.Cheat => UiText.T("Patch.Definition.Existing"),
+        _ => string.Empty
+    };
+
+    public string DefinitionStateTone => IsDefinitionResident ? "Game" : "Muted";
 
     public string PrimaryBadgeDisplay => PatchSourceDisplay;
 
@@ -138,6 +170,38 @@ public sealed class PatchItemVm : VmBase
             ? UiText.T(IsCanary ? "Patch.PlayerActionCanarySelectable" : "Patch.PlayerActionSelectable")
             : MatchTooltip;
 
+    public bool IsRuntimeGuarded =>
+        PatchActivationPolicy.IsRuntimeGuardedMatch(Match);
+
+    public PatchCompatibilityDecision CompatibilityDecision =>
+        PatchActivationPolicy.Decide(Match);
+
+    public bool HasPlayerInstruction =>
+        !string.IsNullOrWhiteSpace(Notes) &&
+        ContainsAny(
+            Notes,
+            "requires",
+            "required",
+            "must ",
+            "enable ",
+            "disable ",
+            "press ",
+            "hold ",
+            "toggle ",
+            "using ",
+            "set ",
+            "check ",
+            "only works",
+            "يجب",
+            "يتطلب",
+            "فعّل",
+            "عطّل",
+            "اضغط");
+
+    public string PlayerInstructionText => HasPlayerInstruction
+        ? UiText.F("Patch.User.Instruction", LocalizedMessage)
+        : string.Empty;
+
     public string InstalledVersionDisplay => Rpcs3PatchVersion.Normalize(Match.MatchedVersion)
         ?? UiText.T("Ui.Unknown");
 
@@ -159,11 +223,82 @@ public sealed class PatchItemVm : VmBase
         _ => "HASH"
     };
 
-    public string ShortHash => string.IsNullOrWhiteSpace(Match.Patch.Hash)
+    private string ComparableHash =>
+        Match.Patch.NormalizedExecutableHash ?? Match.Patch.Hash;
+
+    public string ShortHash => string.IsNullOrWhiteSpace(ComparableHash)
         ? "-"
-        : Match.Patch.Hash[..Math.Min(12, Match.Patch.Hash.Length)];
+        : ComparableHash[..Math.Min(12, ComparableHash.Length)];
 
     public string TechnicalTargetDisplay => $"{HashKindDisplay}-{ShortHash}";
+
+    public bool HasHashEvidence => Match.Patch.HashKind != PatchHashKind.Unknown;
+
+    public string RequiredHashDisplay => $"{HashKindDisplay}-{ComparableHash}";
+
+    public string DetectedHashDisplay => Match.AllDetectedHashes.Count == 0
+        ? UiText.T("Ui.Unknown")
+        : string.Join(", ", Match.AllDetectedHashes.Select(hash => $"{HashKindDisplay}-{hash}"));
+
+    public string HashEvidenceSourceDisplay
+    {
+        get
+        {
+            return Match.HashEvidenceKind switch
+            {
+                PatchHashEvidenceKind.PlainLog or
+                PatchHashEvidenceKind.CompressedLog =>
+                    UiText.T("PatchReadiness.Source.Log"),
+
+                PatchHashEvidenceKind.GameCache =>
+                    UiText.T("PatchReadiness.Source.Cache"),
+
+                PatchHashEvidenceKind.ExistingMetadata =>
+                    UiText.T("PatchReadiness.Source.Metadata"),
+
+                _ => string.IsNullOrWhiteSpace(Match.HashEvidenceSource)
+                    ? UiText.T("Ui.Unknown")
+                    : UiText.T("PatchReadiness.Source.Metadata")
+            };
+        }
+    }
+
+    public string HashEvidenceSummary
+    {
+        get
+        {
+            if (IsRuntimeGuarded)
+            {
+                return UiText.T("Patch.HashEvidence.RuntimeGuarded");
+            }
+
+            if (Match.AllDetectedHashes.Any(hash =>
+                    hash.Equals(
+                        Match.Patch.NormalizedExecutableHash,
+                        StringComparison.OrdinalIgnoreCase)))
+            {
+                return UiText.F(
+                    "Patch.HashEvidence.Proven",
+                    FormatTechInline(RequiredHashDisplay),
+                    HashEvidenceSourceDisplay);
+            }
+
+            return Match.AllDetectedHashes.Count > 0
+                ? UiText.F(
+                    "Patch.HashEvidence.Rejected",
+                    FormatTechInline(RequiredHashDisplay),
+                    FormatTechInline(DetectedHashDisplay))
+                : UiText.F(
+                    "Patch.HashEvidence.Missing",
+                    FormatTechInline(RequiredHashDisplay));
+        }
+    }
+
+    public string HashEvidenceDetails => UiText.F(
+        "Patch.HashEvidence.Details",
+        FormatTechInline(RequiredHashDisplay),
+        FormatTechInline(DetectedHashDisplay),
+        HashEvidenceSourceDisplay);
 
     public string GroupDisplay => string.IsNullOrWhiteSpace(Match.Patch.Group)
         ? PatchTypeDisplay
@@ -184,16 +319,51 @@ public sealed class PatchItemVm : VmBase
                 return UiText.T("Patch.Direct.Enabled");
             }
 
+            var compatibilityKey = CompatibilityDecision.ReasonCode switch
+            {
+                PatchCompatibilityReasonCode.InvalidRuntimeKey =>
+                    "Patch.Direct.InvalidRuntimeKey",
+                PatchCompatibilityReasonCode.RuntimeKeySerialMismatch =>
+                    "Patch.Direct.RuntimeKeySerialMismatch",
+                PatchCompatibilityReasonCode.UntrustedRuntimeGuard =>
+                    "Patch.Direct.UntrustedRuntimeGuard",
+                PatchCompatibilityReasonCode.GlobalTargetNeedsExactHash =>
+                    "Patch.Direct.GlobalNeedsExactHash",
+                _ => null
+            };
+
+            if (compatibilityKey is not null)
+            {
+                return UiText.T(compatibilityKey);
+            }
+
+            if (CanEnable && IsDefinitionResident)
+            {
+                return Match.Patch.Source switch
+                {
+                    PatchSourceOrigin.Imported when IsExperimentalPatch =>
+                        UiText.T("Patch.Direct.MergedDisabled"),
+                    PatchSourceOrigin.ManagedCheats =>
+                        UiText.T("Patch.Direct.PreparedDisabled"),
+                    PatchSourceOrigin.TitleSpecific when Risk == PatchRisk.Cheat =>
+                        UiText.T("Patch.Direct.PreparedDisabled"),
+                    _ => UiText.T("Patch.Direct.Disabled")
+                };
+            }
+
             return MatchStatus switch
             {
                 PatchMatchStatus.ExactMatch => UiText.T("Patch.Direct.Ready"),
+                PatchMatchStatus.SerialVersionMatchHashUnknown when IsRuntimeGuarded =>
+                    UiText.T("Patch.Direct.RuntimeGuarded"),
                 PatchMatchStatus.SerialVersionMatchHashUnknown => UiText.F("Patch.Direct.HashUnknown", HashKindDisplay),
                 PatchMatchStatus.VersionUnknown => UiText.F("Patch.Direct.VersionUnknown", RequiredVersionDisplay),
                 PatchMatchStatus.VersionMismatch => UiText.F(
                     "Patch.Direct.VersionMismatch",
                     InstalledVersionDisplay,
                     RequiredVersionDisplay),
-                PatchMatchStatus.HashMismatch => UiText.F("Patch.Direct.HashMismatch", HashKindDisplay),
+                PatchMatchStatus.HashMismatch => UiText.T(
+                    "Patch.Direct.HashMismatch"),
                 _ => UiText.T("Patch.Direct.Unavailable")
             };
         }
@@ -202,10 +372,14 @@ public sealed class PatchItemVm : VmBase
     public string StateDisplay => IsEnabled
         ? UiText.T("Patch.State.Enabled")
         : CanEnable
-            ? UiText.T("Patch.State.Ready")
+            ? UiText.T(IsDefinitionResident ? "Patch.State.Disabled" : "Patch.State.Ready")
             : UiText.T("Patch.State.Blocked");
 
-    public string StateTone => IsEnabled ? "Game" : CanEnable ? "Auto" : "Warning";
+    public string StateTone => IsEnabled
+        ? "Game"
+        : CanEnable
+            ? IsDefinitionResident ? "Muted" : "Auto"
+            : "Warning";
 
     public string DetailsLine => UiText.F(
         "Patch.DetailsLine",
@@ -303,9 +477,14 @@ public sealed class PatchItemVm : VmBase
         OnPropertyChanged(nameof(IsVersionSpecific));
         OnPropertyChanged(nameof(IsOfficial));
         OnPropertyChanged(nameof(IsCanary));
+        OnPropertyChanged(nameof(IsExperimentalPatch));
         OnPropertyChanged(nameof(IsLocal));
         OnPropertyChanged(nameof(IsCustom));
         OnPropertyChanged(nameof(IsAvailable));
+        OnPropertyChanged(nameof(IsDefinitionResident));
+        OnPropertyChanged(nameof(HasDefinitionState));
+        OnPropertyChanged(nameof(DefinitionStateDisplay));
+        OnPropertyChanged(nameof(DefinitionStateTone));
         OnPropertyChanged(nameof(PrimaryBadgeDisplay));
         OnPropertyChanged(nameof(PrimaryBadgeTone));
         OnPropertyChanged(nameof(PrimaryBadgeTooltip));
@@ -316,12 +495,22 @@ public sealed class PatchItemVm : VmBase
         OnPropertyChanged(nameof(PlayerSourceText));
         OnPropertyChanged(nameof(PlayerScopeText));
         OnPropertyChanged(nameof(PlayerActionText));
+        OnPropertyChanged(nameof(IsRuntimeGuarded));
+        OnPropertyChanged(nameof(CompatibilityDecision));
+        OnPropertyChanged(nameof(HasPlayerInstruction));
+        OnPropertyChanged(nameof(PlayerInstructionText));
         OnPropertyChanged(nameof(InstalledVersionDisplay));
         OnPropertyChanged(nameof(RequiredVersionDisplay));
         OnPropertyChanged(nameof(TargetSerialDisplay));
         OnPropertyChanged(nameof(HashKindDisplay));
         OnPropertyChanged(nameof(ShortHash));
         OnPropertyChanged(nameof(TechnicalTargetDisplay));
+        OnPropertyChanged(nameof(HasHashEvidence));
+        OnPropertyChanged(nameof(RequiredHashDisplay));
+        OnPropertyChanged(nameof(DetectedHashDisplay));
+        OnPropertyChanged(nameof(HashEvidenceSourceDisplay));
+        OnPropertyChanged(nameof(HashEvidenceSummary));
+        OnPropertyChanged(nameof(HashEvidenceDetails));
         OnPropertyChanged(nameof(GroupDisplay));
         OnPropertyChanged(nameof(TargetLine));
         OnPropertyChanged(nameof(DirectStatusText));
@@ -363,6 +552,8 @@ public sealed class PatchItemVm : VmBase
         {
             PatchSourceOrigin.Official => PatchSourceKind.Official,
             PatchSourceOrigin.BundledCanary => PatchSourceKind.Canary,
+            PatchSourceOrigin.BundledCheats => PatchSourceKind.CheatLibrary,
+            PatchSourceOrigin.ManagedCheats => PatchSourceKind.Local,
             PatchSourceOrigin.Imported when patch.Risk == PatchRisk.Canary => PatchSourceKind.Canary,
             PatchSourceOrigin.Imported => PatchSourceKind.Local,
             PatchSourceOrigin.TitleSpecific => PatchSourceKind.Custom,
@@ -430,6 +621,7 @@ public sealed class PatchItemVm : VmBase
         {
             PatchSourceKind.Official => "Patch.Source.Official",
             PatchSourceKind.Canary => "Patch.Source.Canary",
+            PatchSourceKind.CheatLibrary => "Patch.Source.CheatLibrary",
             PatchSourceKind.Local => "Patch.Source.Local",
             PatchSourceKind.Custom => "Patch.Source.Custom",
             PatchSourceKind.Missing => "Patch.Source.Missing",

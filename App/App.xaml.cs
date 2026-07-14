@@ -1,5 +1,5 @@
 using System.Windows;
-using AppSvc;
+using R3Config.Svc;
 using R3Config.Lang;
 
 namespace R3Config;

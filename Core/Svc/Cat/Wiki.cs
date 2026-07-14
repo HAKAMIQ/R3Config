@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -23,6 +24,65 @@ public sealed class WikiRecommendationService
         @"<!--.*?-->",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
 
+    private static readonly Regex HtmlBreak = new(
+        @"<br\s*/?>",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    private static readonly Regex WikiLink = new(
+        @"\[\[(?<body>.*?)\]\]",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
+
+    private static readonly Regex WikiIssue = new(
+        @"\{\{issue\|(?<id>\d+)\}\}",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    private static readonly Regex WikiPullRequest = new(
+        @"\{\{pr\|(?<id>\d+)\}\}",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    private static readonly Regex SquareDimension = new(
+        @"^(?<width>\d+)\s*[x×]\s*(?<height>\d+)$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    private static readonly Regex IntegerRange = new(
+        @"^\d+\s*[-–—]\s*\d+$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static readonly Regex AnisotropicValue = new(
+        @"^(?<value>\d+)\s*x$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    private static readonly IReadOnlySet<string> BooleanConfigKeys =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "enable spu loop detection",
+            "accurate spu dma",
+            "accurate rsx reservation access",
+            "accurate llvm dfma",
+            "ppu llvm java mode handling",
+            "ppu llvm accurate vector nans",
+            "debug console mode",
+            "hook static functions",
+            "write color buffers",
+            "read color buffers",
+            "write depth buffers",
+            "read depth buffers",
+            "strict rendering mode",
+            "stretch to display area",
+            "multithreaded rsx",
+            "asynchronous texture streaming",
+            "disable on-disk shader cache",
+            "disable vertex cache",
+            "vblank ntsc fixup",
+            "force cpu blit emulation",
+            "force gpu texture scaling",
+            "disable zcull occlusion queries",
+            "dump to file",
+            "convert to 16-bit",
+            "enable buffering",
+            "enable time stretching"
+        };
+
     private static readonly IReadOnlyDictionary<string, (string Section, string Key)> ConfigMap =
         new Dictionary<string, (string Section, string Key)>(StringComparer.OrdinalIgnoreCase)
         {
@@ -31,7 +91,7 @@ public sealed class WikiRecommendationService
             ["preferred spu threads"] = ("Core", "Preferred SPU Threads"),
             ["thread scheduler"] = ("Core", "Thread Scheduler Mode"),
             ["enable spu loop detection"] = ("Core", "SPU loop detection"),
-            ["spu xfloat accuracy"] = ("Core", "XFloat Accuracy"),
+            ["spu xfloat accuracy"] = ("Core", "SPU XFloat Accuracy"),
             ["spu block size"] = ("Core", "SPU Block Size"),
             ["accurate spu dma"] = ("Core", "Accurate SPU DMA"),
             ["accurate rsx reservation access"] = ("Core", "Accurate RSX reservation access"),
@@ -60,10 +120,10 @@ public sealed class WikiRecommendationService
             ["write depth buffers"] = ("Video", "Write Depth Buffer"),
             ["read depth buffers"] = ("Video", "Read Depth Buffer"),
             ["strict rendering mode"] = ("Video", "Strict Rendering Mode"),
-            ["vsync"] = ("Video", "VSync"),
+            ["vsync"] = ("Video", "VSync Mode"),
             ["stretch to display area"] = ("Video", "Stretch To Display Area"),
             ["multithreaded rsx"] = ("Video", "Multithreaded RSX"),
-            ["asynchronous texture streaming"] = ("Video", "Vulkan.Asynchronous Texture Streaming 2"),
+            ["asynchronous texture streaming"] = ("Video", "Vulkan.Asynchronous Texture Streaming"),
             ["disable on-disk shader cache"] = ("Video", "Disable On-Disk Shader Cache"),
             ["disable vertex cache"] = ("Video", "Disable Vertex Cache"),
             ["driver wake-up delay"] = ("Video", "Driver Wake-Up Delay"),
@@ -225,7 +285,12 @@ public sealed class WikiRecommendationService
                 continue;
             }
 
-            var value = ConvertWikiValue(rawValue);
+            var value = ConvertWikiValue(wikiKey, rawValue);
+            if (value is null)
+            {
+                continue;
+            }
+
             notes.TryGetValue(wikiKey, out var note);
 
             yield return new ConfigChange(
@@ -263,29 +328,99 @@ public sealed class WikiRecommendationService
     private static string CleanWikiValue(string value)
     {
         value = HtmlComment.Replace(value, string.Empty);
+        value = HtmlBreak.Replace(value, " ");
+        value = WikiIssue.Replace(value, "RPCS3 issue #${id}");
+        value = WikiPullRequest.Replace(value, "RPCS3 PR #${id}");
+        value = WikiLink.Replace(value, match =>
+        {
+            var body = match.Groups["body"].Value;
+            var separator = body.LastIndexOf('|');
+            return separator >= 0
+                ? body[(separator + 1)..].Trim()
+                : body.Replace('_', ' ').Trim();
+        });
         value = WebUtility.HtmlDecode(value);
         value = value.Replace("'''", string.Empty).Replace("''", string.Empty);
         return Regex.Replace(value, @"\s+", " ").Trim();
     }
 
-    private static string ConvertWikiValue(string value)
+    private static string? ConvertWikiValue(string wikiKey, string value)
     {
-        if (string.Equals(value, "On", StringComparison.OrdinalIgnoreCase))
+        if (wikiKey.Equals("resolution scale threshold", StringComparison.OrdinalIgnoreCase))
         {
-            return "true";
+            if (TryParseBoundedInteger(value, 1, 1024, out var directDimension))
+            {
+                return directDimension.ToString(CultureInfo.InvariantCulture);
+            }
+
+            var dimensionMatch = SquareDimension.Match(value);
+            if (!dimensionMatch.Success ||
+                !int.TryParse(dimensionMatch.Groups["width"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var width) ||
+                !int.TryParse(dimensionMatch.Groups["height"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var height) ||
+                width != height ||
+                width is < 1 or > 1024)
+            {
+                return null;
+            }
+
+            return width.ToString(CultureInfo.InvariantCulture);
         }
 
-        if (string.Equals(value, "Off", StringComparison.OrdinalIgnoreCase))
+        if (wikiKey.Equals("anisotropic filter", StringComparison.OrdinalIgnoreCase))
         {
-            return "false";
+            if (value.Equals("Auto", StringComparison.OrdinalIgnoreCase))
+            {
+                return "0";
+            }
+
+            var anisotropicMatch = AnisotropicValue.Match(value);
+            var numericValue = anisotropicMatch.Success
+                ? anisotropicMatch.Groups["value"].Value
+                : value;
+
+            return TryParseBoundedInteger(numericValue, 0, 16, out var anisotropic)
+                ? anisotropic.ToString(CultureInfo.InvariantCulture)
+                : null;
         }
 
-        if (value.EndsWith('%') && int.TryParse(value[..^1], out var percent))
+        if (wikiKey.Equals("preferred spu threads", StringComparison.OrdinalIgnoreCase))
         {
-            return percent.ToString();
+            if (IntegerRange.IsMatch(value))
+            {
+                return null;
+            }
+
+            return TryParseBoundedInteger(value, 0, 6, out var preferredThreads)
+                ? preferredThreads.ToString(CultureInfo.InvariantCulture)
+                : null;
+        }
+
+        if (BooleanConfigKeys.Contains(wikiKey))
+        {
+            if (value.Equals("On", StringComparison.OrdinalIgnoreCase))
+            {
+                return "true";
+            }
+
+            if (value.Equals("Off", StringComparison.OrdinalIgnoreCase))
+            {
+                return "false";
+            }
+        }
+
+        if (value.EndsWith('%') &&
+            int.TryParse(value[..^1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var percent))
+        {
+            return percent.ToString(CultureInfo.InvariantCulture);
         }
 
         return value;
     }
 
+    private static bool TryParseBoundedInteger(string value, int minimum, int maximum, out int result)
+    {
+        return int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out result) &&
+               result >= minimum &&
+               result <= maximum;
+    }
 }

@@ -5,7 +5,7 @@ using Microsoft.Win32;
 using R3Config.Lang;
 using R3Config.View.Dlg;
 
-namespace AppSvc;
+namespace R3Config.Svc;
 
 public enum UiDialogKind
 {
@@ -32,7 +32,9 @@ public static class UiDlg
 
         ApplyInitialDirectory(dialog, currentPath);
 
-        return dialog.ShowDialog(ActiveOwner()) == true ? dialog.FileName : null;
+        return dialog.ShowDialog(ActiveOwner()) == true
+            ? dialog.FileName
+            : null;
     }
 
     public static string? PickWikiXml()
@@ -47,7 +49,9 @@ public static class UiDlg
             DefaultExt = ".xml"
         };
 
-        return dialog.ShowDialog(ActiveOwner()) == true ? dialog.FileName : null;
+        return dialog.ShowDialog(ActiveOwner()) == true
+            ? dialog.FileName
+            : null;
     }
 
     public static string? PickCatExportPath()
@@ -63,27 +67,45 @@ public static class UiDlg
             DefaultExt = ".json"
         };
 
-        return dialog.ShowDialog(ActiveOwner()) == true ? dialog.FileName : null;
+        return dialog.ShowDialog(ActiveOwner()) == true
+            ? dialog.FileName
+            : null;
     }
 
     public static void Info(string message, string title)
     {
-        Show(message, title, UiDialogKind.Info, isConfirm: false);
+        Show(
+            message,
+            title,
+            UiDialogKind.Info,
+            isConfirm: false);
     }
 
     public static void Warn(string message, string title)
     {
-        Show(message, title, UiDialogKind.Warning, isConfirm: false);
+        Show(
+            message,
+            title,
+            UiDialogKind.Warning,
+            isConfirm: false);
     }
 
     public static void Error(string message, string title)
     {
-        Show(message, title, UiDialogKind.Error, isConfirm: false);
+        Show(
+            message,
+            title,
+            UiDialogKind.Error,
+            isConfirm: false);
     }
 
     public static bool Confirm(string message, string title)
     {
-        return Show(message, title, UiDialogKind.Confirm, isConfirm: true);
+        return Show(
+            message,
+            title,
+            UiDialogKind.Confirm,
+            isConfirm: true);
     }
 
     public static void CopyText(string text)
@@ -91,14 +113,25 @@ public static class UiDlg
         Clipboard.SetText(text);
     }
 
-    private static bool Show(string message, string title, UiDialogKind kind, bool isConfirm)
+    private static bool Show(
+        string message,
+        string title,
+        UiDialogKind kind,
+        bool isConfirm)
     {
-        var owner = ActiveOwner();
-        var dialog = new AppDialog(owner, title, message, kind, isConfirm);
+        var dialog = new AppDialog(
+            ActiveOwner(),
+            title,
+            message,
+            kind,
+            isConfirm);
+
         return dialog.ShowDialog() == true;
     }
 
-    private static void ApplyInitialDirectory(FileDialog dialog, string path)
+    private static void ApplyInitialDirectory(
+        FileDialog dialog,
+        string path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -131,8 +164,8 @@ public static class UiDlg
         }
 
         return current.Windows
-            .OfType<Window>()
-            .FirstOrDefault(window => window.IsActive)
-            ?? current.MainWindow;
+                   .OfType<Window>()
+                   .FirstOrDefault(window => window.IsActive)
+               ?? current.MainWindow;
     }
 }

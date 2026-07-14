@@ -1,81 +1,74 @@
-# R3Config 1.0.0
+# R3Config
 
-R3Config is a local, offline Windows companion for RPCS3. It discovers installed games, compares their current per-game configuration with the bundled recommendation catalog, and manages explicitly selected RPCS3 patches without editing game files or the official patch catalog.
+> Development status: Unreleased
 
-R3Config هو برنامج Windows محلي لمساعدة مستخدم RPCS3 على مراجعة إعدادات كل لعبة والباتشات المطابقة وتطبيق ما يختاره فقط، مع نسخة احتياطية قبل كل كتابة.
+R3Config is a local Windows companion for RPCS3. It scans installed games, reviews their per-game settings, and helps the user manage compatible patches safely.
+
+R3Config هو برنامج Windows محلي لمراجعة إعدادات ألعاب RPCS3 والباتشات المتوافقة، مع التحقق والنسخ الاحتياطي قبل أي تعديل.
+
+## Features
+
+- Arabic and English interface.
+- Local RPCS3 game detection.
+- Per-game configuration recommendations.
+- Game, Canary, and Cheat patch views.
+- Compatibility checks using serial, version, and executable hash.
+- Backup and rollback before configuration or patch writes.
+- Offline operation with no telemetry or cloud services.
 
 ## Requirements
 
-- Windows 10 or Windows 11, x64.
-- A local RPCS3 installation selected through `rpcs3.exe`.
-- The portable release is self-contained; users do not need to install .NET separately.
+- Windows 10 or Windows 11 x64.
+- A local RPCS3 installation.
+- RPCS3 must be closed before writing configuration or patch files.
 
-## Main workflow
+## Safety
 
-1. Select `rpcs3.exe`.
-2. Analyze installed games from `games.yml`, `dev_hdd0/game`, and `PARAM.SFO`.
-3. Select a game and review its current and recommended settings.
-4. Review patches grouped like RPCS3: game title, serial/version, then patch entries.
-5. Select only the settings or patches you want.
-6. Confirm the plan. R3Config creates a backup, validates the temporary YAML, then replaces the target atomically.
+R3Config does not modify game files or the official `patch.yml`.
 
-## RPCS3 compatibility contract
+Patches are not selected automatically. A patch can be enabled only after the user selects it and the required compatibility information matches.
 
-The patch implementation follows the local RPCS3 source contract:
+Invalid YAML or an active RPCS3 process blocks writing. Existing files are backed up before changes are committed.
 
-- reads `patch.yml`, `imported_patch.yml`, and `*_patch.yml` in RPCS3 load order;
-- supports PPU, SPU, PRX, OVL, and `All` patch targets;
-- uses `Hash → Patch title → Game title → Serial → Version → Enabled` for `patch_config.yml`;
-- preserves RPCS3 configurable values when disabling a patch;
-- never writes to `patch.yml`;
-- prepares bundled Canary entries in `imported_patch.yml` only when the user explicitly enables one.
+## Build
 
-## Safety boundaries
+    dotnet restore .\R3Config.slnx
+    dotnet build .\R3Config.slnx -c Release
+    dotnet run --project .\Tst\R3Config.Tests.csproj -c Release
 
-- No downloads, telemetry, cloud sync, auto-update, or full-disk scan.
-- No emulator, firmware, game, license, or save-data distribution.
-- No automatic patch selection and no blind Apply All.
-- Enable requires an exact serial/version/hash match.
-- RPCS3 must be closed before any configuration or patch write.
-- Invalid YAML blocks writing and is shown in the interface.
-- Every configuration and patch write is backed up and rolled back after failure.
+## Portable package
 
-## Build and test
+    .\scripts\Publish-Portable.cmd -Rpcs3Path "C:\path\to\rpcs3"
 
-```powershell
-dotnet restore .\R3Config.slnx
-dotnet build .\R3Config.slnx
-dotnet run --project .\Tst\R3Config.Tests.csproj
-```
+The publish script builds and verifies the project, then creates the portable package and checksums under `artifacts`.
 
-Read-only verification against a real RPCS3 installation:
+## Project structure
 
-```powershell
-.\scripts\Test-Release.cmd -Rpcs3Path "C:\path\to\rpcs3"
-```
+- `App/Application/` — use-case orchestration without WPF dependencies.
+- `App/Composition/` — the single dependency composition root.
+- `App/Vm/`, `App/View/`, `App/Ctrl/` — WPF presentation and commands.
+- `App/Flow.cs` — a thin compatibility facade over the use cases.
+- `Core/` — models, scanning, planning, parsing, matching, mutation guards,
+  transactions, backup, and restore.
+- `Tst/` — smoke and regression tests.
+- `scripts/` — build, verification, and packaging scripts.
+- `docs/architecture/` — the developer architecture and extension guide.
 
-Add `-LaunchApp` for the final manual UI pass.
+Developers should start with the
+[architecture pack](docs/architecture/README.md). See [CHEATS.md](CHEATS.md) for
+the bundled cheat catalog notice and [KL.md](KL.md) for known limitations.
 
-## Publish
+## Source handoff
 
-```powershell
-.\scripts\Publish-Portable.cmd -Rpcs3Path "C:\path\to\rpcs3"
-```
+The detailed Arabic product idea and implementation contract are documented in
+[docs/PRODUCT_SPECIFICATION_AR.md](docs/PRODUCT_SPECIFICATION_AR.md).
 
-The script restores, builds, runs the smoke and optional real-install tests, creates a self-contained single-file executable, validates the release tree and language/catalog assets, writes per-file checksums, and produces:
+Create a clean source package for a developer with:
 
-```text
-artifacts\R3Config-1.0.0-win-x64-portable.zip
-artifacts\R3Config-1.0.0-win-x64-portable.zip.sha256
-```
+    .\scripts\Export-Source.cmd
 
-The release contains `R3Config.exe`, the offline catalogs, Arabic/English language files, documentation, license, and `SHA256SUMS.txt`. It never contains RPCS3 or game data.
-
-## Project layout
-
-- `App/`: WPF UI, ViewModels, localization, bundled data, and Canary import workflow.
-- `Core/`: scanning, recommendation planning, patch parsing/matching, YAML writes, backup, and restore.
-- `Tst/`: executable smoke, regression, RPCS3 contract, and optional real-install tests.
-- `scripts/`: release test, publish, package verification, and source-cleanliness scripts.
-
-See [RN.md](RN.md) for release notes and [KL.md](KL.md) for intentional limitations.
+The exporter includes the current working tree, including uncommitted and new
+source files. It excludes Git history, Visual Studio state, build outputs,
+publish artifacts, logs, temporary files, local user files, backups, and nested
+ZIP files. The verified archive and its SHA-256 checksum are written under
+`artifacts/source`.

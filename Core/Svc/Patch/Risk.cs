@@ -1,6 +1,8 @@
 using System;
 using R3Config.Mdl;
 
+#pragma warning disable IDE0130
+
 namespace R3Config.Svc;
 
 public static class PatchRiskPolicy
@@ -14,12 +16,7 @@ public static class PatchRiskPolicy
     {
         var haystack = $"{title} {group} {notes} {author}";
 
-        if (isCanarySource)
-        {
-            return PatchRisk.Canary;
-        }
-
-        if (ContainsAny(haystack, "canary"))
+        if (isCanarySource || ContainsAny(haystack, "canary"))
         {
             return PatchRisk.Canary;
         }
@@ -54,7 +51,12 @@ public static class PatchRiskPolicy
             return PatchRisk.Fps60;
         }
 
-        if (ContainsAny(haystack, "experimental", "unstable", "testing only", "test patch"))
+        if (ContainsAny(
+            haystack,
+            "experimental",
+            "unstable",
+            "testing only",
+            "test patch"))
         {
             return PatchRisk.Experimental;
         }
@@ -106,7 +108,10 @@ public static class PatchRiskPolicy
         return PatchRisk.Unknown;
     }
 
-    public static string InferPatchType(string title, string? group, PatchRisk risk)
+    public static string InferPatchType(
+        string title,
+        string? group,
+        PatchRisk risk)
     {
         if (!string.IsNullOrWhiteSpace(group))
         {
@@ -126,41 +131,77 @@ public static class PatchRiskPolicy
         };
     }
 
-    public static bool IsVisibleInPreview(PatchRisk risk, bool expertMode)
+    public static bool IsVisibleInPreview(
+        PatchRisk risk,
+        bool expertMode)
     {
-        // RPCS3 exposes Canary patches as a distinct documented patch type.
-        // The preview must show them for the selected game instead of hiding them
-        // behind an expert toggle, while still requiring an explicit user check.
+        _ = risk;
+        _ = expertMode;
         return true;
     }
 
-    public static bool CanSelectInPreview(PatchRisk risk, PatchMatchStatus matchStatus)
+    public static bool CanSelectInPreview(
+        PatchRisk risk,
+        PatchMatchStatus matchStatus)
     {
-        return IsUserSelectablePatch(risk) && IsSafeMatchForPatchConfig(matchStatus);
+        return IsUserSelectablePatch(risk) &&
+               IsSafeMatchForPatchConfig(matchStatus);
     }
 
-    public static bool ShouldSelectByDefaultInPreview(PatchRisk risk, PatchMatchStatus matchStatus)
+    public static bool CanSelectInPreview(
+        Rpcs3PatchMatchResult match)
     {
-        // Every patch write must reflect an explicit user choice. Even a safe,
-        // exact match starts unchecked.
+        return IsUserSelectablePatch(match.Patch.Risk) &&
+               PatchActivationPolicy.CanEnable(match);
+    }
+
+    public static bool ShouldSelectByDefaultInPreview(
+        PatchRisk risk,
+        PatchMatchStatus matchStatus)
+    {
+        _ = risk;
+        _ = matchStatus;
         return false;
     }
 
-    public static bool CanApplyCheckedPatch(PatchRisk risk, PatchMatchStatus matchStatus, bool expertMode)
+    public static bool CanApplyCheckedPatch(
+        PatchRisk risk,
+        PatchMatchStatus matchStatus,
+        bool expertMode)
     {
-        return IsUserSelectablePatch(risk) && IsSafeMatchForPatchConfig(matchStatus);
+        _ = expertMode;
+
+        return IsUserSelectablePatch(risk) &&
+               IsSafeMatchForPatchConfig(matchStatus);
     }
 
-    public static bool CanDisableCheckedPatch(PatchRisk risk, PatchMatchStatus matchStatus)
+    public static bool CanApplyCheckedPatch(
+        Rpcs3PatchMatchResult match,
+        bool expertMode)
     {
-        return IsUserSelectablePatch(risk) && IsKnownPatchConfigMatch(matchStatus);
+        _ = expertMode;
+
+        return IsUserSelectablePatch(match.Patch.Risk) &&
+               PatchActivationPolicy.CanEnable(match);
+    }
+
+    public static bool CanDisableCheckedPatch(
+        PatchRisk risk,
+        PatchMatchStatus matchStatus)
+    {
+        return IsUserSelectablePatch(risk) &&
+               IsKnownPatchConfigMatch(matchStatus);
+    }
+
+    public static bool CanDisableCheckedPatch(
+        Rpcs3PatchMatchResult match)
+    {
+        return IsUserSelectablePatch(match.Patch.Risk) &&
+               PatchActivationPolicy.CanDisable(match);
     }
 
     private static bool IsUserSelectablePatch(PatchRisk risk)
     {
-        // The preview is an execution surface, not an automatic policy engine.
-        // Exact and serial/version-matched patches may be selected manually,
-        // while only SafeFix remains auto-selected by default.
         return risk is PatchRisk.SafeFix
             or PatchRisk.VisualFix
             or PatchRisk.Performance
@@ -171,12 +212,14 @@ public static class PatchRiskPolicy
             or PatchRisk.Unknown;
     }
 
-    private static bool IsSafeMatchForPatchConfig(PatchMatchStatus matchStatus)
+    private static bool IsSafeMatchForPatchConfig(
+        PatchMatchStatus matchStatus)
     {
         return matchStatus == PatchMatchStatus.ExactMatch;
     }
 
-    private static bool IsKnownPatchConfigMatch(PatchMatchStatus matchStatus)
+    private static bool IsKnownPatchConfigMatch(
+        PatchMatchStatus matchStatus)
     {
         return matchStatus is PatchMatchStatus.ExactMatch
             or PatchMatchStatus.SerialVersionMatchHashUnknown;
@@ -189,14 +232,20 @@ public static class PatchRiskPolicy
             return "Unknown";
         }
 
-        return ContainsAny(title, "patch") ? "Patch" : "Unknown";
+        return ContainsAny(title, "patch")
+            ? "Patch"
+            : "Unknown";
     }
 
-    private static bool ContainsAny(string value, params string[] fragments)
+    private static bool ContainsAny(
+        string value,
+        params string[] fragments)
     {
         foreach (var fragment in fragments)
         {
-            if (value.Contains(fragment, StringComparison.OrdinalIgnoreCase))
+            if (value.Contains(
+                    fragment,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
@@ -205,3 +254,5 @@ public static class PatchRiskPolicy
         return false;
     }
 }
+
+#pragma warning restore IDE0130

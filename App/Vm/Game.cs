@@ -1,4 +1,3 @@
-using R3Config.Lang;
 using R3Config.Mdl;
 
 namespace R3Config.Vm;
@@ -34,9 +33,7 @@ public sealed class GameItemVm : VmBase
         {
             if (SetProperty(ref _recState, value))
             {
-                OnPropertyChanged(nameof(Total));
                 OnPropertyChanged(nameof(Pending));
-                OnPropertyChanged(nameof(NeedDisplay));
             }
         }
     }
@@ -47,20 +44,5 @@ public sealed class GameItemVm : VmBase
 
     public bool IsDetectedInRpcs3 { get; }
 
-    public int Total => RecState.Total;
-
     public int Pending => RecState.Pending;
-
-    public string NeedLabel => UiText.T("Games.Need");
-
-    public string NeedTip => UiText.T("Games.NeedTip");
-
-    public string NeedDisplay => UiText.F("Games.NeedDisplay", Pending, Total);
-
-    public void RefreshLanguage()
-    {
-        OnPropertyChanged(nameof(NeedLabel));
-        OnPropertyChanged(nameof(NeedTip));
-        OnPropertyChanged(nameof(NeedDisplay));
-    }
 }

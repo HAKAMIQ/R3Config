@@ -1,8 +1,9 @@
+using System;
 using System.Windows;
 using System.Windows.Markup;
 using R3Config.Lang;
 
-namespace AppSvc;
+namespace R3Config.Svc;
 
 public sealed class UiLayoutState
 {
@@ -30,46 +31,68 @@ public sealed class UiLayoutState
 
     public FlowDirection ShellFlow => TextFlow;
 
-    public FlowDirection TextFlow => IsRtl ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+    public FlowDirection TextFlow =>
+        IsRtl
+            ? FlowDirection.RightToLeft
+            : FlowDirection.LeftToRight;
 
-    public FlowDirection TechnicalFlow => FlowDirection.LeftToRight;
+    public FlowDirection TechnicalFlow { get; } =
+        FlowDirection.LeftToRight;
 
-    public TextAlignment TextAlignment => IsRtl ? TextAlignment.Right : TextAlignment.Left;
+    public TextAlignment TextAlignment =>
+        IsRtl
+            ? TextAlignment.Right
+            : TextAlignment.Left;
 
-    public TextAlignment SettingsTextAlignment => TextAlignment.Left;
+    public TextAlignment SettingsTextAlignment { get; } =
+        TextAlignment.Left;
 
-    public TextAlignment TechnicalTextAlignment => TextAlignment.Left;
+    public TextAlignment TechnicalTextAlignment { get; } =
+        TextAlignment.Left;
 
-    public HorizontalAlignment HorizontalAlignment => IsRtl ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+    public HorizontalAlignment HorizontalAlignment =>
+        IsRtl
+            ? HorizontalAlignment.Right
+            : HorizontalAlignment.Left;
 
     public GridLength GamesPanelWidth { get; }
 
     public GridLength DetailsPanelWidth { get; }
 
-    public int GamesPanelColumn => 0;
+    public int GamesPanelColumn { get; } = 0;
 
-    public int DetailsPanelColumn => 1;
+    public int DetailsPanelColumn { get; } = 1;
 
     public GridLength LeftShellColumnWidth => GamesPanelWidth;
 
     public GridLength RightShellColumnWidth => DetailsPanelWidth;
 
-    public FlowDirection SelectedGameTitleFlow(bool hasSelectedGame)
+    public FlowDirection SelectedGameTitleFlow(
+        bool hasSelectedGame)
     {
-        return hasSelectedGame ? TechnicalFlow : TextFlow;
+        return hasSelectedGame
+            ? TechnicalFlow
+            : TextFlow;
     }
 
-    public TextAlignment SelectedGameTitleAlignment(bool hasSelectedGame)
+    public TextAlignment SelectedGameTitleAlignment(
+        bool hasSelectedGame)
     {
-        return hasSelectedGame ? TechnicalTextAlignment : TextAlignment;
+        return hasSelectedGame
+            ? TechnicalTextAlignment
+            : TextAlignment;
     }
 
     public static UiLayoutState FromLanguage(string? language)
     {
         var normalized = UiText.NormalizeLang(language);
+
         return new UiLayoutState(
             normalized,
-            normalized == UiText.ArabicLang,
+            string.Equals(
+                normalized,
+                UiText.ArabicLang,
+                StringComparison.Ordinal),
             XmlLanguage.GetLanguage(normalized),
             new GridLength(304, GridUnitType.Pixel),
             new GridLength(1, GridUnitType.Star));
@@ -78,7 +101,8 @@ public sealed class UiLayoutState
 
 public static class UiLayoutService
 {
-    public static UiLayoutState Current => UiLayoutState.FromLanguage(UiText.CurrentLang);
+    public static UiLayoutState Current =>
+        UiLayoutState.FromLanguage(UiText.CurrentLang);
 
     public static void ApplyApplicationResources()
     {
@@ -89,22 +113,52 @@ public static class UiLayoutService
         }
 
         var layout = Current;
-        app.Resources["App.FlowDirection"] = layout.TextFlow;
-        app.Resources["App.CaptionButtonsFlowDirection"] = layout.IsRtl ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
-        app.Resources["App.DefaultTextAlignment"] = layout.TextAlignment;
-        app.Resources["Options.SettingsTextAlignment"] = layout.SettingsTextAlignment;
-        app.Resources["App.HorizontalAlignment"] = layout.HorizontalAlignment;
-        app.Resources["App.XmlLanguage"] = layout.XmlLanguage;
 
-        app.Resources["TechnicalText.FlowDirection"] = layout.TechnicalFlow;
-        app.Resources["TechnicalText.TextAlignment"] = layout.TechnicalTextAlignment;
-        app.Resources["TechnicalText.HorizontalAlignment"] = HorizontalAlignment.Left;
-        app.Resources["TechnicalText.Language"] = XmlLanguage.GetLanguage(UiText.EnglishLang);
+        app.Resources["App.FlowDirection"] =
+            layout.TextFlow;
 
-        app.Resources["App.ShellFlowDirection"] = layout.ShellFlow;
-        app.Resources["App.TextFlowDirection"] = layout.TextFlow;
-        app.Resources["App.TechnicalFlowDirection"] = layout.TechnicalFlow;
-        app.Resources["App.TextAlignment"] = layout.TextAlignment;
-        app.Resources["App.TechnicalTextAlignment"] = layout.TechnicalTextAlignment;
+        app.Resources["App.CaptionButtonsFlowDirection"] =
+            layout.IsRtl
+                ? FlowDirection.RightToLeft
+                : FlowDirection.LeftToRight;
+
+        app.Resources["App.DefaultTextAlignment"] =
+            layout.TextAlignment;
+
+        app.Resources["Options.SettingsTextAlignment"] =
+            layout.SettingsTextAlignment;
+
+        app.Resources["App.HorizontalAlignment"] =
+            layout.HorizontalAlignment;
+
+        app.Resources["App.XmlLanguage"] =
+            layout.XmlLanguage;
+
+        app.Resources["TechnicalText.FlowDirection"] =
+            layout.TechnicalFlow;
+
+        app.Resources["TechnicalText.TextAlignment"] =
+            layout.TechnicalTextAlignment;
+
+        app.Resources["TechnicalText.HorizontalAlignment"] =
+            HorizontalAlignment.Left;
+
+        app.Resources["TechnicalText.Language"] =
+            XmlLanguage.GetLanguage(UiText.EnglishLang);
+
+        app.Resources["App.ShellFlowDirection"] =
+            layout.ShellFlow;
+
+        app.Resources["App.TextFlowDirection"] =
+            layout.TextFlow;
+
+        app.Resources["App.TechnicalFlowDirection"] =
+            layout.TechnicalFlow;
+
+        app.Resources["App.TextAlignment"] =
+            layout.TextAlignment;
+
+        app.Resources["App.TechnicalTextAlignment"] =
+            layout.TechnicalTextAlignment;
     }
 }

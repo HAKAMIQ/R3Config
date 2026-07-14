@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace AppSvc;
+namespace R3Config.Svc;
 
 public static class WindowThemeService
 {
-    private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
-    private const int DWMWA_USE_IMMERSIVE_DARK_MODE_LEGACY = 19;
+    private const int UseImmersiveDarkMode = 20;
+    private const int UseImmersiveDarkModeLegacy = 19;
 
     public static void ApplyDwmSetWindowAttributeDarkMode(Window? window)
     {
@@ -29,7 +29,9 @@ public static class WindowThemeService
         TryApplyDarkMode(handle);
     }
 
-    private static void Window_SourceInitialized(object? sender, EventArgs e)
+    private static void Window_SourceInitialized(
+        object? sender,
+        EventArgs e)
     {
         if (sender is not Window window)
         {
@@ -47,34 +49,31 @@ public static class WindowThemeService
             var enabled = 1;
             var result = DwmSetWindowAttribute(
                 handle,
-                DWMWA_USE_IMMERSIVE_DARK_MODE,
+                UseImmersiveDarkMode,
                 ref enabled,
-                Marshal.SizeOf<int>());
+                sizeof(int));
 
             if (result != 0)
             {
                 _ = DwmSetWindowAttribute(
                     handle,
-                    DWMWA_USE_IMMERSIVE_DARK_MODE_LEGACY,
+                    UseImmersiveDarkModeLegacy,
                     ref enabled,
-                    Marshal.SizeOf<int>());
+                    sizeof(int));
             }
         }
-        catch (DllNotFoundException)
+        catch (Exception ex) when (
+            ex is DllNotFoundException or
+            EntryPointNotFoundException or
+            Win32Exception)
         {
-            // DWM dark mode is cosmetic. Ignore when unavailable.
-        }
-        catch (EntryPointNotFoundException)
-        {
-            // DWM dark mode is cosmetic. Ignore when unavailable.
-        }
-        catch (Win32Exception)
-        {
-            // DWM dark mode is cosmetic. Ignore when unavailable.
         }
     }
 
-    [DllImport("dwmapi.dll", PreserveSig = true)]
+    [DllImport(
+        "dwmapi.dll",
+        ExactSpelling = true,
+        PreserveSig = true)]
     private static extern int DwmSetWindowAttribute(
         IntPtr hwnd,
         int dwAttribute,

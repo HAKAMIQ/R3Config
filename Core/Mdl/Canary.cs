@@ -1,10 +1,148 @@
 namespace R3Config.Mdl;
 
+public enum CanaryDiagnosticSeverity
+{
+    Info,
+    Warning,
+    Error
+}
+
+public enum CanaryComplexity
+{
+    SimpleWrite,
+    ConstantChange,
+    SingleInstruction,
+    MultiInstruction,
+    BranchPatch,
+    CodeCave,
+    AnchorBased,
+    MultiModule,
+    Dynamic,
+    Unsupported
+}
+
+public sealed record CanaryCatalogDiagnostic(
+    CanaryDiagnosticSeverity Severity,
+    string Code,
+    string Message,
+    string? ModuleKey = null,
+    string? PatchTitle = null);
+
+public sealed record CanaryInstruction(
+    string Kind,
+    string Address,
+    string Value,
+    IReadOnlyList<string> ExtraArguments,
+    string? AnchorName = null);
+
+public sealed record CanaryConfigValue(
+    string Name,
+    string Type,
+    string DefaultValue,
+    IReadOnlyDictionary<string, string> AllowedValues);
+
+public sealed record CanaryPatchDefinition(
+    string Title,
+    string NormalizedTitle,
+    PatchHashKind ModuleKind,
+    string ModuleHash,
+    string? NormalizedModuleHash,
+    IReadOnlyList<Rpcs3PatchGameTarget> GameTargets,
+    string PatchVersion,
+    string Author,
+    string? Notes,
+    string? Group,
+    IReadOnlyList<string> AnchorDependencies,
+    IReadOnlyList<CanaryConfigValue> ConfigurableValues,
+    IReadOnlyList<CanaryInstruction> Instructions,
+    string InstructionFingerprint,
+    CanaryComplexity Complexity,
+    bool IsAutomaticCandidate,
+    string ClassificationReason,
+    PatchSourceOrigin Source,
+    string? SourcePath)
+{
+    public string ModuleKey => $"{ModuleKind.ToString().ToUpperInvariant()}-{ModuleHash}";
+
+    public IReadOnlyList<string> Serials => GameTargets
+        .Select(target => target.Serial)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Order(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
+    public IReadOnlyList<string> Versions => GameTargets
+        .SelectMany(target => target.Versions)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Order(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+}
+
+public sealed record CanaryCatalog(
+    string? Version,
+    IReadOnlyList<CanaryPatchDefinition> Definitions,
+    IReadOnlyList<CanaryCatalogDiagnostic> Diagnostics,
+    int RejectedDefinitions,
+    int AnchorCount)
+{
+    public bool HasErrors => Diagnostics.Any(item => item.Severity == CanaryDiagnosticSeverity.Error);
+}
+
+public sealed record CanaryCatalogResult(
+    bool Succeeded,
+    CanaryCatalog Catalog);
+
+public sealed record CanaryPatchFamily(
+    string FamilyId,
+    string Title,
+    string NormalizedTitle,
+    IReadOnlyList<CanaryPatchDefinition> ReferenceEntries,
+    IReadOnlyList<string> SupportedRegions,
+    IReadOnlyList<string> SupportedVersions,
+    IReadOnlyList<string> KnownHashes,
+    IReadOnlyList<string> InstructionFingerprints,
+    CanaryComplexity Complexity);
+
+
+public enum CanaryPortStatus
+{
+    ExactReference,
+    HashEvidenceMissing,
+    VersionUnsupported,
+    ConflictingReferences,
+    ComplexManualReview,
+    NotPortable
+}
+
+public sealed record CanaryPortAnalysis(
+    string FamilyId,
+    string Title,
+    CanaryPortStatus Status,
+    string TargetSerial,
+    string? TargetVersion,
+    PatchHashEvidenceKind EvidenceKind,
+    string? EvidenceSource,
+    IReadOnlyList<string> TargetHashes,
+    IReadOnlyList<CanaryPatchDefinition> CandidateReferences,
+    IReadOnlyList<CanaryPatchDefinition> ExactReferences,
+    bool HasDeterministicEvidence,
+    string Reason);
+
+public sealed record CanaryCatalogReport(
+    int PatchCount,
+    IReadOnlyDictionary<PatchHashKind, int> ModuleCounts,
+    int RejectedDefinitions,
+    int FamilyCount,
+    int SimilarFamilyCount,
+    int SimplePatchCount,
+    int ComplexPatchCount,
+    IReadOnlyList<CanaryPatchFamily> Families,
+    IReadOnlyList<CanaryCatalogDiagnostic> Diagnostics);
+
 public enum HCanaryPatchType
 {
     Ppu,
     Spu,
-    Canary
+    LegacyCanary
 }
 
 public enum HCanaryDraftStatus
@@ -74,6 +212,7 @@ public sealed class HCanaryAnchor
 public sealed class HCanaryPatchDraft
 {
     public HCanaryPatchType PatchType { get; set; } = HCanaryPatchType.Ppu;
+    public bool IsExperimental { get; set; }
     public string ExecutableHash { get; set; } = string.Empty;
     public string PatchName { get; set; } = string.Empty;
     public string Author { get; set; } = string.Empty;
@@ -88,6 +227,7 @@ public sealed class HCanaryPatchDraft
     public HCanaryPatchDraft Clone() => new()
     {
         PatchType = PatchType,
+        IsExperimental = IsExperimental,
         ExecutableHash = ExecutableHash,
         PatchName = PatchName,
         Author = Author,

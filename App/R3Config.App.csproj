@@ -11,10 +11,10 @@
     <DebugType>embedded</DebugType>
     <AssemblyName>R3Config</AssemblyName>
     <RootNamespace>R3Config</RootNamespace>
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
-    <InformationalVersion>1.0.0</InformationalVersion>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <InformationalVersion>1.0.1</InformationalVersion>
     <Product>R3Config</Product>
     <Authors>HAKAMIQ</Authors>
     <Company>HAKAMIQ</Company>
@@ -30,6 +30,7 @@
   <ItemGroup>
     <Content Include="Data\cat.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Data\can.yml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Data\cheats.yml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Lang\ar-SA.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Lang\en-US.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Resource Include="Asset\Icon.ico" />
@@ -41,6 +42,8 @@
     <None Include="..\LICENSE" Link="LICENSE" CopyToPublishDirectory="Always" />
     <None Include="..\KL.md" Link="KL.md" CopyToPublishDirectory="Always" />
     <None Include="..\RN.md" Link="RN.md" CopyToPublishDirectory="Always" />
+    <None Include="..\CHEATS.md" Link="CHEATS.md" CopyToPublishDirectory="Always" />
+    <None Include="..\CANARY.md" Link="CANARY.md" CopyToPublishDirectory="Always" />
   </ItemGroup>
 
 </Project>

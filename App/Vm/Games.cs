@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using R3Config.Lang;
 
@@ -9,6 +11,7 @@ namespace R3Config.Vm;
 public sealed class GameListVm : VmBase
 {
     private readonly List<GameItemVm> _allGames = [];
+    private readonly BulkObservableCollection<GameItemVm> _games = [];
     private GameItemVm? _selectedGame;
     private bool _showOnlyDetectedInRpcs3 = true;
     private string _searchText = string.Empty;
@@ -22,7 +25,7 @@ public sealed class GameListVm : VmBase
         };
     }
 
-    public ObservableCollection<GameItemVm> Games { get; } = [];
+    public ObservableCollection<GameItemVm> Games => _games;
 
     public bool IsEmpty => Games.Count == 0;
 
@@ -83,7 +86,7 @@ public sealed class GameListVm : VmBase
     public void Clear()
     {
         _allGames.Clear();
-        Games.Clear();
+        _games.ReplaceAll([]);
         SelectedGame = null;
         SearchText = string.Empty;
 
@@ -97,11 +100,6 @@ public sealed class GameListVm : VmBase
         OnPropertyChanged(nameof(EmptyStateText));
         OnPropertyChanged(nameof(FilterTooltip));
         OnPropertyChanged(nameof(IsSearchEmpty));
-
-        foreach (var game in _allGames)
-        {
-            game.RefreshLanguage();
-        }
     }
 
     private void ApplyFilterPreservingSelection()
@@ -124,12 +122,7 @@ public sealed class GameListVm : VmBase
                 .ToArray();
         }
 
-        Games.Clear();
-
-        foreach (var game in visible)
-        {
-            Games.Add(game);
-        }
+        _games.ReplaceAll(visible);
 
         var selected = string.IsNullOrWhiteSpace(selectedSerial)
             ? null
@@ -142,5 +135,23 @@ public sealed class GameListVm : VmBase
         OnPropertyChanged(nameof(IsEmpty));
         OnPropertyChanged(nameof(HasGames));
         OnPropertyChanged(nameof(EmptyStateText));
+    }
+
+    private sealed class BulkObservableCollection<T> : ObservableCollection<T>
+    {
+        public void ReplaceAll(IEnumerable<T> items)
+        {
+            Items.Clear();
+
+            foreach (var item in items)
+            {
+                Items.Add(item);
+            }
+
+            OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+            OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
+                NotifyCollectionChangedAction.Reset));
+        }
     }
 }

@@ -1,11 +1,26 @@
 param(
     [string]$Configuration = 'Release',
     [string]$Runtime = 'win-x64',
-    [string]$Version = '1.0.0',
+    [string]$Version = '1.0.1',
     [string]$Rpcs3Path
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ([string]::IsNullOrWhiteSpace($Rpcs3Path)) {
+    throw 'Final portable publishing requires -Rpcs3Path so the read-only real-install contract is executed.'
+}
+
+$resolvedRpcs3Path = if (Test-Path -LiteralPath $Rpcs3Path -PathType Container) {
+    Join-Path $Rpcs3Path 'rpcs3.exe'
+}
+else {
+    $Rpcs3Path
+}
+
+if (-not (Test-Path -LiteralPath $resolvedRpcs3Path -PathType Leaf)) {
+    throw "RPCS3 executable was not found: $resolvedRpcs3Path"
+}
 
 function Invoke-DotNet {
     param([Parameter(Mandatory = $true)][string[]]$Arguments)
@@ -13,6 +28,24 @@ function Invoke-DotNet {
     & dotnet @Arguments
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet failed with exit code ${LASTEXITCODE}: dotnet $($Arguments -join ' ')"
+    }
+}
+
+function Get-Sha256Hex {
+    param([Parameter(Mandatory = $true)][string]$LiteralPath)
+
+    $stream = [IO.File]::OpenRead($LiteralPath)
+    try {
+        $sha256 = [Security.Cryptography.SHA256]::Create()
+        try {
+            return [BitConverter]::ToString($sha256.ComputeHash($stream)).Replace('-', '').ToLowerInvariant()
+        }
+        finally {
+            $sha256.Dispose()
+        }
+    }
+    finally {
+        $stream.Dispose()
     }
 }
 
@@ -56,10 +89,11 @@ try {
     Invoke-DotNet -Arguments @('restore', '.\App\R3Config.App.csproj', '-r', $Runtime)
     Invoke-DotNet -Arguments @('build', '.\R3Config.slnx', '-c', $Configuration, '--no-restore', '--nologo')
 
-    $testArguments = @('run', '--project', '.\Tst\R3Config.Tests.csproj', '-c', $Configuration, '--no-build', '--')
-    if (-not [string]::IsNullOrWhiteSpace($Rpcs3Path)) {
-        $testArguments += $Rpcs3Path
-    }
+    $testArguments = @(
+        'run', '--project', '.\Tst\R3Config.Tests.csproj',
+        '-c', $Configuration, '--no-build', '--',
+        $resolvedRpcs3Path
+    )
     Invoke-DotNet -Arguments $testArguments
 
     Invoke-DotNet -Arguments @(
@@ -81,7 +115,7 @@ try {
         Sort-Object FullName |
         ForEach-Object {
             $relative = $_.FullName.Substring($publishDir.TrimEnd('\').Length + 1).Replace('\', '/')
-            $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash.ToLowerInvariant()
+            $hash = Get-Sha256Hex -LiteralPath $_.FullName
             "$hash  $relative"
         }
     Set-Content -LiteralPath $manifestPath -Value $manifestLines -Encoding ascii
@@ -92,7 +126,7 @@ try {
     }
 
     Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $zipPath -Force
-    $zipHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath).Hash.ToLowerInvariant()
+    $zipHash = Get-Sha256Hex -LiteralPath $zipPath
     Set-Content -LiteralPath $zipHashPath -Value "$zipHash  $([IO.Path]::GetFileName($zipPath))" -Encoding ascii
 
     Write-Host "Portable ZIP created: $zipPath"

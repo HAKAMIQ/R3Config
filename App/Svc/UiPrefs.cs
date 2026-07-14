@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using R3Config.Lang;
 
-namespace AppSvc;
+namespace R3Config.Svc;
 
 public static class UiPrefs
 {
@@ -27,13 +27,21 @@ public static class UiPrefs
             }
 
             using var stream = File.OpenRead(path);
-            var prefs = JsonSerializer.Deserialize<UiPrefsData>(stream, JsonOptions);
+            var prefs = JsonSerializer.Deserialize<UiPrefsData>(
+                stream,
+                JsonOptions);
 
             return UiText.NormalizeLang(prefs?.Lang);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
+        catch (Exception ex) when (
+            ex is IOException or
+            UnauthorizedAccessException or
+            JsonException or
+            NotSupportedException)
         {
-            Trace.TraceWarning($"R3Config UI preferences load failed: {ex.Message}");
+            Trace.TraceWarning(
+                $"R3Config UI preferences load failed: {ex.Message}");
+
             return UiText.ArabicLang;
         }
     }
@@ -46,6 +54,7 @@ public static class UiPrefs
         {
             var path = ResolvePath();
             var directory = Path.GetDirectoryName(path);
+
             if (string.IsNullOrWhiteSpace(directory))
             {
                 return;
@@ -58,28 +67,48 @@ public static class UiPrefs
                 Lang = UiText.NormalizeLang(lang)
             };
 
-            var json = JsonSerializer.Serialize(prefs, JsonOptions);
+            var json = JsonSerializer.Serialize(
+                prefs,
+                JsonOptions);
+
             tempPath = path + ".tmp";
 
-            File.WriteAllText(tempPath, json);
-            File.Move(tempPath, path, overwrite: true);
+            File.WriteAllText(
+                tempPath,
+                json);
+
+            File.Move(
+                tempPath,
+                path,
+                overwrite: true);
+
             tempPath = null;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
+        catch (Exception ex) when (
+            ex is IOException or
+            UnauthorizedAccessException or
+            JsonException or
+            NotSupportedException)
         {
             if (!string.IsNullOrWhiteSpace(tempPath))
             {
                 TryDeleteFile(tempPath);
             }
 
-            Trace.TraceWarning($"R3Config UI preferences save failed: {ex.Message}");
+            Trace.TraceWarning(
+                $"R3Config UI preferences save failed: {ex.Message}");
         }
     }
 
     private static string ResolvePath()
     {
-        var root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(root, "R3Config", FileName);
+        var root = Environment.GetFolderPath(
+            Environment.SpecialFolder.LocalApplicationData);
+
+        return Path.Combine(
+            root,
+            "R3Config",
+            FileName);
     }
 
     private static void TryDeleteFile(string path)
@@ -93,7 +122,6 @@ public static class UiPrefs
         }
         catch
         {
-            // Best-effort cleanup for temporary UI preference files.
         }
     }
 

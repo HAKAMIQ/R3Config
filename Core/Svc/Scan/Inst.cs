@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using R3Config.Mdl;
 
+#pragma warning disable IDE0130
+
 namespace R3Config.Svc;
 
 public static class Rpcs3InstallService
@@ -11,47 +13,96 @@ public static class Rpcs3InstallService
     {
         if (string.IsNullOrWhiteSpace(exePath))
         {
-            throw new ArgumentException("Select rpcs3.exe first.", nameof(exePath));
+            throw new ArgumentException(
+                "Select rpcs3.exe first.",
+                nameof(exePath));
         }
 
         var fullExePath = Path.GetFullPath(exePath);
 
         if (!File.Exists(fullExePath))
         {
-            throw new FileNotFoundException("rpcs3.exe was not found.", fullExePath);
+            throw new FileNotFoundException(
+                "rpcs3.exe was not found.",
+                fullExePath);
         }
 
-        if (!string.Equals(Path.GetFileName(fullExePath), "rpcs3.exe", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(
+                Path.GetFileName(fullExePath),
+                "rpcs3.exe",
+                StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("The selected file must be rpcs3.exe.");
+            throw new InvalidOperationException(
+                "The selected file must be rpcs3.exe.");
         }
 
         var rootPath = Path.GetDirectoryName(fullExePath)
-            ?? throw new InvalidOperationException("Could not detect RPCS3 root path.");
+            ?? throw new InvalidOperationException(
+                "Could not detect RPCS3 root path.");
 
-        // R3Config writes per-game wiki settings to the emulator-root config tree.
-        // The final-user contract is always:
-        // <RPCS3 folder>\config\custom_configs\config_<SERIAL>.yml
-        // regardless of the folder name chosen by the user.
-        var configPath = Path.Combine(rootPath, "config");
+        var dataRootPath = ResolveDataRootPath(rootPath);
 
-        // RPCS3 documents manually added patches on Windows as:
-        // <RPCS3 folder>\patches\imported_patch.yml
-        // Keep patch files anchored to the emulator folder even when RPCS3 uses
-        // a portable config folder for config and patch_config.yml.
-        var patchesPath = Path.Combine(rootPath, "patches");
+        var configPath = Path.Combine(
+            dataRootPath,
+            "config");
+
+        var patchesPath = Path.Combine(
+            dataRootPath,
+            "patches");
 
         return new Rpcs3InstallDescriptor(
             RootPath: rootPath,
             ExePath: fullExePath,
             ConfigPath: configPath,
-            CustomConfigsPath: Path.Combine(configPath, "custom_configs"),
+            CustomConfigsPath: Path.Combine(
+                configPath,
+                "custom_configs"),
             PatchesPath: patchesPath,
-            PatchConfigPath: Path.Combine(configPath, "patch_config.yml"));
+            PatchConfigPath: Path.Combine(
+                configPath,
+                "patch_config.yml"),
+            DataRootPath: dataRootPath);
+    }
+
+    private static string ResolveDataRootPath(string rootPath)
+    {
+        // RPCS3 checks <exe>/portable before RPCS3_CONFIG_DIR.
+        var portablePath = Path.Combine(rootPath, "portable");
+        if (Directory.Exists(portablePath))
+        {
+            return Path.GetFullPath(portablePath);
+        }
+
+        var configuredPath = Environment.GetEnvironmentVariable(
+            "RPCS3_CONFIG_DIR");
+        if (string.IsNullOrWhiteSpace(configuredPath))
+        {
+            return rootPath;
+        }
+
+        var candidate = configuredPath.Trim();
+        return Path.GetFullPath(
+            Path.IsPathRooted(candidate)
+                ? candidate
+                : Path.Combine(rootPath, candidate));
     }
 
     public static bool IsRpcs3Running()
     {
-        return Process.GetProcessesByName("rpcs3").Length > 0;
+        var processes = Process.GetProcessesByName("rpcs3");
+
+        try
+        {
+            return processes.Length > 0;
+        }
+        finally
+        {
+            foreach (var process in processes)
+            {
+                process.Dispose();
+            }
+        }
     }
 }
+
+#pragma warning restore IDE0130

@@ -11,12 +11,25 @@
     <Color x:Key="TextPrimaryColor">#FFF4F6F8</Color>
     <Color x:Key="TextSecondaryColor">#FFD2D7DD</Color>
     <Color x:Key="TextMutedColor">#FF9BA3AC</Color>
-    <Color x:Key="AccentColor">#FF5E8FBA</Color>
-    <Color x:Key="AccentHoverColor">#FF76A6CF</Color>
+    <Color x:Key="AccentColor">#FF456F93</Color>
+    <Color x:Key="AccentHoverColor">#FF4F789D</Color>
     <Color x:Key="WarningColor">#FFF1CF74</Color>
     <Color x:Key="DangerColor">#FFFFB1AB</Color>
     <Color x:Key="SuccessColor">#FF7BC79A</Color>
     <Color x:Key="OnAccentColor">#FFFFFFFF</Color>
+    <Color x:Key="AccentPressedColor">#FF365B7A</Color>
+
+    <!-- Semantic control states. Keep control templates free from literal colors. -->
+    <Color x:Key="InputBackgroundColor">#FF20242A</Color>
+    <Color x:Key="InputHoverColor">#FF292E35</Color>
+    <Color x:Key="InputDisabledColor">#FF22252A</Color>
+    <Color x:Key="PopupSurfaceColor">#FF20242A</Color>
+    <Color x:Key="FocusBorderColor">#FF76A6CF</Color>
+    <Color x:Key="DisabledTextColor">#FF89929C</Color>
+    <Color x:Key="DisabledBorderColor">#FF30353B</Color>
+    <Color x:Key="DangerSurfaceColor">#FF3A2527</Color>
+    <Color x:Key="DangerSurfaceHoverColor">#FF4B2A2C</Color>
+    <Color x:Key="DangerBorderColor">#FF85504D</Color>
 
     <Color x:Key="HeaderSurfaceColor">#FF24272B</Color>
     <Color x:Key="HeaderBorderColor">#FF3A3E45</Color>
@@ -26,12 +39,13 @@
     <Color x:Key="CardBackgroundColor">#FF25282D</Color>
     <Color x:Key="CardBorderColor">#FF3A3E45</Color>
     <Color x:Key="SubtleTextColor">#FFD2D7DD</Color>
-    <Color x:Key="SelectionColor">#242F3A44</Color>
-    <Color x:Key="SelectionInactiveColor">#22363A3F</Color>
+    <Color x:Key="SelectionColor">#FF294B66</Color>
+    <Color x:Key="SelectionHoverColor">#FF345F7E</Color>
+    <Color x:Key="SelectionInactiveColor">#FF343C45</Color>
     <Color x:Key="ScrollTrackColor">#FF2A2D32</Color>
     <Color x:Key="ScrollThumbColor">#FF808890</Color>
     <Color x:Key="ScrollThumbHoverColor">#FFA0A7AF</Color>
-    <Color x:Key="ScrollThumbPressedColor">#FF5E8FBA</Color>
+    <Color x:Key="ScrollThumbPressedColor">#FF456F93</Color>
     <Color x:Key="EmptyStateBackgroundColor">#1F2A2D31</Color>
     <Color x:Key="ToolTipSurfaceColor">#FF2B2F34</Color>
     <Color x:Key="WarningBadgeBackgroundColor">#334A3C14</Color>
@@ -65,6 +79,17 @@
     <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="OnAccentBrush" Color="{StaticResource OnAccentColor}" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}" />
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="{StaticResource InputBackgroundColor}" />
+    <SolidColorBrush x:Key="InputHoverBrush" Color="{StaticResource InputHoverColor}" />
+    <SolidColorBrush x:Key="InputDisabledBrush" Color="{StaticResource InputDisabledColor}" />
+    <SolidColorBrush x:Key="PopupSurfaceBrush" Color="{StaticResource PopupSurfaceColor}" />
+    <SolidColorBrush x:Key="FocusBorderBrush" Color="{StaticResource FocusBorderColor}" />
+    <SolidColorBrush x:Key="DisabledTextBrush" Color="{StaticResource DisabledTextColor}" />
+    <SolidColorBrush x:Key="DisabledBorderBrush" Color="{StaticResource DisabledBorderColor}" />
+    <SolidColorBrush x:Key="DangerSurfaceBrush" Color="{StaticResource DangerSurfaceColor}" />
+    <SolidColorBrush x:Key="DangerSurfaceHoverBrush" Color="{StaticResource DangerSurfaceHoverColor}" />
+    <SolidColorBrush x:Key="DangerBorderBrush" Color="{StaticResource DangerBorderColor}" />
 
     <SolidColorBrush x:Key="HeaderSurfaceBrush" Color="{StaticResource HeaderSurfaceColor}" />
     <SolidColorBrush x:Key="HeaderBorderBrush" Color="{StaticResource HeaderBorderColor}" />
@@ -79,6 +104,7 @@
     <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextPrimaryColor}" />
     <SolidColorBrush x:Key="SubtleTextBrush" Color="{StaticResource SubtleTextColor}" />
     <SolidColorBrush x:Key="SelectionBrush" Color="{StaticResource SelectionColor}" />
+    <SolidColorBrush x:Key="SelectionHoverBrush" Color="{StaticResource SelectionHoverColor}" />
     <SolidColorBrush x:Key="SelectionInactiveBrush" Color="{StaticResource SelectionInactiveColor}" />
     <SolidColorBrush x:Key="ScrollTrackBrush" Color="{StaticResource ScrollTrackColor}" />
     <SolidColorBrush x:Key="ScrollThumbBrush" Color="{StaticResource ScrollThumbColor}" />

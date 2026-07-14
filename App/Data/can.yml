@@ -3,6 +3,316 @@
 # Contract: copied to <RPCS3 folder>\patches\imported_patch.yml when Canary is prepared.
 Version: 1.2
 
+Anchors:
+  bf3_109_title: &bf3_109_title
+    "Battlefield 3":
+      BLES01275: [ 01.09 ]
+      BLUS30762: [ 01.09 ]
+
+  bf4120_title: &bf4120_title
+    "Battlefield 4":
+      BLES01832: [ 01.20 ]
+      BLUS31162: [ 01.20 ]
+      NPUB31148: [ 01.20 ]
+      NPEB01303: [ 01.20 ]
+
+  #rb2_cams: &rb2_cams
+  #  - [ be32, 0x00093884, 0x60000000 ] # all cameras
+
+  rb2_stutter: &rb2_stutter
+  #  - [ be32, 0x0004a514, 0x60000000 ]
+    - [ be32, 0x0004a6f4, 0x60000000 ]
+
+  rb2_manual_v: &rb2_manual_v
+    - [ be32, 0x0003b03c, 0x60000000 ]
+
+  rb2_ground_debris: &rb2_ground_debris
+    - [ be32, 0x00383a98, 0x60000000 ]
+    - [ be32, 0x00383bf0, 0x60000000 ]
+    - [ be32, 0x00383a08, 0x60000000 ]
+
+  #rb2_fb: &rb2_fb
+  #  - [ be32, 0x0006dde8, 0x60000000 ]
+  #  - [ be32, 0x0006ccc4, 0x60000000 ]
+
+  rb2_misc: &rb2_misc
+    - [ be32, 0x0036f610, 0x60000000 ]
+
+  rb2_dash: &rb2_dash
+    - [ be32, 0x00043a84, 0x60000000 ]
+
+  rb2_cancels: &rb2_cancels
+    - [ be32, 0x0003b384, 0x808b00ff ] #public build
+
+  gow3_fps_notes: &gow3_fps_notes
+    "WARNING: Causes physics issues with harpies, you will need to disable this patch to get past some sections of the game.\n\nUnlocks internal timestep calculation and fixes IGC timing issues at 60 FPS and above. Increase vblank to match your desired framerate."
+
+  gow3_100_title: &gow3_100_title
+    "God of War 3 (God of War III)":
+      BCES00510: [ 01.00 ]
+      BCES00799: [ 01.00 ]
+      BCUS98111: [ 01.00 ]
+      BCJS37001: [ 01.00 ]
+
+  gow3_103_title: &gow3_103_title
+    "God of War 3 (God of War III)":
+      BCES00510: [ 01.03 ]
+      BCES00799: [ 01.03 ]
+      BCUS98111: [ 01.03 ]
+      BCJS37001: [ 01.03 ]
+      BCAS25003: [ 01.03 ]
+      BCKS15003: [ 01.03 ]
+
+  GOW3_AR_Configurable_Values: &GOW3_AR_Configurable_Values
+    "Aspect Ratio":
+      Type: double_enum
+      Value: &16_9_value 1.77777777778
+      Allowed Values:
+        "16:9 (Default)": *16_9_value
+        "32:9": 3.555555555555556
+        "21:9 (3840x1600)": 2.4
+        "21:9 (3440x1440)": 2.388888888888889
+        "21:9 (2560x1080)": 2.37037037037037
+        "16:10": 1.6
+        "4:3": 1.333333333333333
+        "5:4": 1.25
+
+  gta5_EU127title: &gta5_EU127title
+    "Grand Theft Auto V (Grand Theft Auto 5)":
+      BLES01807: [ 01.27 ]
+      NPEB01283: [ 01.27 ]
+
+  gta5_US127title: &gta5_US127title
+    "Grand Theft Auto V (Grand Theft Auto 5)":
+      BLUS31156: [ 01.27 ]
+      NPUB31154: [ 01.27 ]
+
+  gta5_JP123title: &gta5_JP123title
+    "Grand Theft Auto V (Grand Theft Auto 5)":
+      BLJM61019: [ 02.24 ]
+      NPJB00516: [ 01.23 ]
+
+  inFam1_PSNalltitle: &Infam1_PSNalltitle
+    "inFamous":
+      NPUA80480: [ All ]
+      NPEA00252: [ All ]
+      NPHA80103: [ All ]
+
+  inFam1_EUdiscalltitle: &Infam1_EUdiscalltitle
+    "inFamous":
+      BCES00220: [ 01.00 ]
+      BCES00591: [ All ]
+      BCES00609: [ All ]
+
+  inFam1_unst_light_notes: &Infam1_unst_light_notes
+    "Increases FPS by around 50% in certain parts by disabling some shadows and lighting.\nDoesn't help much in sewer areas.\nMay break sunlight completely on AMD GPUs using Vulkan.\nMay cause glitches with some other effects like lightning."
+
+  inFam1_disable_vfx_notes: &Infam1_disable_vfx_notes
+    "Disables Visual Effects.\nGives just a tiny bit more fps than the 'Unstable VFX' patch.\nUse only as the last resort."
+
+  inFam1_unst_vfx: &Infam1_unst_vfx
+    "Increases FPS by about 50% by partially breaking fire, lightning and (some) lighting effects.\nCauses projectiles to become partially invisible."
+
+  inFam1_unst_audio: &Infam1_unst_audio
+    "Improves sound cackling by disabling some functions related to the audio.\nLightning sounds might be distorted.\nPlease, report any other side effects."
+
+  MGS4_CrashWorkaround_Notes: &MGS4_CrashWorkaround_Notes
+    "Workaround for 0x68 crash."
+
+  MGS4_FlickerWorkaround_Notes: &MGS4_FlickerWorkaround_Notes
+    "Workaround for flickering ground textures."
+
+  p5_CommunityPatches_Author: &p5_CommunityPatches_Author
+    "DeathChaos"
+  p5_CommunityPatches_Notes: &p5_CommunityPatches_Notes
+    "A collection of QoL patches to help make some game mods possible. Currently includes:\n Single Combat GAP\n Expand DLC BGM IDs\n Forcibly Enable motionse.dat/acb on All Enemies\n Disable Player Swordtrack Loading\n Load Proper Boss Voices"
+  p5_CommunityPatches_PatVer: &p5_CommunityPatches_PatVer 1.0
+  p5_CommunityPatches: &p5_CommunityPatches
+  # Force Single GAP Combat Animations
+  # Break Comparison with split "a" GAP file so it is always false
+    - [ be32, 0x006717e0, 0x3be00000 ]
+    - [ be32, 0x0067195c, 0x3be00000 ]
+  # Prevent "b" GAP files from loading
+    - [ be32, 0x006750e4, 0x60000000 ]
+    - [ be32, 0x00675100, 0x60000000 ]
+    - [ be32, 0x0067510c, 0x60000000 ]
+    - [ be32, 0x00675118, 0x60000000 ]
+    - [ be32, 0x00675124, 0x60000000 ]
+  # Prevent "b" GAP files from loading (alt)
+    - [ be32, 0x00675308, 0x60000000 ]
+    - [ be32, 0x00675328, 0x60000000 ]
+    - [ be32, 0x00675330, 0x60000000 ]
+    - [ be32, 0x0067533c, 0x60000000 ]
+    - [ be32, 0x00675348, 0x60000000 ]
+  # Expand DLC Outfit BGM List
+  # Patch table to redirect to new one
+    - [ be32, 0x0006cd00, 0x3fe000b4 ] # lis r31, 0xb4
+    - [ be32, 0x0006cd0c, 0x33ff4bf8 ] # addic r31, r31, 0x4bf8
+  # Patch table size to new size 0x15
+    - [ be32, 0x0006cd5c, 0x2c1e0015 ] # cmpwi r30, 0x15
+  # expand the table
+  # Default BGM
+    - [ be32, 0x00b44bf8, 0x0000ffff ]
+    - [ be32, 0x00b44bfc, 0x00000000 ]
+  # bgm_01
+    - [ be16, 0x00b44c00, 0x0001 ]
+    - [ be16, 0x00b44c02, 0x7053 ]
+    - [ be16, 0x00b44c04, 0x0000 ]
+    - [ be16, 0x00b44c06, 0x2290 ]
+  # bgm_02
+    - [ be16, 0x00b44c08, 0x0002 ]
+    - [ be16, 0x00b44c0a, 0x704a ]
+    - [ be16, 0x00b44c0c, 0x0000 ]
+    - [ be16, 0x00b44c0e, 0x2291 ]
+  # bgm_03
+    - [ be16, 0x00b44c10, 0x0003 ]
+    - [ be16, 0x00b44c12, 0x7065 ]
+    - [ be16, 0x00b44c14, 0x0000 ]
+    - [ be16, 0x00b44c16, 0x2292 ]
+  # bgm_04
+    - [ be16, 0x00b44c18, 0x0004 ]
+    - [ be16, 0x00b44c1a, 0x705c ]
+    - [ be16, 0x00b44c1c, 0x0000 ]
+    - [ be16, 0x00b44c1e, 0x2293 ]
+  # bgm_05
+    - [ be16, 0x00b44c20, 0x0005 ]
+    - [ be16, 0x00b44c22, 0x7077 ]
+    - [ be16, 0x00b44c24, 0x0000 ]
+    - [ be16, 0x00b44c26, 0x2294 ]
+  # bgm_06
+    - [ be16, 0x00b44c28, 0x0006 ]
+    - [ be16, 0x00b44c2a, 0x7092 ]
+    - [ be16, 0x00b44c2c, 0x0000 ]
+    - [ be16, 0x00b44c2e, 0x2295 ]
+  # bgm_07
+    - [ be16, 0x00b44c30, 0x0007 ]
+    - [ be16, 0x00b44c32, 0x709b ]
+    - [ be16, 0x00b44c34, 0x0000 ]
+    - [ be16, 0x00b44c36, 0x2296 ]
+  # bgm_08
+    - [ be16, 0x00b44c38, 0x0008 ]
+    - [ be16, 0x00b44c3a, 0x70a4 ]
+    - [ be16, 0x00b44c3c, 0x0000 ]
+    - [ be16, 0x00b44c3e, 0x2297 ]
+  # bgm_09
+    - [ be16, 0x00b44c40, 0x0009 ]
+    - [ be16, 0x00b44c42, 0x70ad ]
+    - [ be16, 0x00b44c44, 0x0000 ]
+    - [ be16, 0x00b44c46, 0x2298 ]
+  # bgm_10 - Original List ends here
+    - [ be16, 0x00b44c48, 0x000a ]
+    - [ be16, 0x00b44c4a, 0x706e ]
+    - [ be16, 0x00b44c4c, 0x0000 ]
+    - [ be16, 0x00b44c4e, 0x2299 ]
+  # bgm_11 - Starlight (c0001_170_00.GMD)
+    - [ be16, 0x00b44c50, 0x000b ]
+    - [ be16, 0x00b44c52, 0x70b6 ]
+    - [ be16, 0x00b44c54, 0x0000 ]
+    - [ be16, 0x00b44c56, 0x229a ]
+  # bgm_12 - Midwinter (c0001_171_00.GMD)
+    - [ be16, 0x00b44c58, 0x000c ]
+    - [ be16, 0x00b44c5a, 0x70bf ]
+    - [ be16, 0x00b44c5c, 0x0000 ]
+    - [ be16, 0x00b44c5e, 0x229b ]
+  # bgm_13 - Ultramarine (Velvet Room) (c0001_172_00.GMD)
+    - [ be16, 0x00b44c60, 0x000d ]
+    - [ be16, 0x00b44c62, 0x70c8 ]
+    - [ be16, 0x00b44c64, 0x0000 ]
+    - [ be16, 0x00b44c66, 0x229c ]
+  # bgm_14 - Featherman (c0001_173_00.GMD)
+    - [ be16, 0x00b44c68, 0x000e ]
+    - [ be16, 0x00b44c6a, 0x70d1 ]
+    - [ be16, 0x00b44c6c, 0x0000 ]
+    - [ be16, 0x00b44c6e, 0x229d ]
+  # bgm_15 - Demonica Helmet (c0001_174_00.GMD)
+    - [ be16, 0x00b44c70, 0x000f ]
+    - [ be16, 0x00b44c72, 0x70da ]
+    - [ be16, 0x00b44c74, 0x0000 ]
+    - [ be16, 0x00b44c76, 0x229e ]
+  # bgm_16 - Demonica Suit (No Helmet) (c0001_175_00.GMD)
+    - [ be16, 0x00b44c78, 0x0010 ]
+    - [ be16, 0x00b44c7a, 0x70e3 ]
+    - [ be16, 0x00b44c7c, 0x0000 ]
+    - [ be16, 0x00b44c7e, 0x229f ]
+  # bgm_17 - New Cinema (c0001_176_00.GMD)
+    - [ be16, 0x00b44c80, 0x0011 ]
+    - [ be16, 0x00b44c82, 0x70ec ]
+    - [ be16, 0x00b44c84, 0x0000 ]
+    - [ be16, 0x00b44c86, 0x22a0 ]
+  # bgm_18 - RESERVE (Never hurts to have extras) (c0001_177_00.GMD)
+    - [ be16, 0x00b44c88, 0x0012 ]
+    - [ be16, 0x00b44c8a, 0x70f5 ]
+    - [ be16, 0x00b44c8c, 0x0000 ]
+    - [ be16, 0x00b44c8e, 0x22a1 ]
+  # bgm_19 - RESERVE (c0001_178_00.GMD)
+    - [ be16, 0x00b44c90, 0x0013 ]
+    - [ be16, 0x00b44c92, 0x70fe ]
+    - [ be16, 0x00b44c94, 0x0000 ]
+    - [ be16, 0x00b44c96, 0x22a2 ]
+  # bgm_20 - RESERVE (c0001_179_00.GMD)
+    - [ be16, 0x00b44c98, 0x0014 ]
+    - [ be16, 0x00b44c9a, 0x7107 ]
+    - [ be16, 0x00b44c9c, 0x0000 ]
+    - [ be16, 0x00b44c9e, 0x22a3 ]
+  # Forcibly Enable motionse.dat/acb On All Enemies
+    - [ be32, 0x0002d91c, 0x38600001 ] # li   param_1,0x1
+    - [ be32, 0x0002d97c, 0x38600001 ] # li   param_1,0x1
+    - [ be32, 0x0002d998, 0x3860ffff ] # li   param_1,-1
+    - [ be32, 0x0002da04, 0x3860001e ] # li   param_1,0x1e
+  # Disable Player Swordtrack Loading
+    - [ be32, 0x000265cc, 0x38600000 ] # li   param_1,0x0
+  # Boss Voice Stuff
+    - [ be32, 0x006a87ac, 0x281c00e6 ] # cmplwi   r28,0xe6
+    - [ be32, 0x006a87b0, 0x41810878 ] # bgt   LAB_006a9028
+
+  p5_4K_Author: &p5_4K_Author
+    "rexis"
+  p5_4K_Notes: &p5_4K_Notes
+    "A special patch that scales down some UI elements. Rexis's 4K Mod requires this patch. Don't enable it if you don't use the 4K Mod."
+  p5_4K_PatVer: &p5_4K_PatVer 1.0
+  p5_4K: &p5_4K
+    - [ be32, 0x001cffb0, 0x48b45007 ] # bustups A
+    - [ be32, 0x001d027c, 0x48b45007 ]
+    - [ be32, 0x001d039c, 0x48b45007 ]
+    - [ be32, 0x001cffd4, 0x48b45007 ]
+    - [ be32, 0x001d02a0, 0x48b45007 ]
+    - [ be32, 0x001d03c0, 0x48b45007 ]
+
+    - [ be32, 0x00b45004, 0x38a00003 ] # li     r5,0x3
+    - [ be32, 0x00b45008, 0x7c632bd2 ] # divd   r3,r3,r5
+    - [ be32, 0x00b4500c, 0x4e800020 ] # blr
+
+  p5_Title_US: &p5_Title_US
+    "Persona 5":
+      BLUS31604: [ All ]
+      NPUB31848: [ All ]
+
+  p5_Title_EU: &p5_Title_EU
+    "Persona 5":
+      BLES02247: [ All ]
+      NPEB02436: [ All ]
+
+  p5_Title_JP_100: &p5_Title_JP_100
+    "Persona 5":
+      BLJM61346: [ 01.00 ]
+
+  p5_Title_JP_103: &p5_Title_JP_103
+    "Persona 5":
+      BLJM61346: [ 01.03 ]
+
+  rftod_freezeworkaround_notes: &rftod_freezeworkaround_notes
+    "Fixes game crashes/freezes."
+
+  sonic06_graphics_fix_notes: &sonic06_graphics_fix_notes
+    "Fixes missing graphics."
+  sonic06_graphics_fix: &sonic06_graphics_fix
+    - [ be32, 0x00000000, 0x38800003 ] # li r4, 3
+    - [ jumpf, 0x00000000, "RPCS3_HLE_LIBRARY:WaitForSPUsToEmptySNRs" ] # Args: (SPU ID, 3)
+    - [ be32, 0x00000000, 0x38800000 ] # li r4, 0
+    - [ be32, 0x00000000, 0x44000002 ] # sc
+
+  ico_60fps_notes: &ico_60fps_notes "Only recommended for gameplay. Needs vblank rate set to 120hz.\nMost IGC (in-game cinematics) Camera movements are still tied to 30 FPS and are sped up as a result."
+
 PPU-17a273d69dad20980377e405809f7d888b6c6dce:
   "Green artifacts fix":
     Games:
@@ -61,7 +371,7 @@ PPU-fdfcb78c6a8830e27a4a11400048c1b741ed4593:
       - [ be32, 0x01E7AE24, 0x4801C0F6 ]  # ba 0x0001C0F4
 
       # -------------------------------------------------------
-      # Fix 2: Wrapper spin-wait ��� yield + sleep
+      # Fix 2: Wrapper spin-wait — yield + sleep
       # -------------------------------------------------------
       - [ be32, 0x003932F8, 0x49E7AF42 ]  # ba 0x01E7AF40
 
@@ -74,7 +384,7 @@ PPU-fdfcb78c6a8830e27a4a11400048c1b741ed4593:
       - [ be32, 0x01E7AF54, 0x483932FE ]  # ba 0x003932FC
 
       # -------------------------------------------------------
-      # Fix 3: Inlined TaskThread usleep ��� yield + sleep
+      # Fix 3: Inlined TaskThread usleep — yield + sleep
       # -------------------------------------------------------
       - [ be32, 0x00504818, 0x49E7AF02 ]  # ba 0x01E7AF00
       - [ be32, 0x0050481C, 0x60000000 ]  # nop
@@ -91,19 +401,13 @@ PPU-fdfcb78c6a8830e27a4a11400048c1b741ed4593:
 PPU-e99e8ed3a9dc1773c1a288d86c53a50bfde3ced1:
   "60 FPS":
     Games:
-      "Bakugan Battle Brawlers���":
+      "Bakugan Battle Brawlers™":
         BLES00758: [ 01.00 ]
     Author: "FlexBy"
     Notes:
     Patch Version: 1.0
     Patch:
       - [ be32, 0x006c1dbc, 0x3c888889 ] # 006c1d70, 006f19c8, 006c1dc4
-
-Anchors:
-  bf3_109_title: &bf3_109_title
-    "Battlefield 3":
-      BLES01275: [ 01.09 ]
-      BLUS30762: [ 01.09 ]
 
 PPU-fbb251a511c29cb38f33da72675bdf041ceadf4e:
   " Fix Rainbow Graphics":
@@ -113,14 +417,6 @@ PPU-fbb251a511c29cb38f33da72675bdf041ceadf4e:
     Patch Version: 1.0
     Patch:
       - [ be16, 0x012bc140, 0x9b1f ]
-
-Anchors:
-  bf4120_title: &bf4120_title
-    "Battlefield 4":
-      BLES01832: [ 01.20 ]
-      BLUS31162: [ 01.20 ]
-      NPUB31148: [ 01.20 ]
-      NPEB01303: [ 01.20 ]
 
 PPU-f7ff4ca5d07f753244f290dc5e54907948e03613:
   "Fix Graphics issues": # unorganized mess! needs cleanup.
@@ -139,7 +435,7 @@ PPU-f7ff4ca5d07f753244f290dc5e54907948e03613:
 PPU-900e4d225f95c89cb7998d2c632f2f326d9b5706:
   "1280x720 Resolution":
     Games:
-      "Call Of Duty�� 4: Modern Warfare (Singleplayer)":
+      "Call Of Duty® 4: Modern Warfare (Singleplayer)":
         NPUB30588: [ 01.40 ]
         NPEB00740: [ 01.40 ]
     Author: "Margen67"
@@ -215,35 +511,6 @@ PPU-49aef7eecc248bf85af210bdca336bce8c9272e4:
       - [ byte, 0x004c4383, 0x01 ]       # 60 FPS
       - [ be32, 0x001622dc, 0x60000000 ] # No reset
       - [ be32, 0x0016349c, 0x60000000 ] # Pause fix
-
-Anchors:
-  #rb2_cams: &rb2_cams
-  #  - [ be32, 0x00093884, 0x60000000 ] # all cameras
-
-  rb2_stutter: &rb2_stutter
-  #  - [ be32, 0x0004a514, 0x60000000 ]
-    - [ be32, 0x0004a6f4, 0x60000000 ]
-
-  rb2_manual_v: &rb2_manual_v
-    - [ be32, 0x0003b03c, 0x60000000 ]
-
-  rb2_ground_debris: &rb2_ground_debris
-    - [ be32, 0x00383a98, 0x60000000 ]
-    - [ be32, 0x00383bf0, 0x60000000 ]
-    - [ be32, 0x00383a08, 0x60000000 ]
-
-  #rb2_fb: &rb2_fb
-  #  - [ be32, 0x0006dde8, 0x60000000 ]
-  #  - [ be32, 0x0006ccc4, 0x60000000 ]
-
-  rb2_misc: &rb2_misc
-    - [ be32, 0x0036f610, 0x60000000 ]
-
-  rb2_dash: &rb2_dash
-    - [ be32, 0x00043a84, 0x60000000 ]
-
-  rb2_cancels: &rb2_cancels
-    - [ be32, 0x0003b384, 0x808b00ff ] #public build
 
 PPU-07e7ef2b34549f3c879306f6c255ded2daec21f4:
   "NFiK RB3 Patch":
@@ -361,40 +628,6 @@ PPU-d526f54bfa95c26ecb612318f58a49c62ea53915:
     Patch:
       - [ be32, 0x00212464, 0x63e30000 ]
 
-Anchors:
-  gow3_fps_notes: &gow3_fps_notes
-    "WARNING: Causes physics issues with harpies, you will need to disable this patch to get past some sections of the game.\n\nUnlocks internal timestep calculation and fixes IGC timing issues at 60 FPS and above. Increase vblank to match your desired framerate."
-
-  gow3_100_title: &gow3_100_title
-    "God of War 3 (God of War III)":
-      BCES00510: [ 01.00 ]
-      BCES00799: [ 01.00 ]
-      BCUS98111: [ 01.00 ]
-      BCJS37001: [ 01.00 ]
-
-  gow3_103_title: &gow3_103_title
-    "God of War 3 (God of War III)":
-      BCES00510: [ 01.03 ]
-      BCES00799: [ 01.03 ]
-      BCUS98111: [ 01.03 ]
-      BCJS37001: [ 01.03 ]
-      BCAS25003: [ 01.03 ]
-      BCKS15003: [ 01.03 ]
-
-GOW3_AR_Configurable_Values: &GOW3_AR_Configurable_Values
-    "Aspect Ratio":
-      Type: double_enum
-      Value: &16_9_value 1.77777777778
-      Allowed Values:
-        "16:9 (Default)": *16_9_value
-        "32:9": 3.555555555555556
-        "21:9 (3840x1600)": 2.4
-        "21:9 (3440x1440)": 2.388888888888889
-        "21:9 (2560x1080)": 2.37037037037037
-        "16:10": 1.6
-        "4:3": 1.333333333333333
-        "5:4": 1.25
-
 PPU-4d5c51503a81a327c2a99427390a395b8dcb3767: # God of War 3 1.00
   "Unlock FPS":
     Games: *gow3_100_title
@@ -466,22 +699,6 @@ PPU-3a0b43e4a5f4bfea64f53612ee7c5d990f88129c:
       - [ bef32, 0x003a52b4, 1000 ]
       - [ bef32, 0x002d024c, 6667 ]
 
-Anchors:
-  gta5_EU127title: &gta5_EU127title
-    "Grand Theft Auto V (Grand Theft Auto 5)":
-      BLES01807: [ 01.27 ]
-      NPEB01283: [ 01.27 ]
-
-  gta5_US127title: &gta5_US127title
-    "Grand Theft Auto V (Grand Theft Auto 5)":
-      BLUS31156: [ 01.27 ]
-      NPUB31154: [ 01.27 ]
-
-  gta5_JP123title: &gta5_JP123title
-    "Grand Theft Auto V (Grand Theft Auto 5)":
-      BLJM61019: [ 02.24 ]
-      NPJB00516: [ 01.23 ]
-
 PPU-e2d0208186c8a9456d5eb143bb695ec356b195a0:
   "GTA:OG Custom Server":
     Games: *gta5_JP123title
@@ -535,31 +752,6 @@ PPU-70a481398fc3e934446bc53c8e888d92cbcc62be:
       - [ be32, 0x012D1524, 0x4E800020 ]
       - [ be32, 0x00D2E910, 0x39200001 ]
       - [ be32, 0x00D2E920, 0x38C0001B ]
-
-Anchors:
-  inFam1_PSNalltitle: &Infam1_PSNalltitle
-    "inFamous":
-      NPUA80480: [ All ]
-      NPEA00252: [ All ]
-      NPHA80103: [ All ]
-
-  inFam1_EUdiscalltitle: &Infam1_EUdiscalltitle
-    "inFamous":
-      BCES00220: [ 01.00 ]
-      BCES00591: [ All ]
-      BCES00609: [ All ]
-
-  inFam1_unst_light_notes: &Infam1_unst_light_notes
-    "Increases FPS by around 50% in certain parts by disabling some shadows and lighting.\nDoesn't help much in sewer areas.\nMay break sunlight completely on AMD GPUs using Vulkan.\nMay cause glitches with some other effects like lightning."
-
-  inFam1_disable_vfx_notes: &Infam1_disable_vfx_notes
-    "Disables Visual Effects.\nGives just a tiny bit more fps than the 'Unstable VFX' patch.\nUse only as the last resort."
-
-  inFam1_unst_vfx: &Infam1_unst_vfx
-    "Increases FPS by about 50% by partially breaking fire, lightning and (some) lighting effects.\nCauses projectiles to become partially invisible."
-
-  inFam1_unst_audio: &Infam1_unst_audio
-    "Improves sound cackling by disabling some functions related to the audio.\nLightning sounds might be distorted.\nPlease, report any other side effects."
 
 PPU-1fb2d518fd8f29063f45344d1a83735c5094edec:
   "(Experimental) Disable visual effects":
@@ -771,23 +963,6 @@ PPU-043ec8903128e165d4fa06045a9524746b369b89:
     Patch:
       - [ be32, 0x001bd5fc, 0x60000000 ]
 
-Version: 1.2
-Anchors:
-  MGS4_All_Games: &MGS4_All_Games
-    "Metal Gear Solid 4: Guns of the Patriots":
-      BLES00246: [ All ]
-      BLUS30109: [ All ]
-      BLJM67001: [ All ]
-      NPUB31633: [ All ]
-      NPEB02182: [ All ]
-      NPJB00698: [ All ]
-
-  MGS4_CrashWorkaround_Notes: &MGS4_CrashWorkaround_Notes
-    "Workaround for 0x68 crash."
-
-  MGS4_FlickerWorkaround_Notes: &MGS4_FlickerWorkaround_Notes
-    "Workaround for flickering ground textures."
-
 PPU-33e09a0bd8fa2a3b28780a3feeb7b0e018bae381:
   "Crash fix":
     Games:
@@ -979,185 +1154,6 @@ PPU-534e146dfb4206ec2ae9272e00ff73c7739451f8:
       - [ be16, 0x012b3290, 0x993f ]
       - [ be16, 0x012b35f0, 0x98bf ]
 
-Anchors:
-  p5_CommunityPatches_Author: &p5_CommunityPatches_Author
-    "DeathChaos"
-  p5_CommunityPatches_Notes: &p5_CommunityPatches_Notes
-    "A collection of QoL patches to help make some game mods possible. Currently includes:\n Single Combat GAP\n Expand DLC BGM IDs\n Forcibly Enable motionse.dat/acb on All Enemies\n Disable Player Swordtrack Loading\n Load Proper Boss Voices"
-  p5_CommunityPatches_PatVer: &p5_CommunityPatches_PatVer 1.0
-  p5_CommunityPatches: &p5_CommunityPatches
-  # Force Single GAP Combat Animations
-  # Break Comparison with split "a" GAP file so it is always false
-    - [ be32, 0x006717e0, 0x3be00000 ]
-    - [ be32, 0x0067195c, 0x3be00000 ]
-  # Prevent "b" GAP files from loading
-    - [ be32, 0x006750e4, 0x60000000 ]
-    - [ be32, 0x00675100, 0x60000000 ]
-    - [ be32, 0x0067510c, 0x60000000 ]
-    - [ be32, 0x00675118, 0x60000000 ]
-    - [ be32, 0x00675124, 0x60000000 ]
-  # Prevent "b" GAP files from loading (alt)
-    - [ be32, 0x00675308, 0x60000000 ]
-    - [ be32, 0x00675328, 0x60000000 ]
-    - [ be32, 0x00675330, 0x60000000 ]
-    - [ be32, 0x0067533c, 0x60000000 ]
-    - [ be32, 0x00675348, 0x60000000 ]
-  # Expand DLC Outfit BGM List
-  # Patch table to redirect to new one
-    - [ be32, 0x0006cd00, 0x3fe000b4 ] # lis r31, 0xb4
-    - [ be32, 0x0006cd0c, 0x33ff4bf8 ] # addic r31, r31, 0x4bf8
-  # Patch table size to new size 0x15
-    - [ be32, 0x0006cd5c, 0x2c1e0015 ] # cmpwi r30, 0x15
-  # expand the table
-  # Default BGM
-    - [ be32, 0x00b44bf8, 0x0000ffff ]
-    - [ be32, 0x00b44bfc, 0x00000000 ]
-  # bgm_01
-    - [ be16, 0x00b44c00, 0x0001 ]
-    - [ be16, 0x00b44c02, 0x7053 ]
-    - [ be16, 0x00b44c04, 0x0000 ]
-    - [ be16, 0x00b44c06, 0x2290 ]
-  # bgm_02
-    - [ be16, 0x00b44c08, 0x0002 ]
-    - [ be16, 0x00b44c0a, 0x704a ]
-    - [ be16, 0x00b44c0c, 0x0000 ]
-    - [ be16, 0x00b44c0e, 0x2291 ]
-  # bgm_03
-    - [ be16, 0x00b44c10, 0x0003 ]
-    - [ be16, 0x00b44c12, 0x7065 ]
-    - [ be16, 0x00b44c14, 0x0000 ]
-    - [ be16, 0x00b44c16, 0x2292 ]
-  # bgm_04
-    - [ be16, 0x00b44c18, 0x0004 ]
-    - [ be16, 0x00b44c1a, 0x705c ]
-    - [ be16, 0x00b44c1c, 0x0000 ]
-    - [ be16, 0x00b44c1e, 0x2293 ]
-  # bgm_05
-    - [ be16, 0x00b44c20, 0x0005 ]
-    - [ be16, 0x00b44c22, 0x7077 ]
-    - [ be16, 0x00b44c24, 0x0000 ]
-    - [ be16, 0x00b44c26, 0x2294 ]
-  # bgm_06
-    - [ be16, 0x00b44c28, 0x0006 ]
-    - [ be16, 0x00b44c2a, 0x7092 ]
-    - [ be16, 0x00b44c2c, 0x0000 ]
-    - [ be16, 0x00b44c2e, 0x2295 ]
-  # bgm_07
-    - [ be16, 0x00b44c30, 0x0007 ]
-    - [ be16, 0x00b44c32, 0x709b ]
-    - [ be16, 0x00b44c34, 0x0000 ]
-    - [ be16, 0x00b44c36, 0x2296 ]
-  # bgm_08
-    - [ be16, 0x00b44c38, 0x0008 ]
-    - [ be16, 0x00b44c3a, 0x70a4 ]
-    - [ be16, 0x00b44c3c, 0x0000 ]
-    - [ be16, 0x00b44c3e, 0x2297 ]
-  # bgm_09
-    - [ be16, 0x00b44c40, 0x0009 ]
-    - [ be16, 0x00b44c42, 0x70ad ]
-    - [ be16, 0x00b44c44, 0x0000 ]
-    - [ be16, 0x00b44c46, 0x2298 ]
-  # bgm_10 - Original List ends here
-    - [ be16, 0x00b44c48, 0x000a ]
-    - [ be16, 0x00b44c4a, 0x706e ]
-    - [ be16, 0x00b44c4c, 0x0000 ]
-    - [ be16, 0x00b44c4e, 0x2299 ]
-  # bgm_11 - Starlight (c0001_170_00.GMD)
-    - [ be16, 0x00b44c50, 0x000b ]
-    - [ be16, 0x00b44c52, 0x70b6 ]
-    - [ be16, 0x00b44c54, 0x0000 ]
-    - [ be16, 0x00b44c56, 0x229a ]
-  # bgm_12 - Midwinter (c0001_171_00.GMD)
-    - [ be16, 0x00b44c58, 0x000c ]
-    - [ be16, 0x00b44c5a, 0x70bf ]
-    - [ be16, 0x00b44c5c, 0x0000 ]
-    - [ be16, 0x00b44c5e, 0x229b ]
-  # bgm_13 - Ultramarine (Velvet Room) (c0001_172_00.GMD)
-    - [ be16, 0x00b44c60, 0x000d ]
-    - [ be16, 0x00b44c62, 0x70c8 ]
-    - [ be16, 0x00b44c64, 0x0000 ]
-    - [ be16, 0x00b44c66, 0x229c ]
-  # bgm_14 - Featherman (c0001_173_00.GMD)
-    - [ be16, 0x00b44c68, 0x000e ]
-    - [ be16, 0x00b44c6a, 0x70d1 ]
-    - [ be16, 0x00b44c6c, 0x0000 ]
-    - [ be16, 0x00b44c6e, 0x229d ]
-  # bgm_15 - Demonica Helmet (c0001_174_00.GMD)
-    - [ be16, 0x00b44c70, 0x000f ]
-    - [ be16, 0x00b44c72, 0x70da ]
-    - [ be16, 0x00b44c74, 0x0000 ]
-    - [ be16, 0x00b44c76, 0x229e ]
-  # bgm_16 - Demonica Suit (No Helmet) (c0001_175_00.GMD)
-    - [ be16, 0x00b44c78, 0x0010 ]
-    - [ be16, 0x00b44c7a, 0x70e3 ]
-    - [ be16, 0x00b44c7c, 0x0000 ]
-    - [ be16, 0x00b44c7e, 0x229f ]
-  # bgm_17 - New Cinema (c0001_176_00.GMD)
-    - [ be16, 0x00b44c80, 0x0011 ]
-    - [ be16, 0x00b44c82, 0x70ec ]
-    - [ be16, 0x00b44c84, 0x0000 ]
-    - [ be16, 0x00b44c86, 0x22a0 ]
-  # bgm_18 - RESERVE (Never hurts to have extras) (c0001_177_00.GMD)
-    - [ be16, 0x00b44c88, 0x0012 ]
-    - [ be16, 0x00b44c8a, 0x70f5 ]
-    - [ be16, 0x00b44c8c, 0x0000 ]
-    - [ be16, 0x00b44c8e, 0x22a1 ]
-  # bgm_19 - RESERVE (c0001_178_00.GMD)
-    - [ be16, 0x00b44c90, 0x0013 ]
-    - [ be16, 0x00b44c92, 0x70fe ]
-    - [ be16, 0x00b44c94, 0x0000 ]
-    - [ be16, 0x00b44c96, 0x22a2 ]
-  # bgm_20 - RESERVE (c0001_179_00.GMD)
-    - [ be16, 0x00b44c98, 0x0014 ]
-    - [ be16, 0x00b44c9a, 0x7107 ]
-    - [ be16, 0x00b44c9c, 0x0000 ]
-    - [ be16, 0x00b44c9e, 0x22a3 ]
-  # Forcibly Enable motionse.dat/acb On All Enemies
-    - [ be32, 0x0002d91c, 0x38600001 ] # li   param_1,0x1
-    - [ be32, 0x0002d97c, 0x38600001 ] # li   param_1,0x1
-    - [ be32, 0x0002d998, 0x3860ffff ] # li   param_1,-1
-    - [ be32, 0x0002da04, 0x3860001e ] # li   param_1,0x1e
-  # Disable Player Swordtrack Loading
-    - [ be32, 0x000265cc, 0x38600000 ] # li   param_1,0x0
-  # Boss Voice Stuff
-    - [ be32, 0x006a87ac, 0x281c00e6 ] # cmplwi   r28,0xe6
-    - [ be32, 0x006a87b0, 0x41810878 ] # bgt   LAB_006a9028
-
-  p5_4K_Author: &p5_4K_Author
-    "rexis"
-  p5_4K_Notes: &p5_4K_Notes
-    "A special patch that scales down some UI elements. Rexis's 4K Mod requires this patch. Don't enable it if you don't use the 4K Mod."
-  p5_4K_PatVer: &p5_4K_PatVer 1.0
-  p5_4K: &p5_4K
-    - [ be32, 0x001cffb0, 0x48b45007 ] # bustups A
-    - [ be32, 0x001d027c, 0x48b45007 ]
-    - [ be32, 0x001d039c, 0x48b45007 ]
-    - [ be32, 0x001cffd4, 0x48b45007 ]
-    - [ be32, 0x001d02a0, 0x48b45007 ]
-    - [ be32, 0x001d03c0, 0x48b45007 ]
-
-    - [ be32, 0x00b45004, 0x38a00003 ] # li     r5,0x3
-    - [ be32, 0x00b45008, 0x7c632bd2 ] # divd   r3,r3,r5
-    - [ be32, 0x00b4500c, 0x4e800020 ] # blr
-
-  p5_Title_US: &p5_Title_US
-    "Persona 5":
-      BLUS31604: [ All ]
-      NPUB31848: [ All ]
-
-  p5_Title_EU: &p5_Title_EU
-    "Persona 5":
-      BLES02247: [ All ]
-      NPEB02436: [ All ]
-
-  p5_Title_JP_100: &p5_Title_JP_100
-    "Persona 5":
-      BLJM61346: [ 01.00 ]
-
-  p5_Title_JP_103: &p5_Title_JP_103
-    "Persona 5":
-      BLJM61346: [ 01.03 ]
-
 PPU-e72e715d646a94770d1902364bc66fe33b1b6606:
   "P5 Modding Community Patches":
     Games: *p5_Title_US
@@ -1244,6 +1240,16 @@ PPU-d4c05d9af92fcedd667375d06ae698fdb51557db:
     Patch:
       - [ be32, 0x005cbb2c, 0x409efff4 ]
 
+  "Freeze fix":
+    Games:
+      "Ratchet & Clank Future: A Crack in Time":
+        BCES00748: [01.20]
+    Author: "Juhn, Pappapatu"
+    Patch Version: 1.0
+    Notes: "Fixes game crashes/freezes."
+    Patch:
+      - [be32, 0x005cbb2c, 0x409efff4]
+
 PPU-a3ed375ea1044d5abe734a4aa3a740f7673a4274:
   "Freeze Fix":
     Games:
@@ -1254,17 +1260,6 @@ PPU-a3ed375ea1044d5abe734a4aa3a740f7673a4274:
     Patch Version: 1.2
     Patch:
       - [ be32, 0x005cb7ec, 0x409efff4 ]
-
-PPU-d4c05d9af92fcedd667375d06ae698fdb51557db:
-  "Freeze fix":
-    Games:
-      "Ratchet & Clank Future: A Crack in Time":
-        BCES00748: [01.20]
-    Author: "Juhn, Pappapatu"
-    Patch Version: 1.0
-    Notes: "Fixes game crashes/freezes."
-    Patch:
-      - [be32, 0x005cbb2c, 0x409efff4]
 
 PPU-0997e35d2b6738f5cecfda1d76380acca0828365:
   "Freeze Fix":
@@ -1323,10 +1318,6 @@ PPU-1d9e99e1f091cfbdf1714d04e690d9cd816e2971:
     Patch Version: 1.2
     Patch:
       - [ be32, 0x003eb730, 0x409efff0 ]
-
-Anchors:
-  rftod_freezeworkaround_notes: &rftod_freezeworkaround_notes
-    "Fixes game crashes/freezes."
 
 PPU-c4e26433d1eed9166eb0c67b6f66b2268f3704e2:
   "Freeze Fix":
@@ -1495,15 +1486,6 @@ PPU-b34a07c8bc8ee4018657a36539d9d7b1f28bd9bb:
       - [ be16, 0x005bbe96, 1280 ] # 0x0480
       - [ be16, 0x005bbea2, 720 ] # 0x0280
 
-Anchors:
-  sonic06_graphics_fix_notes: &sonic06_graphics_fix_notes
-    "Fixes missing graphics."
-  sonic06_graphics_fix: &sonic06_graphics_fix
-    - [ be32, 0x00000000, 0x38800003 ] # li r4, 3
-    - [ jumpf, 0x00000000, "RPCS3_HLE_LIBRARY:WaitForSPUsToEmptySNRs" ] # Args: (SPU ID, 3)
-    - [ be32, 0x00000000, 0x38800000 ] # li r4, 0
-    - [ be32, 0x00000000, 0x44000002 ] # sc
-
 PPU-4b46d0161ca657ab16b0a779d9062810ea5ea2dd:
   "Graphics Fix":
     Games:
@@ -1595,9 +1577,6 @@ PPU-c945ba504e5cecb338bfce2f7329fa78110a5738:
     Patch Version: 1.0
     Patch:
       - [ be32, 0x006b7310, 0x60000000 ]
-
-Anchors:
-  ico_60fps_notes: &ico_60fps_notes "Only recommended for gameplay. Needs vblank rate set to 120hz.\nMost IGC (in-game cinematics) Camera movements are still tied to 30 FPS and are sped up as a result."
 
 PPU-1b40cda726a12a28393206edcd63252df76ca39c: # ICO eboot.bin
   "60 FPS":
@@ -1894,6 +1873,35 @@ PPU-02a88c3c6cd415b0bb81f1606bc743835881a4ba:
     Patch:
       - [ be32, 0x0096ed2c, 0x9b83031d ] # Depth border fix       (mem address: 0x1386885)
 
+  "Heat waves Approximate ZCull fix":
+    Games:
+      "Uncharted 3: Drake's Deception":
+        BCES01175: [ 01.19 ]
+        BCES01176: [ 01.19 ]
+        BCES01670: [ 01.19 ]
+        BCES01692: [ 01.19 ]
+        BCUS98233: [ 01.19 ]
+        BCJS37004: [ 02.17 ]
+        NPEA00422: [ 01.19 ]
+        NPUA80858: [ 01.19 ]
+        BCUS99086: [ 01.19 ]
+        BCAS25014: [ 01.19 ]
+        BCAS25009: [ 01.19 ]
+    Author: "ZEROx"
+    Patch Version: 1.0
+    Group: ""
+    Notes: "Enables rendering of Heat Wave effect under Approximate ZCull, normally works with Precise ZCull only, but Precise ZCull has a big speed impact"
+    Patch:
+    - [ be32, 0x0078c7d0, 0x3a800001 ] # Heat waves
+    - [ byte, 0x0078c7f3, 0x00 ] # Disable broken blur effect
+  # This patch cycles through various post-processing modes. Values accepted are:
+  #    0 = None
+  #    1 = Bloom
+  #    2 = Depth of Field
+  #    3 = ??? (Tonemapping)
+  #    4 = Bloom & Depth of Field
+  #    5 = Bloom & Depth of Field & Tonemapping (Default)
+
 PPU-9584776e7fca409ed410f8a713832267020d8ac3:
   "Performance (WCB)":
     Games:
@@ -1989,36 +1997,6 @@ PPU-0ff0b00602e5ffc67f32ab69840bbb2c7df735fe:
     Patch Version: 1.0
     Patch:
       - [ be32, 0x0093a8b8, 0x9b83031d ]
-
-PPU-02a88c3c6cd415b0bb81f1606bc743835881a4ba:
-  "Heat waves Approximate ZCull fix":
-    Games:
-      "Uncharted 3: Drake's Deception":
-        BCES01175: [ 01.19 ]
-        BCES01176: [ 01.19 ]
-        BCES01670: [ 01.19 ]
-        BCES01692: [ 01.19 ]
-        BCUS98233: [ 01.19 ]
-        BCJS37004: [ 02.17 ]
-        NPEA00422: [ 01.19 ]
-        NPUA80858: [ 01.19 ]
-        BCUS99086: [ 01.19 ]
-        BCAS25014: [ 01.19 ]
-        BCAS25009: [ 01.19 ]
-    Author: "ZEROx"
-    Patch Version: 1.0
-    Group: ""
-    Notes: "Enables rendering of Heat Wave effect under Approximate ZCull, normally works with Precise ZCull only, but Precise ZCull has a big speed impact"
-    Patch:
-    - [ be32, 0x0078c7d0, 0x3a800001 ] # Heat waves
-    - [ byte, 0x0078c7f3, 0x00 ] # Disable broken blur effect
-  # This patch cycles through various post-processing modes. Values accepted are:
-  #    0 = None
-  #    1 = Bloom
-  #    2 = Depth of Field
-  #    3 = ??? (Tonemapping)
-  #    4 = Bloom & Depth of Field
-  #    5 = Bloom & Depth of Field & Tonemapping (Default)
 
 PPU-8363904e0b8fc276380a8f0e158dd81d7a9cefc5:
   "Fix Blur":

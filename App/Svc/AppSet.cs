@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 
-namespace AppSvc;
+namespace R3Config.Svc;
 
 public sealed record AppSettings(
     string? LastRpcs3ExePath);
@@ -31,7 +31,8 @@ public sealed class AppSettingsService
             }
 
             var json = File.ReadAllText(_settingsPath);
-            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? DefaultSettings;
+            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions)
+                   ?? DefaultSettings;
         }
         catch
         {
@@ -59,8 +60,6 @@ public sealed class AppSettingsService
         }
         catch
         {
-            // Settings persistence is best-effort.
-            // The app should not fail because the last-used RPCS3 path could not be saved.
         }
     }
 }

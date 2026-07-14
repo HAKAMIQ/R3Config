@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Windows;
+using R3Config.Svc;
 using R3Config.Lang;
 using R3Config.Mdl;
-using R3Config.Svc;
 
 namespace R3Config.Vm;
 
@@ -45,7 +46,7 @@ public sealed class PatchPreviewVm : VmBase
 
     public bool HasSelectedDisableablePatches => Items.Any(item => item.IsSelected && item.CanDisable);
 
-    public bool HasSelectedCanaryPatches => Items.Any(item => item.IsSelected && item.CanEnable && item.IsCanary);
+    public bool HasSelectedCanaryPatches => CanaryItems.Any(item => item.IsSelected && item.CanEnable);
 
     public bool HasSelectedOfficialApplyablePatches => OfficialItems.Any(item => item.IsSelected && item.CanEnable);
 
@@ -121,6 +122,10 @@ public sealed class PatchPreviewVm : VmBase
         set => SetProperty(ref _summary, value);
     }
 
+    public FlowDirection TextFlow => UiLayoutService.Current.TextFlow;
+
+    public TextAlignment TextAlignment => UiLayoutService.Current.TextAlignment;
+
     public bool ShowExpertPatches
     {
         get => _showExpertPatches;
@@ -136,6 +141,45 @@ public sealed class PatchPreviewVm : VmBase
     public void RefreshLanguage()
     {
         Title = UiText.T("Patch.Title");
+        OnPropertyChanged(nameof(TextFlow));
+        OnPropertyChanged(nameof(TextAlignment));
+
+        if (_surfaceState == PatchSurfaceState.Loaded)
+        {
+            // WPF can retain the old FlowDirection inside already-materialized
+            // DataTemplate containers after a live Arabic/English switch. Rebuild
+            // the item containers under the new application resources while
+            // preserving every explicit checkbox state.
+            var selection = Items.ToDictionary(
+                SelectionIdentity,
+                item => item.IsSelected,
+                StringComparer.OrdinalIgnoreCase);
+            var expansion = OfficialGroups
+                .Concat(CanaryGroups)
+                .Concat(CheatGroups)
+                .ToDictionary(
+                    GroupIdentity,
+                    group => group.IsExpanded,
+                    StringComparer.OrdinalIgnoreCase);
+
+            RefreshVisibleItems();
+            foreach (var item in Items)
+            {
+                if (selection.TryGetValue(SelectionIdentity(item), out var isSelected))
+                {
+                    item.IsSelected = isSelected;
+                }
+            }
+            foreach (var group in OfficialGroups.Concat(CanaryGroups).Concat(CheatGroups))
+            {
+                if (expansion.TryGetValue(GroupIdentity(group), out var isExpanded))
+                {
+                    group.IsExpanded = isExpanded;
+                }
+            }
+
+            return;
+        }
 
         switch (_surfaceState)
         {
@@ -170,6 +214,27 @@ public sealed class PatchPreviewVm : VmBase
         {
             group.RefreshLanguage();
         }
+    }
+
+    private static string SelectionIdentity(PatchItemVm item)
+    {
+        return string.Join(
+            "\0",
+            item.Match.Patch.HashKind,
+            item.Match.Patch.Hash,
+            item.Match.Patch.Title,
+            PatchTargetGroupVm.BuildKey(item));
+    }
+
+    private static string GroupIdentity(PatchTargetGroupVm group)
+    {
+        var first = group.Items[0];
+        var surface = first.IsExperimentalPatch
+            ? "Canary"
+            : first.Risk == PatchRisk.Cheat
+                ? "Cheat"
+                : "Official";
+        return string.Join("\0", surface, PatchTargetGroupVm.BuildKey(first));
     }
 
     public void Clear()
@@ -281,8 +346,8 @@ public sealed class PatchPreviewVm : VmBase
 
     public IReadOnlyList<Rpcs3PatchMatchResult> SelectedCanaryMatches()
     {
-        return Items
-            .Where(item => item.IsSelected && item.CanEnable && item.IsCanary)
+        return CanaryItems
+            .Where(item => item.IsSelected && item.CanEnable)
             .Select(item => item.Match)
             .ToArray();
     }
@@ -341,12 +406,12 @@ public sealed class PatchPreviewVm : VmBase
         {
             var isEnabled = _isEnabledResolver?.Invoke(match) == true;
             if (Rpcs3PatchVersion.IsAll(match.MatchedTargetSerial) &&
-                match.Status != PatchMatchStatus.ExactMatch &&
-                !isEnabled)
+                match.Status != PatchMatchStatus.ExactMatch)
             {
                 // RPCS3 uses All/All/All for hash-scoped modules shared by many
-                // games. A non-matching global hash is not evidence that the
-                // patch belongs to the selected game, so do not clutter its page.
+                // games. Enabled state in patch_config.yml is global too, so it
+                // cannot prove that the patch belongs to the selected game.
+                // Only exact local runtime evidence may place it on a game page.
                 continue;
             }
 
@@ -354,7 +419,7 @@ public sealed class PatchPreviewVm : VmBase
             item.PropertyChanged += PatchItem_PropertyChanged;
             Items.Add(item);
 
-            if (item.IsCanary)
+            if (item.IsExperimentalPatch)
             {
                 CanaryItems.Add(item);
             }
@@ -473,15 +538,15 @@ public sealed class PatchPreviewVm : VmBase
         }
 
         var selectedCount = Items.Count(item => item.IsSelected);
-        var exactCount = Items.Count(item => item.MatchStatus == PatchMatchStatus.ExactMatch);
-        var canaryCount = Items.Count(item => item.IsCanary);
+        var readyCount = Items.Count(item => item.CanEnable || item.CanDisable);
+        var canaryCount = Items.Count(item => item.IsExperimentalPatch);
 
         if (canaryCount > 0)
         {
-            return WithWarning(UiText.F("Patch.SummaryWithCanary", Items.Count, canaryCount, exactCount, selectedCount));
+            return WithWarning(UiText.F("Patch.SummaryWithCanary", Items.Count, canaryCount, readyCount, selectedCount));
         }
 
-        return WithWarning(UiText.F("Patch.SummaryClean", Items.Count, exactCount, selectedCount));
+        return WithWarning(UiText.F("Patch.SummaryClean", Items.Count, readyCount, selectedCount));
     }
 
     private string WithWarning(string summary)
@@ -511,6 +576,7 @@ public sealed class PatchTargetGroupVm : VmBase
     private readonly PatchMatchStatus _bestStatus;
     private readonly string _gameTitle;
     private readonly string? _installedVersion;
+    private bool _isExpanded;
 
     public PatchTargetGroupVm(IReadOnlyList<PatchItemVm> items)
     {
@@ -546,6 +612,9 @@ public sealed class PatchTargetGroupVm : VmBase
             .Select(item => item.MatchStatus)
             .OrderBy(MatchRankFor)
             .First();
+        _isExpanded = _bestStatus is
+            PatchMatchStatus.ExactMatch or
+            PatchMatchStatus.SerialVersionMatchHashUnknown;
 
         foreach (var duplicateSet in items.GroupBy(item => item.Title, StringComparer.OrdinalIgnoreCase))
         {
@@ -588,10 +657,9 @@ public sealed class PatchTargetGroupVm : VmBase
     public string Header => _gameTitle;
 
     public string Details => UiText.F(
-        "Patch.GroupDetails",
-        FormatTechInline(Serial),
+        "Patch.GroupUserDetails",
         FormatTechInline(InstalledVersionDisplay),
-        FormatTechInline(VersionDisplay));
+        Items.Count);
 
     public string Tooltip => string.Join(
         Environment.NewLine,
@@ -599,29 +667,49 @@ public sealed class PatchTargetGroupVm : VmBase
         Details,
         UiText.PatchMatchLabel(_bestStatus));
 
-    public string StatusDisplay => UiText.PatchMatchLabel(_bestStatus);
+    public string StatusDisplay => Items.Any(item => item.IsEnabled)
+        ? UiText.T("Patch.State.Enabled")
+        : Items.Any(item => item.CanEnable && item.IsDefinitionResident)
+            ? UiText.T("Patch.State.Disabled")
+        : Items.Any(item => item.CanEnable)
+            ? UiText.T("Patch.State.Ready")
+            : UiText.PatchMatchLabel(_bestStatus);
 
-    public string StatusTone => _bestStatus switch
+    public string StatusTone => Items.Any(item => item.IsEnabled)
+        ? "Game"
+        : Items.Any(item => item.CanEnable && item.IsDefinitionResident)
+            ? "Muted"
+            : _bestStatus switch
+            {
+                PatchMatchStatus.ExactMatch => "Auto",
+                PatchMatchStatus.SerialVersionMatchHashUnknown when Items.Any(item => item.CanEnable) => "Auto",
+                PatchMatchStatus.SerialVersionMatchHashUnknown => "Warning",
+                _ => "Muted"
+            };
+
+    public FlowDirection TextFlow => UiLayoutService.Current.TextFlow;
+
+    public TextAlignment TextAlignment => UiLayoutService.Current.TextAlignment;
+
+    public bool IsExpanded
     {
-        PatchMatchStatus.ExactMatch => "Auto",
-        PatchMatchStatus.SerialVersionMatchHashUnknown => "Warning",
-        _ => "Muted"
-    };
-
-    public bool IsExpanded => _bestStatus is
-        PatchMatchStatus.ExactMatch or
-        PatchMatchStatus.SerialVersionMatchHashUnknown;
+        get => _isExpanded;
+        set => SetProperty(ref _isExpanded, value);
+    }
 
     public int MatchRank => MatchRankFor(_bestStatus);
 
     public void RefreshLanguage()
     {
+        OnPropertyChanged(nameof(TextFlow));
+        OnPropertyChanged(nameof(TextAlignment));
         OnPropertyChanged(nameof(VersionDisplay));
         OnPropertyChanged(nameof(InstalledVersionDisplay));
         OnPropertyChanged(nameof(Header));
         OnPropertyChanged(nameof(Details));
         OnPropertyChanged(nameof(Tooltip));
         OnPropertyChanged(nameof(StatusDisplay));
+        OnPropertyChanged(nameof(StatusTone));
     }
 
     public static string BuildKey(PatchItemVm item)

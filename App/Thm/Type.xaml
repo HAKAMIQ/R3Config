@@ -18,7 +18,6 @@
 	<Style x:Key="ArabicCaptionText" TargetType="TextBlock" BasedOn="{StaticResource ArabicBlockText}">
 		<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
-		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
 	</Style>
 
 	<Style x:Key="ArabicEmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource ArabicBlockText}">
@@ -61,7 +60,6 @@
 		<Setter Property="SnapsToDevicePixels" Value="True" />
 		<Setter Property="VerticalAlignment" Value="Center" />
 		<Setter Property="Padding" Value="8,0" />
-		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
 	</Style>
 
 	<Style x:Key="RailTitleText" TargetType="TextBlock" BasedOn="{StaticResource ArabicText}">

@@ -114,10 +114,11 @@ internal static class HCanTests
         spu.ExecutableHash = "SPU-1234567890abcdef1234567890abcdef12345678";
         Assert(service.Validate(spu).IsValid && service.GenerateYaml(spu).Contains("SPU-", StringComparison.Ordinal), "SPU YAML should generate.");
 
-        var canary = ValidDraft();
-        canary.PatchType = HCanaryPatchType.Canary;
-        canary.PatchVersion = "0.1";
-        Assert(service.Validate(canary).IsValid, "Canary development Patch Type should accept an explicit PPU/SPU executable Hash.");
+        var experimental = ValidDraft();
+        experimental.IsExperimental = true;
+        experimental.PatchVersion = "0.1";
+        Assert(service.Validate(experimental).IsValid,
+            "Experimental classification must remain independent from the PPU/SPU executable type.");
     }
 
     private static void RunImportEditTests()
@@ -160,17 +161,20 @@ internal static class HCanTests
             var second = ValidDraft();
             second.ExecutableHash = "PPU-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
             second.PatchName = "Other Patch";
-            second.PatchType = HCanaryPatchType.Canary;
+            second.IsExperimental = true;
             second.Status = HCanaryDraftStatus.Testing;
             service.Save(path, backup, second);
             var merged = service.Load(path);
             Assert(merged.Count == 2 && merged.Any(item => item.Draft.PatchName == first.PatchName), "Merge must not delete other imported patches.");
             Assert(merged.Single(item => item.Draft.PatchName == "Other Patch").Draft.Status == HCanaryDraftStatus.Testing,
                 "Local Draft/Testing status should persist in separate R3Config metadata.");
+            Assert(merged.Single(item => item.Draft.PatchName == "Other Patch").Draft.IsExperimental &&
+                   merged.Single(item => item.Draft.PatchName == "Other Patch").Draft.PatchType == HCanaryPatchType.Ppu,
+                "Experimental classification must persist separately from the PPU executable type.");
             var localCatalog = new PatchCatalogReader().Read(path, PatchSourceOrigin.Imported).Catalog;
             var classified = service.ApplyLocalMetadata(localCatalog, path);
             Assert(classified.Entries.Single(item => item.Title == "Other Patch").Risk == PatchRisk.Canary,
-                "A custom Canary patch should reappear in the Canary activation tab after catalog reload.");
+                "A custom experimental patch should reappear on the experimental patch page after catalog reload.");
             AssertThrows<InvalidOperationException>(() => service.Save(path, backup, second), "Duplicate Patch name and Hash should be detected.");
 
             service.Delete(path, backup, merged.Single(item => item.Draft.PatchName == "Other Patch").Identity);

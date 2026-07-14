@@ -4,6 +4,8 @@ using System.Security.Cryptography;
 using System.Text;
 using R3Config.Mdl;
 
+#pragma warning disable CA1822, IDE0130
+
 namespace R3Config.Svc;
 
 public sealed class CatInfoService
@@ -16,6 +18,7 @@ public sealed class CatInfoService
         }
 
         byte[] bytes;
+
         try
         {
             bytes = File.ReadAllBytes(catalogPath);
@@ -37,7 +40,8 @@ public sealed class CatInfoService
         {
             using var stream = new MemoryStream(bytes, writable: false);
             var catalog = RecommendationCatalogService.Load(stream);
-            var generatedAt = catalog.GeneratedAt ?? new DateTimeOffset(File.GetLastWriteTimeUtc(catalogPath));
+            var generatedAt = catalog.GeneratedAt ??
+                              new DateTimeOffset(File.GetLastWriteTimeUtc(catalogPath));
             var sourceHash = ComputeHash(bytes);
 
             return catalog.WithInfo(catalog.Info with
@@ -62,7 +66,9 @@ public sealed class CatInfoService
     {
         if (!File.Exists(filePath))
         {
-            throw new FileNotFoundException("Source file was not found.", filePath);
+            throw new FileNotFoundException(
+                "Source file was not found.",
+                filePath);
         }
 
         return ComputeHash(File.ReadAllBytes(filePath));
@@ -70,7 +76,8 @@ public sealed class CatInfoService
 
     public string FormatInfo(CatalogInfo info)
     {
-        var generatedAt = info.GeneratedAt?.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'") ?? "-";
+        var generatedAt = info.GeneratedAt?.UtcDateTime
+            .ToString("yyyy-MM-dd HH:mm:ss 'UTC'") ?? "-";
 
         var builder = new StringBuilder();
         builder.AppendLine($"DataSource: {info.DataSource}");
@@ -78,17 +85,22 @@ public sealed class CatInfoService
         builder.AppendLine($"GeneratedAt: {generatedAt}");
         builder.AppendLine($"SourceHash: {DisplayValue(info.SourceHash)}");
         builder.AppendLine($"RecommendationCount: {info.RecommendationCount}");
+
         return builder.ToString();
     }
 
     private static string ComputeHash(byte[] bytes)
     {
-        return Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+        return Convert
+            .ToHexString(SHA256.HashData(bytes))
+            .ToLowerInvariant();
     }
 
     private static string DisplayValue(string value)
     {
-        return string.IsNullOrWhiteSpace(value) ? "-" : value;
+        return string.IsNullOrWhiteSpace(value)
+            ? "-"
+            : value;
     }
 }
 
@@ -121,3 +133,5 @@ public sealed class CatalogInvalidException : Exception
     {
     }
 }
+
+#pragma warning restore CA1822, IDE0130
