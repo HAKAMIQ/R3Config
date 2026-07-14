@@ -1,10 +1,9 @@
 using System;
 using System.Linq;
 using System.Windows;
-using AppSvc;
+using R3Config.Svc;
 using R3Config.Lang;
 using R3Config.Mdl;
-using R3Config.Svc;
 
 namespace R3Config.Vm;
 
@@ -15,7 +14,7 @@ public sealed class PlanItemVm : VmBase
     public PlanItemVm(ConfigPlanEntry entry, bool isSelected)
     {
         Entry = entry;
-        _isSelected = entry.State == RecState.Applied || (isSelected && entry.IsActionable);
+        _isSelected = isSelected && entry.IsActionable;
     }
 
     public ConfigPlanEntry Entry { get; }
@@ -111,11 +110,7 @@ public sealed class PlanItemVm : VmBase
         get => _isSelected;
         set
         {
-            if (Entry.State == RecState.Applied)
-            {
-                value = true;
-            }
-            else if (!IsActionable)
+            if (!IsActionable)
             {
                 value = false;
             }

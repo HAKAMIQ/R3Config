@@ -3505,15 +3505,39 @@ static CfgPlanState RunRecStateTests(
     var plan = new PlanService().CreateConfigPlan(install, rogue, recommendation);
     var vblank = plan.Items.Single(item => item.Key == "Vblank Rate");
     var resolutionScale = plan.Items.Single(item => item.Key == "Resolution Scale");
-    Assert(!RecommendationRiskPolicy.ShouldSelectByDefault(vblank), "Vblank must not be selected by default.");
-    Assert(!RecommendationRiskPolicy.ShouldSelectByDefault(resolutionScale), "Hardware-dependent setting must not be selected by default.");
+    Assert(!vblank.IsAutoSelectable,
+        "Vblank must not be eligible for the explicit recommended-selection action.");
+    Assert(!resolutionScale.IsAutoSelectable,
+        "Hardware-dependent settings must not be eligible for the explicit recommended-selection action.");
 
-    var selectedChanges = plan.Items
-        .Where(RecommendationRiskPolicy.ShouldSelectByDefault)
+    var planViewModel = new PlanVm();
+    planViewModel.Load(plan);
+    Assert(planViewModel.Items.All(item => !item.IsSelected),
+        "Expected every item in a newly loaded recommendation plan to start unselected.");
+
+    planViewModel.SelectRecommended();
+    Assert(planViewModel.Items
+            .Where(item => item.IsSelected)
+            .All(item => item.IsAutoSelectable && item.IsDifferent && item.IsActionable),
+        "Expected SelectRecommended to select only safe, different, actionable items.");
+    Assert(planViewModel.Items
+            .Where(item => item.Entry.State is RecState.Manual or RecState.Blocked or RecState.Unknown)
+            .All(item => !item.IsSelected),
+        "Expected SelectRecommended not to select Manual, Blocked, or Unknown items.");
+
+    var selectedChanges = planViewModel.Items
+        .Where(item => item.IsSelected)
         .Select(item => item.Change)
         .ToArray();
-    Assert(selectedChanges.Length == 1, "Expected only safe/recommended changes to be selected.");
-    Assert(selectedChanges.Single().Key == "Write Color Buffers", "Expected only Write Color Buffers to be selected by default.");
+    Assert(selectedChanges.Length == 1,
+        "Expected the explicit recommended-selection action to select one safe change.");
+    Assert(selectedChanges.Single().Key == "Write Color Buffers",
+        "Expected the explicit recommended-selection action to select only Write Color Buffers.");
+
+    planViewModel.ClearSelection();
+    Assert(planViewModel.Items.All(item => !item.IsSelected),
+        "Expected ClearSelection to clear every recommendation checkbox.");
+    planViewModel.SelectRecommended();
 
     var recStateService = new RecStateService();
     var recStateRecommendation = BuildRecStateRecommendation();
@@ -3595,11 +3619,90 @@ static void RunPlanVmVisibilityTests()
         "Expected fully applied recommendations to remain visible instead of disappearing.");
     Assert(!viewModel.IsEmpty,
         "Expected fully applied recommendation view not to enter the empty state.");
-    Assert(viewModel.Items.Single().IsSelected,
-        "Expected applied recommendations to remain visibly checked as proof that they are already configured.");
+    Assert(!viewModel.Items.Single().IsSelected,
+        "Expected an applied recommendation to remain a visible state without becoming a current selection.");
+    viewModel.Items.Single().IsSelected = true;
+    Assert(!viewModel.Items.Single().IsSelected,
+        "Expected a non-actionable applied recommendation not to become selected.");
     viewModel.ClearSelection();
-    Assert(viewModel.Items.Single().IsSelected,
-        "Expected applied recommendations to stay checked even when clearing pending selections.");
+    Assert(!viewModel.Items.Single().IsSelected,
+        "Expected clearing selection to leave applied recommendations unselected.");
+
+    var pendingChange = change with
+    {
+        Key = "Read Color Buffers",
+        WikiKey = "read color buffers"
+    };
+    var pendingState = state with
+    {
+        Path = pendingChange.DisplayPath,
+        Current = "false",
+        State = RecState.Pending,
+        IsDifferent = true,
+        IsActionable = true,
+        IsAutoSelectable = true
+    };
+    var mixedPlan = plan with
+    {
+        Items =
+        [
+            plan.Items.Single(),
+            new ConfigPlanEntry(
+                pendingChange,
+                "false",
+                pendingState)
+        ],
+        RecState = new RecStateSummary(
+            "TEST00001",
+            2,
+            1,
+            1,
+            0,
+            0,
+            0,
+            [state, pendingState])
+    };
+
+    viewModel.Load(mixedPlan);
+    Assert(viewModel.Items.All(item => !item.IsSelected),
+        "Expected reloading a new plan to start with no implicit selection.");
+    var pendingItem = viewModel.Items.Single(item =>
+        item.Key == "Read Color Buffers");
+    pendingItem.IsSelected = true;
+
+    viewModel.ShowApplied = false;
+    Assert(viewModel.Items.Count == 1 &&
+           viewModel.Items.Single().Key == "Read Color Buffers" &&
+           viewModel.Items.Single().IsSelected,
+        "Expected filtering applied rows to preserve the user's explicit pending selection.");
+    viewModel.ShowApplied = true;
+    Assert(viewModel.Items.Single(item =>
+               item.Key == "Read Color Buffers").IsSelected &&
+           !viewModel.Items.Single(item =>
+               item.Key == "Write Color Buffers").IsSelected,
+        "Expected rebuilding filtered rows to preserve only the explicit prior selection.");
+
+    var originalLanguage = UiText.CurrentLang;
+    try
+    {
+        UiText.SetLang(
+            originalLanguage == UiText.ArabicLang
+                ? UiText.EnglishLang
+                : UiText.ArabicLang);
+        viewModel.RefreshLanguage();
+        viewModel.ShowApplied = false;
+        viewModel.ShowApplied = true;
+        Assert(viewModel.Items.Single(item =>
+                   item.Key == "Read Color Buffers").IsSelected &&
+               !viewModel.Items.Single(item =>
+                   item.Key == "Write Color Buffers").IsSelected,
+            "Expected a language refresh to preserve only explicit user selection.");
+    }
+    finally
+    {
+        UiText.SetLang(originalLanguage);
+        viewModel.RefreshLanguage();
+    }
 }
 
 static void RunBackupTests(

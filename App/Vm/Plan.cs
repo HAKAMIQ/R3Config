@@ -147,8 +147,6 @@ public sealed class PlanVm : VmBase
             ? SelectedItemKeys()
             : [];
 
-        var hadVisibleItems = Items.Count > 0;
-
         UnsubscribeItems();
         Items.Clear();
 
@@ -165,9 +163,8 @@ public sealed class PlanVm : VmBase
 
         foreach (var item in visibleItems)
         {
-            var isSelected = hadVisibleItems && selectedKeys.Contains(ItemKey(item))
-                ? true
-                : IsDefaultSelected(item);
+            var isSelected = preserveSelection &&
+                             selectedKeys.Contains(ItemKey(item));
 
             var viewModel = new PlanItemVm(item, isSelected);
             viewModel.PropertyChanged += Item_PropertyChanged;
@@ -242,11 +239,6 @@ public sealed class PlanVm : VmBase
 
         var state = _plan.RecState;
         Summary = UiText.F("Plan.SummaryFormat", state.Total, state.Applied, state.Pending);
-    }
-
-    private static bool IsDefaultSelected(ConfigPlanEntry item)
-    {
-        return item.IsAutoSelectable && item.IsDifferent && item.IsActionable;
     }
 
     private static string ItemKey(ConfigPlanEntry item)

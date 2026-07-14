@@ -115,11 +115,6 @@ public static class RecommendationRiskPolicy
         return RecommendationRisk.Unknown;
     }
 
-    public static bool ShouldSelectByDefault(ConfigPlanEntry entry)
-    {
-        return entry.IsAutoSelectable;
-    }
-
     public static bool RequiresExtraApplyWarning(RecommendationRisk risk)
     {
         return risk is RecommendationRisk.Conditional
