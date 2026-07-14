@@ -1,9 +1,9 @@
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.UseCases;
+namespace R3Config.Case;
 
-public sealed class HCanaryUseCase(
+public sealed class HCanCase(
     HCanaryPatchAuthoringService authoring,
     IRpcs3MutationGuard mutationGuard)
 {
@@ -11,7 +11,7 @@ public sealed class HCanaryUseCase(
         Rpcs3InstallDescriptor install)
     {
         return authoring.Load(
-            Rpcs3AppPaths.ImportedPatch(install));
+            R3Paths.ImpPat(install));
     }
 
     public HCanarySaveResult Save(
@@ -20,11 +20,11 @@ public sealed class HCanaryUseCase(
         string? originalIdentity = null,
         bool saveAsNew = false)
     {
-        EnsureCanWrite(install);
+        CheckCan(install);
 
         return authoring.Save(
-            Rpcs3AppPaths.ImportedPatch(install),
-            Rpcs3AppPaths.BackupRoot(install),
+            R3Paths.ImpPat(install),
+            R3Paths.BkpRoot(install),
             draft,
             originalIdentity,
             saveAsNew,
@@ -38,11 +38,11 @@ public sealed class HCanaryUseCase(
         Rpcs3InstallDescriptor install,
         string identity)
     {
-        EnsureCanWrite(install);
+        CheckCan(install);
 
         return authoring.Delete(
-            Rpcs3AppPaths.ImportedPatch(install),
-            Rpcs3AppPaths.BackupRoot(install),
+            R3Paths.ImpPat(install),
+            R3Paths.BkpRoot(install),
             identity,
             (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
                 install,
@@ -50,15 +50,15 @@ public sealed class HCanaryUseCase(
                 [backupRoot]));
     }
 
-    private void EnsureCanWrite(
+    private void CheckCan(
         Rpcs3InstallDescriptor install)
     {
         mutationGuard.EnsureCanMutate(
             install,
             [
-                Rpcs3AppPaths.ImportedPatch(install),
-                Rpcs3AppPaths.HCanaryMetadata(install)
+                R3Paths.ImpPat(install),
+                R3Paths.HCanMeta(install)
             ],
-            [Rpcs3AppPaths.BackupRoot(install)]);
+            [R3Paths.BkpRoot(install)]);
     }
 }

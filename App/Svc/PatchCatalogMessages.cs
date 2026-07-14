@@ -1,18 +1,18 @@
 using R3Config.Lang;
-using R3Config.UseCases;
+using R3Config.Case;
 
 namespace R3Config.Svc;
 
 public sealed class LocalizedPatchCatalogMessageFormatter :
-    IPatchCatalogMessageFormatter
+    IPatMsg
 {
-    public string MissingCatalog =>
+    public string MissCat =>
         UiText.T("Patch.FileMissing");
 
-    public string InvalidCatalog =>
+    public string BadCat =>
         UiText.T("Patch.FileInvalid");
 
-    public string FormatReadError(
+    public string FmtRead(
         string? rawError,
         bool isImported)
     {

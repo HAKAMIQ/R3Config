@@ -2,12 +2,12 @@ using System.IO;
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.UseCases;
+namespace R3Config.Case;
 
-public sealed class RecommendationCatalogUseCase(
+public sealed class RecCat(
     CatInfoService catalogInfo)
 {
-    public CatLoadResult LoadBuiltIn(string baseDirectory)
+    public CatLoad LoadData(string baseDirectory)
     {
         var path = Path.Combine(
             baseDirectory,
@@ -16,21 +16,21 @@ public sealed class RecommendationCatalogUseCase(
 
         try
         {
-            return new CatLoadResult(
+            return new CatLoad(
                 catalogInfo.LoadCatalog(path),
                 null);
         }
         catch (CatalogMissingException ex)
         {
-            return new CatLoadResult(null, ex.Message);
+            return new CatLoad(null, ex.Message);
         }
         catch (CatalogInvalidException ex)
         {
-            return new CatLoadResult(null, ex.Message);
+            return new CatLoad(null, ex.Message);
         }
         catch
         {
-            return new CatLoadResult(
+            return new CatLoad(
                 null,
                 CatalogInvalidException.UserMessage);
         }
@@ -50,7 +50,7 @@ public sealed class RecommendationCatalogUseCase(
             sourceHash);
     }
 
-    public string FormatInfo(CatalogInfo info)
+    public string FmtInf(CatalogInfo info)
     {
         return catalogInfo.FormatInfo(info);
     }

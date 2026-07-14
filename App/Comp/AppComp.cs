@@ -1,18 +1,18 @@
-using R3Config.UseCases;
+using R3Config.Case;
 using R3Config.Svc;
 
-namespace R3Config.Composition;
+namespace R3Config.Comp;
 
-public static class AppComposition
+public static class AppComp
 {
-    public static AppRuntimeServices CreateRuntimeServices()
+    public static AppRun BuildRun()
     {
-        return new AppRuntimeServices(
-            new AppFlow(CreateUseCases()),
+        return new AppRun(
+            new AppFlow(Build()),
             new AppSettingsService());
     }
 
-    public static AppUseCases CreateUseCases()
+    public static AppCases Build()
     {
         var backup = new BackupService();
         var mutationGuard = new Rpcs3MutationGuard();
@@ -30,7 +30,7 @@ public static class AppComposition
             patchTransaction);
         var patchCompatibility = new PatchCompatibilityService();
 
-        var patchCatalog = new PatchCatalogUseCase(
+        var patchCatalog = new PatCat(
             patchReader,
             new PatchCatalogMergeService(),
             new PatchMatchService(patchCompatibility),
@@ -38,24 +38,24 @@ public static class AppComposition
             hCanary,
             canaryImport,
             new LocalizedPatchCatalogMessageFormatter());
-        var backupUseCase = new BackupUseCase(
+        var backupUseCase = new BkpCase(
             backup,
             mutationGuard);
 
-        return new AppUseCases(
-            new AnalysisUseCase(
+        return new AppCases(
+            new AnlzCase(
                 new GameScanner(),
                 plan,
                 new HwProbe(),
                 new PatchHashProbeService(),
                 patchCatalog,
                 backupUseCase),
-            new ConfigUseCase(
+            new CfgCase(
                 plan,
                 new ConfigApplyService(backup),
                 mutationGuard),
             patchCatalog,
-            new PatchMutationUseCase(
+            new PatMut(
                 new PatchApplyPlanner(),
                 new PatchApplyService(
                     backup,
@@ -64,21 +64,21 @@ public static class AppComposition
                 new BundledCanaryPatchService(),
                 new BundledCheatPatchService(),
                 mutationGuard),
-            new CanaryImportUseCase(
+            new CanImp(
                 canaryImport,
                 mutationGuard,
                 patchTransaction,
                 backup,
                 patchReader),
-            new RecommendationCatalogUseCase(
+            new RecCat(
                 new CatInfoService()),
             backupUseCase,
-            new HCanaryUseCase(
+            new HCanCase(
                 hCanary,
                 mutationGuard));
     }
 }
 
-public sealed record AppRuntimeServices(
+public sealed record AppRun(
     AppFlow Flow,
     AppSettingsService Settings);

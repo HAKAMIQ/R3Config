@@ -2,11 +2,11 @@ using System.IO;
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.UseCases;
+namespace R3Config.Case;
 
-public static class Rpcs3AppPaths
+public static class R3Paths
 {
-    public static string BackupRoot(
+    public static string BkpRoot(
         Rpcs3InstallDescriptor install)
     {
         return Path.Combine(
@@ -14,7 +14,7 @@ public static class Rpcs3AppPaths
             "R3ConfigBackups");
     }
 
-    public static string ImportedPatch(
+    public static string ImpPat(
         Rpcs3InstallDescriptor install)
     {
         return Path.Combine(
@@ -22,7 +22,7 @@ public static class Rpcs3AppPaths
             CanaryPatchImportService.ImportedPatchFileName);
     }
 
-    public static string HCanaryMetadata(
+    public static string HCanMeta(
         Rpcs3InstallDescriptor install)
     {
         return Path.Combine(

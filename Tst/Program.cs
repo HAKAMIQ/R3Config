@@ -13,8 +13,8 @@ using R3Config.Lang;
 using R3Config.Mdl;
 using R3Config.Vm;
 using R3Config.View;
-using R3Config.UseCases;
-using R3Config.Composition;
+using R3Config.Case;
+using R3Config.Comp;
 
 var tempRoot = Path.Combine(Path.GetTempPath(), "R3ConfigSmoke", Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(tempRoot);
@@ -306,7 +306,7 @@ static void RunMutationGuardTests(string tempRoot)
 
     var blockedImportReader = new PatchCatalogReader();
     var blockedImportBackup = new BackupService();
-    var blockedImport = new CanaryImportUseCase(
+    var blockedImport = new CanImp(
         new CanaryPatchImportService(blockedImportReader),
         new Rpcs3MutationGuard(() => true),
         new PatchFileTransactionService(
@@ -869,7 +869,7 @@ static void RunMutationCommandStateTests(string tempRoot)
 
     var running = false;
     var main = new MainVm(
-        AppComposition.CreateRuntimeServices(),
+        AppComp.BuildRun(),
         () => running,
         (_, _) => true);
     var change = new ConfigChange(
@@ -972,7 +972,7 @@ static void RunMutationCommandStateTests(string tempRoot)
     File.WriteAllBytes(Path.Combine(importRoot, "rpcs3.exe"), []);
     var importInstall = Rpcs3InstallService.FromExePath(
         Path.Combine(importRoot, "rpcs3.exe"));
-    var importFlow = AppComposition.CreateRuntimeServices().Flow;
+    var importFlow = AppComp.BuildRun().Flow;
     var allowConfirmation = false;
     var confirmationCalls = 0;
     var importViewModel = new CanaryPatchImportVm(
@@ -1024,7 +1024,7 @@ static void RunMutationCommandStateTests(string tempRoot)
         []);
     var hCanaryConfirm = false;
     var hCanary = new HCanaryVm(
-        AppComposition.CreateRuntimeServices().Flow,
+        AppComp.BuildRun().Flow,
         () => running,
         (_, _) => hCanaryConfirm);
     hCanary.SetContext(hCanaryInstall, hCanaryGame);
@@ -1210,7 +1210,7 @@ static void RunMutationGuardReparseTests(string tempRoot)
             0,
             []),
         RequiresBackup: true);
-    new ConfigUseCase(
+    new CfgCase(
             new PlanService(),
             new ConfigApplyService(),
             guard)
@@ -1253,7 +1253,7 @@ static void RunMutationGuardReparseTests(string tempRoot)
         PatchSourceOrigin.Imported,
         ExpectedEntryCount: 1);
     new PatchFileTransactionService().Commit(
-        Rpcs3AppPaths.BackupRoot(patchOnly),
+        R3Paths.BkpRoot(patchOnly),
         [patchOnlyPrepared],
         (_, backupRoot, targets) =>
             guard.EnsureCanMutate(
@@ -1594,11 +1594,11 @@ static void RunArchitectureBoundaryTests()
 {
     var repoRoot = FindRepoRoot();
     var coreRoot = Path.Combine(repoRoot, "Core");
-    var applicationRoot = Path.Combine(repoRoot, "App", "Application");
+    var applicationRoot = Path.Combine(repoRoot, "App", "Case");
     var viewModelRoot = Path.Combine(repoRoot, "App", "Vm");
 
     Assert(Directory.Exists(applicationRoot),
-        "Expected an explicit App/Application use-case layer.");
+        "Expected an explicit App/Case use-case layer.");
 
     var coreSource = string.Join(
         Environment.NewLine,
@@ -1664,8 +1664,8 @@ static void RunCanaryCompositionTests(string tempRoot)
     var compositionPath = Path.Combine(
         repoRoot,
         "App",
-        "Composition",
-        "AppComposition.cs");
+        "Comp",
+        "AppComp.cs");
     var compositionSource = File.ReadAllText(compositionPath);
     Assert(CountOccurrences(
                compositionSource,
@@ -1690,7 +1690,7 @@ static void RunCanaryCompositionTests(string tempRoot)
         patchesPath,
         Path.Combine(configPath, "patch_config.yml"),
         readOnlyRoot);
-    var runtime = AppComposition.CreateRuntimeServices();
+    var runtime = AppComp.BuildRun();
 
     Assert(!runtime.Flow.HasManagedImportedPatch(install) &&
            !Directory.Exists(patchesPath),
@@ -1777,12 +1777,12 @@ static void RunAppPatchPresentationSourceTests()
     var appFlowPath = Path.Combine(appRoot, "Flow.cs");
     var patchMutationUseCasePath = Path.Combine(
         appRoot,
-        "Application",
-        "PatchMutationUseCase.cs");
+        "Case",
+        "PatMut.cs");
     var compositionPath = Path.Combine(
         appRoot,
-        "Composition",
-        "AppComposition.cs");
+        "Comp",
+        "AppComp.cs");
     var mutationGuardPath = Path.Combine(
         repoRoot,
         "Core",
@@ -2290,7 +2290,7 @@ static void RunAppPatchPresentationSourceTests()
     var patchMutationUseCase = File.ReadAllText(patchMutationUseCasePath);
     var composition = File.ReadAllText(compositionPath);
     var mutationGuard = File.ReadAllText(mutationGuardPath);
-    Assert(appFlow.Contains("_useCases.PatchMutation.ApplyTransaction", StringComparison.Ordinal) &&
+    Assert(appFlow.Contains("_useCases.PatchMutation.ApplyTxn", StringComparison.Ordinal) &&
            !appFlow.Contains("PrepareImportedPatchFile", StringComparison.Ordinal) &&
            !appFlow.Contains("PrepareManagedPatchFile", StringComparison.Ordinal) &&
            !appFlow.Contains("PrepareBundledCanaryPatch", StringComparison.Ordinal),
@@ -3440,7 +3440,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     File.WriteAllBytes(exePath, []);
 
     var install = Rpcs3InstallService.FromExePath(exePath);
-    var importedPath = Rpcs3AppPaths.ImportedPatch(install);
+    var importedPath = R3Paths.ImpPat(install);
     var officialPath = Path.Combine(patchesPath, "patch.yml");
     var officialBytes = Encoding.UTF8.GetBytes(
         "Version: 1.2\r\n# RPCS3-owned test catalog\r\n");
@@ -3470,7 +3470,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
         backup,
         reader,
         new PatchConfigReader());
-    var useCase = new CanaryImportUseCase(
+    var useCase = new CanImp(
         new CanaryPatchImportService(reader),
         new Rpcs3MutationGuard(() => false),
         transaction,
@@ -3486,7 +3486,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
                StringComparison.Ordinal),
         "Expected a newly imported Canary catalog to start with Version: 1.2.");
     var missingSnapshots = backup.ListBackups(
-        Rpcs3AppPaths.BackupRoot(install));
+        R3Paths.BkpRoot(install));
     Assert(missingSnapshots.Count == 1 &&
            missingSnapshots[0].Files.Count == 1 &&
            !missingSnapshots[0].Files[0].Existed &&
@@ -3523,23 +3523,23 @@ static void RunCanaryImportTransactionTests(string tempRoot)
         "Expected replacement to keep manual content and emit exactly one managed marker.");
 
     var snapshotsBeforeReplay = backup.ListBackups(
-        Rpcs3AppPaths.BackupRoot(install)).Count;
+        R3Paths.BkpRoot(install)).Count;
     var bytesBeforeReplay = File.ReadAllBytes(importedPath);
     var replayResult = useCase.Import(install, newManaged);
     Assert(replayResult.Succeeded &&
            replayResult.BackupPath is null &&
            File.ReadAllBytes(importedPath).SequenceEqual(bytesBeforeReplay) &&
-           backup.ListBackups(Rpcs3AppPaths.BackupRoot(install)).Count == snapshotsBeforeReplay,
+           backup.ListBackups(R3Paths.BkpRoot(install)).Count == snapshotsBeforeReplay,
         "Expected identical Canary import replay to be byte-idempotent without a new backup.");
 
     File.WriteAllText(importedPath, "Version: [broken", Encoding.UTF8);
     var invalidBefore = File.ReadAllBytes(importedPath);
     var snapshotsBeforeInvalid = backup.ListBackups(
-        Rpcs3AppPaths.BackupRoot(install)).Count;
+        R3Paths.BkpRoot(install)).Count;
     var invalidResult = useCase.Import(install, newManaged);
     Assert(!invalidResult.Succeeded &&
            File.ReadAllBytes(importedPath).SequenceEqual(invalidBefore) &&
-           backup.ListBackups(Rpcs3AppPaths.BackupRoot(install)).Count == snapshotsBeforeInvalid &&
+           backup.ListBackups(R3Paths.BkpRoot(install)).Count == snapshotsBeforeInvalid &&
            File.ReadAllBytes(officialPath).SequenceEqual(officialBytes),
         "Expected malformed existing YAML to block import with zero target or backup changes.");
 
@@ -3557,11 +3557,11 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     File.WriteAllText(importedPath, manual, Encoding.UTF8);
     var stageBefore = File.ReadAllBytes(importedPath);
     var snapshotsBeforeStageFailure = backup.ListBackups(
-        Rpcs3AppPaths.BackupRoot(install)).Count;
+        R3Paths.BkpRoot(install)).Count;
     try
     {
         transaction.Commit(
-            Rpcs3AppPaths.BackupRoot(install),
+            R3Paths.BkpRoot(install),
             [
                 new PatchPreparedFile(
                     importedPath,
@@ -3575,7 +3575,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     catch (InvalidDataException)
     {
         Assert(File.ReadAllBytes(importedPath).SequenceEqual(stageBefore) &&
-               backup.ListBackups(Rpcs3AppPaths.BackupRoot(install)).Count == snapshotsBeforeStageFailure,
+               backup.ListBackups(R3Paths.BkpRoot(install)).Count == snapshotsBeforeStageFailure,
             "Expected stage validation failure before backup or target mutation.");
     }
 
@@ -3590,7 +3590,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
             File.Copy(stagedPath, targetPath, overwrite: true);
             throw new IOException("Simulated Canary commit failure.");
         });
-    var commitFailureUseCase = new CanaryImportUseCase(
+    var commitFailureUseCase = new CanImp(
         new CanaryPatchImportService(commitFailureReader),
         new Rpcs3MutationGuard(() => false),
         commitFailureTransaction,
@@ -3615,7 +3615,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
             File.Move(stagedPath, targetPath, overwrite: true);
             File.WriteAllText(targetPath, "Version: [broken", Encoding.UTF8);
         });
-    var readBackFailureUseCase = new CanaryImportUseCase(
+    var readBackFailureUseCase = new CanImp(
         new CanaryPatchImportService(readBackFailureReader),
         new Rpcs3MutationGuard(() => false),
         readBackFailureTransaction,
@@ -3642,12 +3642,12 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     File.WriteAllText(importedPath, userMarkerText, Encoding.UTF8);
     var userMarkerBefore = File.ReadAllBytes(importedPath);
     var userMarkerBackups = backup.ListBackups(
-        Rpcs3AppPaths.BackupRoot(install)).Count;
+        R3Paths.BkpRoot(install)).Count;
     var userMarkerResult = useCase.Remove(install);
     Assert(userMarkerResult.Succeeded &&
            userMarkerResult.BackupPath is null &&
            File.ReadAllBytes(importedPath).SequenceEqual(userMarkerBefore) &&
-           backup.ListBackups(Rpcs3AppPaths.BackupRoot(install)).Count ==
+           backup.ListBackups(R3Paths.BkpRoot(install)).Count ==
            userMarkerBackups,
         "Expected marker text in a patch title, Notes value, or ordinary comment not to grant managed ownership.");
 
@@ -3722,7 +3722,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
             throw new IOException(
                 "Simulated managed Canary delete commit failure.");
         });
-    var deleteFailureCase = new CanaryImportUseCase(
+    var deleteFailureCase = new CanImp(
         new CanaryPatchImportService(deleteFailureReader),
         new Rpcs3MutationGuard(() => false),
         deleteFailureTxn,
@@ -3742,10 +3742,10 @@ static void RunCanaryImportTransactionTests(string tempRoot)
 
     File.Delete(importedPath);
     var snapshotsBeforeBlocked = backup.ListBackups(
-        Rpcs3AppPaths.BackupRoot(install)).Count;
+        R3Paths.BkpRoot(install)).Count;
     var blockedReader = new PatchCatalogReader();
     var blockedBackup = new BackupService();
-    var blockedUseCase = new CanaryImportUseCase(
+    var blockedUseCase = new CanImp(
         new CanaryPatchImportService(blockedReader),
         new Rpcs3MutationGuard(() => true),
         new PatchFileTransactionService(
@@ -3763,7 +3763,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
                patchesPath,
                "*.r3stage",
                SearchOption.TopDirectoryOnly).Any() &&
-           backup.ListBackups(Rpcs3AppPaths.BackupRoot(install)).Count == snapshotsBeforeBlocked &&
+           backup.ListBackups(R3Paths.BkpRoot(install)).Count == snapshotsBeforeBlocked &&
            File.ReadAllBytes(officialPath).SequenceEqual(officialBytes),
         "Expected blocked Canary import to create no target, stage, backup, or patch.yml change.");
 
@@ -3819,7 +3819,7 @@ static void RunBackupRestoreTransactionTests(string tempRoot)
     File.WriteAllBytes(exePath, []);
 
     var install = Rpcs3InstallService.FromExePath(exePath);
-    var backupRoot = Rpcs3AppPaths.BackupRoot(install);
+    var backupRoot = R3Paths.BkpRoot(install);
     var firstTarget = Path.Combine(
         customConfigsPath,
         "config_BLUS10001.yml");
@@ -3849,7 +3849,7 @@ static void RunBackupRestoreTransactionTests(string tempRoot)
     File.WriteAllBytes(firstTarget, Encoding.UTF8.GetBytes("current-first"));
     File.WriteAllBytes(secondTarget, Encoding.UTF8.GetBytes("current-second"));
     File.WriteAllBytes(missingTarget, Encoding.UTF8.GetBytes("created-after-backup"));
-    var restoreUseCase = new BackupUseCase(
+    var restoreUseCase = new BkpCase(
         backupService,
         new Rpcs3MutationGuard(() => false));
     restoreUseCase.Restore(install, snapshot);
@@ -3879,7 +3879,7 @@ static void RunBackupRestoreTransactionTests(string tempRoot)
             throw new IOException("Simulated first restore commit failure."));
     try
     {
-        new BackupUseCase(
+        new BkpCase(
             firstCommitFailure,
             new Rpcs3MutationGuard(() => false))
             .Restore(install, snapshot);
@@ -3920,7 +3920,7 @@ static void RunBackupRestoreTransactionTests(string tempRoot)
         });
     try
     {
-        new BackupUseCase(
+        new BkpCase(
             middleCommitFailure,
             new Rpcs3MutationGuard(() => false))
             .Restore(install, snapshot);
@@ -3957,7 +3957,7 @@ static void RunBackupRestoreTransactionTests(string tempRoot)
                 "Simulated restore rollback error."));
     try
     {
-        new BackupUseCase(
+        new BkpCase(
             rollbackFailureService,
             new Rpcs3MutationGuard(() => false))
             .Restore(install, snapshot);
@@ -4002,7 +4002,7 @@ static void RunBackupRestoreTransactionTests(string tempRoot)
         outsideManifest.Files);
     var outsideBefore = File.ReadAllBytes(validationTarget);
     AssertThrows<InvalidDataException>(
-        () => new BackupUseCase(
+        () => new BkpCase(
                 new BackupService(),
                 new Rpcs3MutationGuard(() => false))
             .Restore(install, outsideRequest),
@@ -4073,7 +4073,7 @@ static void RunBackupRestoreTransactionTests(string tempRoot)
         legacySnapshot.DirectoryPath,
         legacyManifest);
     File.WriteAllText(validationTarget, "changed-after-legacy-backup", Encoding.UTF8);
-    new BackupUseCase(
+    new BkpCase(
         new BackupService(),
         new Rpcs3MutationGuard(() => false))
         .Restore(install, new BackupSnapshot(
@@ -4090,7 +4090,7 @@ static void RunBackupRestoreTransactionTests(string tempRoot)
     File.WriteAllText(validationTarget, "running-process-current", Encoding.UTF8);
     var runningBefore = File.ReadAllBytes(validationTarget);
     AssertMutationBlocked(
-        () => new BackupUseCase(
+        () => new BkpCase(
                 new BackupService(),
                 new Rpcs3MutationGuard(() => true))
             .Restore(install, runningSnapshot),
@@ -4108,7 +4108,7 @@ static void RunBackupRestoreTransactionTests(string tempRoot)
         [outsideTarget]);
     File.WriteAllText(outsideTarget, "outside-current", Encoding.UTF8);
     AssertMutationBlocked(
-        () => new BackupUseCase(
+        () => new BkpCase(
                 new BackupService(),
                 new Rpcs3MutationGuard(() => false))
             .Restore(install, outsideTargetSnapshot),
@@ -4664,7 +4664,7 @@ static void RunAnalysisReadPathTests(
 {
     var synchronizationContext = new RecordingSynchronizationContext();
     var originalContext = SynchronizationContext.Current;
-    AnalyzeResult result;
+    AnlzRes result;
 
     try
     {
@@ -6114,7 +6114,7 @@ static void RunAppFlowPatchCatalogLoadSmokeTests(SmokeEnv env, string patchYmlPa
     Assert(string.IsNullOrWhiteSpace(officialOnly.Error), "Expected patch.yml-only AppFlow load not to report an error: " + officialOnly.Error);
     Assert(officialOnly.Cat!.Entries.Any(patch => patch.Title == "Skip Intro Videos"),
         "Expected patch.yml-only AppFlow load to include official/local patches.");
-    var officialStatus = officialOnly.SourceStatuses.Single(source =>
+    var officialStatus = officialOnly.SrcStat.Single(source =>
         source.Source == PatchSourceOrigin.Official && source.Name == "patch.yml");
     Assert(officialStatus is { Exists: true, Loaded: true, EntryCount: > 0 },
         "Expected source diagnostics to report a loaded official patch.yml with its entry count.");
@@ -6126,11 +6126,11 @@ static void RunAppFlowPatchCatalogLoadSmokeTests(SmokeEnv env, string patchYmlPa
     Assert(string.IsNullOrWhiteSpace(importedOnly.Error), "Expected imported_patch.yml-only AppFlow load not to report patch.yml missing.");
     Assert(importedOnly.Cat!.Entries.Any(patch => patch.Title == "Imported Canary Display Patch" && patch.Risk == PatchRisk.Canary),
         "Expected imported_patch.yml entries to load as Canary patches.");
-    Assert(importedOnly.SourceStatuses.Single(source =>
+    Assert(importedOnly.SrcStat.Single(source =>
             source.Source == PatchSourceOrigin.Official && source.Name == "patch.yml") is
         { Exists: false, Loaded: false, EntryCount: 0 },
         "Expected source diagnostics to distinguish a missing optional patch.yml from an invalid catalog.");
-    Assert(importedOnly.SourceStatuses.Single(source =>
+    Assert(importedOnly.SrcStat.Single(source =>
             source.Source == PatchSourceOrigin.Imported && source.Name == "imported_patch.yml") is
         { Exists: true, Loaded: true, EntryCount: > 0 },
         "Expected source diagnostics to report imported_patch.yml independently.");
@@ -6158,7 +6158,7 @@ static void RunAppFlowPatchCatalogLoadSmokeTests(SmokeEnv env, string patchYmlPa
         "Expected imported patches to be preserved when patch.yml fails to parse.");
     Assert(invalidOfficialWithImported.Error?.Contains("patch.yml", StringComparison.OrdinalIgnoreCase) == true,
         "Expected invalid patch.yml to produce a readable warning while imported patches load.");
-    var invalidOfficialStatus = invalidOfficialWithImported.SourceStatuses.Single(source =>
+    var invalidOfficialStatus = invalidOfficialWithImported.SrcStat.Single(source =>
         source.Source == PatchSourceOrigin.Official && source.Name == "patch.yml");
     Assert(invalidOfficialStatus is { Exists: true, Loaded: false, EntryCount: 0 } &&
            !string.IsNullOrWhiteSpace(invalidOfficialStatus.Diagnostic),
@@ -6171,7 +6171,7 @@ static void RunAppFlowPatchCatalogLoadSmokeTests(SmokeEnv env, string patchYmlPa
         "Expected bundled Canary preview data to remain available when optional RPCS3 patch files are missing.");
     Assert(string.IsNullOrWhiteSpace(none.Error),
         "Expected missing optional RPCS3 patch files not to be reported as corrupt data.");
-    Assert(none.SourceStatuses.Single(source =>
+    Assert(none.SrcStat.Single(source =>
             source.Source == PatchSourceOrigin.BundledCanary && source.Name == "can.yml") is
         { Exists: true, Loaded: true, EntryCount: > 0 },
         "Expected source diagnostics to prove the complete bundled Canary database was loaded even without patch.yml.");

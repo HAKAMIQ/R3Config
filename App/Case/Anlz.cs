@@ -1,17 +1,17 @@
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.UseCases;
+namespace R3Config.Case;
 
-public sealed class AnalysisUseCase(
+public sealed class AnlzCase(
     GameScanner scanner,
     PlanService planService,
     HwProbe hardwareProbe,
     PatchHashProbeService patchHashProbe,
-    PatchCatalogUseCase patchCatalog,
-    BackupUseCase backups)
+    PatCat patchCatalog,
+    BkpCase backups)
 {
-    public async Task<AnalyzeResult> ExecuteAsync(
+    public async Task<AnlzRes> RunAsync(
         string rpcs3ExePath,
         RecommendationCatalogService catalog)
     {
@@ -34,7 +34,7 @@ public sealed class AnalysisUseCase(
                     scanResult.Games))
             .ConfigureAwait(false);
 
-        var rowsTask = Task.Run(() => BuildRows(
+        var rowsTask = Task.Run(() => BuildRow(
             install,
             catalog,
             hardware,
@@ -48,7 +48,7 @@ public sealed class AnalysisUseCase(
         await Task.WhenAll(rowsTask, patchCatalogTask, backupsTask)
             .ConfigureAwait(false);
 
-        return new AnalyzeResult(
+        return new AnlzRes(
             install,
             hardware,
             await rowsTask.ConfigureAwait(false),
@@ -57,7 +57,7 @@ public sealed class AnalysisUseCase(
             scanResult.Diagnostics);
     }
 
-    private IReadOnlyList<GamePlanRow> BuildRows(
+    private IReadOnlyList<GameRow> BuildRow(
         Rpcs3InstallDescriptor install,
         RecommendationCatalogService catalog,
         HwInfo hardware,
@@ -75,7 +75,7 @@ public sealed class AnalysisUseCase(
         var detectedSerials = gamesBySerial.Keys
             .Concat(customConfigSerials)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var rows = new List<GamePlanRow>(
+        var rows = new List<GameRow>(
             catalog.Count + gamesBySerial.Count);
 
         foreach (var recommendation in catalog.Recommendations
@@ -101,9 +101,9 @@ public sealed class AnalysisUseCase(
                     game,
                     recommendation,
                     hardware).RecState
-                : BuildCatalogOnlySummary(recommendation);
+                : BuildSum(recommendation);
 
-            rows.Add(new GamePlanRow(
+            rows.Add(new GameRow(
                 game,
                 recommendation,
                 recState,
@@ -115,7 +115,7 @@ public sealed class AnalysisUseCase(
                      .OrderBy(game => game.Title)
                      .ThenBy(game => game.Serial))
         {
-            rows.Add(new GamePlanRow(
+            rows.Add(new GameRow(
                 game,
                 Rec: null,
                 RecState: planService.CreateConfigPlan(
@@ -129,7 +129,7 @@ public sealed class AnalysisUseCase(
         return rows;
     }
 
-    private static RecStateSummary BuildCatalogOnlySummary(
+    private static RecStateSummary BuildSum(
         WikiGameRecommendation recommendation)
     {
         var items = recommendation.Changes

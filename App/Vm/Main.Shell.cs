@@ -232,7 +232,7 @@ public sealed partial class MainVm : VmBase
             _hwInfo = result.Hw;
             _patchCatalog = result.PatchCat.Cat;
             _patchCatalogError = result.PatchCat.Error;
-            _patchCatalogSources = result.PatchCat.SourceStatuses;
+            _patchCatalogSources = result.PatchCat.SrcStat;
             Rpcs3Status = UiText.T("Status.Rpcs3Ready");
             SaveSettings();
 

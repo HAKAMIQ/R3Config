@@ -3,22 +3,22 @@ using System.Text;
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.UseCases;
+namespace R3Config.Case;
 
-public sealed class CanaryImportUseCase(
+public sealed class CanImp(
     CanaryPatchImportService importService,
     IRpcs3MutationGuard mutationGuard,
     PatchFileTransactionService transaction,
     BackupService backupService,
     PatchCatalogReader catalogReader)
 {
-    public CanaryPatchNormalizeResult Normalize(
+    public CanaryPatchNormalizeResult Norm(
         string? sourceText)
     {
         return importService.Normalize(sourceText);
     }
 
-    public bool HasManagedImportedPatch(
+    public bool HasPat(
         Rpcs3InstallDescriptor install)
     {
         ArgumentNullException.ThrowIfNull(install);
@@ -31,7 +31,7 @@ public sealed class CanaryImportUseCase(
         Rpcs3InstallDescriptor install,
         string sourceText)
     {
-        var targetPath = Rpcs3AppPaths.ImportedPatch(install);
+        var targetPath = R3Paths.ImpPat(install);
         mutationGuard.EnsureCanMutate(
             install,
             [targetPath]);
@@ -68,7 +68,7 @@ public sealed class CanaryImportUseCase(
         try
         {
             committedBackup = transaction.Commit(
-                Rpcs3AppPaths.BackupRoot(install),
+                R3Paths.BkpRoot(install),
                 [prepared.PreparedFile],
                 (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
                     install,
@@ -108,7 +108,7 @@ public sealed class CanaryImportUseCase(
             return new CanaryPatchWriteResult(
                 true,
                 targetPath,
-                SnapshotPath(committedBackup),
+                SnapPath(committedBackup),
                 prepared.Message,
                 null);
         }
@@ -137,7 +137,7 @@ public sealed class CanaryImportUseCase(
                 failure.Message,
                 committedBackup is null
                     ? null
-                    : SnapshotPath(committedBackup));
+                    : SnapPath(committedBackup));
         }
     }
 
@@ -146,7 +146,7 @@ public sealed class CanaryImportUseCase(
     {
         ArgumentNullException.ThrowIfNull(install);
 
-        var targetPath = Rpcs3AppPaths.ImportedPatch(install);
+        var targetPath = R3Paths.ImpPat(install);
         mutationGuard.EnsureCanMutate(
             install,
             [targetPath]);
@@ -156,7 +156,7 @@ public sealed class CanaryImportUseCase(
                 install.PatchesPath);
         if (!prepared.Succeeded)
         {
-            return RemoveFail(
+            return DelFail(
                 targetPath,
                 prepared.Error ?? prepared.Message);
         }
@@ -175,7 +175,7 @@ public sealed class CanaryImportUseCase(
         try
         {
             committedBackup = transaction.Commit(
-                Rpcs3AppPaths.BackupRoot(install),
+                R3Paths.BkpRoot(install),
                 [prepared.PreparedFile],
                 (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
                     install,
@@ -220,7 +220,7 @@ public sealed class CanaryImportUseCase(
             return new CanaryPatchRemoveResult(
                 true,
                 targetPath,
-                SnapshotPath(committedBackup),
+                SnapPath(committedBackup),
                 prepared.Message,
                 null);
         }
@@ -244,12 +244,12 @@ public sealed class CanaryImportUseCase(
                 }
             }
 
-            return RemoveFail(
+            return DelFail(
                 targetPath,
                 failure.Message,
                 committedBackup is null
                     ? null
-                    : SnapshotPath(committedBackup));
+                    : SnapPath(committedBackup));
         }
     }
 
@@ -266,7 +266,7 @@ public sealed class CanaryImportUseCase(
             error);
     }
 
-    private static CanaryPatchRemoveResult RemoveFail(
+    private static CanaryPatchRemoveResult DelFail(
         string targetPath,
         string error,
         string? backupPath = null)
@@ -279,7 +279,7 @@ public sealed class CanaryImportUseCase(
             error);
     }
 
-    private static string? SnapshotPath(
+    private static string? SnapPath(
         BackupManifest manifest)
     {
         return manifest.Files

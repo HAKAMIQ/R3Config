@@ -2,16 +2,16 @@ using System.IO;
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.UseCases;
+namespace R3Config.Case;
 
-public sealed class PatchMutationUseCase(
+public sealed class PatMut(
     PatchApplyPlanner planner,
     PatchApplyService applyService,
     BundledCanaryPatchService bundledCanary,
     BundledCheatPatchService bundledCheats,
     IRpcs3MutationGuard mutationGuard)
 {
-    public PatchApplyPlan BuildEnablePlan(
+    public PatchApplyPlan BuildOn(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<Rpcs3PatchMatchResult> matches,
         bool expertMode)
@@ -22,7 +22,7 @@ public sealed class PatchMutationUseCase(
             expertMode);
     }
 
-    public PatchApplyPlan BuildDisablePlan(
+    public PatchApplyPlan BuildOff(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<Rpcs3PatchMatchResult> matches)
     {
@@ -31,19 +31,19 @@ public sealed class PatchMutationUseCase(
             matches);
     }
 
-    public PatchApplyChange? CreateChange(
+    public PatchApplyChange? BuildChg(
         Rpcs3PatchMatchResult match)
     {
         return planner.CreateChangeForMatch(match);
     }
 
-    public PatchApplyResult ApplyTransaction(
+    public PatchApplyResult ApplyTxn(
         PatchApplyPlan plan,
         Rpcs3InstallDescriptor install,
         IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
     {
-        EnsurePlanBelongsToInstall(plan, install);
-        var backupRoot = Rpcs3AppPaths.BackupRoot(install);
+        Check(plan, install);
+        var backupRoot = R3Paths.BkpRoot(install);
         var declaredTargets = new List<string>
         {
             plan.PatchConfigPath
@@ -53,7 +53,7 @@ public sealed class PatchMutationUseCase(
                 PatchSourceOrigin.BundledCanary))
         {
             declaredTargets.Add(
-                Rpcs3AppPaths.ImportedPatch(install));
+                R3Paths.ImpPat(install));
         }
 
         declaredTargets.AddRange(
@@ -68,12 +68,12 @@ public sealed class PatchMutationUseCase(
         var preparedFiles = new List<PatchPreparedFile>();
         var messages = new List<string>();
 
-        PrepareBundledCanary(
+        PrepCan(
             install,
             selectedMatches,
             preparedFiles,
             messages);
-        PrepareBundledCheats(
+        PrepCht(
             install,
             selectedMatches,
             preparedFiles,
@@ -91,7 +91,7 @@ public sealed class PatchMutationUseCase(
             plan,
             backupRoot,
             preparedFiles,
-            Validator(install));
+            VldFunc(install));
 
         return result with
         {
@@ -103,9 +103,9 @@ public sealed class PatchMutationUseCase(
         PatchApplyPlan plan,
         Rpcs3InstallDescriptor install)
     {
-        EnsurePlanBelongsToInstall(plan, install);
-        var backupRoot = Rpcs3AppPaths.BackupRoot(install);
-        var validator = Validator(install);
+        Check(plan, install);
+        var backupRoot = R3Paths.BkpRoot(install);
+        var validator = VldFunc(install);
         validator(
             PatchTransactionPhase.BeforeStage,
             backupRoot,
@@ -121,9 +121,9 @@ public sealed class PatchMutationUseCase(
         PatchApplyPlan plan,
         Rpcs3InstallDescriptor install)
     {
-        EnsurePlanBelongsToInstall(plan, install);
-        var backupRoot = Rpcs3AppPaths.BackupRoot(install);
-        var validator = Validator(install);
+        Check(plan, install);
+        var backupRoot = R3Paths.BkpRoot(install);
+        var validator = VldFunc(install);
         validator(
             PatchTransactionPhase.BeforeStage,
             backupRoot,
@@ -135,7 +135,7 @@ public sealed class PatchMutationUseCase(
             validator);
     }
 
-    private void PrepareBundledCanary(
+    private void PrepCan(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches,
         ICollection<PatchPreparedFile> preparedFiles,
@@ -157,7 +157,7 @@ public sealed class PatchMutationUseCase(
             AppContext.BaseDirectory,
             matches);
 
-        AddPreparedResult(
+        AddPrep(
             result.Succeeded,
             result.PreparedFile,
             result.Message,
@@ -166,7 +166,7 @@ public sealed class PatchMutationUseCase(
             messages);
     }
 
-    private void PrepareBundledCheats(
+    private void PrepCht(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches,
         ICollection<PatchPreparedFile> preparedFiles,
@@ -188,7 +188,7 @@ public sealed class PatchMutationUseCase(
             AppContext.BaseDirectory,
             matches);
 
-        AddPreparedResult(
+        AddPrep(
             result.Succeeded,
             result.PreparedFile,
             result.Message,
@@ -197,7 +197,7 @@ public sealed class PatchMutationUseCase(
             messages);
     }
 
-    private static void AddPreparedResult(
+    private static void AddPrep(
         bool succeeded,
         PatchPreparedFile? preparedFile,
         string message,
@@ -222,7 +222,7 @@ public sealed class PatchMutationUseCase(
         }
     }
 
-    private static void EnsurePlanBelongsToInstall(
+    private static void Check(
         PatchApplyPlan plan,
         Rpcs3InstallDescriptor install)
     {
@@ -236,7 +236,7 @@ public sealed class PatchMutationUseCase(
         }
     }
 
-    private PatchPathValidator Validator(
+    private PatchPathValidator VldFunc(
         Rpcs3InstallDescriptor install)
     {
         return (_, backupRoot, targets) =>

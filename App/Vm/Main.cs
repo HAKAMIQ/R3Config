@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Markup;
 using R3Config;
-using R3Config.Composition;
+using R3Config.Comp;
 using R3Config.Svc;
 using R3Config.Lang;
 using R3Config.Mdl;
@@ -27,7 +27,7 @@ public sealed partial class MainVm : VmBase
     private string? _catalogLoadError;
     private Rpcs3PatchCatalog? _patchCatalog;
     private string? _patchCatalogError;
-    private IReadOnlyList<PatchCatalogSourceStatus> _patchCatalogSources = [];
+    private IReadOnlyList<PatSrcSt> _patchCatalogSources = [];
     private ConfigPlan? _currentPlan;
     private UiLayoutState _layout = UiLayoutService.Current;
     private HwInfo? _hwInfo;
@@ -44,11 +44,11 @@ public sealed partial class MainVm : VmBase
     private bool _isPatchConfigReadable;
 
     public MainVm()
-        : this(AppComposition.CreateRuntimeServices())
+        : this(AppComp.BuildRun())
     {
     }
 
-    public MainVm(AppRuntimeServices services)
+    public MainVm(AppRun services)
         : this(
             services,
             isRpcs3Running: null,
@@ -57,7 +57,7 @@ public sealed partial class MainVm : VmBase
     }
 
     public MainVm(
-        AppRuntimeServices services,
+        AppRun services,
         Func<bool>? isRpcs3Running,
         Func<string, string, bool>? confirm)
     {

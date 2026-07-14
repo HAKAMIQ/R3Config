@@ -273,7 +273,7 @@ public sealed partial class MainVm : VmBase
     public string CanaryPatchSourceBadgeText =>
         SourceBadge(FindPatchSource(PatchSourceOrigin.BundledCanary, "can.yml"));
 
-    private PatchCatalogSourceStatus? FindPatchSource(
+    private PatSrcSt? FindPatchSource(
         PatchSourceOrigin source,
         string name)
     {
@@ -282,7 +282,7 @@ public sealed partial class MainVm : VmBase
             item.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static string SourceTone(PatchCatalogSourceStatus? source)
+    private static string SourceTone(PatSrcSt? source)
     {
         return source?.Loaded == true
             ? HasSourceWarning(source) ? "Warning" : "Auto"
@@ -291,7 +291,7 @@ public sealed partial class MainVm : VmBase
                 : "Warning";
     }
 
-    private static string SourceBadge(PatchCatalogSourceStatus? source)
+    private static string SourceBadge(PatSrcSt? source)
     {
         return source?.Loaded == true
             ? UiText.T(HasSourceWarning(source)
@@ -302,7 +302,7 @@ public sealed partial class MainVm : VmBase
                 : UiText.T("Patch.SourceStatus.MissingBadge");
     }
 
-    private static bool HasSourceWarning(PatchCatalogSourceStatus? source)
+    private static bool HasSourceWarning(PatSrcSt? source)
     {
         return source?.Loaded == true &&
                !string.IsNullOrWhiteSpace(source.Diagnostic);

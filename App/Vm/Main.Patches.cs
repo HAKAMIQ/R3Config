@@ -199,7 +199,7 @@ public sealed partial class MainVm : VmBase
         var result = _flow.LoadPatchCat(_install);
         _patchCatalog = result.Cat;
         _patchCatalogError = result.Error;
-        _patchCatalogSources = result.SourceStatuses;
+        _patchCatalogSources = result.SrcStat;
         RefreshPatchSourceStatus();
 
         if (_patchCatalog is null)

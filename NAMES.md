@@ -118,3 +118,28 @@ RPCS3_CONFIG_DIR
 
 Source-file and symbol mappings are appended to this registry before each
 semantic rename layer is applied.
+
+## App case and composition symbols
+
+| Old type/namespace | New type/namespace |
+|---|---|
+| `R3Config.UseCases` | `R3Config.Case` |
+| `AnalysisUseCase` | `AnlzCase` |
+| `AppUseCases` | `AppCases` |
+| `BackupUseCase` | `BkpCase` |
+| `CanaryImportUseCase` | `CanImp` |
+| `ConfigUseCase` | `CfgCase` |
+| `CatLoadResult` | `CatLoad` |
+| `PatchCatResult` | `PatCatRs` |
+| `PatchCatalogSourceStatus` | `PatSrcSt` |
+| `GamePlanRow` | `GameRow` |
+| `AnalyzeResult` | `AnlzRes` |
+| `HCanaryUseCase` | `HCanCase` |
+| `IPatchCatalogMessageFormatter` | `IPatMsg` |
+| `PatchCatalogUseCase` | `PatCat` |
+| `PatchMutationUseCase` | `PatMut` |
+| `RecommendationCatalogUseCase` | `RecCat` |
+| `Rpcs3AppPaths` | `R3Paths` |
+| `R3Config.Composition` | `R3Config.Comp` |
+| `AppComposition` | `AppComp` |
+| `AppRuntimeServices` | `AppRun` |

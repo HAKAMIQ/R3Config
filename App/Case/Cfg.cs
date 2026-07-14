@@ -2,14 +2,14 @@ using System.IO;
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.UseCases;
+namespace R3Config.Case;
 
-public sealed class ConfigUseCase(
+public sealed class CfgCase(
     PlanService planService,
     ConfigApplyService applyService,
     IRpcs3MutationGuard mutationGuard)
 {
-    public ConfigPlan BuildPlan(
+    public ConfigPlan Build(
         Rpcs3InstallDescriptor install,
         Rpcs3GameDescriptor game,
         WikiGameRecommendation? recommendation,
@@ -27,9 +27,9 @@ public sealed class ConfigUseCase(
         IReadOnlyList<ConfigChange> changes,
         Rpcs3InstallDescriptor install)
     {
-        EnsurePlanBelongsToInstall(plan, install);
-        var backupRoot = Rpcs3AppPaths.BackupRoot(install);
-        var validator = Validator(install);
+        Check(plan, install);
+        var backupRoot = R3Paths.BkpRoot(install);
+        var validator = VldFunc(install);
         validator(
             PatchTransactionPhase.BeforeStage,
             backupRoot,
@@ -47,9 +47,9 @@ public sealed class ConfigUseCase(
         IReadOnlyList<ConfigChange> changes,
         Rpcs3InstallDescriptor install)
     {
-        EnsurePlanBelongsToInstall(plan, install);
-        var backupRoot = Rpcs3AppPaths.BackupRoot(install);
-        var validator = Validator(install);
+        Check(plan, install);
+        var backupRoot = R3Paths.BkpRoot(install);
+        var validator = VldFunc(install);
         validator(
             PatchTransactionPhase.BeforeStage,
             backupRoot,
@@ -62,7 +62,7 @@ public sealed class ConfigUseCase(
             validator);
     }
 
-    private static void EnsurePlanBelongsToInstall(
+    private static void Check(
         ConfigPlan plan,
         Rpcs3InstallDescriptor install)
     {
@@ -80,7 +80,7 @@ public sealed class ConfigUseCase(
         }
     }
 
-    private PatchPathValidator Validator(
+    private PatchPathValidator VldFunc(
         Rpcs3InstallDescriptor install)
     {
         return (_, backupRoot, targets) =>

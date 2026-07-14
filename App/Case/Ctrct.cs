@@ -3,19 +3,19 @@ using R3Config.Svc;
 
 namespace R3Config;
 
-public sealed record CatLoadResult(
+public sealed record CatLoad(
     RecommendationCatalogService? Cat,
     string? Error);
 
-public sealed record PatchCatResult(
+public sealed record PatCatRs(
     Rpcs3PatchCatalog? Cat,
     string? Error,
-    IReadOnlyList<PatchCatalogSourceStatus>? Sources = null)
+    IReadOnlyList<PatSrcSt>? Sources = null)
 {
-    public IReadOnlyList<PatchCatalogSourceStatus> SourceStatuses => Sources ?? [];
+    public IReadOnlyList<PatSrcSt> SrcStat => Sources ?? [];
 }
 
-public sealed record PatchCatalogSourceStatus(
+public sealed record PatSrcSt(
     string Name,
     PatchSourceOrigin Source,
     string Path,
@@ -24,16 +24,16 @@ public sealed record PatchCatalogSourceStatus(
     int EntryCount,
     string? Diagnostic = null);
 
-public sealed record GamePlanRow(
+public sealed record GameRow(
     Rpcs3GameDescriptor Game,
     WikiGameRecommendation? Rec,
     RecStateSummary RecState,
     bool IsDetectedInRpcs3);
 
-public sealed record AnalyzeResult(
+public sealed record AnlzRes(
     Rpcs3InstallDescriptor Install,
     HwInfo Hw,
-    IReadOnlyList<GamePlanRow> Games,
-    PatchCatResult PatchCat,
+    IReadOnlyList<GameRow> Games,
+    PatCatRs PatchCat,
     IReadOnlyList<BackupSnapshot> Backups,
     IReadOnlyList<GameScanDiagnostic> GameScanDiagnostics);
