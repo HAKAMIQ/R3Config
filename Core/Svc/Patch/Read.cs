@@ -4,6 +4,8 @@ using R3Config.Mdl;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 
+#pragma warning disable CA1822, IDE0130
+
 namespace R3Config.Svc;
 
 public sealed class PatchConfigReader
@@ -17,13 +19,22 @@ public sealed class PatchConfigReader
                 return new YamlStream(new YamlDocument(new YamlMappingNode()));
             }
 
-            using var reader = new StreamReader(path);
+            var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+                path,
+                Rpcs3InputLimits.PatchConfigYamlBytes,
+                "patch_config.yml");
             var yaml = new YamlStream();
-            yaml.Load(reader);
+            yaml.Load(new StringReader(text));
 
             if (yaml.Documents.Count == 0)
             {
                 yaml.Documents.Add(new YamlDocument(new YamlMappingNode()));
+            }
+
+            if (yaml.Documents.Count > Rpcs3InputLimits.YamlDocuments)
+            {
+                throw new InvalidDataException(
+                    "patch_config.yml contains too many YAML documents.");
             }
 
             if (yaml.Documents[0].RootNode is not YamlMappingNode)
@@ -41,30 +52,14 @@ public sealed class PatchConfigReader
 
     public bool IsEnabled(string path, PatchApplyChange change)
     {
+        return ReadSnapshot(path).IsEnabled(change);
+    }
+
+    public PatchConfigSnapshot ReadSnapshot(string path)
+    {
         var yaml = Load(path);
-        var root = (YamlMappingNode)yaml.Documents[0].RootNode;
-
-        var versionNode = FindNestedNode(
-            root,
-            change.HashKey,
-            change.PatchTitle,
-            change.GameTitle,
-            change.Serial,
-            change.Version);
-
-        if (versionNode is YamlScalarNode legacyScalar &&
-            bool.TryParse(legacyScalar.Value, out var legacyEnabled))
-        {
-            return legacyEnabled;
-        }
-
-        var enabledNode = versionNode is YamlMappingNode versionMapping
-            ? FindValue(versionMapping, "Enabled")
-            : null;
-
-        return enabledNode is YamlScalarNode scalar &&
-               bool.TryParse(scalar.Value, out var enabled) &&
-               enabled;
+        return new PatchConfigSnapshot(
+            (YamlMappingNode)yaml.Documents[0].RootNode);
     }
 
     internal static YamlNode? FindValue(YamlMappingNode mapping, string key)
@@ -81,9 +76,12 @@ public sealed class PatchConfigReader
         return null;
     }
 
-    internal static YamlMappingNode? FindNestedMapping(YamlMappingNode root, params string[] path)
+    internal static YamlMappingNode? FindNestedMapping(
+        YamlMappingNode root,
+        params string[] path)
     {
         YamlMappingNode current = root;
+
         foreach (var key in path)
         {
             if (FindValue(current, key) is not YamlMappingNode next)
@@ -97,12 +95,16 @@ public sealed class PatchConfigReader
         return current;
     }
 
-    internal static YamlNode? FindNestedNode(YamlMappingNode root, params string[] path)
+    internal static YamlNode? FindNestedNode(
+        YamlMappingNode root,
+        params string[] path)
     {
         YamlNode current = root;
+
         foreach (var key in path)
         {
-            if (current is not YamlMappingNode mapping || FindValue(mapping, key) is not { } next)
+            if (current is not YamlMappingNode mapping ||
+                FindValue(mapping, key) is not { } next)
             {
                 return null;
             }
@@ -113,3 +115,42 @@ public sealed class PatchConfigReader
         return current;
     }
 }
+
+public sealed class PatchConfigSnapshot
+{
+    private readonly YamlMappingNode _root;
+
+    internal PatchConfigSnapshot(YamlMappingNode root)
+    {
+        _root = root;
+    }
+
+    public bool IsEnabled(PatchApplyChange change)
+    {
+        ArgumentNullException.ThrowIfNull(change);
+
+        var versionNode = PatchConfigReader.FindNestedNode(
+            _root,
+            change.HashKey,
+            change.PatchTitle,
+            change.GameTitle,
+            change.Serial,
+            change.Version);
+
+        if (versionNode is YamlScalarNode legacyScalar &&
+            bool.TryParse(legacyScalar.Value, out var legacyEnabled))
+        {
+            return legacyEnabled;
+        }
+
+        var enabledNode = versionNode is YamlMappingNode versionMapping
+            ? PatchConfigReader.FindValue(versionMapping, "Enabled")
+            : null;
+
+        return enabledNode is YamlScalarNode scalar &&
+               bool.TryParse(scalar.Value, out var enabled) &&
+               enabled;
+    }
+}
+
+#pragma warning restore CA1822, IDE0130

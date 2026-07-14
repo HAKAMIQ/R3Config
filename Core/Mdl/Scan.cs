@@ -1,4 +1,20 @@
+using System;
+
 namespace R3Config.Mdl;
+
+public static class Rpcs3InputLimits
+{
+    public const long ParamSfoFileBytes = 16L * 1024 * 1024;
+    public const uint ParamSfoEntries = 4_096;
+    public const int ParamSfoKeyBytes = 256;
+    public const uint ParamSfoValueBytes = 4U * 1024 * 1024;
+    public const long GamesYamlBytes = 32L * 1024 * 1024;
+    public const long PatchCatalogYamlBytes = 128L * 1024 * 1024;
+    public const long PatchConfigYamlBytes = 16L * 1024 * 1024;
+    public const long CustomConfigYamlBytes = 16L * 1024 * 1024;
+    public const int DirectoryEntries = 100_000;
+    public const int YamlDocuments = 1;
+}
 
 public sealed record Rpcs3InstallDescriptor(
     string RootPath,
@@ -6,7 +22,8 @@ public sealed record Rpcs3InstallDescriptor(
     string ConfigPath,
     string CustomConfigsPath,
     string PatchesPath,
-    string PatchConfigPath);
+    string PatchConfigPath,
+    string? DataRootPath = null);
 
 public sealed record Rpcs3GameDescriptor(
     string Serial,
@@ -18,20 +35,84 @@ public sealed record Rpcs3GameDescriptor(
     IReadOnlyList<string>? PpuHashes = null,
     IReadOnlyList<string>? SpuHashes = null,
     string? HashSource = null,
-    string? HashMessage = null)
+    string? HashMessage = null,
+    PatchHashEvidenceKind HashEvidenceKind = PatchHashEvidenceKind.None,
+    DateTime? HashEvidenceTimestampUtc = null,
+    IReadOnlyList<string>? PrxHashes = null,
+    IReadOnlyList<string>? OvlHashes = null,
+    IReadOnlyList<string>? AuthoritativePpuHashes = null)
 {
     public IReadOnlyList<string> AllPpuHashes => MergeHashes(PpuHash, PpuHashes);
 
     public IReadOnlyList<string> AllSpuHashes => MergeHashes(SpuHash, SpuHashes);
 
-    private static IReadOnlyList<string> MergeHashes(string? primary, IReadOnlyList<string>? hashes)
+    public IReadOnlyList<string> AllPrxHashes => MergeRuntimeHashes(
+        PatchHashKind.Prx,
+        PrxHashes);
+
+    public IReadOnlyList<string> AllOvlHashes => MergeRuntimeHashes(
+        PatchHashKind.Ovl,
+        OvlHashes);
+
+    public IReadOnlyList<string> AllAuthoritativePpuHashes =>
+        AuthoritativePpuHashes is not null
+            ? MergeHashes(null, AuthoritativePpuHashes)
+            : HashEvidenceKind == PatchHashEvidenceKind.GameCache
+                ? []
+                : AllPpuHashes;
+
+    public IReadOnlyList<string> HashesFor(PatchHashKind kind)
     {
-        return (hashes ?? [])
-            .Append(primary)
-            .Where(hash => !string.IsNullOrWhiteSpace(hash))
-            .Select(hash => hash!.Trim().ToLowerInvariant())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        return kind switch
+        {
+            PatchHashKind.Ppu => AllPpuHashes,
+            PatchHashKind.Spu => AllSpuHashes,
+            PatchHashKind.Prx => AllPrxHashes,
+            PatchHashKind.Ovl => AllOvlHashes,
+            _ => []
+        };
+    }
+
+    private static IReadOnlyList<string> MergeHashes(
+        string? primary,
+        IReadOnlyList<string>? hashes)
+    {
+        return
+        [
+            .. (hashes ?? [])
+                .Append(primary)
+                .Select(NormalizeExecutableHash)
+                .Where(hash => hash is not null)
+                .Select(hash => hash!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+        ];
+    }
+
+    private static string? NormalizeExecutableHash(string? hash)
+    {
+        return Rpcs3ExecutableHash.TryNormalize(hash, out var normalized)
+            ? normalized
+            : null;
+    }
+
+    private static IReadOnlyList<string> MergeRuntimeHashes(
+        PatchHashKind kind,
+        IReadOnlyList<string>? hashes)
+    {
+        return
+        [
+            .. (hashes ?? [])
+                .Select(hash =>
+                    Rpcs3PatchRuntimeKey.TryNormalizeEvidence(
+                        kind,
+                        hash,
+                        out var normalized)
+                        ? normalized
+                        : null)
+                .Where(hash => hash is not null)
+                .Select(hash => hash!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+        ];
     }
 }
 

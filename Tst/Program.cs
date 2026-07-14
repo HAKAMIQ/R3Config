@@ -32,6 +32,7 @@ try
     RunBackupRestoreTransactionTests(tempRoot);
     RunMutationGuardReparseTests(tempRoot);
     RunMutationGuardTests(tempRoot);
+    RunInputLimitTests(tempRoot);
     RunGameListSearchTests();
     RunAdvancedDialogXamlSmokeTest();
     var env = CreateEnv(tempRoot);
@@ -356,6 +357,247 @@ static void RunMutationGuardTests(string tempRoot)
         "Expected a descriptor path outside its declared RPCS3 data-root layout to be rejected.");
 
     Console.WriteLine("Central RPCS3 mutation guard smoke PASS.");
+}
+
+static void RunInputLimitTests(string tempRoot)
+{
+    Assert(Rpcs3InputLimits.ParamSfoFileBytes == 16L * 1024 * 1024 &&
+           Rpcs3InputLimits.ParamSfoEntries == 4_096 &&
+           Rpcs3InputLimits.ParamSfoKeyBytes == 256 &&
+           Rpcs3InputLimits.ParamSfoValueBytes == 4U * 1024 * 1024 &&
+           Rpcs3InputLimits.GamesYamlBytes == 32L * 1024 * 1024 &&
+           Rpcs3InputLimits.PatchCatalogYamlBytes == 128L * 1024 * 1024 &&
+           Rpcs3InputLimits.PatchConfigYamlBytes == 16L * 1024 * 1024 &&
+           Rpcs3InputLimits.CustomConfigYamlBytes == 16L * 1024 * 1024 &&
+           Rpcs3InputLimits.DirectoryEntries == 100_000 &&
+           Rpcs3InputLimits.YamlDocuments == 1,
+        "Expected the untrusted RPCS3 input limits to remain explicit and centrally testable.");
+
+    var suiteRoot = Path.Combine(tempRoot, "input-limits");
+    Directory.CreateDirectory(suiteRoot);
+
+    var validSfo = Path.Combine(suiteRoot, "valid.sfo");
+    WriteParamSfo(validSfo, new Dictionary<string, string>
+    {
+        ["TITLE"] = "Bounded SFO",
+        ["TITLE_ID"] = "BLUS40000",
+        ["APP_VER"] = "01.00"
+    });
+    Assert(ParamSfoReader.TryRead(validSfo) is
+        { TitleId: "BLUS40000", AppVersion: "01.00" },
+        "Expected a small valid PARAM.SFO to remain readable.");
+
+    var truncatedSfo = Path.Combine(suiteRoot, "truncated.sfo");
+    File.WriteAllBytes(truncatedSfo, [0x00, 0x50, 0x53, 0x46]);
+    Assert(ParamSfoReader.TryRead(truncatedSfo) is null,
+        "Expected a truncated PARAM.SFO to fail safely.");
+
+    var hugeEntryCountSfo = Path.Combine(
+        suiteRoot,
+        "huge-entry-count.sfo");
+    using (var stream = File.Create(hugeEntryCountSfo))
+    using (var writer = new BinaryWriter(stream, Encoding.UTF8))
+    {
+        writer.Write(0x46535000u);
+        writer.Write(0x00000101u);
+        writer.Write(20u);
+        writer.Write(20u);
+        writer.Write(Rpcs3InputLimits.ParamSfoEntries + 1);
+    }
+    Assert(ParamSfoReader.TryRead(hugeEntryCountSfo) is null,
+        "Expected an excessive PARAM.SFO entry count to be rejected before table allocation.");
+
+    var hugeValueSfo = Path.Combine(suiteRoot, "huge-value.sfo");
+    WriteSingleEntrySfo(
+        hugeValueSfo,
+        Rpcs3InputLimits.ParamSfoValueBytes + 1,
+        dataOffset: 0);
+    Assert(ParamSfoReader.TryRead(hugeValueSfo) is null,
+        "Expected an excessive PARAM.SFO value length to be rejected before byte allocation.");
+
+    var overflowOffsetSfo = Path.Combine(
+        suiteRoot,
+        "overflow-offset.sfo");
+    WriteSingleEntrySfo(
+        overflowOffsetSfo,
+        dataLength: 1,
+        dataOffset: uint.MaxValue);
+    Assert(ParamSfoReader.TryRead(overflowOffsetSfo) is null,
+        "Expected PARAM.SFO offset arithmetic outside the stream to fail safely.");
+
+    var oversizedSfo = Path.Combine(suiteRoot, "oversized.sfo");
+    using (var stream = File.Create(oversizedSfo))
+    {
+        stream.SetLength(Rpcs3InputLimits.ParamSfoFileBytes + 1);
+    }
+    Assert(ParamSfoReader.TryRead(oversizedSfo) is null,
+        "Expected an oversized sparse PARAM.SFO to be rejected without allocating its declared size.");
+
+    var atLimitRoot = Path.Combine(suiteRoot, "games-at-limit");
+    var atLimitInstall = CreateInputLimitInstall(atLimitRoot);
+    var atLimitGamePath = Path.Combine(suiteRoot, "BLUS40001");
+    Directory.CreateDirectory(atLimitGamePath);
+    var atLimitGamesYml = Path.Combine(
+        atLimitInstall.ConfigPath,
+        "games.yml");
+    WriteUtf8FileAtExactLength(
+        atLimitGamesYml,
+        $"BLUS40001: \"{EscapeYamlPath(atLimitGamePath)}\"\r\n#",
+        Rpcs3InputLimits.GamesYamlBytes);
+    Assert(new FileInfo(atLimitGamesYml).Length ==
+           Rpcs3InputLimits.GamesYamlBytes &&
+           new GameScanner().Scan(atLimitInstall)
+               .Any(game => game.Serial == "BLUS40001"),
+        "Expected games.yml at the exact byte limit to remain readable.");
+
+    var overLimitRoot = Path.Combine(suiteRoot, "games-over-limit");
+    var overLimitInstall = CreateInputLimitInstall(overLimitRoot);
+    var overLimitGamesYml = Path.Combine(
+        overLimitInstall.ConfigPath,
+        "games.yml");
+    using (var stream = File.Create(overLimitGamesYml))
+    {
+        stream.SetLength(Rpcs3InputLimits.GamesYamlBytes + 1);
+    }
+    Assert(new GameScanner().Scan(overLimitInstall).Count == 0,
+        "Expected games.yml above the byte limit to be rejected without blocking the scan.");
+
+    var fallbackGamePath = Path.Combine(suiteRoot, "BLUS40002");
+    Directory.CreateDirectory(fallbackGamePath);
+    File.WriteAllText(
+        Path.Combine(overLimitRoot, "games.yml"),
+        $"BLUS40002: \"{EscapeYamlPath(fallbackGamePath)}\"{Environment.NewLine}");
+    Assert(new GameScanner().Scan(overLimitInstall)
+            .Any(game => game.Serial == "BLUS40002"),
+        "Expected one oversized games.yml source not to block a valid independent source.");
+
+    var oversizedPatch = Path.Combine(suiteRoot, "patch.yml");
+    using (var stream = File.Create(oversizedPatch))
+    {
+        stream.SetLength(
+            Rpcs3InputLimits.PatchCatalogYamlBytes + 1);
+    }
+    var patchRead = new PatchCatalogReader().Read(
+        oversizedPatch,
+        PatchSourceOrigin.Official);
+    Assert(!patchRead.Succeeded &&
+           patchRead.Error?.Contains(
+               "input limit",
+               StringComparison.OrdinalIgnoreCase) == true,
+        "Expected a patch catalog above the byte limit to fail before text allocation.");
+
+    var oversizedPatchConfig = Path.Combine(
+        suiteRoot,
+        "patch_config.yml");
+    using (var stream = File.Create(oversizedPatchConfig))
+    {
+        stream.SetLength(
+            Rpcs3InputLimits.PatchConfigYamlBytes + 1);
+    }
+    AssertThrows<InvalidDataException>(
+        () => new PatchConfigReader().Load(oversizedPatchConfig),
+        "Expected patch_config.yml above the byte limit to be rejected.");
+
+    var oversizedCustomConfig = Path.Combine(
+        suiteRoot,
+        "config_BLUS40003.yml");
+    using (var stream = File.Create(oversizedCustomConfig))
+    {
+        stream.SetLength(
+            Rpcs3InputLimits.CustomConfigYamlBytes + 1);
+    }
+    Assert(!Rpcs3ConfigYaml.CanRead(oversizedCustomConfig),
+        "Expected custom config YAML above the byte limit to fail closed.");
+
+    var multiDocumentPatchConfig = Path.Combine(
+        suiteRoot,
+        "multi-document-patch_config.yml");
+    File.WriteAllText(
+        multiDocumentPatchConfig,
+        "---\r\n{}\r\n---\r\n{}\r\n");
+    AssertThrows<InvalidDataException>(
+        () => new PatchConfigReader().Load(multiDocumentPatchConfig),
+        "Expected YAML document count to be bounded.");
+
+    var directoryLimitRoot = Path.Combine(
+        suiteRoot,
+        "directory-limit");
+    var directoryLimitInstall = CreateInputLimitInstall(
+        directoryLimitRoot);
+    var hddGameRoot = Path.Combine(
+        directoryLimitRoot,
+        "dev_hdd0",
+        "game");
+    for (var index = 0; index < 4; index++)
+    {
+        Directory.CreateDirectory(Path.Combine(
+            hddGameRoot,
+            $"BLUS{41000 + index:00000}"));
+    }
+    Assert(new GameScanner(directoryEntryLimit: 3)
+            .Scan(directoryLimitInstall).Count == 3,
+        "Expected game directory enumeration to stop at its configured bounded entry limit.");
+
+    Console.WriteLine(
+        "Bounded untrusted RPCS3 input reader tests PASS.");
+}
+
+static Rpcs3InstallDescriptor CreateInputLimitInstall(string root)
+{
+    Directory.CreateDirectory(Path.Combine(root, "config"));
+    File.WriteAllBytes(Path.Combine(root, "rpcs3.exe"), []);
+    return Rpcs3InstallService.FromExePath(
+        Path.Combine(root, "rpcs3.exe"));
+}
+
+static void WriteSingleEntrySfo(
+    string path,
+    uint dataLength,
+    uint dataOffset)
+{
+    using var stream = File.Create(path);
+    using var writer = new BinaryWriter(
+        stream,
+        Encoding.UTF8,
+        leaveOpen: false);
+    writer.Write(0x46535000u);
+    writer.Write(0x00000101u);
+    writer.Write(36u);
+    writer.Write(38u);
+    writer.Write(1u);
+    writer.Write((ushort)0);
+    writer.Write((ushort)0x0204);
+    writer.Write(dataLength);
+    writer.Write(dataLength);
+    writer.Write(dataOffset);
+    writer.Write((byte)'K');
+    writer.Write((byte)0);
+    writer.Write((byte)0);
+}
+
+static void WriteUtf8FileAtExactLength(
+    string path,
+    string prefix,
+    long targetLength)
+{
+    var prefixBytes = Encoding.UTF8.GetBytes(prefix);
+    if (prefixBytes.LongLength > targetLength)
+    {
+        throw new ArgumentException(
+            "The bounded test-file prefix is longer than its target length.",
+            nameof(prefix));
+    }
+
+    using var stream = File.Create(path);
+    stream.Write(prefixBytes);
+    var padding = Enumerable.Repeat((byte)'x', 80 * 1024).ToArray();
+    var remaining = targetLength - prefixBytes.LongLength;
+    while (remaining > 0)
+    {
+        var count = (int)Math.Min(padding.Length, remaining);
+        stream.Write(padding, 0, count);
+        remaining -= count;
+    }
 }
 
 static void RunMutationGuardReparseTests(string tempRoot)
