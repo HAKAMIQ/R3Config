@@ -31,8 +31,8 @@ R3Config/
 │  ├─ Lang/                        ar-SA/en-US resources
 │  └─ Data/                        shipped catalogs
 ├─ Tst/                            executable smoke/regression harness
-├─ scripts/                        source/release/portable gates
-└─ docs/architecture/              this architecture pack
+├─ Script/                         source/release/portable gates
+└─ docs/Arch/                      this architecture pack
 ```
 
 ### اتجاه الاعتماديات
@@ -231,7 +231,7 @@ Enable يحتاج `ExactMatch`، أو trusted definition ذات serial/version �
 
 طبقة القرار الرسمية هي `PatchCompatibilityService`. تجمع السيريال والإصدار
 وأدلة PPU/SPU/PRX/OVL وتنتج `PatchCompatibilityDecision` واحدًا تستخدمه كل
-المصادر. راجع [عقد التوافق الكامل](PATCH_COMPATIBILITY.md) قبل تغيير matcher أو
+المصادر. راجع [عقد التوافق الكامل](PatCmp.md) قبل تغيير matcher أو
 parser أو compiler أو واجهة الباتشات.
 
 ## 10. Hash evidence

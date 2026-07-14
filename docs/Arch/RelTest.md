@@ -2,7 +2,7 @@
 
 ## Runner
 
-`Tst/R3Config.Tests.csproj` console smoke/regression runner. كل method جديد يجب أن
+`Tst/R3Test.csproj` console smoke/regression runner. كل method جديد يجب أن
 يُستدعى من top-level sequence أو suite `Run()`؛ وجوده وحده لا يشغله.
 
 كل mutation test يستخدم temp RPCS3 tree. المسار الحقيقي، إن مُرر للـ runner،
@@ -11,16 +11,16 @@
 ## أوامر القبول
 
 ```powershell
-dotnet restore .\R3Config.slnx
-dotnet build .\R3Config.slnx -c Release --no-restore --nologo
-dotnet run --project .\Tst\R3Config.Tests.csproj -c Release --no-build
-powershell -ExecutionPolicy Bypass -File .\scripts\Verify-SourceClean.ps1
+dotnet restore .\R3Cfg.slnx
+dotnet build .\R3Cfg.slnx -c Release --no-restore --nologo
+dotnet run --project .\Tst\R3Test.csproj -c Release --no-build
+powershell -ExecutionPolicy Bypass -File .\Script\SrcChk.ps1
 ```
 
 اختبار إصدار:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\Test-Release.ps1 -Configuration Release
+powershell -ExecutionPolicy Bypass -File .\Script\RelTest.ps1 -Configuration Release
 ```
 
 portable release يحتاج `-Rpcs3Path` لتشغيل عقد التثبيت الحقيقي read-only.

@@ -38,7 +38,7 @@
 
   <ItemGroup>
     <None Include="..\README.md" Link="README.md" CopyToPublishDirectory="Always" />
-    <None Include="..\CHANGELOG.md" Link="CHANGELOG.md" CopyToPublishDirectory="Always" />
+    <None Include="..\Changes.md" Link="Changes.md" CopyToPublishDirectory="Always" />
     <None Include="..\LICENSE" Link="LICENSE" CopyToPublishDirectory="Always" />
     <None Include="..\KL.md" Link="KL.md" CopyToPublishDirectory="Always" />
     <None Include="..\RN.md" Link="RN.md" CopyToPublishDirectory="Always" />

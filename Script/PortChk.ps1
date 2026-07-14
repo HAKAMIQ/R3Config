@@ -36,7 +36,7 @@ $requiredFiles = @(
     'Lang/en-US.json',
     'README.md',
     'LICENSE',
-    'CHANGELOG.md',
+    'Changes.md',
     'KL.md',
     'RN.md',
     'CHEATS.md',

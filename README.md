@@ -32,13 +32,13 @@ Invalid YAML or an active RPCS3 process blocks writing. Existing files are backe
 
 ## Build
 
-    dotnet restore .\R3Config.slnx
-    dotnet build .\R3Config.slnx -c Release
-    dotnet run --project .\Tst\R3Config.Tests.csproj -c Release
+    dotnet restore .\R3Cfg.slnx
+    dotnet build .\R3Cfg.slnx -c Release
+    dotnet run --project .\Tst\R3Test.csproj -c Release
 
 ## Portable package
 
-    .\scripts\Publish-Portable.cmd -Rpcs3Path "C:\path\to\rpcs3"
+    .\Script\PortPub.cmd -Rpcs3Path "C:\path\to\rpcs3"
 
 The publish script builds and verifies the project, then creates the portable package and checksums under `artifacts`.
 
@@ -51,21 +51,21 @@ The publish script builds and verifies the project, then creates the portable pa
 - `Core/` — models, scanning, planning, parsing, matching, mutation guards,
   transactions, backup, and restore.
 - `Tst/` — smoke and regression tests.
-- `scripts/` — build, verification, and packaging scripts.
-- `docs/architecture/` — the developer architecture and extension guide.
+- `Script/` — build, verification, and packaging scripts.
+- `docs/Arch/` — the developer architecture and extension guide.
 
 Developers should start with the
-[architecture pack](docs/architecture/README.md). See [CHEATS.md](CHEATS.md) for
+[architecture pack](docs/Arch/README.md). See [CHEATS.md](CHEATS.md) for
 the bundled cheat catalog notice and [KL.md](KL.md) for known limitations.
 
 ## Source handoff
 
 The detailed Arabic product idea and implementation contract are documented in
-[docs/PRODUCT_SPECIFICATION_AR.md](docs/PRODUCT_SPECIFICATION_AR.md).
+[docs/ProdAr.md](docs/ProdAr.md).
 
 Create a clean source package for a developer with:
 
-    .\scripts\Export-Source.cmd
+    .\Script\SrcExp.cmd
 
 The exporter includes the current working tree, including uncommitted and new
 source files. It excludes Git history, Visual Studio state, build outputs,

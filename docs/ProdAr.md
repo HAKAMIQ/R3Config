@@ -13,6 +13,7 @@
 هذه الوثيقة هي مرجع المنتج الذي يُسلّم مع السورس للمبرمج. وهي تشرح ما الذي
 يفعله البرنامج، وما الذي لا يفعله، وكيف يجب أن تسير كل عملية قراءة أو تعديل.
 أما التفاصيل البرمجية الدقيقة وقواعد إضافة الميزات فتوجد في
+`docs/Arch/README.md`.
 
 ## 2. الفكرة في سطر واحد
 
@@ -400,10 +401,10 @@ logic أوقرار توافق جديد.
 ### بوابة السورس الأساسية
 
 ```powershell
-dotnet restore .\R3Config.slnx
-dotnet build .\R3Config.slnx -c Release --no-restore
-dotnet run --project .\Tst\R3Config.Tests.csproj -c Release --no-build
-powershell -ExecutionPolicy Bypass -File .\scripts\Verify-SourceClean.ps1
+dotnet restore .\R3Cfg.slnx
+dotnet build .\R3Cfg.slnx -c Release --no-restore
+dotnet run --project .\Tst\R3Test.csproj -c Release --no-build
+powershell -ExecutionPolicy Bypass -File .\Script\SrcChk.ps1
 ```
 
 ### معايير قبول سلوكية

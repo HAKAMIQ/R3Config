@@ -77,8 +77,8 @@
 ```powershell
 rg -n '#[0-9A-Fa-f]{6,8}|\b(White|Black|Gray|Red|Blue|Green)\b' App --glob '*.xaml' -g '!App/Thm/Colors.xaml'
 rg -n 'Color\.|Colors\.|Brushes\.|FromRgb|FromArgb' App --glob '*.cs'
-dotnet build .\R3Config.slnx -c Debug
-dotnet run --project .\Tst\R3Config.Tests.csproj -c Debug --no-build
+dotnet build .\R3Cfg.slnx -c Debug
+dotnet run --project .\Tst\R3Test.csproj -c Debug --no-build
 ```
 
 نتيجة `rg` غير الفارغة تحتاج تبريرًا أو نقل اللون إلى اللوحة. بعد ذلك شغّل

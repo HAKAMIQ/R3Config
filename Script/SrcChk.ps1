@@ -111,6 +111,20 @@ function Test-SourceTree {
     }
 }
 
+function Chk-Name {
+    param([Parameter(Mandatory = $true)][string]$RootPath)
+
+    $gate = Join-Path $RootPath 'Script\NameChk.ps1'
+    if (-not (Test-Path -LiteralPath $gate -PathType Leaf)) {
+        throw "Source tree is missing the name gate: $gate"
+    }
+
+    & powershell -ExecutionPolicy Bypass -File $gate
+    if ($LASTEXITCODE -ne 0) {
+        throw "Name gate failed for: $RootPath"
+    }
+}
+
 $resolvedPath = (Resolve-Path -LiteralPath $Path).Path
 if ((Test-Path -LiteralPath $resolvedPath -PathType Leaf) -and [IO.Path]::GetExtension($resolvedPath) -ieq '.zip') {
     $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ('R3ConfigSourceVerify_' + [Guid]::NewGuid().ToString('N'))
@@ -118,6 +132,7 @@ if ((Test-Path -LiteralPath $resolvedPath -PathType Leaf) -and [IO.Path]::GetExt
     try {
         Expand-Archive -LiteralPath $resolvedPath -DestinationPath $tempRoot -Force
         Test-SourceTree -RootPath $tempRoot -Strict $true
+        Chk-Name -RootPath $tempRoot
         Write-Host "Source ZIP verification passed: $resolvedPath"
     }
     finally {
@@ -134,6 +149,7 @@ if ((Test-Path -LiteralPath $resolvedPath -PathType Leaf) -and [IO.Path]::GetExt
 }
 
 Test-SourceTree -RootPath $resolvedPath -Strict ([bool]$StrictTree)
+Chk-Name -RootPath $resolvedPath
 if ($StrictTree) {
     Write-Host 'Strict source tree verification passed.'
 }

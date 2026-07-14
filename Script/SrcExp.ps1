@@ -95,10 +95,9 @@ try {
         'Includes-Working-Tree: yes'
         'File-Count: ' + $sourceFiles.Count
         'Excluded: .git, .vs, bin, obj, artifacts, publish, local user files, logs, temp files, backups, nested ZIP files'
-        'Start-Here: docs/PRODUCT_SPECIFICATION_AR.md'
-        'Architecture-Index: docs/architecture/README.md'
+        'Start-Here: docs/ProdAr.md'
+        'Architecture-Index: docs/Arch/README.md'
     )
-    Set-Content -LiteralPath (Join-Path $stagingRoot 'SOURCE-HANDOFF.txt') -Value $manifest -Encoding UTF8
 
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $stagingRoot 'Script\SrcChk.ps1') -Path $stagingRoot -StrictTree
     if ($LASTEXITCODE -ne 0) {
