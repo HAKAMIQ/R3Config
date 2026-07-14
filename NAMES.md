@@ -289,3 +289,60 @@ Additional registered ViewModel abbreviations: `Dsp` (display), `Tip`
 Additional registered UI abbreviations: `Prop` (dependency property), `Cap`
 (caption), `Drag` (window drag), `Click` (click handler), `Alt`
 (secondary/alternative), and `Tog` (toggle).
+
+## Test symbols
+
+| Old type/property | New type/property | Old type/property | New type/property |
+|---|---|---|---|
+| `HCanTests` | `HCanTst` | `GameScanState` | `ScanStat` |
+| `CfgPlanState` | `PlanStat` | `RecordingSynchronizationContext` | `SyncCtx` |
+| `FakeRpcs3Root` | `FakeRoot` | `ConfigPath` | `CfgPath` |
+| `GameFolder` | `GameDir` | `WikiXmlPath` | `WikiPath` |
+| `Recommendation` | `Rec` | `SelectedChanges` | `SelChg` |
+| `_postCount` | `_posts` | `PostCount` | `Posts` |
+
+| Old method | New method | Old method | New method |
+|---|---|---|---|
+| `RunHashExtractionTests` | `Hash_Ext` | `RunValidationTests` | `Vld_All` |
+| `RunYamlTests` | `Yaml_All` | `RunImportEditTests` | `Imp_Edit` |
+| `RunTransactionTests` | `Txn_All` | `RunViewModelTests` | `Vm_All` |
+| `RunLocalizationAndViewTests` | `Ui_Lang` | `ValidDraft` | `GoodDrft` |
+| `ExpectIssue` | `HasIssue` | `FindRepoRoot` | `RepoRoot` |
+| `AssertThrows` | `MustFail` | `RunLangKeyTests` | `Lang_Key` |
+| `RunMutationGuardTests` | `MutGuard` | `RunInputLimitTests` | `Inp_Lim` |
+| `BuildYamlItems` | `YamlIts` | `RunGameScanDiagnosticTests` | `Scan_Src` |
+| `DiagnosticIdentity` | `DiagId` | `RunMutationCommandStateTests` | `Mut_Cmd` |
+| `SetPrivateField` | `SetField` | `CreateInputLimitInstall` | `LimInst` |
+| `WriteSingleEntrySfo` | `OneSfo` | `WriteUtf8FileAtExactLength` | `Utf8Len` |
+| `RunMutationGuardReparseTests` | `Mut_Link` | `CreateDirectoryJunction` | `MakeLink` |
+| `RunArchitectureBoundaryTests` | `Arch_Svc` | `RunCanaryCompositionTests` | `Can_Comp` |
+| `ReadLangFile` | `LangRead` | `RunAppPatchPresentationSourceTests` | `App_Pat` |
+| `RunPatchCatalogReaderDuplicateTopLevelHashTests` | `Cat_Dup` | `RunPatchCompatibilityArchitectureTests` | `Pat_Cmp` |
+| `CreatePatch` | `NewPatch` | `RunBundledCheatCompilerTests` | `Cht_Bndl` |
+| `RunPatchTransactionTests` | `Pat_Txn` | `RunCanaryImportTransactionTests` | `Can_Txn` |
+| `BuildCanaryImportPatch` | `CanPat` | `CountOccurrences` | `CountOf` |
+| `RunBackupRestoreTransactionTests` | `Bkp_Rst` | `CreateBackupSnapshot` | `BkpSnap` |
+| `WriteBackupManifest` | `BkpMan` | `ApplyRestoreOperationForTest` | `RstTest` |
+| `HasRestoreStages` | `HasRst` | `BuildTransactionPatchCatalog` | `TxnCat` |
+| `RunGameListSearchTests` | `ListFind` | `RunAdvancedDialogXamlSmokeTest` | `Adv_Xaml` |
+| `CreateEnv` | `MakeEnv` | `RunHwTests` | `Hw_All` |
+| `RunGameScanTests` | `GameScan` | `RunCatTests` | `Cat_All` |
+| `RunAnalysisReadPathTests` | `AnlzPath` | `RunRecStateTests` | `Rec_Stat` |
+| `RunPlanVmVisibilityTests` | `Plan_Ui` | `RunBackupTests` | `Bkp_All` |
+| `RunCfgApplyTests` | `Cfg_All` | `RunCanaryImportFileContractTests` | `Can_Imp` |
+| `RunPatchTests` | `Pat_All` | `RunRpcs3PatchContractTests` | `R3_Pat` |
+| `RunAppFlowPatchCatalogLoadSmokeTests` | `Flow_Cat` | `RunReadOnlyRpcs3InstallContract` | `R3_Read` |
+| `ComputeFileSha256` | `FileHash` | `BuildRecStateRecommendation` | `RecBuild` |
+| `BuildManualTimingRecommendation` | `ManlRec` | `BuildLowEndBlockedRecommendation` | `LowRec` |
+| `BuildWikiXml` | `WikiXml` | `BuildWrongRiskCatalogJson` | `RiskJson` |
+| `BuildDuplicateJsonKeyCatalogJson` | `DupKeyJs` | `BuildDuplicateSerialCatalogJson` | `DupSerJs` |
+| `BuildDuplicateSettingCatalogJson` | `DupSetJs` | `BuildDuplicateTopLevelHashPatchYml` | `DupHash` |
+| `BuildPatchYml` | `PatYaml` | `BuildImportedPatchYml` | `ImpYaml` |
+| `BuildImportedPatchDuplicateKeyYml` | `ImpDup` | `BuildExistingPatchConfigYml` | `CfgYaml` |
+| `WriteInvalidOffsetParamSfo` | `BadSfo` | `WriteParamSfo` | `SfoWrite` |
+| `EscapeYamlPath` | `EscPath` | `AssertMutationBlocked` | `MutFails` |
+| `CanExecute` | `CanRun` |  |  |
+
+Additional registered test abbreviations: `Arch` (architecture), `Dup`
+(duplicate), `Js` (JSON fixture), `Lim` (limit), `Manl` (manual), and `Utf8`
+(UTF-8).

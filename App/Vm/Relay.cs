@@ -19,7 +19,9 @@ public sealed class RelayCmd : ICommand
 
     public event EventHandler? CanExecuteChanged;
 
-    public bool CanExecute(object? parameter)
+    bool ICommand.CanExecute(object? arg) => CanRun(arg);
+
+    public bool CanRun(object? parameter)
     {
         return _canRun?.Invoke() ?? true;
     }
@@ -51,14 +53,16 @@ public sealed class AsyncCmd : ICommand
 
     public event EventHandler? CanExecuteChanged;
 
-    public bool CanExecute(object? parameter)
+    bool ICommand.CanExecute(object? arg) => CanRun(arg);
+
+    public bool CanRun(object? parameter)
     {
         return !_isRun && (_canRun?.Invoke() ?? true);
     }
 
     public async void Execute(object? parameter)
     {
-        if (!CanExecute(parameter))
+        if (!CanRun(parameter))
         {
             return;
         }

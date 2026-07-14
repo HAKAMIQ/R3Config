@@ -715,7 +715,7 @@ public sealed partial class SelComp
                        StringComparison.OrdinalIgnoreCase);
         }
 
-        public int GetHashCode(
+        int IEqualityComparer<SelKey>.GetHashCode(
             SelKey value)
         {
             return HashCode.Combine(

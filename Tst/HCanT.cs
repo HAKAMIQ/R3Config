@@ -6,21 +6,21 @@ using R3Config.Mdl;
 using R3Config.Svc;
 using R3Config.Vm;
 
-internal static class HCanTests
+internal static class HCanTst
 {
     public static void Run()
     {
-        RunHashExtractionTests();
-        RunValidationTests();
-        RunYamlTests();
-        RunImportEditTests();
-        RunTransactionTests();
-        RunViewModelTests();
-        RunLocalizationAndViewTests();
+        Hash_Ext();
+        Vld_All();
+        Yaml_All();
+        Imp_Edit();
+        Txn_All();
+        Vm_All();
+        Ui_Lang();
         Console.WriteLine("H-Canary authoring, import, validation, transaction, ViewModel, and localization tests passed.");
     }
 
-    private static void RunHashExtractionTests()
+    private static void Hash_Ext()
     {
         const string ppu = "8645cfa235c9980ff74b5e06388b29e97fdbbed9";
         const string spu = "1234567890abcdef1234567890abcdef12345678";
@@ -47,24 +47,24 @@ internal static class HCanTests
         finally { Directory.Delete(temp, true); }
     }
 
-    private static void RunValidationTests()
+    private static void Vld_All()
     {
         var service = new PatAuth();
-        var valid = ValidDraft();
+        var valid = GoodDrft();
         Assert(service.Validate(valid).IsValid, "A complete PPU draft should validate.");
 
-        ExpectIssue(service, valid, draft => draft.ExeHash = "PPU-abc", "Hash.Invalid");
-        ExpectIssue(service, valid, draft => draft.ExeHash = "PPU-gggggggggggggggggggggggggggggggggggggggg", "Hash.Invalid");
-        ExpectIssue(service, valid, draft => draft.PatName = string.Empty, "PatchName.Required");
-        ExpectIssue(service, valid, draft => draft.PatVer = string.Empty, "PatchVersion.Required");
-        ExpectIssue(service, valid, draft => draft.PatVer = "١.٠", "PatchVersion.Invalid");
-        ExpectIssue(service, valid, draft => draft.Games[0].GameId = string.Empty, "GameId.Required");
-        ExpectIssue(service, valid, draft => draft.Games[0].GameVer = string.Empty, "GameVersion.Required");
-        ExpectIssue(service, valid, draft => draft.Ins.Clear(), "Instructions.Required");
-        ExpectIssue(service, valid, draft => draft.Ins[0].Address = "1234", "Address.Invalid");
-        ExpectIssue(service, valid, draft => draft.Ins[0].Value = "hello", "Value.Invalid");
-        ExpectIssue(service, valid, draft => draft.Ins[0].Op = "unknown", "Operation.Invalid");
-        ExpectIssue(service, valid, draft => draft.Ins[0] = new HCanInst { Op = "load", Address = "Missing" }, "Anchor.Missing");
+        HasIssue(service, valid, draft => draft.ExeHash = "PPU-abc", "Hash.Invalid");
+        HasIssue(service, valid, draft => draft.ExeHash = "PPU-gggggggggggggggggggggggggggggggggggggggg", "Hash.Invalid");
+        HasIssue(service, valid, draft => draft.PatName = string.Empty, "PatchName.Required");
+        HasIssue(service, valid, draft => draft.PatVer = string.Empty, "PatchVersion.Required");
+        HasIssue(service, valid, draft => draft.PatVer = "١.٠", "PatchVersion.Invalid");
+        HasIssue(service, valid, draft => draft.Games[0].GameId = string.Empty, "GameId.Required");
+        HasIssue(service, valid, draft => draft.Games[0].GameVer = string.Empty, "GameVersion.Required");
+        HasIssue(service, valid, draft => draft.Ins.Clear(), "Instructions.Required");
+        HasIssue(service, valid, draft => draft.Ins[0].Address = "1234", "Address.Invalid");
+        HasIssue(service, valid, draft => draft.Ins[0].Value = "hello", "Value.Invalid");
+        HasIssue(service, valid, draft => draft.Ins[0].Op = "unknown", "Operation.Invalid");
+        HasIssue(service, valid, draft => draft.Ins[0] = new HCanInst { Op = "load", Address = "Missing" }, "Anchor.Missing");
 
         var duplicateAnchor = valid.Clone();
         duplicateAnchor.Anchors =
@@ -79,10 +79,10 @@ internal static class HCanTests
         Assert(service.Validate(spu).Issues.Any(issue => issue.Code == "Hash.Kind"), "SPU Patch Type must require an SPU Hash.");
     }
 
-    private static void RunYamlTests()
+    private static void Yaml_All()
     {
         var service = new PatAuth();
-        var draft = ValidDraft();
+        var draft = GoodDrft();
         draft.PatName = "Reduce \"input\" lag";
         draft.Author = "WAZAAAAA";
         draft.Notes = "ملاحظة عربية\nSecond line";
@@ -109,19 +109,19 @@ internal static class HCanTests
         Assert(yaml.Contains("ملاحظة عربية", StringComparison.Ordinal), "Arabic Notes must be preserved as UTF-8 text.");
         Assert(yaml.Contains("Reduce \\\"input\\\" lag", StringComparison.Ordinal), "Quoted patch names must be escaped.");
 
-        var spu = ValidDraft();
+        var spu = GoodDrft();
         spu.PatType = HCanType.Spu;
         spu.ExeHash = "SPU-1234567890abcdef1234567890abcdef12345678";
         Assert(service.Validate(spu).IsValid && service.Generate(spu).Contains("SPU-", StringComparison.Ordinal), "SPU YAML should generate.");
 
-        var experimental = ValidDraft();
+        var experimental = GoodDrft();
         experimental.IsExp = true;
         experimental.PatVer = "0.1";
         Assert(service.Validate(experimental).IsValid,
             "Experimental classification must remain independent from the PPU/SPU executable type.");
     }
 
-    private static void RunImportEditTests()
+    private static void Imp_Edit()
     {
         var service = new PatAuth();
         var temp = NewTemp();
@@ -131,7 +131,7 @@ internal static class HCanTests
             var backup = Path.Combine(temp, "backups");
             Directory.CreateDirectory(patches);
             var path = Path.Combine(patches, "imported_patch.yml");
-            var first = ValidDraft();
+            var first = GoodDrft();
             first.Anchors.Add(new HCanAnc
             {
                 Name = "SharedCode",
@@ -158,7 +158,7 @@ internal static class HCanTests
             var reloaded = service.Load(path).Single();
             Assert(reloaded.Draft.Ins[0].Value == "0x39200001" && reloaded.Draft.Games.Count == 2, "Structured edits should survive regeneration.");
 
-            var second = ValidDraft();
+            var second = GoodDrft();
             second.ExeHash = "PPU-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
             second.PatName = "Other Patch";
             second.IsExp = true;
@@ -175,7 +175,7 @@ internal static class HCanTests
             var classified = service.Apply(localCatalog, path);
             Assert(classified.Entries.Single(item => item.Title == "Other Patch").Risk == PatRisk.Canary,
                 "A custom experimental patch should reappear on the experimental patch page after catalog reload.");
-            AssertThrows<InvalidOperationException>(() => service.Save(path, backup, second), "Duplicate Patch name and Hash should be detected.");
+            MustFail<InvalidOperationException>(() => service.Save(path, backup, second), "Duplicate Patch name and Hash should be detected.");
 
             service.Delete(path, backup, merged.Single(item => item.Draft.PatName == "Other Patch").Identity);
             Assert(service.Load(path).Count == 1, "Deleting one custom Patch must preserve other patches.");
@@ -183,7 +183,7 @@ internal static class HCanTests
         finally { Directory.Delete(temp, true); }
     }
 
-    private static void RunTransactionTests()
+    private static void Txn_All()
     {
         var temp = NewTemp();
         try
@@ -191,20 +191,20 @@ internal static class HCanTests
             var path = Path.Combine(temp, "imported_patch.yml");
             var backupRoot = Path.Combine(temp, "backups");
             var baseline = new PatAuth();
-            baseline.Save(path, backupRoot, ValidDraft());
+            baseline.Save(path, backupRoot, GoodDrft());
             var original = File.ReadAllText(path);
             Assert(Directory.EnumerateFiles(backupRoot, "manifest.json", SearchOption.AllDirectories).Any(), "Save should create a Backup manifest.");
 
             var failingTransaction = new PatTxn(commitFile: (_, _) => throw new IOException("simulated atomic replace failure"));
             var failing = new PatAuth(transaction: failingTransaction);
-            var changed = ValidDraft(); changed.PatName = "Rollback Patch"; changed.ExeHash = "PPU-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-            AssertThrows<IOException>(() => failing.Save(path, backupRoot, changed), "A failed atomic commit should surface the original failure.");
+            var changed = GoodDrft(); changed.PatName = "Rollback Patch"; changed.ExeHash = "PPU-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+            MustFail<IOException>(() => failing.Save(path, backupRoot, changed), "A failed atomic commit should surface the original failure.");
             Assert(File.ReadAllText(path) == original, "Transaction failure must roll back imported_patch.yml exactly.");
         }
         finally { Directory.Delete(temp, true); }
     }
 
-    private static void RunViewModelTests()
+    private static void Vm_All()
     {
         var temp = NewTemp();
         try
@@ -229,7 +229,7 @@ internal static class HCanTests
             vm.Ins[0].Address = "0x0001c310";
             vm.Ins[0].Value = "0x39200000";
             Assert(vm.Preview != previewBefore && vm.Preview.Contains("0x39200000", StringComparison.Ordinal), "Preview should update when an instruction changes.");
-            Assert(vm.IsValid && vm.SaveCmd.CanExecute(null), "CanExecute should allow a complete valid draft.");
+            Assert(vm.IsValid && vm.SaveCmd.CanRun(null), "CanExecute should allow a complete valid draft.");
             vm.AddICmd.Execute(null);
             Assert(vm.Ins.Count == 2, "ViewModel should add instructions.");
             vm.DelICmd.Execute(null);
@@ -255,9 +255,9 @@ internal static class HCanTests
         finally { Directory.Delete(temp, true); }
     }
 
-    private static void RunLocalizationAndViewTests()
+    private static void Ui_Lang()
     {
-        var root = FindRepoRoot();
+        var root = RepoRoot();
         var en = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Combine(root, "App", "Lang", "en-US.json")))!;
         var ar = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Combine(root, "App", "Lang", "ar-SA.json")))!;
         Assert(en.Keys.Order().SequenceEqual(ar.Keys.Order()), "Arabic and English localization keys must match exactly.");
@@ -272,7 +272,7 @@ internal static class HCanTests
             "The obsolete patch-browser and compatibility-analysis concepts must be absent.");
     }
 
-    private static HCanDrft ValidDraft() => new()
+    private static HCanDrft GoodDrft() => new()
     {
         PatType = HCanType.Ppu,
         ExeHash = "PPU-8645cfa235c9980ff74b5e06388b29e97fdbbed9",
@@ -284,7 +284,7 @@ internal static class HCanTests
         Ins = [new HCanInst { Op = "be32", Address = "0x0001c310", Value = "0x39200000" }]
     };
 
-    private static void ExpectIssue(PatAuth service, HCanDrft valid, Action<HCanDrft> mutate, string code)
+    private static void HasIssue(PatAuth service, HCanDrft valid, Action<HCanDrft> mutate, string code)
     {
         var draft = valid.Clone(); mutate(draft);
         Assert(service.Validate(draft).Issues.Any(issue => issue.Code == code), "Expected validation issue " + code);
@@ -296,7 +296,7 @@ internal static class HCanTests
         Directory.CreateDirectory(path); return path;
     }
 
-    private static string FindRepoRoot()
+    private static string RepoRoot()
     {
         var current = new DirectoryInfo(Environment.CurrentDirectory);
         while (current is not null)
@@ -307,7 +307,7 @@ internal static class HCanTests
         throw new DirectoryNotFoundException("R3Config repository root was not found.");
     }
 
-    private static void AssertThrows<T>(Action action, string message) where T : Exception
+    private static void MustFail<T>(Action action, string message) where T : Exception
     {
         try { action(); }
         catch (T) { return; }
