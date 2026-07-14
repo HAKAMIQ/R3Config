@@ -110,9 +110,17 @@ public sealed class BackupService(
                 backupPath,
                 ManifestFileName);
 
+            var manifestText = JsonSerializer.Serialize(
+                manifest,
+                _jsonOptions);
+            Rpcs3BoundedInput.EnsureTextLength(
+                manifestText,
+                Rpcs3InputLimits.BackupManifestBytes,
+                "R3Config backup manifest");
+
             File.WriteAllText(
                 manifestPath,
-                JsonSerializer.Serialize(manifest, _jsonOptions));
+                manifestText);
 
             var persisted = ReadManifest(manifestPath);
             if (!ManifestsEquivalent(manifest, persisted))
@@ -528,8 +536,12 @@ public sealed class BackupService(
 
     private BackupManifest ReadManifest(string manifestPath)
     {
+        var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+            manifestPath,
+            Rpcs3InputLimits.BackupManifestBytes,
+            "R3Config backup manifest");
         var manifest = JsonSerializer.Deserialize<BackupManifest>(
-            File.ReadAllText(manifestPath),
+            text,
             _jsonOptions);
 
         return manifest ?? throw new InvalidDataException(

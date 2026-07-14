@@ -32,9 +32,9 @@ public sealed class PatchConfigWriter(
     {
         try
         {
-            using var reader = new StringReader(text);
-            var yaml = new YamlStream();
-            yaml.Load(reader);
+            var yaml = Rpcs3BoundedInput.LoadYaml(
+                text,
+                "patch_config.yml");
 
             if (yaml.Documents.Count == 0 ||
                 yaml.Documents[0].RootNode is not YamlMappingNode)

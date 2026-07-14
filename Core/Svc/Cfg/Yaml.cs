@@ -167,6 +167,9 @@ public static class Rpcs3ConfigYaml
             path,
             Rpcs3InputLimits.CustomConfigYamlBytes,
             "RPCS3 custom config YAML");
+        Rpcs3BoundedInput.ValidateYaml(
+            text,
+            "RPCS3 custom config YAML");
         var yaml = new YamlStream();
         yaml.Load(new StringReader(text));
 
@@ -394,6 +397,9 @@ public static class Rpcs3ConfigYaml
             using (var reader = new StringReader(validationText))
             {
                 var validationYaml = new YamlStream();
+                Rpcs3BoundedInput.ValidateYaml(
+                    validationText,
+                    "Prepared RPCS3 custom config YAML");
                 validationYaml.Load(reader);
                 if (validationYaml.Documents.Count == 0 ||
                     validationYaml.Documents.Count > Rpcs3InputLimits.YamlDocuments)

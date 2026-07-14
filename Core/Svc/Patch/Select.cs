@@ -78,12 +78,10 @@ public sealed partial class PatchSelectionCompiler
 
         try
         {
-            var yaml = new YamlStream();
-
-            yaml.Load(
-                new StringReader(
-                    PatchCatalogReader.NormalizeDuplicateKeysForRead(
-                        sourceText)));
+            var yaml = Rpcs3BoundedInput.LoadYaml(
+                PatchCatalogReader.NormalizeDuplicateKeysForRead(
+                    sourceText),
+                "Patch selection source");
 
             if (yaml.Documents.Count == 0 ||
                 yaml.Documents[0].RootNode is not YamlMappingNode root)

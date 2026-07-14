@@ -142,10 +142,12 @@ public sealed class PatchCatalogReader
                 Rpcs3InputLimits.PatchCatalogYamlBytes,
                 "Patch catalog");
 
-            var yaml = new YamlStream();
-            yaml.Load(new StringReader(NormalizeDuplicatePatchKeys(
-                patchYmlText,
-                allowDuplicatePatchTitles: source == PatchSourceOrigin.BundledCheats)));
+            var yaml = Rpcs3BoundedInput.LoadYaml(
+                NormalizeDuplicatePatchKeys(
+                    patchYmlText,
+                    allowDuplicatePatchTitles:
+                        source == PatchSourceOrigin.BundledCheats),
+                "Patch catalog");
 
             if (yaml.Documents.Count == 0 ||
                 yaml.Documents.Count > Rpcs3InputLimits.YamlDocuments ||
@@ -170,7 +172,8 @@ public sealed class PatchCatalogReader
             }
 
             var entries = new List<Rpcs3PatchEntry>();
-            var diagnostics = new List<string>();
+            var diagnostics = new BoundedDiagnosticList<string>(
+                Rpcs3InputLimits.Diagnostics);
 
             foreach (var (keyNode, valueNode) in root.Children)
             {

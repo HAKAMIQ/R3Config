@@ -58,7 +58,12 @@ public sealed class HCanaryCatalogService
 
         try
         {
-            return ReadText(File.ReadAllText(path), path);
+            return ReadText(
+                Rpcs3BoundedInput.ReadUtf8TextFile(
+                    path,
+                    Rpcs3InputLimits.PatchCatalogYamlBytes,
+                    "Canary catalog"),
+                path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -68,7 +73,9 @@ public sealed class HCanaryCatalogService
 
     public CanaryCatalogResult ReadText(string text, string? sourcePath = null)
     {
-        var diagnostics = new List<CanaryCatalogDiagnostic>();
+        var diagnostics =
+            new BoundedDiagnosticList<CanaryCatalogDiagnostic>(
+                Rpcs3InputLimits.Diagnostics);
         if (!TryNormalizeVersionHeaders(text, out var normalizedText, out var duplicateVersions, out var versionError))
         {
             diagnostics.Add(new CanaryCatalogDiagnostic(
@@ -114,8 +121,10 @@ public sealed class HCanaryCatalogService
 
         try
         {
-            var yaml = new YamlStream();
-            yaml.Load(new StringReader(PatchCatalogReader.NormalizeDuplicateKeysForRead(normalizedText)));
+            var yaml = Rpcs3BoundedInput.LoadYaml(
+                PatchCatalogReader.NormalizeDuplicateKeysForRead(
+                    normalizedText),
+                "Canary catalog");
 
             if (yaml.Documents.Count != 1 || yaml.Documents[0].RootNode is not YamlMappingNode root)
             {
@@ -1776,7 +1785,10 @@ public sealed class HCanaryPatchAuthoringService
             return [];
         }
 
-        var text = File.ReadAllText(path, Encoding.UTF8);
+        var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+            path,
+            Rpcs3InputLimits.PatchCatalogYamlBytes,
+            "imported_patch.yml");
         var catalog = _reader.ReadText(text, PatchSourceOrigin.Imported, path);
         if (!catalog.Succeeded)
         {
@@ -1856,7 +1868,10 @@ public sealed class HCanaryPatchAuthoringService
         }
 
         var existing = File.Exists(importedPatchPath) && new FileInfo(importedPatchPath).Length > 0
-            ? File.ReadAllText(importedPatchPath, Encoding.UTF8)
+            ? Rpcs3BoundedInput.ReadUtf8TextFile(
+                importedPatchPath,
+                Rpcs3InputLimits.PatchCatalogYamlBytes,
+                "imported_patch.yml")
             : "Version: 1.2\r\n";
         var yaml = LoadYaml(existing);
         var root = (YamlMappingNode)yaml.Documents[0].RootNode;
@@ -1909,7 +1924,11 @@ public sealed class HCanaryPatchAuthoringService
         {
             throw new FileNotFoundException("imported_patch.yml was not found.", importedPatchPath);
         }
-        var yaml = LoadYaml(File.ReadAllText(importedPatchPath, Encoding.UTF8));
+        var yaml = LoadYaml(
+            Rpcs3BoundedInput.ReadUtf8TextFile(
+                importedPatchPath,
+                Rpcs3InputLimits.PatchCatalogYamlBytes,
+                "imported_patch.yml"));
         var root = (YamlMappingNode)yaml.Documents[0].RootNode;
         if (!RemovePatch(root, identity))
         {
@@ -1987,7 +2006,11 @@ public sealed class HCanaryPatchAuthoringService
         }
         try
         {
-            return JsonSerializer.Deserialize<Dictionary<string, LocalMetadata>>(File.ReadAllText(path, Encoding.UTF8))
+            var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+                path,
+                Rpcs3InputLimits.HCanaryMetadataBytes,
+                "R3Config H-Canary metadata");
+            return JsonSerializer.Deserialize<Dictionary<string, LocalMetadata>>(text)
                    ?? new Dictionary<string, LocalMetadata>(StringComparer.Ordinal);
         }
         catch (JsonException ex)
@@ -1998,8 +2021,15 @@ public sealed class HCanaryPatchAuthoringService
 
     private static string SerializeMetadata(IReadOnlyDictionary<string, LocalMetadata> metadata)
     {
-        return JsonSerializer.Serialize(metadata, new JsonSerializerOptions { WriteIndented = true })
+        var text = JsonSerializer.Serialize(
+                metadata,
+                new JsonSerializerOptions { WriteIndented = true })
             .Replace("\n", "\r\n", StringComparison.Ordinal) + "\r\n";
+        Rpcs3BoundedInput.EnsureTextLength(
+            text,
+            Rpcs3InputLimits.HCanaryMetadataBytes,
+            "R3Config H-Canary metadata");
+        return text;
     }
 
     public sealed record LocalMetadata(
@@ -2011,8 +2041,9 @@ public sealed class HCanaryPatchAuthoringService
     {
         try
         {
-            var yaml = new YamlStream();
-            yaml.Load(new StringReader(text));
+            var yaml = Rpcs3BoundedInput.LoadYaml(
+                text,
+                "imported_patch.yml");
             if (yaml.Documents.Count != 1 || yaml.Documents[0].RootNode is not YamlMappingNode root)
             {
                 throw new InvalidDataException("imported_patch.yml must contain one YAML mapping document.");

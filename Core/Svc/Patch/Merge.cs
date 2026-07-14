@@ -19,7 +19,9 @@ public sealed class PatchCatalogMergeService
         var selected = new Dictionary<string, Rpcs3PatchEntry>(StringComparer.OrdinalIgnoreCase);
         var rejected = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var order = new List<string>();
-        var diagnostics = new List<PatchCatalogDiagnostic>();
+        var diagnostics =
+            new BoundedDiagnosticList<PatchCatalogDiagnostic>(
+                Rpcs3InputLimits.Diagnostics);
 
         foreach (var entry in availableCatalogs.SelectMany(catalog => catalog.Entries))
         {

@@ -167,6 +167,15 @@ public sealed class PatchFileTransactionService(
                     $"Prepared patch file is empty: {file.TargetPath}");
             }
 
+            if (!file.DeleteTarget &&
+                file.Kind == PatchPreparedFileKind.JsonMetadata)
+            {
+                Rpcs3BoundedInput.EnsureTextLength(
+                    file.Content,
+                    Rpcs3InputLimits.HCanaryMetadataBytes,
+                    "R3Config H-Canary metadata");
+            }
+
             var targetPath = Path.GetFullPath(file.TargetPath);
 
             if (!seenTargets.Add(targetPath))
@@ -273,9 +282,14 @@ public sealed class PatchFileTransactionService(
 
             case PatchPreparedFileKind.JsonMetadata:
                 using (var document = JsonDocument.Parse(
-                           File.ReadAllText(
+                           Rpcs3BoundedInput.ReadUtf8TextFile(
                                stagedPath,
-                               Encoding.UTF8)))
+                               Rpcs3InputLimits.HCanaryMetadataBytes,
+                               "R3Config H-Canary metadata"),
+                           new JsonDocumentOptions
+                           {
+                               MaxDepth = Rpcs3InputLimits.YamlDepth
+                           }))
                 {
                     if (document.RootElement.ValueKind !=
                         JsonValueKind.Object)

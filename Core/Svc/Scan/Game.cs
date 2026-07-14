@@ -50,7 +50,9 @@ public sealed partial class GameScanner
     {
         var games = new Dictionary<string, Rpcs3GameDescriptor>(
             StringComparer.OrdinalIgnoreCase);
-        var diagnostics = new List<GameScanDiagnostic>();
+        var diagnostics =
+            new BoundedDiagnosticList<GameScanDiagnostic>(
+                Rpcs3InputLimits.Diagnostics);
 
         ScanGamesYml(install, games, diagnostics);
         ScanHddGameFolders(install, games, diagnostics);
@@ -182,8 +184,9 @@ public sealed partial class GameScanner
                 gamesYmlPath,
                 Rpcs3InputLimits.GamesYamlBytes,
                 "games.yml");
-            var yaml = new YamlStream();
-            yaml.Load(new StringReader(text));
+            var yaml = Rpcs3BoundedInput.LoadYaml(
+                text,
+                "games.yml");
 
             if (yaml.Documents.Count == 0 ||
                 yaml.Documents.Count > Rpcs3InputLimits.YamlDocuments ||

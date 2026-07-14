@@ -373,8 +373,16 @@ static void RunInputLimitTests(string tempRoot)
            Rpcs3InputLimits.PatchCatalogYamlBytes == 128L * 1024 * 1024 &&
            Rpcs3InputLimits.PatchConfigYamlBytes == 16L * 1024 * 1024 &&
            Rpcs3InputLimits.CustomConfigYamlBytes == 16L * 1024 * 1024 &&
+           Rpcs3InputLimits.BackupManifestBytes == 4L * 1024 * 1024 &&
+           Rpcs3InputLimits.HCanaryMetadataBytes == 8L * 1024 * 1024 &&
            Rpcs3InputLimits.DirectoryEntries == 100_000 &&
-           Rpcs3InputLimits.YamlDocuments == 1,
+           Rpcs3InputLimits.YamlDocuments == 1 &&
+           Rpcs3InputLimits.YamlDepth == 64 &&
+           Rpcs3InputLimits.YamlNodes == 250_000 &&
+           Rpcs3InputLimits.YamlAliases == 4_096 &&
+           Rpcs3InputLimits.YamlMappings == 100_000 &&
+           Rpcs3InputLimits.YamlSequences == 100_000 &&
+           Rpcs3InputLimits.Diagnostics == 1_000,
         "Expected the untrusted RPCS3 input limits to remain explicit and centrally testable.");
 
     var suiteRoot = Path.Combine(tempRoot, "input-limits");
@@ -523,6 +531,118 @@ static void RunInputLimitTests(string tempRoot)
         () => new PatchConfigReader().Load(multiDocumentPatchConfig),
         "Expected YAML document count to be bounded.");
 
+    var depthAtLimit =
+        string.Concat(Enumerable.Repeat(
+            "- ",
+            Rpcs3InputLimits.YamlDepth)) +
+        "value\n";
+    Rpcs3BoundedInput.ValidateYaml(
+        depthAtLimit,
+        "depth-at-limit");
+    var depthOverLimit =
+        "- " + depthAtLimit;
+    AssertThrows<InvalidDataException>(
+        () => Rpcs3BoundedInput.ValidateYaml(
+            depthOverLimit,
+            "depth-over-limit"),
+        "Expected YAML depth above the structural limit to be rejected before representation-model allocation.");
+
+    var aliasAtLimit = BuildYamlItems(
+        "base: &base { value: 1 }\nuses:\n",
+        "  - *base\n",
+        Rpcs3InputLimits.YamlAliases);
+    Rpcs3BoundedInput.ValidateYaml(
+        aliasAtLimit,
+        "aliases-at-limit");
+    var aliasOverLimit = aliasAtLimit + "  - *base\n";
+    AssertThrows<InvalidDataException>(
+        () => Rpcs3BoundedInput.ValidateYaml(
+            aliasOverLimit,
+            "aliases-over-limit"),
+        "Expected YAML aliases above the structural limit to be rejected.");
+
+    var mappingsAtLimit = BuildYamlItems(
+        "root:\n",
+        "  - {}\n",
+        Rpcs3InputLimits.YamlMappings - 1);
+    Rpcs3BoundedInput.ValidateYaml(
+        mappingsAtLimit,
+        "mappings-at-limit");
+    AssertThrows<InvalidDataException>(
+        () => Rpcs3BoundedInput.ValidateYaml(
+            mappingsAtLimit + "  - {}\n",
+            "mappings-over-limit"),
+        "Expected YAML mapping count above the structural limit to be rejected.");
+
+    var sequencesAtLimit = BuildYamlItems(
+        "root:\n",
+        "  - []\n",
+        Rpcs3InputLimits.YamlSequences - 1);
+    Rpcs3BoundedInput.ValidateYaml(
+        sequencesAtLimit,
+        "sequences-at-limit");
+    AssertThrows<InvalidDataException>(
+        () => Rpcs3BoundedInput.ValidateYaml(
+            sequencesAtLimit + "  - []\n",
+            "sequences-over-limit"),
+        "Expected YAML sequence count above the structural limit to be rejected.");
+
+    var nodesAtLimit = BuildYamlItems(
+        string.Empty,
+        "- value\n",
+        Rpcs3InputLimits.YamlNodes - 1);
+    Rpcs3BoundedInput.ValidateYaml(
+        nodesAtLimit,
+        "nodes-at-limit");
+    AssertThrows<InvalidDataException>(
+        () => Rpcs3BoundedInput.ValidateYaml(
+            nodesAtLimit + "- value\n",
+            "nodes-over-limit"),
+        "Expected YAML node count above the structural limit to be rejected.");
+
+    var oversizedBackupRoot = Path.Combine(
+        suiteRoot,
+        "oversized-backup-manifest");
+    var oversizedSnapshot = Path.Combine(
+        oversizedBackupRoot,
+        "snapshot");
+    Directory.CreateDirectory(oversizedSnapshot);
+    using (var stream = File.Create(Path.Combine(
+               oversizedSnapshot,
+               "manifest.json")))
+    {
+        stream.SetLength(
+            Rpcs3InputLimits.BackupManifestBytes + 1);
+    }
+    Assert(new BackupService().ListBackups(
+               oversizedBackupRoot).Count == 0,
+        "Expected an oversized backup manifest to be rejected without full-file allocation.");
+
+    var hCanaryLimitRoot = Path.Combine(
+        suiteRoot,
+        "hcanary-metadata-limit");
+    Directory.CreateDirectory(hCanaryLimitRoot);
+    var hCanaryPatch = Path.Combine(
+        hCanaryLimitRoot,
+        "imported_patch.yml");
+    File.WriteAllText(
+        hCanaryPatch,
+        BuildCanaryImportPatch(
+            new string('a', 40),
+            "Metadata Limit Patch",
+            "0x00000300"));
+    using (var stream = File.Create(Path.Combine(
+               hCanaryLimitRoot,
+               HCanaryPatchAuthoringService.MetadataFileName)))
+    {
+        stream.SetLength(
+            Rpcs3InputLimits.HCanaryMetadataBytes + 1);
+    }
+    AssertThrows<InvalidDataException>(
+        () => new HCanaryPatchAuthoringService().Load(
+            hCanaryPatch),
+        "Expected oversized H-Canary metadata to be rejected before JSON text allocation.");
+
     var directoryLimitRoot = Path.Combine(
         suiteRoot,
         "directory-limit");
@@ -547,8 +667,50 @@ static void RunInputLimitTests(string tempRoot)
                GameScanDiagnosticCode.DirectoryEntryLimitReached),
         "Expected game directory enumeration to stop at its limit and emit a diagnostic.");
 
+    var diagnosticLimitRoot = Path.Combine(
+        suiteRoot,
+        "diagnostic-limit");
+    var diagnosticInstall = CreateInputLimitInstall(
+        diagnosticLimitRoot);
+    var diagnosticGameRoot = Path.Combine(
+        diagnosticLimitRoot,
+        "dev_hdd0",
+        "game");
+    Directory.CreateDirectory(diagnosticGameRoot);
+    var diagnosticFolders = Enumerable.Range(
+            0,
+            Rpcs3InputLimits.Diagnostics + 100)
+        .Select(index => Path.Combine(
+            diagnosticGameRoot,
+            $"BLUS{50000 + index:00000}"))
+        .ToArray();
+    var diagnosticResult = new GameScanner(
+            directoryEntryLimit: diagnosticFolders.Length,
+            enumerateDirectories: _ => diagnosticFolders)
+        .ScanDetailed(diagnosticInstall);
+    Assert(diagnosticResult.Diagnostics.Count ==
+           Rpcs3InputLimits.Diagnostics,
+        "Expected game-scan diagnostics to stop at the central diagnostic count limit.");
+
     Console.WriteLine(
         "Bounded untrusted RPCS3 input reader tests PASS.");
+}
+
+static string BuildYamlItems(
+    string header,
+    string item,
+    int count)
+{
+    var text = new StringBuilder(
+        header.Length +
+        checked(item.Length * count));
+    text.Append(header);
+    for (var index = 0; index < count; index++)
+    {
+        text.Append(item);
+    }
+
+    return text.ToString();
 }
 
 static void RunGameScanDiagnosticTests(string tempRoot)

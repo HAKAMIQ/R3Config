@@ -23,8 +23,9 @@ public sealed class PatchConfigReader
                 path,
                 Rpcs3InputLimits.PatchConfigYamlBytes,
                 "patch_config.yml");
-            var yaml = new YamlStream();
-            yaml.Load(new StringReader(text));
+            var yaml = Rpcs3BoundedInput.LoadYaml(
+                text,
+                "patch_config.yml");
 
             if (yaml.Documents.Count == 0)
             {

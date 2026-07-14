@@ -12,8 +12,16 @@ public static class Rpcs3InputLimits
     public const long PatchCatalogYamlBytes = 128L * 1024 * 1024;
     public const long PatchConfigYamlBytes = 16L * 1024 * 1024;
     public const long CustomConfigYamlBytes = 16L * 1024 * 1024;
+    public const long BackupManifestBytes = 4L * 1024 * 1024;
+    public const long HCanaryMetadataBytes = 8L * 1024 * 1024;
     public const int DirectoryEntries = 100_000;
     public const int YamlDocuments = 1;
+    public const int YamlDepth = 64;
+    public const int YamlNodes = 250_000;
+    public const int YamlAliases = 4_096;
+    public const int YamlMappings = 100_000;
+    public const int YamlSequences = 100_000;
+    public const int Diagnostics = 1_000;
 }
 
 public enum GameScanDiagnosticCode
