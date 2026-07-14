@@ -345,6 +345,7 @@ Additional registered UI abbreviations: `Prop` (dependency property), `Cap`
 | `WriteInvalidOffsetParamSfo` | `BadSfo` | `WriteParamSfo` | `SfoWrite` |
 | `EscapeYamlPath` | `EscPath` | `AssertMutationBlocked` | `MutFails` |
 | `CanExecute` | `CanRun` |  |  |
+| `PropertyChanged` | `PropChg` | `CanExecuteChanged` | `CanChg` |
 
 Additional registered test abbreviations: `Arch` (architecture), `Dup`
 (duplicate), `Js` (JSON fixture), `Lim` (limit), `Manl` (manual), and `Utf8`

@@ -23,7 +23,13 @@ public sealed class UiText : INotifyPropertyChanged
         _text = text;
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
+    public event PropertyChangedEventHandler? PropChg;
+
+    event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
+    {
+        add => PropChg += value;
+        remove => PropChg -= value;
+    }
 
     public static UiText Current => CurInst;
 
@@ -66,7 +72,7 @@ public sealed class UiText : INotifyPropertyChanged
         CurInst._text = LoadText(normalized, out var effectiveLang);
         CurLang = effectiveLang;
         Apply(effectiveLang);
-        CurInst.PropertyChanged?.Invoke(CurInst, new PropertyChangedEventArgs("Item[]"));
+        CurInst.PropChg?.Invoke(CurInst, new PropertyChangedEventArgs("Item[]"));
     }
 
     public static string GetText(string key)

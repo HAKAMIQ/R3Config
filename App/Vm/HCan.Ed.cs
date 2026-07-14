@@ -117,7 +117,7 @@ public sealed partial class HCanVm : VmBase
         AddIns(new InsVm { Op = "load", Address = SelAnc.Name, Value = string.Empty });
     }
 
-    private void Sub(VmBase item) => item.PropertyChanged += OnItem;
+    private void Sub(VmBase item) => item.PropChg += OnItem;
     private void OnItem(object? sender, PropertyChangedEventArgs e) { if (e.PropertyName != "Error") LoadDrft(); }
     private void OnDraft() { if (!_noRfsh) LoadDrft(); }
 

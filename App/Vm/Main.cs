@@ -115,7 +115,7 @@ public sealed partial class MainVm : VmBase
             OpenDir,
             () => _install is not null && Directory.Exists(_install.PatPath));
 
-        GameList.PropertyChanged += (_, e) =>
+        GameList.PropChg += (_, e) =>
         {
             if (e.PropertyName == nameof(ListVm.SelGame))
             {
@@ -127,7 +127,7 @@ public sealed partial class MainVm : VmBase
 
         Plan.SelState += (_, _) => RaiseCmd();
         Preview.SelState += (_, _) => RaiseCmd();
-        Advanced.PropertyChanged += (_, e) =>
+        Advanced.PropChg += (_, e) =>
         {
             if (e.PropertyName == nameof(AdvVm.SelBkp))
             {

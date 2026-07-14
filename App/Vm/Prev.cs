@@ -416,7 +416,7 @@ public sealed class PatPrev : VmBase
             }
 
             var item = new PatItVm(match, _srcText, isEnabled);
-            item.PropertyChanged += PatItem;
+            item.PropChg += PatItem;
             Items.Add(item);
 
             if (item.IsExpPat)

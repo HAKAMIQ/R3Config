@@ -155,6 +155,10 @@ foreach (var area in new[] { "App", "Core", "Tst", "Script" })
                     kind = "Property";
                     break;
                 case EventDeclarationSyntax item:
+                    if (item.ExplicitInterfaceSpecifier is not null)
+                    {
+                        continue;
+                    }
                     name = item.Identifier.ValueText;
                     kind = "Property";
                     break;
@@ -163,7 +167,8 @@ foreach (var area in new[] { "App", "Core", "Tst", "Script" })
                     kind = "Property";
                     break;
                 case VariableDeclaratorSyntax item
-                    when item.Parent?.Parent is FieldDeclarationSyntax:
+                    when item.Parent?.Parent is FieldDeclarationSyntax or
+                        EventFieldDeclarationSyntax:
                     name = item.Identifier.ValueText;
                     kind = "Field";
                     break;

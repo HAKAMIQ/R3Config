@@ -17,7 +17,13 @@ public sealed class RelayCmd : ICommand
         _canRun = canExecute;
     }
 
-    public event EventHandler? CanExecuteChanged;
+    public event EventHandler? CanChg;
+
+    event EventHandler? ICommand.CanExecuteChanged
+    {
+        add => CanChg += value;
+        remove => CanChg -= value;
+    }
 
     bool ICommand.CanExecute(object? arg) => CanRun(arg);
 
@@ -33,7 +39,7 @@ public sealed class RelayCmd : ICommand
 
     public void RaiseCan()
     {
-        CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        CanChg?.Invoke(this, EventArgs.Empty);
     }
 }
 
@@ -51,7 +57,13 @@ public sealed class AsyncCmd : ICommand
         _canRun = canExecute;
     }
 
-    public event EventHandler? CanExecuteChanged;
+    public event EventHandler? CanChg;
+
+    event EventHandler? ICommand.CanExecuteChanged
+    {
+        add => CanChg += value;
+        remove => CanChg -= value;
+    }
 
     bool ICommand.CanExecute(object? arg) => CanRun(arg);
 
@@ -83,6 +95,6 @@ public sealed class AsyncCmd : ICommand
 
     public void RaiseCan()
     {
-        CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        CanChg?.Invoke(this, EventArgs.Empty);
     }
 }

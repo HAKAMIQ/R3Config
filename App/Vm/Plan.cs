@@ -167,7 +167,7 @@ public sealed class PlanVm : VmBase
                              selectedKeys.Contains(ItemKey(item));
 
             var viewModel = new PlanItVm(item, isSelected);
-            viewModel.PropertyChanged += OnItem;
+            viewModel.PropChg += OnItem;
             Items.Add(viewModel);
         }
 
@@ -216,7 +216,7 @@ public sealed class PlanVm : VmBase
     {
         foreach (var item in Items)
         {
-            item.PropertyChanged -= OnItem;
+            item.PropChg -= OnItem;
         }
     }
 

@@ -6,7 +6,13 @@ namespace R3Config.Vm;
 
 public abstract class VmBase : INotifyPropertyChanged
 {
-    public event PropertyChangedEventHandler? PropertyChanged;
+    public event PropertyChangedEventHandler? PropChg;
+
+    event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
+    {
+        add => PropChg += value;
+        remove => PropChg -= value;
+    }
 
     protected bool Set<T>(
         ref T storage,
@@ -25,6 +31,6 @@ public abstract class VmBase : INotifyPropertyChanged
 
     protected void OnChange([CallerMemberName] string? propertyName = null)
     {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        PropChg?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
