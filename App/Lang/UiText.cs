@@ -79,12 +79,12 @@ public sealed class UiText : INotifyPropertyChanged
         return string.Format(CultureInfo.CurrentCulture, T(key), args);
     }
 
-    public static string RecRiskLabel(RecommendationRisk risk)
+    public static string RecRiskLabel(RecRisk risk)
     {
         return T($"Risk.Rec.{risk}.Label");
     }
 
-    public static string RecRiskTip(RecommendationRisk risk)
+    public static string RecRiskTip(RecRisk risk)
     {
         return T($"Risk.Rec.{risk}.Tip");
     }
@@ -94,19 +94,19 @@ public sealed class UiText : INotifyPropertyChanged
         return T($"RecState.{state}");
     }
 
-    public static string PatchRiskLabel(PatchRisk risk)
+    public static string PatchRiskLabel(PatRisk risk)
     {
         return T($"Risk.Patch.{risk}.Label");
     }
 
-    public static string PatchRiskTip(PatchRisk risk, PatchMatchStatus matchStatus)
+    public static string PatchRiskTip(PatRisk risk, MatStat matchStatus)
     {
-        if (matchStatus == PatchMatchStatus.SerialVersionMatchHashUnknown)
+        if (matchStatus == MatStat.Unknown)
         {
             return T("Msg.PatchHashUnknown");
         }
 
-        if (matchStatus != PatchMatchStatus.ExactMatch)
+        if (matchStatus != MatStat.Match)
         {
             return PatchMatchTip(matchStatus);
         }
@@ -125,24 +125,24 @@ public sealed class UiText : INotifyPropertyChanged
         return Current._text.TryGetValue(key, out var value) ? value : patchType;
     }
 
-    public static string HashStatusLabel(PatchMatchStatus status, PatchHashKind hashKind)
+    public static string HashStatusLabel(MatStat status, HashKind hashKind)
     {
         return status switch
         {
-            PatchMatchStatus.ExactMatch => T("PatchHash.Exact"),
-            PatchMatchStatus.SerialVersionMatchHashUnknown => T("PatchHash.Unknown"),
-            PatchMatchStatus.HashMismatch => T("PatchHash.Mismatch"),
-            PatchMatchStatus.NoMetadata => T("PatchHash.NoMetadata"),
-            _ => hashKind == PatchHashKind.Unknown ? T("PatchHash.Unavailable") : T("PatchHash.NotMatched")
+            MatStat.Match => T("PatchHash.Exact"),
+            MatStat.Unknown => T("PatchHash.Unknown"),
+            MatStat.HashBad => T("PatchHash.Mismatch"),
+            MatStat.NoMeta => T("PatchHash.NoMetadata"),
+            _ => hashKind == HashKind.Unknown ? T("PatchHash.Unavailable") : T("PatchHash.NotMatched")
         };
     }
 
-    public static string PatchMatchLabel(PatchMatchStatus status)
+    public static string PatchMatchLabel(MatStat status)
     {
         return T($"PatchMatch.{status}.Label");
     }
 
-    public static string PatchMatchTip(PatchMatchStatus status)
+    public static string PatchMatchTip(MatStat status)
     {
         return T($"PatchMatch.{status}.Tip");
     }
@@ -150,16 +150,16 @@ public sealed class UiText : INotifyPropertyChanged
     public static string HwStatus(HwInfo info)
     {
         var tier = T($"HwTier.{info.Tier}");
-        var cpu = info.LogicalProcessorCount > 0
-            ? F("Hw.CpuThreads", info.LogicalProcessorCount)
+        var cpu = info.CpuNum > 0
+            ? F("Hw.CpuThreads", info.CpuNum)
             : T("Hw.CpuUnknown");
 
-        return F("Hw.Status", tier, cpu, info.MemoryDisplay);
+        return F("Hw.Status", tier, cpu, info.Display);
     }
 
     public static string HwTip(HwInfo info)
     {
-        return F("Hw.Tip", info.CpuName, info.MemoryDisplay, info.GpuName, info.Tier, info.ProbeMessage);
+        return F("Hw.Tip", info.CpuName, info.Display, info.GpuName, info.Tier, info.ProbeMsg);
     }
 
     private static IReadOnlyDictionary<string, string> LoadText(string lang, out string effectiveLang)

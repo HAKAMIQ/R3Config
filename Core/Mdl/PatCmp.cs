@@ -11,57 +11,57 @@ namespace R3Config.Mdl;
 /// compatibility intentionally remain separate: a cheat can be compatible,
 /// but it still requires an explicit user choice.
 /// </summary>
-public enum PatchCompatibilityVerdict
+public enum CmpVerd
 {
-    Compatible,
-    RuntimeGuarded,
+    Compat,
+    Guarded,
     Blocked
 }
 
-public enum PatchCompatibilityReasonCode
+public enum CmpCode
 {
-    ExactRuntimeIdentity,
-    Rpcs3RuntimeHashGuard,
-    MissingTargetMetadata,
-    SerialMismatch,
-    VersionUnknown,
-    VersionMismatch,
-    ExecutableHashMismatch,
-    InvalidRuntimeKey,
-    RuntimeKeySerialMismatch,
-    UntrustedRuntimeGuard,
-    GlobalTargetNeedsExactHash
+    ExactId,
+    R3Guard,
+    Meta,
+    SerBad,
+    Unknown,
+    VerBad,
+    ExeBad,
+    Key,
+    KeySerBd,
+    Guard,
+    Hash
 }
 
-public sealed record PatchCompatibilityDecision(
-    PatchCompatibilityVerdict Verdict,
-    PatchCompatibilityReasonCode ReasonCode,
-    bool CanEnable,
-    bool CanDisable,
-    bool UsesRpcs3RuntimeHashGuard,
-    string RuntimeKey);
+public sealed record CmpDec(
+    CmpVerd Verdict,
+    CmpCode Code,
+    bool CanOn,
+    bool CanOff,
+    bool UseGuard,
+    string RunKey);
 
-public sealed record Rpcs3PatchRuntimeKeyInfo(
-    string RuntimeKey,
-    PatchHashKind Kind,
+public sealed record KeyInf(
+    string RunKey,
+    HashKind Kind,
     string Hash,
-    string NormalizedHash,
-    string? SerialScope);
+    string NormHash,
+    string? SerScope);
 
 /// <summary>
 /// Mirrors the names passed by RPCS3 to patch_engine::apply:
 /// PPU/SPU/OVL use a 40-hex SHA-1, while PRX uses RPCS3 Base57 plus a segment
 /// ordinal.  RPCS3 also accepts a TITLE_ID-prefixed alternative key.
 /// </summary>
-public static partial class Rpcs3PatchRuntimeKey
+public static partial class RunKey
 {
     public static bool TryParse(
         string? value,
-        out Rpcs3PatchRuntimeKeyInfo info)
+        out KeyInf info)
     {
-        info = new Rpcs3PatchRuntimeKeyInfo(
+        info = new KeyInf(
             string.Empty,
-            PatchHashKind.Unknown,
+            HashKind.Unknown,
             string.Empty,
             string.Empty,
             null);
@@ -72,24 +72,24 @@ public static partial class Rpcs3PatchRuntimeKey
         }
 
         var candidate = value.Trim();
-        var match = RuntimeKeyPattern().Match(candidate);
+        var match = KeyRegex().Match(candidate);
         if (!match.Success)
         {
             return false;
         }
 
-        var kind = ParseKind(match.Groups["kind"].Value);
+        var kind = Parse(match.Groups["kind"].Value);
         var hash = match.Groups["hash"].Value.Trim();
         var serialScope = match.Groups["serial"].Success
             ? match.Groups["serial"].Value.ToUpperInvariant()
             : null;
 
-        if (!TryNormalizeHash(kind, hash, out var normalizedHash))
+        if (!TryNorm(kind, hash, out var normalizedHash))
         {
             return false;
         }
 
-        info = new Rpcs3PatchRuntimeKeyInfo(
+        info = new KeyInf(
             candidate,
             kind,
             hash,
@@ -99,8 +99,8 @@ public static partial class Rpcs3PatchRuntimeKey
         return true;
     }
 
-    public static bool TryNormalizeHash(
-        PatchHashKind kind,
+    public static bool TryNorm(
+        HashKind kind,
         string? value,
         out string normalized)
     {
@@ -113,21 +113,21 @@ public static partial class Rpcs3PatchRuntimeKey
 
         var candidate = value.Trim();
 
-        if (kind is PatchHashKind.Ppu or PatchHashKind.Spu or PatchHashKind.Ovl)
+        if (kind is HashKind.Ppu or HashKind.Spu or HashKind.Ovl)
         {
-            return Rpcs3ExecutableHash.TryNormalizeHex(
+            return ExeHash.TryNorm2(
                 candidate,
                 out normalized);
         }
 
-        if (kind != PatchHashKind.Prx)
+        if (kind != HashKind.Prx)
         {
             return false;
         }
 
-        var prx = PrxHashPattern().Match(candidate);
+        var prx = PrxHash().Match(candidate);
         if (!prx.Success ||
-            !Rpcs3ExecutableHash.TryNormalize(
+            !ExeHash.TryNorm(
                 prx.Groups["digest"].Value,
                 out var digest) ||
             !uint.TryParse(
@@ -147,8 +147,8 @@ public static partial class Rpcs3PatchRuntimeKey
         return true;
     }
 
-    public static bool TryNormalizeEvidence(
-        PatchHashKind kind,
+    public static bool TryNorm2(
+        HashKind kind,
         string? value,
         out string normalized)
     {
@@ -159,21 +159,21 @@ public static partial class Rpcs3PatchRuntimeKey
         }
 
         var candidate = value.Trim();
-        if (kind is PatchHashKind.Ppu or PatchHashKind.Spu or PatchHashKind.Ovl)
+        if (kind is HashKind.Ppu or HashKind.Spu or HashKind.Ovl)
         {
-            return Rpcs3ExecutableHash.TryNormalize(
+            return ExeHash.TryNorm(
                 candidate,
                 out normalized);
         }
 
-        if (kind != PatchHashKind.Prx)
+        if (kind != HashKind.Prx)
         {
             return false;
         }
 
         var separator = candidate.LastIndexOf('-');
         if (separator <= 0 || separator == candidate.Length - 1 ||
-            !Rpcs3ExecutableHash.TryNormalize(
+            !ExeHash.TryNorm(
                 candidate[..separator],
                 out var digest) ||
             !uint.TryParse(
@@ -194,11 +194,11 @@ public static partial class Rpcs3PatchRuntimeKey
     }
 
     public static string Build(
-        PatchHashKind kind,
+        HashKind kind,
         string hash,
         string? serialScope = null)
     {
-        var prefix = KindPrefix(kind);
+        var prefix = Kind(kind);
         if (prefix is null)
         {
             return string.Empty;
@@ -210,26 +210,26 @@ public static partial class Rpcs3PatchRuntimeKey
             : $"{serialScope.Trim().ToUpperInvariant()}-{runtimeKey}";
     }
 
-    private static PatchHashKind ParseKind(string value)
+    private static HashKind Parse(string value)
     {
         return value.ToUpperInvariant() switch
         {
-            "PPU" => PatchHashKind.Ppu,
-            "SPU" => PatchHashKind.Spu,
-            "PRX" => PatchHashKind.Prx,
-            "OVL" => PatchHashKind.Ovl,
-            _ => PatchHashKind.Unknown
+            "PPU" => HashKind.Ppu,
+            "SPU" => HashKind.Spu,
+            "PRX" => HashKind.Prx,
+            "OVL" => HashKind.Ovl,
+            _ => HashKind.Unknown
         };
     }
 
-    private static string? KindPrefix(PatchHashKind kind)
+    private static string? Kind(HashKind kind)
     {
         return kind switch
         {
-            PatchHashKind.Ppu => "PPU",
-            PatchHashKind.Spu => "SPU",
-            PatchHashKind.Prx => "PRX",
-            PatchHashKind.Ovl => "OVL",
+            HashKind.Ppu => "PPU",
+            HashKind.Spu => "SPU",
+            HashKind.Prx => "PRX",
+            HashKind.Ovl => "OVL",
             _ => null
         };
     }
@@ -238,12 +238,12 @@ public static partial class Rpcs3PatchRuntimeKey
         @"^(?:(?<serial>[A-Z0-9]{9})-)?(?<kind>PPU|SPU|PRX|OVL)-(?<hash>.+)$",
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase)]
-    private static partial Regex RuntimeKeyPattern();
+    private static partial Regex KeyRegex();
 
     [GeneratedRegex(
         @"^(?<digest>[0123456789ACEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{28})-(?<segment>[0-9]+)$",
         RegexOptions.CultureInvariant)]
-    private static partial Regex PrxHashPattern();
+    private static partial Regex PrxHash();
 }
 
 #pragma warning restore IDE0130

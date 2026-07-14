@@ -1,15 +1,15 @@
 namespace R3Config.Mdl;
 
-public sealed record CatalogInfo(
-    string DataSource,
-    string DataVersion,
-    DateTimeOffset? GeneratedAt,
-    string SourceHash,
-    int RecommendationCount)
+public sealed record CatInfo(
+    string DataSrc,
+    string DataVer,
+    DateTimeOffset? GenAt,
+    string SrcHash,
+    int RecNum)
 {
-    public string DataDisplay => string.IsNullOrWhiteSpace(DataVersion)
-        ? $"Data: {DataSource}"
-        : $"Data: {DataSource} {DataVersion}";
+    public string Display => string.IsNullOrWhiteSpace(DataVer)
+        ? $"Data: {DataSrc}"
+        : $"Data: {DataSrc} {DataVer}";
 
-    public string RecommendationDisplay => $"Recommendations: {RecommendationCount}";
+    public string RecText => $"Recommendations: {RecNum}";
 }

@@ -14,26 +14,26 @@ public static class AppComp
 
     public static AppCases Build()
     {
-        var backup = new BackupService();
-        var mutationGuard = new Rpcs3MutationGuard();
-        var plan = new PlanService();
-        var patchReader = new PatchCatalogReader();
-        var patchConfigReader = new PatchConfigReader();
+        var backup = new BkpSvc();
+        var mutationGuard = new MutGuard();
+        var plan = new PlanSvc();
+        var patchReader = new ReadSvc();
+        var patchConfigReader = new CfgRead();
         var canaryImport = new CanaryPatchImportService(
             patchReader);
-        var patchTransaction = new PatchFileTransactionService(
+        var patchTransaction = new PatTxn(
             backup,
             patchReader,
             patchConfigReader);
-        var hCanary = new HCanaryPatchAuthoringService(
+        var hCanary = new PatAuth(
             patchReader,
             patchTransaction);
-        var patchCompatibility = new PatchCompatibilityService();
+        var patchCompatibility = new PatCmp();
 
         var patchCatalog = new PatCat(
             patchReader,
-            new PatchCatalogMergeService(),
-            new PatchMatchService(patchCompatibility),
+            new PatMerge(),
+            new MatchSvc(patchCompatibility),
             patchConfigReader,
             hCanary,
             canaryImport,
@@ -44,22 +44,22 @@ public static class AppComp
 
         return new AppCases(
             new AnlzCase(
-                new GameScanner(),
+                new GmScan(),
                 plan,
                 new HwProbe(),
-                new PatchHashProbeService(),
+                new HashPrb(),
                 patchCatalog,
                 backupUseCase),
             new CfgCase(
                 plan,
-                new ConfigApplyService(backup),
+                new CfgApply(backup),
                 mutationGuard),
             patchCatalog,
             new PatMut(
-                new PatchApplyPlanner(),
-                new PatchApplyService(
+                new PatPlnr(),
+                new PatApply(
                     backup,
-                    new PatchConfigWriter(patchConfigReader),
+                    new CfgWrite(patchConfigReader),
                     transaction: patchTransaction),
                 new BundledCanaryPatchService(),
                 new BundledCheatPatchService(),
@@ -71,7 +71,7 @@ public static class AppComp
                 backup,
                 patchReader),
             new RecCat(
-                new CatInfoService()),
+                new CatSvc()),
             backupUseCase,
             new HCanCase(
                 hCanary,

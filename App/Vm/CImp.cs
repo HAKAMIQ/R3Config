@@ -11,7 +11,7 @@ namespace R3Config.Vm;
 
 public sealed class CanaryPatchImportVm : VmBase
 {
-    private readonly Rpcs3InstallDescriptor? _install;
+    private readonly R3Inst? _install;
     private readonly AppFlow _flow;
     private readonly Func<bool> _isRpcs3Running;
     private readonly Func<string, string, bool> _confirm;
@@ -24,7 +24,7 @@ public sealed class CanaryPatchImportVm : VmBase
     private bool _isRpcs3RunningPresentation;
 
     public CanaryPatchImportVm(
-        Rpcs3InstallDescriptor? install,
+        R3Inst? install,
         AppFlow flow,
         Func<bool>? isRpcs3Running = null,
         Func<string, string, bool>? confirm = null)
@@ -32,7 +32,7 @@ public sealed class CanaryPatchImportVm : VmBase
         _install = install;
         _flow = flow ?? throw new ArgumentNullException(nameof(flow));
         _isRpcs3Running = isRpcs3Running ??
-            Rpcs3InstallService.IsRpcs3Running;
+            InstSvc.IsR3;
         _confirm = confirm ?? UiDlg.Confirm;
 
         ChooseFileCommand = new RelayCommand(ChooseFile);
@@ -143,9 +143,9 @@ public sealed class CanaryPatchImportVm : VmBase
 
         try
         {
-            ImportText = Rpcs3BoundedInput.ReadUtf8TextFile(
+            ImportText = R3Bound.ReadUtf8(
                 dialog.FileName,
-                Rpcs3InputLimits.PatchCatalogYamlBytes,
+                R3Limits.PatCatBy,
                 "Canary import patch catalog");
         }
         catch (Exception ex) when (

@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace R3Config.Svc;
 
-public static partial class CfgValueNorm
+public static partial class CfgNorm
 {
     public static bool Same(string? current, string proposed)
     {
@@ -20,7 +20,7 @@ public static partial class CfgValueNorm
             return string.Empty;
         }
 
-        var text = WhitespacePattern()
+        var text = Space()
             .Replace(value.Trim(), " ");
 
         var lower = text.ToLowerInvariant();
@@ -29,11 +29,11 @@ public static partial class CfgValueNorm
         {
             "on" or "true" or "yes" or "enabled" => "true",
             "off" or "false" or "no" or "disabled" => "false",
-            _ => NormPercent(lower)
+            _ => NormPct(lower)
         };
     }
 
-    private static string NormPercent(string value)
+    private static string NormPct(string value)
     {
         if (value.EndsWith('%') &&
             decimal.TryParse(
@@ -51,5 +51,5 @@ public static partial class CfgValueNorm
     }
 
     [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant)]
-    private static partial Regex WhitespacePattern();
+    private static partial Regex Space();
 }

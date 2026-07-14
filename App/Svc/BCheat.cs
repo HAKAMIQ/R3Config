@@ -11,7 +11,7 @@ namespace R3Config.Svc;
 public sealed record PatchLibraryStageResult(
     bool Succeeded,
     string TargetPath,
-    PatchPreparedFile? PreparedFile,
+    PrepFile? PreparedFile,
     int PatchCount,
     string Message,
     string? Error);
@@ -26,8 +26,8 @@ public sealed class BundledCheatPatchService
     public const string ManagedMarker =
         "# R3Config managed RPCS3 cheat patches - do not edit while R3Config is running";
 
-    private readonly PatchSelectionCompiler _compiler = new();
-    private readonly PatchCatalogReader _reader = new();
+    private readonly SelComp _compiler = new();
+    private readonly ReadSvc _reader = new();
 
     public static string GetBundledPath(string baseDirectory)
     {
@@ -60,7 +60,7 @@ public sealed class BundledCheatPatchService
 
     public static IReadOnlyList<string> GetManagedPaths(
         string patchesPath,
-        IEnumerable<Rpcs3PatchMatchResult> matches)
+        IEnumerable<PatMatch> matches)
     {
         return matches
             .Select(MatchedSerial)
@@ -101,7 +101,7 @@ public sealed class BundledCheatPatchService
     public PatchLibraryStageResult PrepareManagedPatchFile(
         string patchesPath,
         string baseDirectory,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
+        IReadOnlyList<PatMatch> selectedMatches)
     {
         string targetPath = string.Empty;
 
@@ -109,8 +109,8 @@ public sealed class BundledCheatPatchService
         {
             var bundledSelections = selectedMatches
                 .Where(match =>
-                    match.Patch.Source == PatchSourceOrigin.BundledCheats &&
-                    PatchActivationPolicy.CanEnable(match))
+                    match.Patch.Source == PatSrc.Cht &&
+                    PatAct.Can(match))
                 .ToArray();
 
             if (bundledSelections.Length == 0)
@@ -141,7 +141,7 @@ public sealed class BundledCheatPatchService
                     UiText.T("Patch.CheatLibrary.Missing"));
             }
 
-            List<Rpcs3PatchMatchResult> selections =
+            List<PatMatch> selections =
             [
                 .. bundledSelections
             ];
@@ -165,10 +165,10 @@ public sealed class BundledCheatPatchService
 
                 var existingRead = _reader.ReadText(
                     existingText,
-                    PatchSourceOrigin.ManagedCheats,
+                    PatSrc.ManCht,
                     targetPath);
 
-                if (!existingRead.Succeeded)
+                if (!existingRead.IsOk)
                 {
                     return StageFailure(
                         targetPath,
@@ -197,13 +197,13 @@ public sealed class BundledCheatPatchService
             {
                 var legacyRead = _reader.Read(
                     legacyPath,
-                    PatchSourceOrigin.ManagedCheats);
+                    PatSrc.ManCht);
 
-                if (legacyRead.Succeeded)
+                if (legacyRead.IsOk)
                 {
                     selections.AddRange(
                         legacyRead.Catalog.Entries
-                            .Where(entry => entry.GameTargets.Any(target =>
+                            .Where(entry => entry.GameTgt.Any(target =>
                                 string.Equals(
                                     target.Serial,
                                     targetSerial,
@@ -230,7 +230,7 @@ public sealed class BundledCheatPatchService
                 selections,
                 bundledSelections);
 
-            if (!compiled.Succeeded)
+            if (!compiled.IsOk)
             {
                 return StageFailure(
                     targetPath,
@@ -242,7 +242,7 @@ public sealed class BundledCheatPatchService
             var finalText =
                 ManagedMarker +
                 "\r\n" +
-                compiled.PatchText;
+                compiled.PatText;
 
             if (File.Exists(targetPath) &&
                 string.Equals(
@@ -253,20 +253,20 @@ public sealed class BundledCheatPatchService
                 return StageSuccess(
                     targetPath,
                     null,
-                    compiled.SelectedCount,
+                    compiled.SelNum,
                     UiText.F(
                         "Patch.CheatLibrary.Ready",
-                        compiled.SelectedCount));
+                        compiled.SelNum));
             }
 
             var validation = _reader.ReadText(
                 finalText,
-                PatchSourceOrigin.ManagedCheats,
+                PatSrc.ManCht,
                 targetPath);
 
-            if (!validation.Succeeded ||
+            if (!validation.IsOk ||
                 validation.Catalog.Entries.Count !=
-                compiled.SelectedCount)
+                compiled.SelNum)
             {
                 return StageFailure(
                     targetPath,
@@ -276,17 +276,17 @@ public sealed class BundledCheatPatchService
 
             return StageSuccess(
                 targetPath,
-                new PatchPreparedFile(
+                new PrepFile(
                     targetPath,
                     finalText,
-                    PatchPreparedFileKind.PatchCatalog,
-                    PatchSourceOrigin.ManagedCheats,
-                    compiled.SelectedCount),
-                compiled.SelectedCount,
+                    PrepKind.PatCat,
+                    PatSrc.ManCht,
+                    compiled.SelNum),
+                compiled.SelNum,
                 UiText.F(
                     "Patch.CheatLibrary.Prepared",
                     bundledSelections.Length,
-                    compiled.SelectedCount));
+                    compiled.SelNum));
         }
         catch (Exception ex) when (
             ex is IOException or
@@ -300,60 +300,60 @@ public sealed class BundledCheatPatchService
         }
     }
 
-    private static Rpcs3PatchMatchResult ToExactMatch(
-        Rpcs3PatchEntry entry)
+    private static PatMatch ToExactMatch(
+        PatEntry entry)
     {
-        if (entry.GameTargets.Count == 0)
+        if (entry.GameTgt.Count == 0)
         {
             throw new InvalidDataException(
                 $"Managed cheat '{entry.Title}' has no game target.");
         }
 
-        var target = entry.GameTargets[0];
+        var target = entry.GameTgt[0];
 
         var versions = target.Versions
-            .Select(Rpcs3PatchVersion.Normalize)
+            .Select(PatVer.Norm)
             .Where(version => version is not null)
             .Select(version => version!)
             .ToArray();
 
         var exactVersion = versions.FirstOrDefault(
-            version => !Rpcs3PatchVersion.IsAll(version));
+            version => !PatVer.IsAll(version));
 
         var version = exactVersion ??
                       (versions.Length > 0 ? versions[0] : null) ??
                       throw new InvalidDataException(
                           $"Managed cheat '{entry.Title}' has no valid version.");
 
-        return new Rpcs3PatchMatchResult(
+        return new PatMatch(
             Patch: entry with
             {
-                Source = PatchSourceOrigin.BundledCheats,
-                Risk = PatchRisk.Cheat,
-                PatchType = "Cheat"
+                Source = PatSrc.Cht,
+                Risk = PatRisk.Cheat,
+                PatType = "Cheat"
             },
-            Status: PatchMatchStatus.ExactMatch,
-            MatchedSerial: target.Serial,
-            MatchedVersion: version,
-            HasHashMetadata: true,
-            MatchReason:
+            Status: MatStat.Match,
+            MatSer: target.Serial,
+            MatVer: version,
+            HasMeta: true,
+            Reason:
                 "Previously prepared by R3Config after an exact match.",
-            MatchedTargetTitle: target.Title,
-            MatchedTargetSerial: target.Serial,
-            MatchedTargetVersion: version);
+            TgtName: target.Title,
+            TgtSer: target.Serial,
+            TgtVer: version);
     }
 
     private static string PatchIdentity(
-        Rpcs3PatchMatchResult match)
+        PatMatch match)
     {
         return
-            $"{match.Patch.RuntimeHashKey}|" +
+            $"{match.Patch.RunKey}|" +
             $"{match.Patch.Title}";
     }
 
     private static bool TryResolveTarget(
         string patchesPath,
-        IReadOnlyList<Rpcs3PatchMatchResult> selections,
+        IReadOnlyList<PatMatch> selections,
         out string targetPath,
         out string error)
     {
@@ -417,11 +417,11 @@ public sealed class BundledCheatPatchService
     }
 
     private static string? MatchedSerial(
-        Rpcs3PatchMatchResult match)
+        PatMatch match)
     {
         return NormalizeSerial(
-            match.MatchedTargetSerial ??
-            match.MatchedSerial);
+            match.TgtSer ??
+            match.MatSer);
     }
 
     private static string? NormalizeSerial(string? serial)
@@ -441,7 +441,7 @@ public sealed class BundledCheatPatchService
 
     private static PatchLibraryStageResult StageSuccess(
         string targetPath,
-        PatchPreparedFile? preparedFile,
+        PrepFile? preparedFile,
         int patchCount,
         string message)
     {

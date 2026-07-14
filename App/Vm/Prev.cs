@@ -14,7 +14,7 @@ public sealed class PatchPreviewVm : VmBase
 {
     private const string DefaultSourceLabel = "patch.yml / imported_patch.yml / bundled Canary";
 
-    private readonly List<Rpcs3PatchMatchResult> _matches = [];
+    private readonly List<PatMatch> _matches = [];
     private string _title = UiText.T("Patch.Title");
     private string _summary = UiText.T("Patch.Empty");
     private string _emptyStateText = UiText.T("Patch.Empty");
@@ -24,7 +24,7 @@ public sealed class PatchPreviewVm : VmBase
     private string? _warningRawMessage;
     private PatchSurfaceState _surfaceState = PatchSurfaceState.NotAnalyzed;
     private bool _showExpertPatches = true;
-    private Func<Rpcs3PatchMatchResult, bool>? _isEnabledResolver;
+    private Func<PatMatch, bool>? _isEnabledResolver;
 
     public event EventHandler? SelectionStateChanged;
 
@@ -231,7 +231,7 @@ public sealed class PatchPreviewVm : VmBase
         var first = group.Items[0];
         var surface = first.IsExperimentalPatch
             ? "Canary"
-            : first.Risk == PatchRisk.Cheat
+            : first.Risk == Mdl.PatRisk.Cheat
                 ? "Cheat"
                 : "Official";
         return string.Join("\0", surface, PatchTargetGroupVm.BuildKey(first));
@@ -263,11 +263,11 @@ public sealed class PatchPreviewVm : VmBase
     }
 
     public void Load(
-        IReadOnlyList<Rpcs3PatchMatchResult> matches,
+        IReadOnlyList<PatMatch> matches,
         string sourceLabel,
         string? title = null,
         string? warningMessage = null,
-        Func<Rpcs3PatchMatchResult, bool>? isEnabledResolver = null)
+        Func<PatMatch, bool>? isEnabledResolver = null)
     {
         _matches.Clear();
         _matches.AddRange(matches);
@@ -328,7 +328,7 @@ public sealed class PatchPreviewVm : VmBase
         RaiseSelectionChanged();
     }
 
-    public IReadOnlyList<Rpcs3PatchMatchResult> SelectedMatches()
+    public IReadOnlyList<PatMatch> SelectedMatches()
     {
         return Items
             .Where(item => item.IsSelected && item.CanEnable)
@@ -336,7 +336,7 @@ public sealed class PatchPreviewVm : VmBase
             .ToArray();
     }
 
-    public IReadOnlyList<Rpcs3PatchMatchResult> SelectedDisableMatches()
+    public IReadOnlyList<PatMatch> SelectedDisableMatches()
     {
         return Items
             .Where(item => item.IsSelected && item.CanDisable)
@@ -344,7 +344,7 @@ public sealed class PatchPreviewVm : VmBase
             .ToArray();
     }
 
-    public IReadOnlyList<Rpcs3PatchMatchResult> SelectedCanaryMatches()
+    public IReadOnlyList<PatMatch> SelectedCanaryMatches()
     {
         return CanaryItems
             .Where(item => item.IsSelected && item.CanEnable)
@@ -352,7 +352,7 @@ public sealed class PatchPreviewVm : VmBase
             .ToArray();
     }
 
-    public IReadOnlyList<Rpcs3PatchMatchResult> SelectedOfficialMatches()
+    public IReadOnlyList<PatMatch> SelectedOfficialMatches()
     {
         return OfficialItems
             .Where(item => item.IsSelected && item.CanEnable)
@@ -360,7 +360,7 @@ public sealed class PatchPreviewVm : VmBase
             .ToArray();
     }
 
-    public IReadOnlyList<Rpcs3PatchMatchResult> SelectedOfficialDisableMatches()
+    public IReadOnlyList<PatMatch> SelectedOfficialDisableMatches()
     {
         return OfficialItems
             .Where(item => item.IsSelected && item.CanDisable)
@@ -368,7 +368,7 @@ public sealed class PatchPreviewVm : VmBase
             .ToArray();
     }
 
-    public IReadOnlyList<Rpcs3PatchMatchResult> SelectedCanaryDisableMatches()
+    public IReadOnlyList<PatMatch> SelectedCanaryDisableMatches()
     {
         return CanaryItems
             .Where(item => item.IsSelected && item.CanDisable)
@@ -376,7 +376,7 @@ public sealed class PatchPreviewVm : VmBase
             .ToArray();
     }
 
-    public IReadOnlyList<Rpcs3PatchMatchResult> SelectedCheatMatches()
+    public IReadOnlyList<PatMatch> SelectedCheatMatches()
     {
         return CheatItems
             .Where(item => item.IsSelected && item.CanEnable)
@@ -384,7 +384,7 @@ public sealed class PatchPreviewVm : VmBase
             .ToArray();
     }
 
-    public IReadOnlyList<Rpcs3PatchMatchResult> SelectedCheatDisableMatches()
+    public IReadOnlyList<PatMatch> SelectedCheatDisableMatches()
     {
         return CheatItems
             .Where(item => item.IsSelected && item.CanDisable)
@@ -402,11 +402,11 @@ public sealed class PatchPreviewVm : VmBase
         CanaryGroups.Clear();
         CheatGroups.Clear();
 
-        foreach (var match in _matches.Where(match => PatchRiskPolicy.IsVisibleInPreview(match.Patch.Risk, ShowExpertPatches)))
+        foreach (var match in _matches.Where(match => PatPol.Is(match.Patch.Risk, ShowExpertPatches)))
         {
             var isEnabled = _isEnabledResolver?.Invoke(match) == true;
-            if (Rpcs3PatchVersion.IsAll(match.MatchedTargetSerial) &&
-                match.Status != PatchMatchStatus.ExactMatch)
+            if (PatVer.IsAll(match.TgtSer) &&
+                match.Status != MatStat.Match)
             {
                 // RPCS3 uses All/All/All for hash-scoped modules shared by many
                 // games. Enabled state in patch_config.yml is global too, so it
@@ -423,7 +423,7 @@ public sealed class PatchPreviewVm : VmBase
             {
                 CanaryItems.Add(item);
             }
-            else if (item.Risk == PatchRisk.Cheat)
+            else if (item.Risk == PatRisk.Cheat)
             {
                 CheatItems.Add(item);
             }
@@ -573,7 +573,7 @@ public sealed class PatchPreviewVm : VmBase
 
 public sealed class PatchTargetGroupVm : VmBase
 {
-    private readonly PatchMatchStatus _bestStatus;
+    private readonly MatStat _bestStatus;
     private readonly string _gameTitle;
     private readonly string? _installedVersion;
     private bool _isExpanded;
@@ -588,14 +588,14 @@ public sealed class PatchTargetGroupVm : VmBase
         var first = items[0];
         var target = ResolveTarget(first.Match);
 
-        Serial = first.Match.MatchedTargetSerial
+        Serial = first.Match.TgtSer
             ?? target?.Serial
-            ?? first.Match.MatchedSerial
-            ?? first.Match.Patch.GameSerials.FirstOrDefault()
+            ?? first.Match.MatSer
+            ?? first.Match.Patch.Serials.FirstOrDefault()
             ?? "-";
 
-        Versions = !string.IsNullOrWhiteSpace(first.Match.MatchedTargetVersion)
-            ? [first.Match.MatchedTargetVersion!]
+        Versions = !string.IsNullOrWhiteSpace(first.Match.TgtVer)
+            ? [first.Match.TgtVer!]
             : target?.Versions
                 .Where(version => !string.IsNullOrWhiteSpace(version))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -603,18 +603,18 @@ public sealed class PatchTargetGroupVm : VmBase
                 .ToArray()
                 ?? [];
 
-        _installedVersion = Rpcs3PatchVersion.Normalize(first.Match.MatchedVersion);
-        _gameTitle = first.Match.MatchedTargetTitle
+        _installedVersion = PatVer.Norm(first.Match.MatVer);
+        _gameTitle = first.Match.TgtName
             ?? target?.Title
-            ?? first.Match.Patch.GameTargets.FirstOrDefault()?.Title
+            ?? first.Match.Patch.GameTgt.FirstOrDefault()?.Title
             ?? "-";
         _bestStatus = items
             .Select(item => item.MatchStatus)
             .OrderBy(MatchRankFor)
             .First();
         _isExpanded = _bestStatus is
-            PatchMatchStatus.ExactMatch or
-            PatchMatchStatus.SerialVersionMatchHashUnknown;
+            MatStat.Match or
+            MatStat.Unknown;
 
         foreach (var duplicateSet in items.GroupBy(item => item.Title, StringComparer.OrdinalIgnoreCase))
         {
@@ -681,9 +681,9 @@ public sealed class PatchTargetGroupVm : VmBase
             ? "Muted"
             : _bestStatus switch
             {
-                PatchMatchStatus.ExactMatch => "Auto",
-                PatchMatchStatus.SerialVersionMatchHashUnknown when Items.Any(item => item.CanEnable) => "Auto",
-                PatchMatchStatus.SerialVersionMatchHashUnknown => "Warning",
+                MatStat.Match => "Auto",
+                MatStat.Unknown when Items.Any(item => item.CanEnable) => "Auto",
+                MatStat.Unknown => "Warning",
                 _ => "Muted"
             };
 
@@ -715,23 +715,23 @@ public sealed class PatchTargetGroupVm : VmBase
     public static string BuildKey(PatchItemVm item)
     {
         var target = ResolveTarget(item.Match);
-        var title = item.Match.MatchedTargetTitle
+        var title = item.Match.TgtName
             ?? target?.Title
-            ?? item.Match.Patch.GameTargets.FirstOrDefault()?.Title
+            ?? item.Match.Patch.GameTgt.FirstOrDefault()?.Title
             ?? "-";
-        var serial = item.Match.MatchedTargetSerial
+        var serial = item.Match.TgtSer
             ?? target?.Serial
-            ?? item.Match.MatchedSerial
-            ?? item.Match.Patch.GameSerials.FirstOrDefault()
+            ?? item.Match.MatSer
+            ?? item.Match.Patch.Serials.FirstOrDefault()
             ?? "-";
-        var versions = item.Match.MatchedTargetVersion
+        var versions = item.Match.TgtVer
             ?? (target is not null && target.Versions.Count > 0
                 ? string.Join(
                     "|",
                     target.Versions
                         .Where(version => !string.IsNullOrWhiteSpace(version))
                         .OrderBy(version => version, StringComparer.OrdinalIgnoreCase))
-                : Rpcs3PatchVersion.All);
+                : PatVer.All);
 
         return string.Join(
             "\0",
@@ -740,34 +740,34 @@ public sealed class PatchTargetGroupVm : VmBase
             versions);
     }
 
-    private static Rpcs3PatchGameTarget? ResolveTarget(Rpcs3PatchMatchResult match)
+    private static R3PatTgt? ResolveTarget(PatMatch match)
     {
-        var serial = match.MatchedTargetSerial
-            ?? match.MatchedSerial
-            ?? match.Patch.GameSerials.FirstOrDefault();
+        var serial = match.TgtSer
+            ?? match.MatSer
+            ?? match.Patch.Serials.FirstOrDefault();
 
         if (string.IsNullOrWhiteSpace(serial))
         {
-            return match.Patch.GameTargets.FirstOrDefault();
+            return match.Patch.GameTgt.FirstOrDefault();
         }
 
-        return match.Patch.GameTargets.FirstOrDefault(target =>
+        return match.Patch.GameTgt.FirstOrDefault(target =>
                    target.Serial.Equals(serial, StringComparison.OrdinalIgnoreCase) &&
-                   (string.IsNullOrWhiteSpace(match.MatchedTargetTitle) ||
-                    target.Title.Equals(match.MatchedTargetTitle, StringComparison.OrdinalIgnoreCase)))
-               ?? match.Patch.GameTargets.FirstOrDefault();
+                   (string.IsNullOrWhiteSpace(match.TgtName) ||
+                    target.Title.Equals(match.TgtName, StringComparison.OrdinalIgnoreCase)))
+               ?? match.Patch.GameTgt.FirstOrDefault();
     }
 
-    private static int MatchRankFor(PatchMatchStatus status)
+    private static int MatchRankFor(MatStat status)
     {
         return status switch
         {
-            PatchMatchStatus.ExactMatch => 0,
-            PatchMatchStatus.SerialVersionMatchHashUnknown => 1,
-            PatchMatchStatus.VersionUnknown => 2,
-            PatchMatchStatus.VersionMismatch => 3,
-            PatchMatchStatus.HashMismatch => 4,
-            PatchMatchStatus.NoMetadata => 5,
+            MatStat.Match => 0,
+            MatStat.Unknown => 1,
+            MatStat.VerUnk => 2,
+            MatStat.VerBad => 3,
+            MatStat.HashBad => 4,
+            MatStat.NoMeta => 5,
             _ => 6
         };
     }

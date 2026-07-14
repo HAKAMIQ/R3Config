@@ -8,7 +8,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace R3Config.Svc;
 
-public sealed class PatchConfigReader
+public sealed class CfgRead
 {
     public YamlStream Load(string path)
     {
@@ -19,11 +19,11 @@ public sealed class PatchConfigReader
                 return new YamlStream(new YamlDocument(new YamlMappingNode()));
             }
 
-            var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+            var text = R3Bound.ReadUtf8(
                 path,
-                Rpcs3InputLimits.PatchConfigYamlBytes,
+                R3Limits.PatCfgBy,
                 "patch_config.yml");
-            var yaml = Rpcs3BoundedInput.LoadYaml(
+            var yaml = R3Bound.LoadYaml(
                 text,
                 "patch_config.yml");
 
@@ -32,7 +32,7 @@ public sealed class PatchConfigReader
                 yaml.Documents.Add(new YamlDocument(new YamlMappingNode()));
             }
 
-            if (yaml.Documents.Count > Rpcs3InputLimits.YamlDocuments)
+            if (yaml.Documents.Count > R3Limits.YamlDoc)
             {
                 throw new InvalidDataException(
                     "patch_config.yml contains too many YAML documents.");
@@ -51,19 +51,19 @@ public sealed class PatchConfigReader
         }
     }
 
-    public bool IsEnabled(string path, PatchApplyChange change)
+    public bool IsOn(string path, PatChg change)
     {
-        return ReadSnapshot(path).IsEnabled(change);
+        return ReadSnap(path).IsOn(change);
     }
 
-    public PatchConfigSnapshot ReadSnapshot(string path)
+    public CfgSnap ReadSnap(string path)
     {
         var yaml = Load(path);
-        return new PatchConfigSnapshot(
+        return new CfgSnap(
             (YamlMappingNode)yaml.Documents[0].RootNode);
     }
 
-    internal static YamlNode? FindValue(YamlMappingNode mapping, string key)
+    internal static YamlNode? FindVal(YamlMappingNode mapping, string key)
     {
         foreach (var child in mapping.Children)
         {
@@ -77,7 +77,7 @@ public sealed class PatchConfigReader
         return null;
     }
 
-    internal static YamlMappingNode? FindNestedMapping(
+    internal static YamlMappingNode? Find(
         YamlMappingNode root,
         params string[] path)
     {
@@ -85,7 +85,7 @@ public sealed class PatchConfigReader
 
         foreach (var key in path)
         {
-            if (FindValue(current, key) is not YamlMappingNode next)
+            if (FindVal(current, key) is not YamlMappingNode next)
             {
                 return null;
             }
@@ -96,7 +96,7 @@ public sealed class PatchConfigReader
         return current;
     }
 
-    internal static YamlNode? FindNestedNode(
+    internal static YamlNode? FindNode(
         YamlMappingNode root,
         params string[] path)
     {
@@ -105,7 +105,7 @@ public sealed class PatchConfigReader
         foreach (var key in path)
         {
             if (current is not YamlMappingNode mapping ||
-                FindValue(mapping, key) is not { } next)
+                FindVal(mapping, key) is not { } next)
             {
                 return null;
             }
@@ -117,24 +117,24 @@ public sealed class PatchConfigReader
     }
 }
 
-public sealed class PatchConfigSnapshot
+public sealed class CfgSnap
 {
     private readonly YamlMappingNode _root;
 
-    internal PatchConfigSnapshot(YamlMappingNode root)
+    internal CfgSnap(YamlMappingNode root)
     {
         _root = root;
     }
 
-    public bool IsEnabled(PatchApplyChange change)
+    public bool IsOn(PatChg change)
     {
         ArgumentNullException.ThrowIfNull(change);
 
-        var versionNode = PatchConfigReader.FindNestedNode(
+        var versionNode = CfgRead.FindNode(
             _root,
             change.HashKey,
-            change.PatchTitle,
-            change.GameTitle,
+            change.PatTitle,
+            change.GameName,
             change.Serial,
             change.Version);
 
@@ -145,7 +145,7 @@ public sealed class PatchConfigSnapshot
         }
 
         var enabledNode = versionNode is YamlMappingNode versionMapping
-            ? PatchConfigReader.FindValue(versionMapping, "Enabled")
+            ? CfgRead.FindVal(versionMapping, "Enabled")
             : null;
 
         return enabledNode is YamlScalarNode scalar &&

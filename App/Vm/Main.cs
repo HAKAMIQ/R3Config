@@ -22,13 +22,13 @@ public sealed partial class MainVm : VmBase
     private readonly AppSettingsService _settingsService;
     private readonly Func<bool> _isRpcs3Running;
     private readonly Func<string, string, bool> _confirm;
-    private Rpcs3InstallDescriptor? _install;
-    private RecommendationCatalogService? _catalog;
+    private R3Inst? _install;
+    private RecSvc? _catalog;
     private string? _catalogLoadError;
-    private Rpcs3PatchCatalog? _patchCatalog;
+    private PatCat? _patchCatalog;
     private string? _patchCatalogError;
     private IReadOnlyList<PatSrcSt> _patchCatalogSources = [];
-    private ConfigPlan? _currentPlan;
+    private CfgPlan? _currentPlan;
     private UiLayoutState _layout = UiLayoutService.Current;
     private HwInfo? _hwInfo;
     private string _rpcs3ExePath = string.Empty;
@@ -65,7 +65,7 @@ public sealed partial class MainVm : VmBase
         _flow = services.Flow;
         _settingsService = services.Settings;
         _isRpcs3Running = isRpcs3Running ??
-            Rpcs3InstallService.IsRpcs3Running;
+            InstSvc.IsR3;
         _confirm = confirm ?? UiDlg.Confirm;
         HCanary = new HCanaryVm(
             _flow,
@@ -113,7 +113,7 @@ public sealed partial class MainVm : VmBase
             () => _install is not null && File.Exists(_install.ExePath));
         OpenPatchesFolderCommand = new RelayCommand(
             OpenPatchesFolder,
-            () => _install is not null && Directory.Exists(_install.PatchesPath));
+            () => _install is not null && Directory.Exists(_install.PatPath));
 
         GameList.PropertyChanged += (_, e) =>
         {
@@ -272,7 +272,7 @@ public sealed partial class MainVm : VmBase
         ? UiText.T("Shell.NoGameTitle")
         : string.IsNullOrWhiteSpace(GameList.SelectedGame.Game.Version)
             ? $"{GameList.SelectedGame.Title} | {GameList.SelectedGame.Serial}"
-            : $"{GameList.SelectedGame.Title} | {GameList.SelectedGame.Serial} | v{Rpcs3PatchVersion.Normalize(GameList.SelectedGame.Game.Version)}";
+            : $"{GameList.SelectedGame.Title} | {GameList.SelectedGame.Serial} | v{PatVer.Norm(GameList.SelectedGame.Game.Version)}";
 
     public FlowDirection SelectedGameTitleFlow => _layout.SelectedGameTitleFlow(GameList.SelectedGame is not null);
 
@@ -298,8 +298,8 @@ public sealed partial class MainVm : VmBase
             {
                 return UiText.F(
                     "PatchReadiness.HashReadyCount",
-                    selected.Game.AllPpuHashes.Count,
-                    selected.Game.AllSpuHashes.Count);
+                    selected.Game.Hashes.Count,
+                    selected.Game.SpuList.Count);
             }
 
             return selected.IsDetectedInRpcs3
@@ -322,8 +322,8 @@ public sealed partial class MainVm : VmBase
             {
                 return UiText.F(
                     "PatchReadiness.HashReadyDetail",
-                    selected.Game.AllPpuHashes.Count,
-                    selected.Game.AllSpuHashes.Count,
+                    selected.Game.Hashes.Count,
+                    selected.Game.SpuList.Count,
                     PatchHashSourceDisplay(selected.Game));
             }
 

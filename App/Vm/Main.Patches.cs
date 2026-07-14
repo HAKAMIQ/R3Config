@@ -52,7 +52,7 @@ public sealed partial class MainVm : VmBase
             }
 
             var plan = _flow.BuildPatchPlan(_install, selectedMatches, PatchPreview.ShowExpertPatches);
-            if (!plan.HasChanges)
+            if (!plan.HasChg)
             {
                 UiDlg.Info(UiText.T("Msg.NoSafePatchApply"), UiText.T("Dialog.NothingToApply"));
                 Log(UiText.T("Msg.SkipPatchApply"));
@@ -79,11 +79,11 @@ public sealed partial class MainVm : VmBase
                 Log(message);
             }
 
-            Log(UiText.F("Msg.BkpSaved", result.Backup.CreatedAt.LocalDateTime));
+            Log(UiText.F("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
 
-            foreach (var change in result.AppliedChanges)
+            foreach (var change in result.ChgList)
             {
-                Log(UiText.F("Msg.PatchApplied", change.HashKey, change.PatchTitle, change.Serial, change.Version));
+                Log(UiText.F("Msg.PatchApplied", change.HashKey, change.PatTitle, change.Serial, change.Version));
             }
 
             RefreshBackups();
@@ -93,7 +93,7 @@ public sealed partial class MainVm : VmBase
             UiDlg.Info(
                 UiText.F(
                     PatchApplySuccessKey(section),
-                    result.AppliedChanges.Count),
+                    result.ChgList.Count),
                 UiText.T("Dialog.ApplyPatchTitle"));
         }
         catch (Exception ex)
@@ -143,7 +143,7 @@ public sealed partial class MainVm : VmBase
             }
 
             var plan = _flow.BuildPatchDisablePlan(_install, selectedMatches);
-            if (!plan.HasChanges)
+            if (!plan.HasChg)
             {
                 UiDlg.Info(UiText.T("Msg.NoPatchDisable"), UiText.T("Dialog.NothingToApply"));
                 return;
@@ -160,11 +160,11 @@ public sealed partial class MainVm : VmBase
 
             var result = _flow.DisablePatch(plan, _install);
 
-            Log(UiText.F("Msg.BkpSaved", result.Backup.CreatedAt.LocalDateTime));
+            Log(UiText.F("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
 
-            foreach (var change in result.AppliedChanges)
+            foreach (var change in result.ChgList)
             {
-                Log(UiText.F("Msg.PatchOff", change.HashKey, change.PatchTitle, change.Serial, change.Version));
+                Log(UiText.F("Msg.PatchOff", change.HashKey, change.PatTitle, change.Serial, change.Version));
             }
 
             RefreshBackups();
@@ -214,9 +214,9 @@ public sealed partial class MainVm : VmBase
             Log(UiText.F("Msg.PatchCatWarning", _patchCatalogError));
         }
 
-        if (_patchCatalog.MergeDiagnostics.Count > 0)
+        if (_patchCatalog.Diag.Count > 0)
         {
-            Log(UiText.F("Msg.PatchMergeDiagnostics", _patchCatalog.MergeDiagnostics.Count));
+            Log(UiText.F("Msg.PatchMergeDiagnostics", _patchCatalog.Diag.Count));
         }
 
         Log(UiText.F("Msg.PatchCatLoaded", _patchCatalog.Entries.Count));
@@ -266,25 +266,25 @@ public sealed partial class MainVm : VmBase
     }
 
     private static string? BuildPatchReadinessWarning(
-        Rpcs3GameDescriptor game,
-        IReadOnlyList<Rpcs3PatchMatchResult> matches)
+        R3Game game,
+        IReadOnlyList<PatMatch> matches)
     {
         if (HasSelectedGameHashes(game) ||
-            matches.Any(PatchActivationPolicy.CanEnable))
+            matches.Any(PatAct.Can))
         {
             return null;
         }
 
         return matches.Any(match =>
-                match.Status == PatchMatchStatus.SerialVersionMatchHashUnknown &&
-                !PatchActivationPolicy.CanEnable(match))
+                match.Status == MatStat.Unknown &&
+                !PatAct.Can(match))
             ? UiText.T("PatchReadiness.NeedsColdBootWarning")
             : null;
     }
 
     private bool IsPatchEnabled(
-        PatchConfigSnapshot? patchConfig,
-        Rpcs3PatchMatchResult match)
+        CfgSnap? patchConfig,
+        PatMatch match)
     {
         if (patchConfig is null)
         {
@@ -292,7 +292,7 @@ public sealed partial class MainVm : VmBase
         }
 
         var change = _flow.CreatePatchChange(match);
-        return change is not null && patchConfig.IsEnabled(change);
+        return change is not null && patchConfig.IsOn(change);
     }
 
     private static string? CombinePatchWarnings(params string?[] warnings)
@@ -308,7 +308,7 @@ public sealed partial class MainVm : VmBase
             : string.Join(Environment.NewLine, clean);
     }
 
-    private PatchConfigSnapshot? ReadPatchConfig(
+    private CfgSnap? ReadPatchConfig(
         out string? warning)
     {
         warning = null;

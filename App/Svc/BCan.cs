@@ -40,10 +40,10 @@ public sealed class BundledCanaryPatchService
     public CanaryPatchStageResult PrepareImportedPatchFile(
         string patchesPath,
         string baseDirectory,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
+        IReadOnlyList<PatMatch> selectedMatches)
     {
         var selectedCanary = selectedMatches
-            .Where(match => match.Patch.Risk == PatchRisk.Canary)
+            .Where(match => match.Patch.Risk == PatRisk.Canary)
             .ToArray();
 
         if (selectedCanary.Length == 0)
@@ -78,7 +78,7 @@ public sealed class BundledCanaryPatchService
 
     private static string BuildSelectedCanaryText(
         string bundledText,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
+        IReadOnlyList<PatMatch> selectedMatches)
     {
         // Compile the selection into a self-contained RPCS3 document. Merely
         // copying the selected hash block leaves aliases such as Games/Notes
@@ -87,18 +87,18 @@ public sealed class BundledCanaryPatchService
         // aliases become dangling and RPCS3/YamlDotNet rejects the result.
         // PatchSelectionCompiler clones the selected entries and expands every
         // alias before the imported_patch.yml transaction is staged.
-        var compiled = new PatchSelectionCompiler().Compile(
+        var compiled = new SelComp().Compile(
             bundledText,
             selectedMatches,
             selectedMatches);
 
-        if (!compiled.Succeeded)
+        if (!compiled.IsOk)
         {
             throw new InvalidDataException(
                 compiled.Error ??
                 "The selected Canary patches could not be compiled.");
         }
 
-        return compiled.PatchText;
+        return compiled.PatText;
     }
 }

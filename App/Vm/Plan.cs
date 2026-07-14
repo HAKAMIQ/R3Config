@@ -16,7 +16,7 @@ public sealed class PlanVm : VmBase
     private string _emptyStateText = UiText.T("Plan.Empty");
     private string _targetConfigPath = "-";
     private bool _showApplied = true;
-    private ConfigPlan? _plan;
+    private CfgPlan? _plan;
 
     public event EventHandler? SelectionStateChanged;
 
@@ -48,7 +48,7 @@ public sealed class PlanVm : VmBase
 
     public bool HasSelectedChanges => Items.Any(item => item.IsSelected && item.IsDifferent && item.IsActionable);
 
-    public bool HasRemovableSettings => _plan?.Items.Any(item => item.CurrentValue is not null) == true;
+    public bool HasRemovableSettings => _plan?.Items.Any(item => item.CurVal is not null) == true;
 
     public bool IsEmpty => Items.Count == 0;
 
@@ -107,14 +107,14 @@ public sealed class PlanVm : VmBase
         RaiseSelectionChanged();
     }
 
-    public void Load(ConfigPlan plan)
+    public void Load(CfgPlan plan)
     {
         Clear();
 
         _plan = plan;
-        Title = plan.GameTitle;
-        GameSerial = plan.GameSerial;
-        TargetConfigPath = plan.TargetConfigPath;
+        Title = plan.GameName;
+        GameSerial = plan.GameSer;
+        TargetConfigPath = plan.CfgPath;
 
         ReloadItems(preserveSelection: false);
     }
@@ -178,7 +178,7 @@ public sealed class PlanVm : VmBase
         RaiseSelectionChanged();
     }
 
-    private bool ShouldShowItem(ConfigPlanEntry item)
+    private bool ShouldShowItem(CfgEntry item)
     {
         if (ShowApplied)
         {
@@ -241,12 +241,12 @@ public sealed class PlanVm : VmBase
         Summary = UiText.F("Plan.SummaryFormat", state.Total, state.Applied, state.Pending);
     }
 
-    private static string ItemKey(ConfigPlanEntry item)
+    private static string ItemKey(CfgEntry item)
     {
-        return string.Join("|", item.Section, item.Key, item.DisplayPath);
+        return string.Join("|", item.Section, item.Key, item.Path);
     }
 
-    private static string GetEmptyStateText(ConfigPlan plan)
+    private static string GetEmptyStateText(CfgPlan plan)
     {
         if (plan.RecState.Total == 0)
         {

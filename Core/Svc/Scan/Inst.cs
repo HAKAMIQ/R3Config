@@ -7,9 +7,9 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public static class Rpcs3InstallService
+public static class InstSvc
 {
-    public static Rpcs3InstallDescriptor FromExePath(string exePath)
+    public static R3Inst FromExe(string exePath)
     {
         if (string.IsNullOrWhiteSpace(exePath))
         {
@@ -40,7 +40,7 @@ public static class Rpcs3InstallService
             ?? throw new InvalidOperationException(
                 "Could not detect RPCS3 root path.");
 
-        var dataRootPath = ResolveDataRootPath(rootPath);
+        var dataRootPath = GetData(rootPath);
 
         var configPath = Path.Combine(
             dataRootPath,
@@ -50,21 +50,21 @@ public static class Rpcs3InstallService
             dataRootPath,
             "patches");
 
-        return new Rpcs3InstallDescriptor(
+        return new R3Inst(
             RootPath: rootPath,
             ExePath: fullExePath,
-            ConfigPath: configPath,
-            CustomConfigsPath: Path.Combine(
+            CfgPath: configPath,
+            CustPath: Path.Combine(
                 configPath,
                 "custom_configs"),
-            PatchesPath: patchesPath,
-            PatchConfigPath: Path.Combine(
+            PatPath: patchesPath,
+            PatCfg: Path.Combine(
                 configPath,
                 "patch_config.yml"),
-            DataRootPath: dataRootPath);
+            DataRoot: dataRootPath);
     }
 
-    private static string ResolveDataRootPath(string rootPath)
+    private static string GetData(string rootPath)
     {
         // RPCS3 checks <exe>/portable before RPCS3_CONFIG_DIR.
         var portablePath = Path.Combine(rootPath, "portable");
@@ -87,7 +87,7 @@ public static class Rpcs3InstallService
                 : Path.Combine(rootPath, candidate));
     }
 
-    public static bool IsRpcs3Running()
+    public static bool IsR3()
     {
         var processes = Process.GetProcessesByName("rpcs3");
 

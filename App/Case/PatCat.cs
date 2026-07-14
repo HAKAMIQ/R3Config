@@ -5,19 +5,19 @@ using R3Config.Svc;
 namespace R3Config.Case;
 
 public sealed class PatCat(
-    PatchCatalogReader catalogReader,
-    PatchCatalogMergeService catalogMerge,
-    PatchMatchService patchMatch,
-    PatchConfigReader patchConfig,
-    HCanaryPatchAuthoringService hCanaryAuthoring,
+    Svc.ReadSvc catalogReader,
+    PatMerge catalogMerge,
+    Svc.MatchSvc patchMatch,
+    CfgRead patchConfig,
+    PatAuth hCanaryAuthoring,
     CanaryPatchImportService canaryImport,
     IPatMsg messages)
 {
     public PatCatRs Load(
-        Rpcs3InstallDescriptor install)
+        R3Inst install)
     {
         var officialPath = Path.Combine(
-            install.PatchesPath,
+            install.PatPath,
             "patch.yml");
         var importedPath = R3Paths.ImpPat(install);
         var bundledPath = BundledCanaryPatchService.GetBundledPath(
@@ -29,10 +29,10 @@ public sealed class PatCat(
         var hasImported = File.Exists(importedPath);
         var hasBundledCanary = File.Exists(bundledPath);
         var hasBundledCheats = File.Exists(bundledCheatPath);
-        var titleSpecificPaths = Directory.Exists(install.PatchesPath)
+        var titleSpecificPaths = Directory.Exists(install.PatPath)
             ? Directory
                 .EnumerateFiles(
-                    install.PatchesPath,
+                    install.PatPath,
                     "*_patch.yml",
                     SearchOption.TopDirectoryOnly)
                 .Where(path => !Path.GetFileName(path).Equals(
@@ -51,17 +51,17 @@ public sealed class PatCat(
                 .ToArray()
             : [];
 
-        var catalogs = new List<Rpcs3PatchCatalog>();
+        var catalogs = new List<Mdl.PatCat>();
         var errors = new List<string>();
         var sources = new List<PatSrcSt>();
-        Rpcs3PatchCatalog? importedCatalog = null;
-        Rpcs3PatchCatalog? bundledCanaryCatalog = null;
+        Mdl.PatCat? importedCatalog = null;
+        Mdl.PatCat? bundledCanaryCatalog = null;
 
         sources.Add(ReadFile(
             "patch.yml",
             officialPath,
             hasOfficial,
-            PatchSourceOrigin.Official,
+            PatSrc.Official,
             isImported: false,
             catalogs,
             errors));
@@ -70,17 +70,17 @@ public sealed class PatCat(
         {
             var read = catalogReader.Read(
                 importedPath,
-                PatchSourceOrigin.Imported);
-            if (read.Succeeded)
+                PatSrc.Imported);
+            if (read.IsOk)
             {
-                importedCatalog = hCanaryAuthoring.ApplyLocalMetadata(
+                importedCatalog = hCanaryAuthoring.Apply(
                     read.Catalog,
                     importedPath);
                 catalogs.Add(importedCatalog);
                 AddWarn(errors, read.Error, isImported: true);
                 sources.Add(new PatSrcSt(
                     CanaryPatchImportService.ImportedPatchFileName,
-                    PatchSourceOrigin.Imported,
+                    PatSrc.Imported,
                     importedPath,
                     Exists: true,
                     Loaded: true,
@@ -94,7 +94,7 @@ public sealed class PatCat(
                     isImported: true));
                 sources.Add(new PatSrcSt(
                     CanaryPatchImportService.ImportedPatchFileName,
-                    PatchSourceOrigin.Imported,
+                    PatSrc.Imported,
                     importedPath,
                     Exists: true,
                     Loaded: false,
@@ -106,7 +106,7 @@ public sealed class PatCat(
         {
             sources.Add(new PatSrcSt(
                 CanaryPatchImportService.ImportedPatchFileName,
-                PatchSourceOrigin.Imported,
+                PatSrc.Imported,
                 importedPath,
                 Exists: false,
                 Loaded: false,
@@ -117,8 +117,8 @@ public sealed class PatCat(
         {
             var source = BundledCheatPatchService.IsManagedFile(
                 titleSpecificPath)
-                ? PatchSourceOrigin.ManagedCheats
-                : PatchSourceOrigin.TitleSpecific;
+                ? PatSrc.ManCht
+                : PatSrc.TitlePat;
 
             sources.Add(ReadFile(
                 Path.GetFileName(titleSpecificPath),
@@ -141,9 +141,9 @@ public sealed class PatCat(
                 {
                     var read = catalogReader.ReadText(
                         normalized.NormalizedText,
-                        PatchSourceOrigin.BundledCanary,
+                        PatSrc.Can,
                         bundledPath);
-                    if (read.Succeeded)
+                    if (read.IsOk)
                     {
                         bundledCanaryCatalog = read.Catalog;
                         catalogs.Add(bundledCanaryCatalog);
@@ -153,7 +153,7 @@ public sealed class PatCat(
                             isImported: true);
                         sources.Add(new PatSrcSt(
                             "can.yml",
-                            PatchSourceOrigin.BundledCanary,
+                            PatSrc.Can,
                             bundledPath,
                             Exists: true,
                             Loaded: true,
@@ -167,7 +167,7 @@ public sealed class PatCat(
                             isImported: true));
                         sources.Add(new PatSrcSt(
                             "can.yml",
-                            PatchSourceOrigin.BundledCanary,
+                            PatSrc.Can,
                             bundledPath,
                             Exists: true,
                             Loaded: false,
@@ -182,7 +182,7 @@ public sealed class PatCat(
                         isImported: true));
                     sources.Add(new PatSrcSt(
                         "can.yml",
-                        PatchSourceOrigin.BundledCanary,
+                        PatSrc.Can,
                         bundledPath,
                         Exists: true,
                         Loaded: false,
@@ -198,7 +198,7 @@ public sealed class PatCat(
                     isImported: true));
                 sources.Add(new PatSrcSt(
                     "can.yml",
-                    PatchSourceOrigin.BundledCanary,
+                    PatSrc.Can,
                     bundledPath,
                     Exists: true,
                     Loaded: false,
@@ -210,7 +210,7 @@ public sealed class PatCat(
         {
             sources.Add(new PatSrcSt(
                 "can.yml",
-                PatchSourceOrigin.BundledCanary,
+                PatSrc.Can,
                 bundledPath,
                 Exists: false,
                 Loaded: false,
@@ -221,7 +221,7 @@ public sealed class PatCat(
             "cheats.yml",
             bundledCheatPath,
             hasBundledCheats,
-            PatchSourceOrigin.BundledCheats,
+            PatSrc.Cht,
             isImported: true,
             catalogs,
             errors));
@@ -259,20 +259,20 @@ public sealed class PatCat(
             sources);
     }
 
-    public IReadOnlyList<Rpcs3PatchMatchResult> Build(
-        Rpcs3PatchCatalog catalog,
-        Rpcs3GameDescriptor game)
+    public IReadOnlyList<Mdl.PatMatch> Build(
+        Mdl.PatCat catalog,
+        R3Game game)
     {
         return catalog.Entries
             .Select(entry => patchMatch.Match(entry, [game]))
             .Where(match => match.Status is not
-                PatchMatchStatus.SerialMismatch and not
-                PatchMatchStatus.NoMetadata)
+                MatStat.SerBad and not
+                MatStat.NoMeta)
             .ToArray();
     }
 
     public bool CanRead(
-        Rpcs3InstallDescriptor install)
+        R3Inst install)
     {
         try
         {
@@ -285,20 +285,20 @@ public sealed class PatCat(
         }
     }
 
-    public PatchConfigSnapshot ReadCfg(
-        Rpcs3InstallDescriptor install)
+    public CfgSnap ReadCfg(
+        R3Inst install)
     {
-        return patchConfig.ReadSnapshot(
-            install.PatchConfigPath);
+        return patchConfig.ReadSnap(
+            install.PatCfg);
     }
 
     private PatSrcSt ReadFile(
         string name,
         string path,
         bool exists,
-        PatchSourceOrigin source,
+        PatSrc source,
         bool isImported,
-        ICollection<Rpcs3PatchCatalog> catalogs,
+        ICollection<Mdl.PatCat> catalogs,
         ICollection<string> errors)
     {
         if (!exists)
@@ -315,7 +315,7 @@ public sealed class PatCat(
         try
         {
             var read = catalogReader.Read(path, source);
-            if (read.Succeeded)
+            if (read.IsOk)
             {
                 catalogs.Add(read.Catalog);
                 AddWarn(errors, read.Error, isImported);
@@ -358,9 +358,9 @@ public sealed class PatCat(
         }
     }
 
-    private static Rpcs3PatchCatalog Classify(
-        Rpcs3PatchCatalog imported,
-        Rpcs3PatchCatalog bundledCanary)
+    private static Mdl.PatCat Classify(
+        Mdl.PatCat imported,
+        Mdl.PatCat bundledCanary)
     {
         var bundledKeys = bundledCanary.Entries
             .Select(PatId)
@@ -372,8 +372,8 @@ public sealed class PatCat(
                 .Select(entry => bundledKeys.Contains(PatId(entry))
                     ? entry with
                     {
-                        Risk = PatchRisk.Canary,
-                        PatchType = "Canary"
+                        Risk = PatRisk.Canary,
+                        PatType = "Canary"
                     }
                     : entry)
                 .ToArray()
@@ -381,9 +381,9 @@ public sealed class PatCat(
     }
 
     private static string PatId(
-        Rpcs3PatchEntry entry)
+        PatEntry entry)
     {
-        return $"{entry.RuntimeHashKey}|{entry.Title}";
+        return $"{entry.RunKey}|{entry.Title}";
     }
 
     private void AddWarn(

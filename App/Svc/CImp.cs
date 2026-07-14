@@ -33,7 +33,7 @@ public sealed record CanaryPatchRemoveResult(
 public sealed record CanaryPatchStageResult(
     bool Succeeded,
     string TargetPath,
-    PatchPreparedFile? PreparedFile,
+    PrepFile? PreparedFile,
     string Message,
     string? Error);
 
@@ -53,12 +53,12 @@ public sealed class CanaryPatchImportService
         @"^  # R3Config managed Canary patches(?<version> v[0-9]+)? - (?<edge>begin|end)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private readonly PatchCatalogReader _catalogReader;
+    private readonly ReadSvc _catalogReader;
 
     public CanaryPatchImportService(
-        PatchCatalogReader? catalogReader = null)
+        ReadSvc? catalogReader = null)
     {
-        _catalogReader = catalogReader ?? new PatchCatalogReader();
+        _catalogReader = catalogReader ?? new ReadSvc();
     }
 
     public CanaryPatchNormalizeResult Normalize(string? sourceText)
@@ -205,9 +205,9 @@ public sealed class CanaryPatchImportService
 
             var incomingCatalog = _catalogReader.ReadText(
                 normalize.NormalizedText,
-                PatchSourceOrigin.Imported,
+                PatSrc.Imported,
                 targetPath);
-            if (!incomingCatalog.Succeeded)
+            if (!incomingCatalog.IsOk)
             {
                 var error = incomingCatalog.Error ??
                             UiText.T("Patch.ImportCanaryInvalidYaml");
@@ -227,9 +227,9 @@ public sealed class CanaryPatchImportService
             {
                 var existingCatalog = _catalogReader.ReadText(
                     existingText,
-                    PatchSourceOrigin.Imported,
+                    PatSrc.Imported,
                     targetPath);
-                if (!existingCatalog.Succeeded)
+                if (!existingCatalog.IsOk)
                 {
                     var error = existingCatalog.Error ??
                                 UiText.T("Patch.ImportCanaryInvalidYaml");
@@ -278,12 +278,12 @@ public sealed class CanaryPatchImportService
 
             var finalCatalog = _catalogReader.ReadText(
                 finalText,
-                PatchSourceOrigin.Imported,
+                PatSrc.Imported,
                 targetPath);
             if (!finalText.StartsWith(
                     RequiredVersionHeader,
                     StringComparison.Ordinal) ||
-                !finalCatalog.Succeeded)
+                !finalCatalog.IsOk)
             {
                 var error = finalCatalog.Error ??
                             UiText.T("Patch.ImportCanaryInvalidYaml");
@@ -298,11 +298,11 @@ public sealed class CanaryPatchImportService
             return new CanaryPatchStageResult(
                 true,
                 targetPath,
-                new PatchPreparedFile(
+                new PrepFile(
                     targetPath,
                      finalText,
-                     PatchPreparedFileKind.PatchCatalog,
-                     PatchSourceOrigin.Imported,
+                     PrepKind.PatCat,
+                     PatSrc.Imported,
                      finalCatalog.Catalog.Entries.Count),
                  UiText.T("Patch.PrepareCanarySelectedSuccess"),
                  null);
@@ -354,9 +354,9 @@ public sealed class CanaryPatchImportService
             var existingText = ReadImportedPatchText(targetPath);
             var existingCatalog = _catalogReader.ReadText(
                 existingText,
-                PatchSourceOrigin.Imported,
+                PatSrc.Imported,
                 targetPath);
-            if (!existingCatalog.Succeeded)
+            if (!existingCatalog.IsOk)
             {
                 var error = existingCatalog.Error ??
                             UiText.T("Patch.ImportCanaryInvalidYaml");
@@ -388,21 +388,21 @@ public sealed class CanaryPatchImportService
                 return new CanaryPatchStageResult(
                     true,
                     targetPath,
-                    new PatchPreparedFile(
+                    new PrepFile(
                         targetPath,
                         string.Empty,
-                        PatchPreparedFileKind.PatchCatalog,
-                        PatchSourceOrigin.Imported,
-                        DeleteTarget: true),
+                        PrepKind.PatCat,
+                        PatSrc.Imported,
+                        DelTgt: true),
                     UiText.T("Patch.RemoveCanarySuccess"),
                     null);
             }
 
             var finalCatalog = _catalogReader.ReadText(
                 finalText,
-                PatchSourceOrigin.Imported,
+                PatSrc.Imported,
                 targetPath);
-            if (!finalCatalog.Succeeded)
+            if (!finalCatalog.IsOk)
             {
                 var error = finalCatalog.Error ??
                             UiText.T("Patch.ImportCanaryInvalidYaml");
@@ -417,11 +417,11 @@ public sealed class CanaryPatchImportService
             return new CanaryPatchStageResult(
                 true,
                 targetPath,
-                new PatchPreparedFile(
+                new PrepFile(
                     targetPath,
                     finalText,
-                    PatchPreparedFileKind.PatchCatalog,
-                    PatchSourceOrigin.Imported,
+                    PrepKind.PatCat,
+                    PatSrc.Imported,
                     finalCatalog.Catalog.Entries.Count),
                 UiText.T("Patch.RemoveCanarySuccess"),
                 null);
@@ -448,9 +448,9 @@ public sealed class CanaryPatchImportService
                 return false;
             }
 
-            var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+            var text = R3Bound.ReadUtf8(
                 targetPath,
-                Rpcs3InputLimits.PatchCatalogYamlBytes,
+                R3Limits.PatCatBy,
                 "imported_patch.yml");
             return ScanManagedBlocks(text).HasManagedBlock;
         }
@@ -506,7 +506,7 @@ public sealed class CanaryPatchImportService
 
     private static bool IsPatchRuntimeKey(string value)
     {
-        return Rpcs3PatchRuntimeKey.TryParse(value, out _);
+        return RunKey.TryParse(value, out _);
     }
 
     private static List<string> FilterDuplicatePatchBlocks(

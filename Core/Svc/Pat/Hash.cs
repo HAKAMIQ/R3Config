@@ -9,17 +9,17 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class PatchHashProbeService
+public sealed class HashPrb
 {
-    private const int MaxProbeBytes = 16 * 1024 * 1024;
-    private const long MaxCompressedProbeBytes = 64L * 1024 * 1024;
-    private const long MaxExpandedProbeBytes = 256L * 1024 * 1024;
-    private const int StreamBufferBytes = 64 * 1024;
+    private const int MaxBytes = 16 * 1024 * 1024;
+    private const long MaxByte2 = 64L * 1024 * 1024;
+    private const long MaxByte3 = 256L * 1024 * 1024;
+    private const int Bytes = 64 * 1024;
 
-    private readonly Dictionary<string, CachedMetadata> _metadataCache =
+    private readonly Dictionary<string, MetaCach> _Cache =
         new(StringComparer.OrdinalIgnoreCase);
 
-    private static readonly Regex SerialSessionRegex = new(
+    private static readonly Regex Regex = new(
         @"^[^\r\n]{0,128}\bSYS:\s*Serial:\s*(?<serial>[A-Z0-9]{9})\b",
         RegexOptions.Compiled |
         RegexOptions.CultureInvariant |
@@ -27,174 +27,174 @@ public sealed class PatchHashProbeService
         RegexOptions.NonBacktracking |
         RegexOptions.Multiline);
 
-    private static readonly Regex PpuHashRegex = new(
+    private static readonly Regex PpuRegex = new(
         @"\bPPU executable hash:\s*PPU-(?<hash>[0-9a-f]{40})(?![0-9a-f])",
         RegexOptions.Compiled |
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase);
 
-    private static readonly Regex SpuHashRegex = new(
+    private static readonly Regex SpuRegex = new(
         @"\b(?:SPU executable hash:|Loaded SPU image:)\s*SPU-(?<hash>[0-9a-f]{40})(?![0-9a-f])",
         RegexOptions.Compiled |
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase);
 
-    private static readonly Regex PrxHashRegex = new(
+    private static readonly Regex PrxRegex = new(
         @"\bPRX hash of [^\r\n]*?:\s*PRX-(?<hash>[0123456789ACEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{28}-[0-9]+)",
         RegexOptions.Compiled |
         RegexOptions.CultureInvariant);
 
-    private static readonly Regex OvlHashRegex = new(
+    private static readonly Regex OvlRegex = new(
         @"\bOVL hash of [^\r\n]*?:\s*OVL-(?<hash>[0-9a-f]{40})(?![0-9a-f])",
         RegexOptions.Compiled |
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase);
 
-    private static readonly Regex CachePpuHashRegex = new(
+    private static readonly Regex Regex2 = new(
         @"^ppu-(?<hash>[0-9A-Za-z]{28}|[0-9a-f]{40})(?:-(?<module>[^\\/:*?\x22<>|]+))?$",
         RegexOptions.Compiled |
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase);
 
-    private static readonly Regex CacheSpuHashRegex = new(
+    private static readonly Regex Regex3 = new(
         @"^spu-(?<hash>[0-9a-f]{40})(?:-|$)",
         RegexOptions.Compiled |
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase);
 
-    public Rpcs3GameDescriptor Enrich(
-        Rpcs3InstallDescriptor install,
-        Rpcs3GameDescriptor game)
+    public R3Game Enrich(
+        R3Inst install,
+        R3Game game)
     {
-        var existingPpuHashes = NormalizeHashes(game.AllPpuHashes);
-        var existingSpuHashes = NormalizeHashes(game.AllSpuHashes);
-        var existingPrxHashes = NormalizeModuleHashes(
-            PatchHashKind.Prx,
-            game.AllPrxHashes);
-        var existingOvlHashes = NormalizeModuleHashes(
-            PatchHashKind.Ovl,
-            game.AllOvlHashes);
-        var existingAuthoritativePpuHashes = NormalizeHashes(
-            game.AllAuthoritativePpuHashes);
+        var existingPpuHashes = Norm(game.Hashes);
+        var existingSpuHashes = Norm(game.SpuList);
+        var existingPrxHashes = Norm2(
+            HashKind.Prx,
+            game.PrxList);
+        var existingOvlHashes = Norm2(
+            HashKind.Ovl,
+            game.OvlList);
+        var existingAuthoritativePpuHashes = Norm(
+            game.PpuList);
         var normalizedGame = game with
         {
             PpuHash = existingPpuHashes.FirstOrDefault(),
             SpuHash = existingSpuHashes.FirstOrDefault(),
-            PpuHashes = existingPpuHashes,
-            SpuHashes = existingSpuHashes,
-            PrxHashes = existingPrxHashes,
-            OvlHashes = existingOvlHashes,
-            AuthoritativePpuHashes = existingAuthoritativePpuHashes
+            PpuRaw = existingPpuHashes,
+            SpuRaw = existingSpuHashes,
+            PrxRaw = existingPrxHashes,
+            OvlRaw = existingOvlHashes,
+            AuthPpu = existingAuthoritativePpuHashes
         };
 
         var result = Probe(install, normalizedGame);
-        var ppuHashes = NormalizeHashes(existingPpuHashes.Concat(result.AllPpuHashes));
-        var spuHashes = NormalizeHashes(existingSpuHashes.Concat(result.AllSpuHashes));
-        var prxHashes = NormalizeModuleHashes(
-            PatchHashKind.Prx,
-            existingPrxHashes.Concat(result.AllPrxHashes));
-        var ovlHashes = NormalizeModuleHashes(
-            PatchHashKind.Ovl,
-            existingOvlHashes.Concat(result.AllOvlHashes));
-        var authoritativePpuHashes = NormalizeHashes(
+        var ppuHashes = Norm(existingPpuHashes.Concat(result.Hashes));
+        var spuHashes = Norm(existingSpuHashes.Concat(result.SpuList));
+        var prxHashes = Norm2(
+            HashKind.Prx,
+            existingPrxHashes.Concat(result.PrxList));
+        var ovlHashes = Norm2(
+            HashKind.Ovl,
+            existingOvlHashes.Concat(result.OvlList));
+        var authoritativePpuHashes = Norm(
             existingAuthoritativePpuHashes.Concat(
-                result.AllAuthoritativePpuHashes));
+                result.PpuList));
 
         return game with
         {
             PpuHash = ppuHashes.FirstOrDefault(),
             SpuHash = spuHashes.FirstOrDefault(),
-            PpuHashes = ppuHashes,
-            SpuHashes = spuHashes,
-            PrxHashes = prxHashes,
-            OvlHashes = ovlHashes,
-            AuthoritativePpuHashes = authoritativePpuHashes,
-            HashSource = result.HashAvailable
-                ? result.SourcePath
-                : game.HashSource,
-            HashMessage = result.Message,
-            HashEvidenceKind = result.HashAvailable
-                ? result.EvidenceKind
-                : game.HashEvidenceKind,
-            HashEvidenceTimestampUtc = result.HashAvailable
-                ? result.SourceTimestampUtc
-                : game.HashEvidenceTimestampUtc
+            PpuRaw = ppuHashes,
+            SpuRaw = spuHashes,
+            PrxRaw = prxHashes,
+            OvlRaw = ovlHashes,
+            AuthPpu = authoritativePpuHashes,
+            HashSrc = result.HasHash
+                ? result.SrcPath
+                : game.HashSrc,
+            HashMsg = result.Message,
+            HashEvi = result.HasHash
+                ? result.EviKind
+                : game.HashEvi,
+            HashTime = result.HasHash
+                ? result.SrcTime
+                : game.HashTime
         };
     }
 
-    public IReadOnlyList<Rpcs3GameDescriptor> Enrich(
-        Rpcs3InstallDescriptor install,
-        IEnumerable<Rpcs3GameDescriptor> games)
+    public IReadOnlyList<R3Game> Enrich(
+        R3Inst install,
+        IEnumerable<R3Game> games)
     {
         return games.Select(game => Enrich(install, game)).ToArray();
     }
 
-    public PatchHashProbeResult Probe(
-        Rpcs3InstallDescriptor install,
-        Rpcs3GameDescriptor game)
+    public HashRes Probe(
+        R3Inst install,
+        R3Game game)
     {
         if (string.IsNullOrWhiteSpace(game.Serial))
         {
-            return PatchHashProbeResult.Unknown(
+            return HashRes.Unknown(
                 "Game serial is unavailable; patch hash remains unknown.");
         }
 
-        var existingPpuHashes = NormalizeHashes(game.AllPpuHashes);
-        var existingSpuHashes = NormalizeHashes(game.AllSpuHashes);
-        var existingPrxHashes = NormalizeModuleHashes(
-            PatchHashKind.Prx,
-            game.AllPrxHashes);
-        var existingOvlHashes = NormalizeModuleHashes(
-            PatchHashKind.Ovl,
-            game.AllOvlHashes);
-        var existingAuthoritativePpuHashes = NormalizeHashes(
-            game.AllAuthoritativePpuHashes);
+        var existingPpuHashes = Norm(game.Hashes);
+        var existingSpuHashes = Norm(game.SpuList);
+        var existingPrxHashes = Norm2(
+            HashKind.Prx,
+            game.PrxList);
+        var existingOvlHashes = Norm2(
+            HashKind.Ovl,
+            game.OvlList);
+        var existingAuthoritativePpuHashes = Norm(
+            game.PpuList);
         if (existingPpuHashes.Count > 0 ||
             existingSpuHashes.Count > 0 ||
             existingPrxHashes.Count > 0 ||
             existingOvlHashes.Count > 0)
         {
-            var existingKind = game.HashEvidenceKind == PatchHashEvidenceKind.None
-                ? PatchHashEvidenceKind.ExistingMetadata
-                : game.HashEvidenceKind;
+            var existingKind = game.HashEvi == HashEvi.None
+                ? HashEvi.Meta
+                : game.HashEvi;
 
-            return CreateResult(
+            return BuildRes(
                 existingPpuHashes,
                 existingSpuHashes,
                 existingPrxHashes,
                 existingOvlHashes,
                 existingKind,
-                game.HashSource,
-                game.HashEvidenceTimestampUtc,
+                game.HashSrc,
+                game.HashTime,
                 "Patch hashes came from existing game metadata.",
                 existingAuthoritativePpuHashes);
         }
 
-        var evidence = new List<PatchHashProbeResult>();
+        var evidence = new List<HashRes>();
 
-        foreach (var candidate in EnumerateCandidateMetadataFiles(install))
+        foreach (var candidate in ListCand(install))
         {
-            var result = TryProbeFile(candidate, game.Serial);
-            if (result.HashAvailable)
+            var result = TryProbe(candidate, game.Serial);
+            if (result.HasHash)
             {
                 evidence.Add(result);
             }
         }
 
-        var cacheResults = EnumerateCandidateCacheEntries(install, game.Serial)
+        var cacheResults = ListCan2(install, game.Serial)
             .Select(path =>
             {
-                var moduleName = ExtractPpuCacheModuleName(path);
-                return new CacheProbe(
+                var moduleName = Extract(path);
+                return new CachePrb(
                     moduleName,
-                    TryProbeCacheEntry(
+                    TryProb2(
                         path,
-                        FindLatestExecutableWriteUtc(
+                        FindUtc(
                             install,
                             game,
                             moduleName)));
             })
-            .Where(item => item.Result.HashAvailable)
+            .Where(item => item.Result.HasHash)
             .ToArray();
 
         if (cacheResults.Length > 0)
@@ -202,49 +202,49 @@ public sealed class PatchHashProbeService
             var newestCacheResult = cacheResults
                 .Select(item => item.Result)
                 .OrderByDescending(result =>
-                    result.SourceTimestampUtc ?? DateTime.MinValue)
+                    result.SrcTime ?? DateTime.MinValue)
                 .First();
             var currentModuleHashes = cacheResults
                 .Where(item =>
-                    item.ModuleName is not null &&
-                    item.Result.AllAuthoritativePpuHashes.Count > 0)
+                    item.ModName is not null &&
+                    item.Result.PpuList.Count > 0)
                 .GroupBy(
-                    item => item.ModuleName!,
+                    item => item.ModName!,
                     StringComparer.OrdinalIgnoreCase)
                 .Select(group => group
                     .OrderByDescending(item =>
-                        item.Result.SourceTimestampUtc ?? DateTime.MinValue)
+                        item.Result.SrcTime ?? DateTime.MinValue)
                     .First()
                     .Result)
-                .SelectMany(result => result.AllAuthoritativePpuHashes);
-            evidence.Add(CreateResult(
-                NormalizeHashes(cacheResults.SelectMany(item => item.Result.AllPpuHashes)),
-                NormalizeHashes(cacheResults.SelectMany(item => item.Result.AllSpuHashes)),
-                NormalizeModuleHashes(
-                    PatchHashKind.Prx,
-                    cacheResults.SelectMany(item => item.Result.AllPrxHashes)),
-                NormalizeModuleHashes(
-                    PatchHashKind.Ovl,
-                    cacheResults.SelectMany(item => item.Result.AllOvlHashes)),
-                PatchHashEvidenceKind.GameCache,
-                newestCacheResult.SourcePath,
-                newestCacheResult.SourceTimestampUtc,
-                $"Found {cacheResults.SelectMany(item => item.Result.AllPpuHashes).Distinct(StringComparer.OrdinalIgnoreCase).Count()} PPU and " +
-                $"{cacheResults.SelectMany(item => item.Result.AllSpuHashes).Distinct(StringComparer.OrdinalIgnoreCase).Count()} SPU hash(es) " +
+                .SelectMany(result => result.PpuList);
+            evidence.Add(BuildRes(
+                Norm(cacheResults.SelectMany(item => item.Result.Hashes)),
+                Norm(cacheResults.SelectMany(item => item.Result.SpuList)),
+                Norm2(
+                    HashKind.Prx,
+                    cacheResults.SelectMany(item => item.Result.PrxList)),
+                Norm2(
+                    HashKind.Ovl,
+                    cacheResults.SelectMany(item => item.Result.OvlList)),
+                HashEvi.Cache,
+                newestCacheResult.SrcPath,
+                newestCacheResult.SrcTime,
+                $"Found {cacheResults.SelectMany(item => item.Result.Hashes).Distinct(StringComparer.OrdinalIgnoreCase).Count()} PPU and " +
+                $"{cacheResults.SelectMany(item => item.Result.SpuList).Distinct(StringComparer.OrdinalIgnoreCase).Count()} SPU hash(es) " +
                  "in the bounded RPCS3 per-game cache probe.",
-                NormalizeHashes(currentModuleHashes)));
+                Norm(currentModuleHashes)));
         }
 
         var newestLog = evidence
-            .Where(result => result.EvidenceKind is
-                PatchHashEvidenceKind.PlainLog or
-                PatchHashEvidenceKind.CompressedLog)
+            .Where(result => result.EviKind is
+                HashEvi.PlainLog or
+                HashEvi.ZipLog)
             .OrderByDescending(result =>
-                result.SourceTimestampUtc ?? DateTime.MinValue)
-            .ThenBy(result => EvidenceRank(result.EvidenceKind))
+                result.SrcTime ?? DateTime.MinValue)
+            .ThenBy(result => EviRank(result.EviKind))
             .FirstOrDefault();
         var cache = evidence.FirstOrDefault(result =>
-            result.EvidenceKind == PatchHashEvidenceKind.GameCache);
+            result.EviKind == HashEvi.Cache);
         var selectedEvidence = new[] { newestLog, cache }
             .Where(result => result is not null)
             .Select(result => result!)
@@ -254,42 +254,42 @@ public sealed class PatchHashProbeService
         {
             var newest = selectedEvidence
                 .OrderByDescending(result =>
-                    result.SourceTimestampUtc ?? DateTime.MinValue)
-                .ThenBy(result => EvidenceRank(result.EvidenceKind))
+                    result.SrcTime ?? DateTime.MinValue)
+                .ThenBy(result => EviRank(result.EviKind))
                 .First();
 
-            return CreateResult(
-                NormalizeHashes(selectedEvidence.SelectMany(result => result.AllPpuHashes)),
-                NormalizeHashes(selectedEvidence.SelectMany(result => result.AllSpuHashes)),
-                NormalizeModuleHashes(
-                    PatchHashKind.Prx,
-                    selectedEvidence.SelectMany(result => result.AllPrxHashes)),
-                NormalizeModuleHashes(
-                    PatchHashKind.Ovl,
-                    selectedEvidence.SelectMany(result => result.AllOvlHashes)),
-                newest.EvidenceKind,
-                newest.SourcePath,
-                newest.SourceTimestampUtc,
+            return BuildRes(
+                Norm(selectedEvidence.SelectMany(result => result.Hashes)),
+                Norm(selectedEvidence.SelectMany(result => result.SpuList)),
+                Norm2(
+                    HashKind.Prx,
+                    selectedEvidence.SelectMany(result => result.PrxList)),
+                Norm2(
+                    HashKind.Ovl,
+                    selectedEvidence.SelectMany(result => result.OvlList)),
+                newest.EviKind,
+                newest.SrcPath,
+                newest.SrcTime,
                 $"Collected RPCS3 runtime identity evidence from {selectedEvidence.Length} bounded source(s).",
-                NormalizeHashes(selectedEvidence.SelectMany(result =>
-                    result.AllAuthoritativePpuHashes)));
+                Norm(selectedEvidence.SelectMany(result =>
+                    result.PpuList)));
         }
 
-        return PatchHashProbeResult.Unknown(
+        return HashRes.Unknown(
             "No RPCS3 log session or bounded per-game cache probe exposed a trustworthy 40-hex executable hash. " +
             "Start the game once with a cold boot, close RPCS3, then analyze again.");
     }
 
-    private static IEnumerable<MetadataCandidate> EnumerateCandidateMetadataFiles(
-        Rpcs3InstallDescriptor install)
+    private static IEnumerable<MetaCand> ListCand(
+        R3Inst install)
     {
-        var configBase = Path.GetDirectoryName(install.ConfigPath);
+        var configBase = Path.GetDirectoryName(install.CfgPath);
         var portablePath = Path.Combine(install.RootPath, "portable");
         var roots = new[]
         {
             install.RootPath,
             configBase,
-            install.ConfigPath,
+            install.CfgPath,
             portablePath
         }
         .Where(path => !string.IsNullOrWhiteSpace(path))
@@ -330,20 +330,20 @@ public sealed class PatchHashProbeService
                 continue;
             }
 
-            yield return new MetadataCandidate(
+            yield return new MetaCand(
                 path,
                 path.EndsWith(".gz", StringComparison.OrdinalIgnoreCase)
-                    ? PatchHashEvidenceKind.CompressedLog
-                    : PatchHashEvidenceKind.PlainLog,
+                    ? HashEvi.ZipLog
+                    : HashEvi.PlainLog,
                 info.LastWriteTimeUtc);
         }
     }
 
-    private static IEnumerable<string> EnumerateCandidateCacheEntries(
-        Rpcs3InstallDescriptor install,
+    private static IEnumerable<string> ListCan2(
+        R3Inst install,
         string serial)
     {
-        var configBase = Path.GetDirectoryName(install.ConfigPath);
+        var configBase = Path.GetDirectoryName(install.CfgPath);
         var portablePath = Path.Combine(install.RootPath, "portable");
         var candidateDirs = new[]
         {
@@ -385,7 +385,7 @@ public sealed class PatchHashProbeService
         }
     }
 
-    private static string? ExtractPpuCacheModuleName(string path)
+    private static string? Extract(string path)
     {
         var name = Path.GetFileName(path);
         if (string.IsNullOrWhiteSpace(name))
@@ -393,7 +393,7 @@ public sealed class PatchHashProbeService
             return null;
         }
 
-        var match = CachePpuHashRegex.Match(name);
+        var match = Regex2.Match(name);
         if (!match.Success || !match.Groups["module"].Success)
         {
             return null;
@@ -407,9 +407,9 @@ public sealed class PatchHashProbeService
             : null;
     }
 
-    private static DateTime? FindLatestExecutableWriteUtc(
-        Rpcs3InstallDescriptor install,
-        Rpcs3GameDescriptor game,
+    private static DateTime? FindUtc(
+        R3Inst install,
+        R3Game game,
         string? moduleName)
     {
         if (string.IsNullOrWhiteSpace(moduleName))
@@ -417,18 +417,18 @@ public sealed class PatchHashProbeService
             return null;
         }
 
-        var dataRoot = install.DataRootPath ??
-                       Path.GetDirectoryName(install.ConfigPath) ??
+        var dataRoot = install.DataRoot ??
+                       Path.GetDirectoryName(install.CfgPath) ??
                        install.RootPath;
         var candidates = new[]
         {
             Path.Combine(
-                game.InstallPath,
+                game.InstPath,
                 "PS3_GAME",
                 "USRDIR",
                 moduleName),
             Path.Combine(
-                game.InstallPath,
+                game.InstPath,
                 "USRDIR",
                 moduleName),
             Path.Combine(
@@ -469,16 +469,16 @@ public sealed class PatchHashProbeService
         return latest;
     }
 
-    private PatchHashProbeResult TryProbeFile(
-        MetadataCandidate candidate,
+    private HashRes TryProbe(
+        MetaCand candidate,
         string serial)
     {
         try
         {
-            var segments = ReadMetadataSegmentsCached(candidate);
+            var segments = ReadMeta(candidate);
             if (segments.All(string.IsNullOrWhiteSpace))
             {
-                return PatchHashProbeResult.Unknown("Metadata file is empty.");
+                return HashRes.Unknown("Metadata file is empty.");
             }
 
             // Segments are ordered newest-first. Keeping the head and tail as
@@ -487,24 +487,24 @@ public sealed class PatchHashProbeService
             // of large RPCS3 logs.
             foreach (var segment in segments)
             {
-                foreach (var session in ExtractMatchingSessionsNewestFirst(
+                foreach (var session in Extract2(
                              segment,
                              serial))
                 {
-                    var ppuHashes = ExtractExecutableHashes(
-                        PpuHashRegex,
+                    var ppuHashes = Extract3(
+                        PpuRegex,
                         session);
-                    var spuHashes = ExtractExecutableHashes(
-                        SpuHashRegex,
+                    var spuHashes = Extract3(
+                        SpuRegex,
                         session);
-                    var prxHashes = ExtractModuleHashes(
-                        PrxHashRegex,
+                    var prxHashes = Extract4(
+                        PrxRegex,
                         session,
-                        PatchHashKind.Prx);
-                    var ovlHashes = ExtractModuleHashes(
-                        OvlHashRegex,
+                        HashKind.Prx);
+                    var ovlHashes = Extract4(
+                        OvlRegex,
                         session,
-                        PatchHashKind.Ovl);
+                        HashKind.Ovl);
                     if (ppuHashes.Count == 0 &&
                         spuHashes.Count == 0 &&
                         prxHashes.Count == 0 &&
@@ -513,21 +513,21 @@ public sealed class PatchHashProbeService
                         continue;
                     }
 
-                    return CreateResult(
+                    return BuildRes(
                         ppuHashes,
                         spuHashes,
                         prxHashes,
                         ovlHashes,
                         candidate.Kind,
                         candidate.Path,
-                        candidate.LastWriteTimeUtc,
+                        candidate.WriteUtc,
                         $"Found {ppuHashes.Count} PPU, {spuHashes.Count} SPU, {prxHashes.Count} PRX, and {ovlHashes.Count} OVL runtime hash(es) " +
                         "inside the newest matching SYS: Serial session.",
                         ppuHashes);
                 }
             }
 
-            return PatchHashProbeResult.Unknown(
+            return HashRes.Unknown(
                 "No exact executable hash was found inside a matching SYS: Serial session.");
         }
         catch (Exception ex) when (
@@ -536,11 +536,11 @@ public sealed class PatchHashProbeService
             UnauthorizedAccessException or
             ArgumentException)
         {
-            return PatchHashProbeResult.Unknown(ex.Message);
+            return HashRes.Unknown(ex.Message);
         }
     }
 
-    private static PatchHashProbeResult TryProbeCacheEntry(
+    private static HashRes TryProb2(
         string path,
         DateTime? latestExecutableWriteUtc)
     {
@@ -549,18 +549,18 @@ public sealed class PatchHashProbeService
             var name = Path.GetFileName(path);
             if (string.IsNullOrWhiteSpace(name))
             {
-                return PatchHashProbeResult.Unknown("Cache entry has no name.");
+                return HashRes.Unknown("Cache entry has no name.");
             }
 
-            var ppuHashes = ExtractExecutableHashes(
-                CachePpuHashRegex,
+            var ppuHashes = Extract3(
+                Regex2,
                 name);
-            var spuHashes = ExtractExecutableHashes(
-                CacheSpuHashRegex,
+            var spuHashes = Extract3(
+                Regex3,
                 name);
             if (ppuHashes.Count == 0 && spuHashes.Count == 0)
             {
-                return PatchHashProbeResult.Unknown(
+                return HashRes.Unknown(
                     "Cache entry does not expose an exact 40-hex patch hash.");
             }
 
@@ -570,12 +570,12 @@ public sealed class PatchHashProbeService
                 latestExecutableWriteUtc is { } executableTimestamp &&
                 cacheTimestamp >= executableTimestamp;
 
-            return CreateResult(
+            return BuildRes(
                 ppuHashes,
                 spuHashes,
                 [],
                 [],
-                PatchHashEvidenceKind.GameCache,
+                HashEvi.Cache,
                 path,
                 cacheTimestamp,
                 "Patch hash found in the RPCS3 per-game cache.",
@@ -586,15 +586,15 @@ public sealed class PatchHashProbeService
             UnauthorizedAccessException or
             ArgumentException)
         {
-            return PatchHashProbeResult.Unknown(ex.Message);
+            return HashRes.Unknown(ex.Message);
         }
     }
 
-    private static IReadOnlyList<string> ExtractMatchingSessionsNewestFirst(
+    private static IReadOnlyList<string> Extract2(
         string text,
         string serial)
     {
-        var markers = SerialSessionRegex.Matches(text)
+        var markers = Regex.Matches(text)
             .Cast<Match>()
             .ToArray();
 
@@ -623,12 +623,12 @@ public sealed class PatchHashProbeService
         return sessions;
     }
 
-    private static IReadOnlyList<string> ExtractExecutableHashes(
+    private static IReadOnlyList<string> Extract3(
         Regex regex,
         string text)
     {
         return regex.Matches(text)
-            .Select(match => NormalizeExecutableHash(
+            .Select(match => NormExe(
                 match.Groups["hash"].Value))
             .Where(hash => hash is not null)
             .Select(hash => hash!)
@@ -636,14 +636,14 @@ public sealed class PatchHashProbeService
             .ToArray();
     }
 
-    private static IReadOnlyList<string> ExtractModuleHashes(
+    private static IReadOnlyList<string> Extract4(
         Regex regex,
         string text,
-        PatchHashKind kind)
+        HashKind kind)
     {
         return regex.Matches(text)
             .Select(match =>
-                Rpcs3PatchRuntimeKey.TryNormalizeEvidence(
+                RunKey.TryNorm2(
                     kind,
                     match.Groups["hash"].Value,
                     out var normalized)
@@ -655,35 +655,35 @@ public sealed class PatchHashProbeService
             .ToArray();
     }
 
-    private static IReadOnlyList<string> NormalizeHashes(
+    private static IReadOnlyList<string> Norm(
         IEnumerable<string> hashes)
     {
         return hashes
-            .Select(NormalizeExecutableHash)
+            .Select(NormExe)
             .Where(hash => hash is not null)
             .Select(hash => hash!)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
 
-    private static PatchHashProbeResult CreateResult(
+    private static HashRes BuildRes(
         IReadOnlyList<string> ppuHashes,
         IReadOnlyList<string> spuHashes,
         IReadOnlyList<string> prxHashes,
         IReadOnlyList<string> ovlHashes,
-        PatchHashEvidenceKind evidenceKind,
+        HashEvi evidenceKind,
         string? sourcePath,
         DateTime? sourceTimestampUtc,
         string message,
         IReadOnlyList<string>? authoritativePpuHashes = null)
     {
-        var normalizedPpuHashes = NormalizeHashes(ppuHashes);
-        var normalizedSpuHashes = NormalizeHashes(spuHashes);
-        var normalizedPrxHashes = NormalizeModuleHashes(
-            PatchHashKind.Prx,
+        var normalizedPpuHashes = Norm(ppuHashes);
+        var normalizedSpuHashes = Norm(spuHashes);
+        var normalizedPrxHashes = Norm2(
+            HashKind.Prx,
             prxHashes);
-        var normalizedOvlHashes = NormalizeModuleHashes(
-            PatchHashKind.Ovl,
+        var normalizedOvlHashes = Norm2(
+            HashKind.Ovl,
             ovlHashes);
 
         if (normalizedPpuHashes.Count == 0 &&
@@ -691,32 +691,32 @@ public sealed class PatchHashProbeService
             normalizedPrxHashes.Count == 0 &&
             normalizedOvlHashes.Count == 0)
         {
-            return PatchHashProbeResult.Unknown(message);
+            return HashRes.Unknown(message);
         }
 
-        return new PatchHashProbeResult(
+        return new HashRes(
             PpuHash: normalizedPpuHashes.FirstOrDefault(),
             SpuHash: normalizedSpuHashes.FirstOrDefault(),
-            EvidenceKind: evidenceKind,
-            SourcePath: sourcePath,
-            SourceTimestampUtc: sourceTimestampUtc,
-            HashAvailable: true,
+            EviKind: evidenceKind,
+            SrcPath: sourcePath,
+            SrcTime: sourceTimestampUtc,
+            HasHash: true,
             Message: message,
-            PpuHashes: normalizedPpuHashes,
-            SpuHashes: normalizedSpuHashes,
-            PrxHashes: normalizedPrxHashes,
-            OvlHashes: normalizedOvlHashes,
-            AuthoritativePpuHashes: NormalizeHashes(
+            PpuRaw: normalizedPpuHashes,
+            SpuRaw: normalizedSpuHashes,
+            PrxRaw: normalizedPrxHashes,
+            OvlRaw: normalizedOvlHashes,
+            AuthPpu: Norm(
                 authoritativePpuHashes ?? []));
     }
 
-    private static IReadOnlyList<string> NormalizeModuleHashes(
-        PatchHashKind kind,
+    private static IReadOnlyList<string> Norm2(
+        HashKind kind,
         IEnumerable<string> hashes)
     {
         return hashes
             .Select(hash =>
-                Rpcs3PatchRuntimeKey.TryNormalizeEvidence(
+                RunKey.TryNorm2(
                     kind,
                     hash,
                     out var normalized)
@@ -728,36 +728,36 @@ public sealed class PatchHashProbeService
             .ToArray();
     }
 
-    private static string? NormalizeExecutableHash(string? hash)
+    private static string? NormExe(string? hash)
     {
-        return Rpcs3ExecutableHash.TryNormalize(
+        return ExeHash.TryNorm(
             hash,
             out var normalized)
             ? normalized
             : null;
     }
 
-    private IReadOnlyList<string> ReadMetadataSegmentsCached(
-        MetadataCandidate candidate)
+    private IReadOnlyList<string> ReadMeta(
+        MetaCand candidate)
     {
         var info = new FileInfo(candidate.Path);
-        if (_metadataCache.TryGetValue(candidate.Path, out var cached) &&
+        if (_Cache.TryGetValue(candidate.Path, out var cached) &&
             cached.Length == info.Length &&
-            cached.LastWriteTimeUtc == info.LastWriteTimeUtc &&
+            cached.WriteUtc == info.LastWriteTimeUtc &&
             cached.Kind == candidate.Kind)
         {
             return cached.Segments;
         }
 
-        var segments = candidate.Kind == PatchHashEvidenceKind.CompressedLog
-            ? ReadGzipHeadAndTail(
+        var segments = candidate.Kind == HashEvi.ZipLog
+            ? ReadGzip(
                 candidate.Path,
-                MaxProbeBytes,
-                MaxCompressedProbeBytes,
-                MaxExpandedProbeBytes)
-            : ReadHeadAndTail(candidate.Path, MaxProbeBytes);
+                MaxBytes,
+                MaxByte2,
+                MaxByte3)
+            : ReadHead(candidate.Path, MaxBytes);
 
-        _metadataCache[candidate.Path] = new CachedMetadata(
+        _Cache[candidate.Path] = new MetaCach(
             info.Length,
             info.LastWriteTimeUtc,
             candidate.Kind,
@@ -766,7 +766,7 @@ public sealed class PatchHashProbeService
         return segments;
     }
 
-    private static IReadOnlyList<string> ReadHeadAndTail(
+    private static IReadOnlyList<string> ReadHead(
         string path,
         int maxBytes)
     {
@@ -785,13 +785,13 @@ public sealed class PatchHashProbeService
         {
             return
             [
-                ReadRange(stream, 0, (int)stream.Length)
+                Read(stream, 0, (int)stream.Length)
             ];
         }
 
         var segmentBytes = Math.Max(1, maxBytes / 2);
-        var head = ReadRange(stream, 0, segmentBytes);
-        var tail = ReadRange(
+        var head = Read(stream, 0, segmentBytes);
+        var tail = Read(
             stream,
             stream.Length - segmentBytes,
             segmentBytes);
@@ -800,7 +800,7 @@ public sealed class PatchHashProbeService
         return [tail, head];
     }
 
-    private static string ReadRange(
+    private static string Read(
         Stream stream,
         long offset,
         int bytesToRead)
@@ -826,7 +826,7 @@ public sealed class PatchHashProbeService
         return Encoding.UTF8.GetString(buffer, 0, totalRead);
     }
 
-    private static IReadOnlyList<string> ReadGzipHeadAndTail(
+    private static IReadOnlyList<string> ReadGzip(
         string path,
         int maxBytes,
         long maxCompressedBytes,
@@ -855,7 +855,7 @@ public sealed class PatchHashProbeService
         // Keep a full maxBytes tail so a log that fits the original bound is
         // still parsed as one continuous document.
         var ring = new byte[maxBytes];
-        var buffer = new byte[StreamBufferBytes];
+        var buffer = new byte[Bytes];
         var writeOffset = 0;
         var retainedCount = 0;
         long expandedBytes = 0;
@@ -882,7 +882,7 @@ public sealed class PatchHashProbeService
                 headCount += headRead;
             }
 
-            AppendToRing(
+            AppendTo(
                 ring,
                 buffer,
                 read,
@@ -925,7 +925,7 @@ public sealed class PatchHashProbeService
         return [tail, headText];
     }
 
-    private static void AppendToRing(
+    private static void AppendTo(
         byte[] ring,
         byte[] source,
         int sourceCount,
@@ -959,30 +959,30 @@ public sealed class PatchHashProbeService
         retainedCount = Math.Min(ring.Length, retainedCount + sourceCount);
     }
 
-    private static int EvidenceRank(PatchHashEvidenceKind kind)
+    private static int EviRank(HashEvi kind)
     {
         return kind switch
         {
-            PatchHashEvidenceKind.PlainLog => 0,
-            PatchHashEvidenceKind.CompressedLog => 1,
-            PatchHashEvidenceKind.GameCache => 2,
-            PatchHashEvidenceKind.ExistingMetadata => 3,
+            HashEvi.PlainLog => 0,
+            HashEvi.ZipLog => 1,
+            HashEvi.Cache => 2,
+            HashEvi.Meta => 3,
             _ => 4
         };
     }
 
-    private sealed record MetadataCandidate(
+    private sealed record MetaCand(
         string Path,
-        PatchHashEvidenceKind Kind,
-        DateTime LastWriteTimeUtc);
+        HashEvi Kind,
+        DateTime WriteUtc);
 
-    private sealed record CachedMetadata(
+    private sealed record MetaCach(
         long Length,
-        DateTime LastWriteTimeUtc,
-        PatchHashEvidenceKind Kind,
+        DateTime WriteUtc,
+        HashEvi Kind,
         IReadOnlyList<string> Segments);
 
-    private sealed record CacheProbe(
-        string? ModuleName,
-        PatchHashProbeResult Result);
+    private sealed record CachePrb(
+        string? ModName,
+        HashRes Result);
 }

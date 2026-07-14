@@ -4,12 +4,12 @@ namespace R3Config.Vm;
 
 public sealed class GameItemVm : VmBase
 {
-    private RecStateSummary _recState;
+    private RecSum _recState;
 
     public GameItemVm(
-        Rpcs3GameDescriptor game,
-        WikiGameRecommendation? recommendation,
-        RecStateSummary recState,
+        R3Game game,
+        WikiRec? recommendation,
+        RecSum recState,
         string serial,
         string title,
         bool isDetectedInRpcs3)
@@ -22,11 +22,11 @@ public sealed class GameItemVm : VmBase
         IsDetectedInRpcs3 = isDetectedInRpcs3;
     }
 
-    public Rpcs3GameDescriptor Game { get; }
+    public R3Game Game { get; }
 
-    public WikiGameRecommendation? Recommendation { get; }
+    public WikiRec? Recommendation { get; }
 
-    public RecStateSummary RecState
+    public RecSum RecState
     {
         get => _recState;
         set

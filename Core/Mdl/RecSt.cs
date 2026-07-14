@@ -9,19 +9,19 @@ public enum RecState
     Unknown
 }
 
-public sealed record RecStateItem(
+public sealed record RecItem(
     string Serial,
     string Path,
     string? Current,
     string Proposed,
-    RecommendationRisk Risk,
+    RecRisk Risk,
     RecState State,
-    bool IsDifferent,
-    bool IsActionable,
-    bool IsAutoSelectable,
+    bool IsDiff,
+    bool IsAction,
+    bool IsSel,
     string Notes);
 
-public sealed record RecStateSummary(
+public sealed record RecSum(
     string Serial,
     int Total,
     int Applied,
@@ -29,4 +29,4 @@ public sealed record RecStateSummary(
     int Manual,
     int Blocked,
     int Unknown,
-    IReadOnlyList<RecStateItem> Items);
+    IReadOnlyList<RecItem> Items);

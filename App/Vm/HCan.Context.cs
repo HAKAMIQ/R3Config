@@ -12,7 +12,7 @@ public sealed partial class HCanaryVm : VmBase
 {
     public void Load(string baseDirectory) => RefreshStoredPatches();
 
-    public void SetContext(Rpcs3InstallDescriptor? install, Rpcs3GameDescriptor? game)
+    public void SetContext(R3Inst? install, R3Game? game)
     {
         var gameChanged = _contextGame?.Serial != game?.Serial;
         _install = install;
@@ -36,7 +36,7 @@ public sealed partial class HCanaryVm : VmBase
         RefreshMutationState();
     }
 
-    public void Analyze(Rpcs3GameDescriptor? game) => SetContext(_install, game);
+    public void Analyze(R3Game? game) => SetContext(_install, game);
 
     public void UpdateMutationAvailability(
         bool isBusy,

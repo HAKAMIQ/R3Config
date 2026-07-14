@@ -10,10 +10,10 @@ namespace R3Config.Svc;
 
 public sealed class HwProbe
 {
-    private readonly Func<string?> _readCpuName;
-    private readonly Func<int> _readLogicalProcessors;
-    private readonly Func<ulong?> _readTotalMemoryBytes;
-    private readonly Func<string?> _readGpuName;
+    private readonly Func<string?> _readNam;
+    private readonly Func<int> _readCpu;
+    private readonly Func<ulong?> _Bytes;
+    private readonly Func<string?> _readNa2;
 
     public HwProbe(
         Func<string?>? readCpuName = null,
@@ -21,20 +21,20 @@ public sealed class HwProbe
         Func<ulong?>? readTotalMemoryBytes = null,
         Func<string?>? readGpuName = null)
     {
-        _readCpuName = readCpuName ?? ReadCpuName;
-        _readLogicalProcessors = readLogicalProcessors ?? (() => Environment.ProcessorCount);
-        _readTotalMemoryBytes = readTotalMemoryBytes ?? ReadTotalMemoryBytes;
-        _readGpuName = readGpuName ?? ReadGpuName;
+        _readNam = readCpuName ?? ReadCpu;
+        _readCpu = readLogicalProcessors ?? (() => Environment.ProcessorCount);
+        _Bytes = readTotalMemoryBytes ?? Read;
+        _readNa2 = readGpuName ?? ReadGpu;
     }
 
     public HwInfo Probe()
     {
         try
         {
-            var cpuName = Normalize(_readCpuName()) ?? "Unknown CPU";
-            var logicalProcessors = Math.Max(0, _readLogicalProcessors());
-            var totalMemoryBytes = _readTotalMemoryBytes();
-            var gpuName = Normalize(_readGpuName()) ?? "Unknown GPU";
+            var cpuName = Norm(_readNam()) ?? "Unknown CPU";
+            var logicalProcessors = Math.Max(0, _readCpu());
+            var totalMemoryBytes = _Bytes();
+            var gpuName = Norm(_readNa2()) ?? "Unknown GPU";
             var tier = Classify(logicalProcessors, totalMemoryBytes, cpuName, gpuName);
             var isFallback = tier == HwTier.Unknown ||
                              cpuName == "Unknown CPU" ||
@@ -43,12 +43,12 @@ public sealed class HwProbe
 
             return new HwInfo(
                 CpuName: cpuName,
-                LogicalProcessorCount: logicalProcessors,
-                TotalMemoryBytes: totalMemoryBytes,
+                CpuNum: logicalProcessors,
+                MemBytes: totalMemoryBytes,
                 GpuName: gpuName,
                 Tier: tier,
-                IsFallback: isFallback,
-                ProbeMessage: isFallback
+                IsFall: isFallback,
+                ProbeMsg: isFallback
                     ? "Hardware probe completed with partial data."
                     : "Hardware probe completed.");
         }
@@ -62,12 +62,12 @@ public sealed class HwProbe
     {
         return new HwInfo(
             CpuName: "Unknown CPU",
-            LogicalProcessorCount: 0,
-            TotalMemoryBytes: null,
+            CpuNum: 0,
+            MemBytes: null,
             GpuName: "Unknown GPU",
             Tier: HwTier.Unknown,
-            IsFallback: true,
-            ProbeMessage: string.IsNullOrWhiteSpace(message) ? "Hardware probe failed safely." : message);
+            IsFall: true,
+            ProbeMsg: string.IsNullOrWhiteSpace(message) ? "Hardware probe failed safely." : message);
     }
 
     private static HwTier Classify(
@@ -97,7 +97,7 @@ public sealed class HwProbe
             return HwTier.Mid;
         }
 
-        if (logicalProcessors >= 4 && memoryGiB >= 8 && LooksLikeMidRangeCpu(cpuName))
+        if (logicalProcessors >= 4 && memoryGiB >= 8 && LooksCpu(cpuName))
         {
             return HwTier.Mid;
         }
@@ -105,7 +105,7 @@ public sealed class HwProbe
         return HwTier.Low;
     }
 
-    private static bool LooksLikeMidRangeCpu(string cpuName)
+    private static bool LooksCpu(string cpuName)
     {
         return cpuName.Contains("i5", StringComparison.OrdinalIgnoreCase) ||
                cpuName.Contains("i7", StringComparison.OrdinalIgnoreCase) ||
@@ -115,9 +115,9 @@ public sealed class HwProbe
                cpuName.Contains("Ryzen 9", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string? ReadCpuName()
+    private static string? ReadCpu()
     {
-        var processorIdentifier = Normalize(Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER"));
+        var processorIdentifier = Norm(Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER"));
 
         if (OperatingSystem.IsWindows())
         {
@@ -128,27 +128,27 @@ public sealed class HwProbe
                 null) as string;
 #pragma warning restore CA1416
 
-            return Normalize(registryValue) ?? processorIdentifier;
+            return Norm(registryValue) ?? processorIdentifier;
         }
 
         return processorIdentifier;
     }
 
-    private static ulong? ReadTotalMemoryBytes()
+    private static ulong? Read()
     {
         if (!OperatingSystem.IsWindows())
         {
             return null;
         }
 
-        var memoryStatus = new MemoryStatusEx();
-        memoryStatus.dwLength = (uint)Marshal.SizeOf<MemoryStatusEx>();
-        return GlobalMemoryStatusEx(ref memoryStatus)
-            ? memoryStatus.ullTotalPhys
+        var memoryStatus = new MemoryEx();
+        memoryStatus.dwLength = (uint)Marshal.SizeOf<MemoryEx>();
+        return GlobalEx(ref memoryStatus)
+            ? memoryStatus.ullPhys
             : null;
     }
 
-    private static string? ReadGpuName()
+    private static string? ReadGpu()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -181,11 +181,11 @@ public sealed class HwProbe
         }
 
         return process.ExitCode == 0
-            ? Normalize(process.StandardOutput.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault())
+            ? Norm(process.StandardOutput.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault())
             : null;
     }
 
-    private static string? Normalize(string? value)
+    private static string? Norm(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -195,20 +195,23 @@ public sealed class HwProbe
         return value.Trim();
     }
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool GlobalMemoryStatusEx(ref MemoryStatusEx buffer);
+    [DllImport(
+        "kernel32.dll",
+        EntryPoint = "GlobalMemoryStatusEx",
+        SetLastError = true)]
+    private static extern bool GlobalEx(ref MemoryEx buffer);
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct MemoryStatusEx
+    private struct MemoryEx
     {
         public uint dwLength;
-        public uint dwMemoryLoad;
-        public ulong ullTotalPhys;
-        public ulong ullAvailPhys;
-        public ulong ullTotalPageFile;
-        public ulong ullAvailPageFile;
-        public ulong ullTotalVirtual;
-        public ulong ullAvailVirtual;
-        public ulong ullAvailExtendedVirtual;
+        public uint dwLoad;
+        public ulong ullPhys;
+        public ulong ullPhys2;
+        public ulong ullFile;
+        public ulong ullFile2;
+        public ulong Virtual;
+        public ulong Virtual2;
+        public ulong Virtual3;
     }
 }

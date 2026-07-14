@@ -3,27 +3,27 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class ConfigApplyService
+public sealed class CfgApply
 {
-    private readonly BackupService _backupService;
+    private readonly BkpSvc _BkpSvc;
     private readonly Action<
         string,
-        IReadOnlyList<ConfigChange>,
-        Action?> _applyChanges;
+        IReadOnlyList<CfgChg>,
+        Action?> _Changes;
 
-    public ConfigApplyService(
-        BackupService? backupService = null,
-        Action<string, IReadOnlyList<ConfigChange>, Action?>? applyChanges = null)
+    public CfgApply(
+        BkpSvc? backupService = null,
+        Action<string, IReadOnlyList<CfgChg>, Action?>? applyChanges = null)
     {
-        _backupService = backupService ?? new BackupService();
-        _applyChanges = applyChanges ?? Rpcs3ConfigYaml.ApplyChanges;
+        _BkpSvc = backupService ?? new BkpSvc();
+        _Changes = applyChanges ?? R3Yaml.Apply;
     }
 
-    public ConfigApplyResult Apply(
-        ConfigPlan plan,
-        IReadOnlyList<ConfigChange> changes,
+    public CfgRes Apply(
+        CfgPlan plan,
+        IReadOnlyList<CfgChg> changes,
         string backupRootPath,
-        PatchPathValidator? validatePaths = null)
+        PathVld? validatePaths = null)
     {
         if (changes.Count == 0)
         {
@@ -31,28 +31,28 @@ public sealed class ConfigApplyService
         }
 
         validatePaths?.Invoke(
-            PatchTransactionPhase.BeforeBackup,
+            PatPhase.Bkp,
             backupRootPath,
-            [plan.TargetConfigPath]);
-        var backup = _backupService.CreateBackup(
+            [plan.CfgPath]);
+        var backup = _BkpSvc.BuildBkp(
             backupRootPath,
-            [plan.TargetConfigPath]);
+            [plan.CfgPath]);
         try
         {
-            _applyChanges(
-                plan.TargetConfigPath,
+            _Changes(
+                plan.CfgPath,
                 changes,
                 () => validatePaths?.Invoke(
-                    PatchTransactionPhase.BeforeCommit,
+                    PatPhase.Commit,
                     backupRootPath,
-                    [plan.TargetConfigPath]));
-            return new ConfigApplyResult(backup, changes);
+                    [plan.CfgPath]));
+            return new CfgRes(backup, changes);
         }
         catch (Exception writeException)
         {
             try
             {
-                _backupService.Restore(backup);
+                _BkpSvc.Restore(backup);
             }
             catch (Exception restoreException)
             {
@@ -66,11 +66,11 @@ public sealed class ConfigApplyService
     }
 
 
-    public ConfigApplyResult Remove(
-        ConfigPlan plan,
-        IReadOnlyList<ConfigChange> changes,
+    public CfgRes Remove(
+        CfgPlan plan,
+        IReadOnlyList<CfgChg> changes,
         string backupRootPath,
-        PatchPathValidator? validatePaths = null)
+        PathVld? validatePaths = null)
     {
         if (changes.Count == 0)
         {
@@ -78,28 +78,28 @@ public sealed class ConfigApplyService
         }
 
         validatePaths?.Invoke(
-            PatchTransactionPhase.BeforeBackup,
+            PatPhase.Bkp,
             backupRootPath,
-            [plan.TargetConfigPath]);
-        var backup = _backupService.CreateBackup(
+            [plan.CfgPath]);
+        var backup = _BkpSvc.BuildBkp(
             backupRootPath,
-            [plan.TargetConfigPath]);
+            [plan.CfgPath]);
         try
         {
-            Rpcs3ConfigYaml.RemoveChanges(
-                plan.TargetConfigPath,
+            R3Yaml.Del(
+                plan.CfgPath,
                 changes,
                 () => validatePaths?.Invoke(
-                    PatchTransactionPhase.BeforeCommit,
+                    PatPhase.Commit,
                     backupRootPath,
-                    [plan.TargetConfigPath]));
-            return new ConfigApplyResult(backup, changes);
+                    [plan.CfgPath]));
+            return new CfgRes(backup, changes);
         }
         catch (Exception writeException)
         {
             try
             {
-                _backupService.Restore(backup);
+                _BkpSvc.Restore(backup);
             }
             catch (Exception restoreException)
             {

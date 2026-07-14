@@ -5,13 +5,13 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public static class RecommendationRiskPolicy
+public static class RecPol
 {
-    private static readonly Regex RequiresPatchPattern = new(
+    private static readonly Regex Pattern = new(
         @"requires\b.{0,80}\bpatch\b",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly IReadOnlySet<string> AutoSelectableFixKeys =
+    private static readonly IReadOnlySet<string> AutoKeys =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "write color buffers",
@@ -24,7 +24,7 @@ public static class RecommendationRiskPolicy
             "spu xfloat accuracy"
         };
 
-    private static readonly IReadOnlySet<string> ManualTimingKeys =
+    private static readonly IReadOnlySet<string> Keys =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "vblank rate",
@@ -33,7 +33,7 @@ public static class RecommendationRiskPolicy
             "vblank ntsc fixup"
         };
 
-    private static readonly IReadOnlySet<string> HardwareDependentKeys =
+    private static readonly IReadOnlySet<string> Keys2 =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "renderer",
@@ -50,37 +50,37 @@ public static class RecommendationRiskPolicy
             "driver wake-up delay"
         };
 
-    public static RecommendationRisk Classify(string wikiKey, string value, string? notes)
+    public static Mdl.RecRisk Classify(string wikiKey, string value, string? notes)
     {
         var haystack = $"{wikiKey} {value} {notes}".ToLowerInvariant();
 
-        if (ManualTimingKeys.Contains(wikiKey) ||
-            ContainsAny(haystack, "60 fps", "60fps", "timing", "physics"))
+        if (Keys.Contains(wikiKey) ||
+            Contains(haystack, "60 fps", "60fps", "timing", "physics"))
         {
-            return RecommendationRisk.ManualTiming;
+            return Mdl.RecRisk.Timing;
         }
 
-        if (IsExpertOnlyKey(wikiKey) || ContainsAny(haystack, "experimental", "debug"))
+        if (IsExpert(wikiKey) || Contains(haystack, "experimental", "debug"))
         {
-            return RecommendationRisk.ExpertOnly;
+            return Mdl.RecRisk.Only;
         }
 
-        if (IsPatchDependent(haystack))
+        if (IsPatDep(haystack))
         {
-            return RecommendationRisk.PatchDependent;
+            return Mdl.RecRisk.PatDep;
         }
 
-        if (IsPerformanceCost(wikiKey, value, haystack))
+        if (IsPerf(wikiKey, value, haystack))
         {
-            return RecommendationRisk.PerformanceCost;
+            return Mdl.RecRisk.PerfCost;
         }
 
-        if (HardwareDependentKeys.Contains(wikiKey) || ContainsAny(haystack, "gpu dependent", "cpu dependent", "hardware dependent"))
+        if (Keys2.Contains(wikiKey) || Contains(haystack, "gpu dependent", "cpu dependent", "hardware dependent"))
         {
-            return RecommendationRisk.HardwareDependent;
+            return Mdl.RecRisk.Dep;
         }
 
-        if (ContainsAny(
+        if (Contains(
             haystack,
             "optional",
             "unless using",
@@ -94,42 +94,42 @@ public static class RecommendationRiskPolicy
             "when using",
             "may cause"))
         {
-            return RecommendationRisk.Conditional;
+            return Mdl.RecRisk.Cond;
         }
 
-        if (!AutoSelectableFixKeys.Contains(wikiKey))
+        if (!AutoKeys.Contains(wikiKey))
         {
-            return RecommendationRisk.Unknown;
+            return Mdl.RecRisk.Unknown;
         }
 
-        if (ContainsAny(haystack, "required", "mandatory"))
+        if (Contains(haystack, "required", "mandatory"))
         {
-            return RecommendationRisk.Required;
+            return Mdl.RecRisk.Required;
         }
 
-        if (ContainsAny(haystack, "fix", "recommended", "needed"))
+        if (Contains(haystack, "fix", "recommended", "needed"))
         {
-            return RecommendationRisk.Recommended;
+            return Mdl.RecRisk.Rec;
         }
 
-        return RecommendationRisk.Unknown;
+        return Mdl.RecRisk.Unknown;
     }
 
-    public static bool RequiresExtraApplyWarning(RecommendationRisk risk)
+    public static bool Requires(Mdl.RecRisk risk)
     {
-        return risk is RecommendationRisk.Conditional
-            or RecommendationRisk.PerformanceCost
-            or RecommendationRisk.PatchDependent
-            or RecommendationRisk.HardwareDependent
-            or RecommendationRisk.ManualTiming
-            or RecommendationRisk.ExpertOnly
-            or RecommendationRisk.Risky;
+        return risk is Mdl.RecRisk.Cond
+            or Mdl.RecRisk.PerfCost
+            or Mdl.RecRisk.PatDep
+            or Mdl.RecRisk.Dep
+            or Mdl.RecRisk.Timing
+            or Mdl.RecRisk.Only
+            or Mdl.RecRisk.Risky;
     }
 
-    private static bool IsPatchDependent(string haystack)
+    private static bool IsPatDep(string haystack)
     {
-        return RequiresPatchPattern.IsMatch(haystack) ||
-               ContainsAny(
+        return Pattern.IsMatch(haystack) ||
+               Contains(
                    haystack,
                    "requires patch",
                    "required if not using patch",
@@ -140,7 +140,7 @@ public static class RecommendationRiskPolicy
                    "patch dependent");
     }
 
-    private static bool IsPerformanceCost(string wikiKey, string value, string haystack)
+    private static bool IsPerf(string wikiKey, string value, string haystack)
     {
         if ((wikiKey.Equals("ppu decoder", StringComparison.OrdinalIgnoreCase) ||
              wikiKey.Equals("spu decoder", StringComparison.OrdinalIgnoreCase)) &&
@@ -149,7 +149,7 @@ public static class RecommendationRiskPolicy
             return true;
         }
 
-        return ContainsAny(
+        return Contains(
             haystack,
             "reduces performance",
             "reduce performance",
@@ -163,7 +163,7 @@ public static class RecommendationRiskPolicy
             "very demanding");
     }
 
-    private static bool IsExpertOnlyKey(string wikiKey)
+    private static bool IsExpert(string wikiKey)
     {
         return wikiKey.Contains("debug", StringComparison.OrdinalIgnoreCase) ||
                wikiKey.Equals("force cpu blit emulation", StringComparison.OrdinalIgnoreCase) ||
@@ -172,7 +172,7 @@ public static class RecommendationRiskPolicy
                wikiKey.Equals("hook static functions", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool ContainsAny(string value, params string[] fragments)
+    private static bool Contains(string value, params string[] fragments)
     {
         foreach (var fragment in fragments)
         {

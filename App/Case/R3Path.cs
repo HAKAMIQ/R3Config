@@ -7,26 +7,26 @@ namespace R3Config.Case;
 public static class R3Paths
 {
     public static string BkpRoot(
-        Rpcs3InstallDescriptor install)
+        R3Inst install)
     {
         return Path.Combine(
-            install.ConfigPath,
+            install.CfgPath,
             "R3ConfigBackups");
     }
 
     public static string ImpPat(
-        Rpcs3InstallDescriptor install)
+        R3Inst install)
     {
         return Path.Combine(
-            install.PatchesPath,
+            install.PatPath,
             CanaryPatchImportService.ImportedPatchFileName);
     }
 
     public static string HCanMeta(
-        Rpcs3InstallDescriptor install)
+        R3Inst install)
     {
         return Path.Combine(
-            install.PatchesPath,
-            HCanaryPatchAuthoringService.MetadataFileName);
+            install.PatPath,
+            PatAuth.MetaName);
     }
 }

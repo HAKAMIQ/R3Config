@@ -7,10 +7,10 @@ namespace R3Config.Case;
 
 public sealed class CanImp(
     CanaryPatchImportService importService,
-    IRpcs3MutationGuard mutationGuard,
-    PatchFileTransactionService transaction,
-    BackupService backupService,
-    PatchCatalogReader catalogReader)
+    IMutGd mutationGuard,
+    PatTxn transaction,
+    BkpSvc backupService,
+    Svc.ReadSvc catalogReader)
 {
     public CanaryPatchNormalizeResult Norm(
         string? sourceText)
@@ -19,20 +19,20 @@ public sealed class CanImp(
     }
 
     public bool HasPat(
-        Rpcs3InstallDescriptor install)
+        R3Inst install)
     {
         ArgumentNullException.ThrowIfNull(install);
 
         return importService.HasManagedImportedPatch(
-            install.PatchesPath);
+            install.PatPath);
     }
 
     public CanaryPatchWriteResult Import(
-        Rpcs3InstallDescriptor install,
+        R3Inst install,
         string sourceText)
     {
         var targetPath = R3Paths.ImpPat(install);
-        mutationGuard.EnsureCanMutate(
+        mutationGuard.CheckCan(
             install,
             [targetPath]);
 
@@ -45,7 +45,7 @@ public sealed class CanImp(
         }
 
         var prepared = importService.PrepareManagedImportedPatchFile(
-            install.PatchesPath,
+            install.PatPath,
             normalized.NormalizedText);
         if (!prepared.Succeeded)
         {
@@ -64,13 +64,13 @@ public sealed class CanImp(
                 null);
         }
 
-        BackupManifest? committedBackup = null;
+        BkpMan? committedBackup = null;
         try
         {
             committedBackup = transaction.Commit(
                 R3Paths.BkpRoot(install),
                 [prepared.PreparedFile],
-                (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
+                (_, backupRoot, targets) => mutationGuard.CheckCan(
                     install,
                     targets,
                     [backupRoot]));
@@ -88,16 +88,16 @@ public sealed class CanImp(
 
             var catalog = catalogReader.ReadText(
                 readBack,
-                PatchSourceOrigin.Imported,
+                PatSrc.Imported,
                 targetPath);
-            if (!catalog.Succeeded)
+            if (!catalog.IsOk)
             {
                 throw new InvalidDataException(
                     catalog.Error ??
                     "The committed imported patch file is invalid.");
             }
 
-            if (prepared.PreparedFile.ExpectedEntryCount is int expected &&
+            if (prepared.PreparedFile.EntNum is int expected &&
                 catalog.Catalog.Entries.Count != expected)
             {
                 throw new InvalidDataException(
@@ -142,18 +142,18 @@ public sealed class CanImp(
     }
 
     public CanaryPatchRemoveResult Remove(
-        Rpcs3InstallDescriptor install)
+        R3Inst install)
     {
         ArgumentNullException.ThrowIfNull(install);
 
         var targetPath = R3Paths.ImpPat(install);
-        mutationGuard.EnsureCanMutate(
+        mutationGuard.CheckCan(
             install,
             [targetPath]);
 
         var prepared = importService
             .PrepareManagedImportedPatchRemoval(
-                install.PatchesPath);
+                install.PatPath);
         if (!prepared.Succeeded)
         {
             return DelFail(
@@ -171,18 +171,18 @@ public sealed class CanImp(
                 null);
         }
 
-        BackupManifest? committedBackup = null;
+        BkpMan? committedBackup = null;
         try
         {
             committedBackup = transaction.Commit(
                 R3Paths.BkpRoot(install),
                 [prepared.PreparedFile],
-                (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
+                (_, backupRoot, targets) => mutationGuard.CheckCan(
                     install,
                     targets,
                     [backupRoot]));
 
-            if (prepared.PreparedFile.DeleteTarget)
+            if (prepared.PreparedFile.DelTgt)
             {
                 if (File.Exists(targetPath))
                 {
@@ -205,10 +205,10 @@ public sealed class CanImp(
 
                 var catalog = catalogReader.ReadText(
                     readBack,
-                    PatchSourceOrigin.Imported,
+                    PatSrc.Imported,
                     targetPath);
-                if (!catalog.Succeeded ||
-                    prepared.PreparedFile.ExpectedEntryCount is int expected &&
+                if (!catalog.IsOk ||
+                    prepared.PreparedFile.EntNum is int expected &&
                     catalog.Catalog.Entries.Count != expected)
                 {
                     throw new InvalidDataException(
@@ -280,10 +280,10 @@ public sealed class CanImp(
     }
 
     private static string? SnapPath(
-        BackupManifest manifest)
+        BkpMan manifest)
     {
         return manifest.Files
-            .Select(file => Path.GetDirectoryName(file.BackupPath))
+            .Select(file => Path.GetDirectoryName(file.BkpPath))
             .FirstOrDefault(path => !string.IsNullOrWhiteSpace(path));
     }
 }

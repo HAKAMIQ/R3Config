@@ -4,22 +4,22 @@ using R3Config.Svc;
 namespace R3Config.Case;
 
 public sealed class AnlzCase(
-    GameScanner scanner,
-    PlanService planService,
+    GmScan scanner,
+    PlanSvc planService,
     HwProbe hardwareProbe,
-    PatchHashProbeService patchHashProbe,
+    HashPrb patchHashProbe,
     PatCat patchCatalog,
     BkpCase backups)
 {
     public async Task<AnlzRes> RunAsync(
         string rpcs3ExePath,
-        RecommendationCatalogService catalog)
+        Svc.RecSvc catalog)
     {
-        var install = Rpcs3InstallService.FromExePath(rpcs3ExePath);
+        var install = InstSvc.FromExe(rpcs3ExePath);
 
         var hardwareTask = Task.Run(hardwareProbe.Probe);
         var scanTask = Task.Run(() =>
-            scanner.ScanDetailed(install));
+            scanner.ScanInfo(install));
 
         await Task.WhenAll(
                 hardwareTask,
@@ -39,7 +39,7 @@ public sealed class AnlzCase(
             catalog,
             hardware,
             games,
-            scanResult.CustomConfigSerials));
+            scanResult.CfgSer));
         var patchCatalogTask = Task.Run(() =>
             patchCatalog.Load(install));
         var backupsTask = Task.Run(() =>
@@ -54,14 +54,14 @@ public sealed class AnlzCase(
             await rowsTask.ConfigureAwait(false),
             await patchCatalogTask.ConfigureAwait(false),
             await backupsTask.ConfigureAwait(false),
-            scanResult.Diagnostics);
+            scanResult.Diags);
     }
 
     private IReadOnlyList<GameRow> BuildRow(
-        Rpcs3InstallDescriptor install,
-        RecommendationCatalogService catalog,
+        R3Inst install,
+        Svc.RecSvc catalog,
         HwInfo hardware,
-        IReadOnlyList<Rpcs3GameDescriptor> games,
+        IReadOnlyList<R3Game> games,
         IReadOnlyList<string> customConfigSerials)
     {
         var gamesBySerial = games
@@ -78,8 +78,8 @@ public sealed class AnlzCase(
         var rows = new List<GameRow>(
             catalog.Count + gamesBySerial.Count);
 
-        foreach (var recommendation in catalog.Recommendations
-                     .OrderBy(rec => rec.WikiTitle)
+        foreach (var recommendation in catalog.Rec
+                     .OrderBy(rec => rec.WikiName)
                      .ThenBy(rec => rec.Serial))
         {
             var isDetected = detectedSerials.Contains(
@@ -88,15 +88,15 @@ public sealed class AnlzCase(
                 recommendation.Serial,
                 out var scannedGame)
                 ? scannedGame
-                : new Rpcs3GameDescriptor(
+                : new R3Game(
                     Serial: recommendation.Serial,
-                    Title: recommendation.WikiTitle,
-                    InstallPath: string.Empty,
+                    Title: recommendation.WikiName,
+                    InstPath: string.Empty,
                     Version: null,
                     PpuHash: null,
                     SpuHash: null);
             var recState = isDetected
-                ? planService.CreateConfigPlan(
+                ? planService.BuildCfg(
                     install,
                     game,
                     recommendation,
@@ -118,7 +118,7 @@ public sealed class AnlzCase(
             rows.Add(new GameRow(
                 game,
                 Rec: null,
-                RecState: planService.CreateConfigPlan(
+                RecState: planService.BuildCfg(
                     install,
                     game,
                     recommendation: null,
@@ -129,24 +129,24 @@ public sealed class AnlzCase(
         return rows;
     }
 
-    private static RecStateSummary BuildSum(
-        WikiGameRecommendation recommendation)
+    private static RecSum BuildSum(
+        WikiRec recommendation)
     {
         var items = recommendation.Changes
-            .Select(change => new RecStateItem(
+            .Select(change => new RecItem(
                 Serial: recommendation.Serial,
-                Path: change.DisplayPath,
+                Path: change.Path,
                 Current: null,
                 Proposed: change.Value,
                 Risk: change.Risk,
                 State: RecState.Unknown,
-                IsDifferent: true,
-                IsActionable: false,
-                IsAutoSelectable: false,
+                IsDiff: true,
+                IsAction: false,
+                IsSel: false,
                 Notes: change.Notes ?? string.Empty))
             .ToArray();
 
-        return new RecStateSummary(
+        return new RecSum(
             Serial: recommendation.Serial,
             Total: items.Length,
             Applied: 0,

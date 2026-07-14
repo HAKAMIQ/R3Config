@@ -9,30 +9,30 @@ using YamlDotNet.RepresentationModel;
 
 namespace R3Config.Svc;
 
-public sealed class PatchConfigWriter(
-    PatchConfigReader? reader = null)
+public sealed class CfgWrite(
+    CfgRead? reader = null)
 {
-    private static readonly Encoding Utf8NoBom =
+    private static readonly Encoding Utf8Bom =
         new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
-    private readonly PatchConfigReader _reader =
-        reader ?? new PatchConfigReader();
+    private readonly CfgRead _reader =
+        reader ?? new CfgRead();
 
-    public string BuildText(
+    public string Build(
         string path,
-        IReadOnlyList<PatchApplyChange> changes,
+        IReadOnlyList<PatChg> changes,
         bool enabled = true)
     {
         var yaml = _reader.Load(path);
-        ApplyChanges(yaml, changes, enabled);
-        return Serialize(yaml);
+        Apply(yaml, changes, enabled);
+        return Write(yaml);
     }
 
-    public static void ValidateText(string text)
+    public static void VldText(string text)
     {
         try
         {
-            var yaml = Rpcs3BoundedInput.LoadYaml(
+            var yaml = R3Bound.LoadYaml(
                 text,
                 "patch_config.yml");
 
@@ -57,17 +57,17 @@ public sealed class PatchConfigWriter(
 
     public void Write(
         string path,
-        IReadOnlyList<PatchApplyChange> changes,
+        IReadOnlyList<PatChg> changes,
         bool enabled = true)
     {
-        var text = BuildText(path, changes, enabled);
+        var text = Build(path, changes, enabled);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        SaveAtomically(path, text);
+        Save(path, text);
     }
 
-    private static void ApplyChanges(
+    private static void Apply(
         YamlStream yaml,
-        IReadOnlyList<PatchApplyChange> changes,
+        IReadOnlyList<PatChg> changes,
         bool enabled)
     {
         var root = (YamlMappingNode)yaml.Documents[0].RootNode;
@@ -76,11 +76,11 @@ public sealed class PatchConfigWriter(
         {
             if (enabled)
             {
-                var versionNode = GetOrCreateNestedMapping(
+                var versionNode = GetOr(
                     root,
                     change.HashKey,
-                    change.PatchTitle,
-                    change.GameTitle,
+                    change.PatTitle,
+                    change.GameName,
                     change.Serial,
                     change.Version);
 
@@ -91,18 +91,18 @@ public sealed class PatchConfigWriter(
             }
             else
             {
-                RemoveEnabledAndPrune(
+                DelPrune(
                     root,
                     change.HashKey,
-                    change.PatchTitle,
-                    change.GameTitle,
+                    change.PatTitle,
+                    change.GameName,
                     change.Serial,
                     change.Version);
             }
         }
     }
 
-    private static string Serialize(YamlStream yaml)
+    private static string Write(YamlStream yaml)
     {
         using var writer = new StringWriter(
             CultureInfo.InvariantCulture)
@@ -114,7 +114,7 @@ public sealed class PatchConfigWriter(
         return writer.ToString();
     }
 
-    private static YamlMappingNode GetOrCreateNestedMapping(
+    private static YamlMappingNode GetOr(
         YamlMappingNode root,
         params string[] path)
     {
@@ -122,7 +122,7 @@ public sealed class PatchConfigWriter(
 
         foreach (var key in path)
         {
-            if (PatchConfigReader.FindValue(
+            if (CfgRead.FindVal(
                     current,
                     key) is YamlMappingNode existing)
             {
@@ -161,7 +161,7 @@ public sealed class PatchConfigWriter(
             value);
     }
 
-    private static void RemoveEnabledAndPrune(
+    private static void DelPrune(
         YamlMappingNode root,
         params string[] path)
     {
@@ -172,7 +172,7 @@ public sealed class PatchConfigWriter(
         foreach (var segment in path)
         {
             if (current is not YamlMappingNode mapping ||
-                !TryFindChild(
+                !TryFind(
                     mapping,
                     segment,
                     out var keyNode,
@@ -195,7 +195,7 @@ public sealed class PatchConfigWriter(
         if (current is YamlMappingNode versionMapping)
         {
             var versionParent = mappings[^2];
-            RemoveValue(versionMapping, "Enabled");
+            DelVal(versionMapping, "Enabled");
 
             if (versionMapping.Children.Count == 0)
             {
@@ -225,7 +225,7 @@ public sealed class PatchConfigWriter(
         }
     }
 
-    private static bool TryFindChild(
+    private static bool TryFind(
         YamlMappingNode mapping,
         string key,
         out YamlNode keyNode,
@@ -250,7 +250,7 @@ public sealed class PatchConfigWriter(
         return false;
     }
 
-    private static void RemoveValue(
+    private static void DelVal(
         YamlMappingNode mapping,
         string key)
     {
@@ -268,7 +268,7 @@ public sealed class PatchConfigWriter(
         }
     }
 
-    private static void SaveAtomically(
+    private static void Save(
         string path,
         string text)
     {
@@ -282,9 +282,9 @@ public sealed class PatchConfigWriter(
             File.WriteAllText(
                 tempPath,
                 text,
-                Utf8NoBom);
+                Utf8Bom);
 
-            ValidateText(
+            VldText(
                 File.ReadAllText(
                     tempPath,
                     Encoding.UTF8));

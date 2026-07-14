@@ -2,9 +2,9 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class RecStateService
+public sealed class StateSvc
 {
-    private static readonly string[] LowEndBlockedKeys =
+    private static readonly string[] LowKeys =
     [
         "resolution scale",
         "resolution scale threshold",
@@ -16,9 +16,9 @@ public sealed class RecStateService
         "multithreaded rsx"
     ];
 
-    public RecStateSummary Evaluate(
-        Rpcs3GameDescriptor game,
-        IReadOnlyList<WikiGameRecommendation> recs,
+    public RecSum Evaluate(
+        R3Game game,
+        IReadOnlyList<WikiRec> recs,
         Func<string, string, string?> readCurrent,
         HwInfo? hw = null)
     {
@@ -28,23 +28,23 @@ public sealed class RecStateService
             .ToArray();
 
         var items = changes
-            .Select(change => EvaluateItem(game.Serial, change, readCurrent, hw))
+            .Select(change => Check(game.Serial, change, readCurrent, hw))
             .ToArray();
 
-        return new RecStateSummary(
+        return new RecSum(
             Serial: game.Serial,
             Total: items.Length,
-            Applied: items.Count(item => item.State == RecState.Applied),
-            Pending: items.Count(item => item.State == RecState.Pending),
-            Manual: items.Count(item => item.State == RecState.Manual),
-            Blocked: items.Count(item => item.State == RecState.Blocked),
-            Unknown: items.Count(item => item.State == RecState.Unknown),
+            Applied: items.Count(item => item.State == Mdl.RecState.Applied),
+            Pending: items.Count(item => item.State == Mdl.RecState.Pending),
+            Manual: items.Count(item => item.State == Mdl.RecState.Manual),
+            Blocked: items.Count(item => item.State == Mdl.RecState.Blocked),
+            Unknown: items.Count(item => item.State == Mdl.RecState.Unknown),
             Items: items);
     }
 
-    private static RecStateItem EvaluateItem(
+    private static RecItem Check(
         string serial,
-        ConfigChange change,
+        CfgChg change,
         Func<string, string, string?> readCurrent,
         HwInfo? hw)
     {
@@ -55,67 +55,67 @@ public sealed class RecStateService
         }
         catch
         {
-            return NewItem(serial, change, null, RecState.Unknown, isDifferent: true, isActionable: false, isAutoSelectable: false);
+            return NewItem(serial, change, null, Mdl.RecState.Unknown, isDifferent: true, isActionable: false, isAutoSelectable: false);
         }
 
-        if (CfgValueNorm.Same(current, change.Value))
+        if (CfgNorm.Same(current, change.Value))
         {
-            return NewItem(serial, change, current, RecState.Applied, isDifferent: false, isActionable: false, isAutoSelectable: false);
+            return NewItem(serial, change, current, Mdl.RecState.Applied, isDifferent: false, isActionable: false, isAutoSelectable: false);
         }
 
-        if (IsBlocked(change, hw))
+        if (Is(change, hw))
         {
-            return NewItem(serial, change, current, RecState.Blocked, isDifferent: true, isActionable: false, isAutoSelectable: false);
+            return NewItem(serial, change, current, Mdl.RecState.Blocked, isDifferent: true, isActionable: false, isAutoSelectable: false);
         }
 
-        if (IsAutoSafe(change.Risk))
+        if (IsAuto(change.Risk))
         {
-            return NewItem(serial, change, current, RecState.Pending, isDifferent: true, isActionable: true, isAutoSelectable: true);
+            return NewItem(serial, change, current, Mdl.RecState.Pending, isDifferent: true, isActionable: true, isAutoSelectable: true);
         }
 
-        return NewItem(serial, change, current, RecState.Manual, isDifferent: true, isActionable: true, isAutoSelectable: false);
+        return NewItem(serial, change, current, Mdl.RecState.Manual, isDifferent: true, isActionable: true, isAutoSelectable: false);
     }
 
-    private static RecStateItem NewItem(
+    private static RecItem NewItem(
         string serial,
-        ConfigChange change,
+        CfgChg change,
         string? current,
-        RecState state,
+        Mdl.RecState state,
         bool isDifferent,
         bool isActionable,
         bool isAutoSelectable)
     {
-        return new RecStateItem(
+        return new RecItem(
             Serial: serial,
-            Path: change.DisplayPath,
+            Path: change.Path,
             Current: current,
             Proposed: change.Value,
             Risk: change.Risk,
             State: state,
-            IsDifferent: isDifferent,
-            IsActionable: isActionable,
-            IsAutoSelectable: isAutoSelectable,
+            IsDiff: isDifferent,
+            IsAction: isActionable,
+            IsSel: isAutoSelectable,
             Notes: change.Notes ?? string.Empty);
     }
 
-    private static bool IsAutoSafe(RecommendationRisk risk)
+    private static bool IsAuto(Mdl.RecRisk risk)
     {
-        return risk is RecommendationRisk.Required or RecommendationRisk.Recommended;
+        return risk is Mdl.RecRisk.Required or Mdl.RecRisk.Rec;
     }
 
-    private static bool IsBlocked(ConfigChange change, HwInfo? hw)
+    private static bool Is(CfgChg change, HwInfo? hw)
     {
         if (hw?.Tier != HwTier.Low)
         {
             return false;
         }
 
-        if (change.Risk is RecommendationRisk.HardwareDependent or RecommendationRisk.PerformanceCost)
+        if (change.Risk is Mdl.RecRisk.Dep or Mdl.RecRisk.PerfCost)
         {
             return true;
         }
 
-        return LowEndBlockedKeys.Any(key =>
+        return LowKeys.Any(key =>
             change.WikiKey.Contains(key, StringComparison.OrdinalIgnoreCase) ||
             change.Key.Contains(key, StringComparison.OrdinalIgnoreCase));
     }

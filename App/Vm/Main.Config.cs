@@ -48,13 +48,13 @@ public sealed partial class MainVm : VmBase
                 return;
             }
 
-            var manualCount = selectedItems.Count(item => RecommendationRiskPolicy.RequiresExtraApplyWarning(item.Risk));
+            var manualCount = selectedItems.Count(item => Svc.RecPol.Requires((Mdl.RecRisk)item.Risk));
             var warning = manualCount > 0
                 ? UiText.F("Msg.ManualWarning", manualCount)
                 : string.Empty;
 
             var confirmed = _confirm(
-                UiText.F("Msg.ApplyCfgConfirm", selectedItems.Length, _currentPlan.GameSerial, warning),
+                UiText.F("Msg.ApplyCfgConfirm", selectedItems.Length, _currentPlan.GameSer, warning),
                 UiText.T("Dialog.ApplyCfgTitle"));
 
             if (!confirmed)
@@ -66,19 +66,19 @@ public sealed partial class MainVm : VmBase
             var selectedChanges = selectedItems.Select(item => item.Change).ToArray();
             var result = _flow.ApplyCfg(_currentPlan, selectedChanges, _install);
 
-            Log(UiText.F("Msg.BkpSaved", result.Backup.CreatedAt.LocalDateTime));
+            Log(UiText.F("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
 
             foreach (var item in selectedItems)
             {
-                Log(UiText.F("Msg.CfgApplied", _currentPlan.GameSerial, item.DisplayPath, item.CurrentDisplay, item.ProposedValue));
+                Log(UiText.F("Msg.CfgApplied", _currentPlan.GameSer, item.DisplayPath, item.CurrentDisplay, item.ProposedValue));
             }
 
-            Log(UiText.F("Msg.CfgWritten", _currentPlan.TargetConfigPath));
+            Log(UiText.F("Msg.CfgWritten", _currentPlan.CfgPath));
 
             RefreshBackups();
             BuildCurrentPlan();
             UiDlg.Info(
-                UiText.F("Msg.CfgApplySuccess", result.AppliedChanges.Count),
+                UiText.F("Msg.CfgApplySuccess", result.ChgList.Count),
                 UiText.T("Dialog.ApplyCfgTitle"));
         }
         catch (Exception ex)
@@ -109,7 +109,7 @@ public sealed partial class MainVm : VmBase
             }
 
             var removableChanges = _currentPlan.Items
-                .Where(item => item.CurrentValue is not null)
+                .Where(item => item.CurVal is not null)
                 .Select(item => item.Change)
                 .ToArray();
 
@@ -127,7 +127,7 @@ public sealed partial class MainVm : VmBase
             }
 
             var confirmed = _confirm(
-                UiText.F("Msg.RemoveWikiSettingsConfirm", removableChanges.Length, _currentPlan.GameSerial),
+                UiText.F("Msg.RemoveWikiSettingsConfirm", removableChanges.Length, _currentPlan.GameSer),
                 UiText.T("Dialog.RemoveWikiSettingsTitle"));
 
             if (!confirmed)
@@ -138,11 +138,11 @@ public sealed partial class MainVm : VmBase
 
             var result = _flow.RemoveCfg(_currentPlan, removableChanges, _install);
 
-            Log(UiText.F("Msg.BkpSaved", result.Backup.CreatedAt.LocalDateTime));
+            Log(UiText.F("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
 
             foreach (var change in removableChanges)
             {
-                Log(UiText.F("Msg.WikiSettingRemoved", _currentPlan.GameSerial, change.DisplayPath));
+                Log(UiText.F("Msg.WikiSettingRemoved", _currentPlan.GameSer, change.Path));
             }
 
             RefreshBackups();
@@ -180,7 +180,7 @@ public sealed partial class MainVm : VmBase
 
         GameList.SelectedGame.RecState = _currentPlan.RecState;
         Plan.Load(_currentPlan);
-        Advanced.TargetConfigPath = _currentPlan.TargetConfigPath;
+        Advanced.TargetConfigPath = _currentPlan.CfgPath;
 
         BuildCurrentPatchPreview();
         RefreshSelectedGameDisplay();

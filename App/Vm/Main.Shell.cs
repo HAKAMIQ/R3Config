@@ -28,7 +28,7 @@ public sealed partial class MainVm : VmBase
 
         try
         {
-            if (!Rpcs3InstallService.IsRpcs3Running())
+            if (!InstSvc.IsR3())
             {
                 Process.Start(new ProcessStartInfo(_install.ExePath)
                 {
@@ -59,7 +59,7 @@ public sealed partial class MainVm : VmBase
 
         try
         {
-            Process.Start(new ProcessStartInfo(_install.PatchesPath)
+            Process.Start(new ProcessStartInfo(_install.PatPath)
             {
                 UseShellExecute = true
             });
@@ -222,7 +222,7 @@ public sealed partial class MainVm : VmBase
 
             if (_catalog is null)
             {
-                throw new InvalidOperationException(_catalogLoadError ?? CatalogMissingException.UserMessage);
+                throw new InvalidOperationException(_catalogLoadError ?? MissEx.UserMsg);
             }
 
             var result = await _flow.AnalyzeAsync(Rpcs3ExePath, _catalog);
@@ -236,9 +236,9 @@ public sealed partial class MainVm : VmBase
             Rpcs3Status = UiText.T("Status.Rpcs3Ready");
             SaveSettings();
 
-            Advanced.ConfigPath = _install.ConfigPath;
-            Advanced.CustomConfigsPath = _install.CustomConfigsPath;
-            Advanced.PatchesPath = _install.PatchesPath;
+            Advanced.ConfigPath = _install.CfgPath;
+            Advanced.CustomConfigsPath = _install.CustPath;
+            Advanced.PatchesPath = _install.PatPath;
 
             HardwareStatus = FormatHardwareStatus();
             HardwareTooltip = FormatHardwareTooltip();
@@ -250,7 +250,7 @@ public sealed partial class MainVm : VmBase
                     recommendation: row.Rec,
                     recState: row.RecState,
                     serial: row.Game.Serial,
-                    title: row.Rec?.WikiTitle ?? row.Game.Title,
+                    title: row.Rec?.WikiName ?? row.Game.Title,
                     isDetectedInRpcs3: row.IsDetectedInRpcs3))
                 .ToArray();
 
@@ -263,7 +263,7 @@ public sealed partial class MainVm : VmBase
             Advanced.RefreshBackups(result.Backups);
             BackupsStatus = UiText.F("Status.BkpCount", Advanced.Backups.Count);
 
-            Log(UiText.F("Msg.CatLoaded", _catalog.DataSource, _catalog.DataVersion, _catalog.Count));
+            Log(UiText.F("Msg.CatLoaded", _catalog.DataSrc, _catalog.DataVer, _catalog.Count));
             Log(UiText.F("Msg.GamesFound", GameList.Games.Count));
             LogGameScanDiagnostics(result.GameScanDiagnostics);
         }

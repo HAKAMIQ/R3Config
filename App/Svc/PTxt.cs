@@ -56,7 +56,7 @@ public static class PatchTextLocalizer
 
     public static LocalizedNoteText LocalizeRecommendationNote(
         string? raw,
-        RecommendationRisk risk)
+        RecRisk risk)
     {
         return Localize(
             raw,
@@ -199,23 +199,23 @@ public static class PatchTextLocalizer
     }
 
     private static string TypeKeyFor(
-        RecommendationRisk risk)
+        RecRisk risk)
     {
         return risk switch
         {
-            RecommendationRisk.Optional =>
+            RecRisk.Optional =>
                 "NoteType.Optional",
-            RecommendationRisk.Conditional =>
+            RecRisk.Cond =>
                 "NoteType.Conditional",
-            RecommendationRisk.HardwareDependent =>
+            RecRisk.Dep =>
                 "NoteType.HardwareBased",
-            RecommendationRisk.ManualTiming =>
+            RecRisk.Timing =>
                 "NoteType.ManualTiming",
-            RecommendationRisk.PatchDependent =>
+            RecRisk.PatDep =>
                 "NoteType.PatchRequired",
-            RecommendationRisk.ExpertOnly or
-            RecommendationRisk.Risky or
-            RecommendationRisk.Unknown =>
+            RecRisk.Only or
+            RecRisk.Risky or
+            RecRisk.Unknown =>
                 "NoteType.NotAutoSelected",
             _ =>
                 "NoteType.CompatibilityWarning"

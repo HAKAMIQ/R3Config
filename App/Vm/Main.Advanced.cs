@@ -19,7 +19,7 @@ public sealed partial class MainVm : VmBase
         GameScanDiagnosticFormatter = new();
 
     private void LogGameScanDiagnostics(
-        IReadOnlyList<GameScanDiagnostic> diagnostics)
+        IReadOnlyList<ScanDiag> diagnostics)
     {
         foreach (var diagnostic in diagnostics)
         {
@@ -67,7 +67,7 @@ public sealed partial class MainVm : VmBase
             var confirmed = _confirm(
                 UiText.F(
                     "Msg.RestoreConfirm",
-                    backup.CreatedAt.LocalDateTime,
+                    backup.MadeAt.LocalDateTime,
                     backup.Files.Count),
                 UiText.T("Dialog.RestoreTitle"));
 
@@ -78,7 +78,7 @@ public sealed partial class MainVm : VmBase
             }
 
             _flow.Restore(_install, backup);
-            Log(UiText.F("Msg.Restored", backup.DirectoryPath));
+            Log(UiText.F("Msg.Restored", backup.DirPath));
 
             BuildCurrentPlan();
         }
@@ -136,7 +136,7 @@ public sealed partial class MainVm : VmBase
     {
         if (_catalog is null)
         {
-            UiDlg.Info(_catalogLoadError ?? CatalogMissingException.UserMessage, UiText.T("Dialog.CatInfo"));
+            UiDlg.Info(_catalogLoadError ?? MissEx.UserMsg, UiText.T("Dialog.CatInfo"));
             return;
         }
 
@@ -149,7 +149,7 @@ public sealed partial class MainVm : VmBase
         {
             if (_catalog is null)
             {
-                UiDlg.Info(_catalogLoadError ?? CatalogMissingException.UserMessage, UiText.T("Dialog.NoCat"));
+                UiDlg.Info(_catalogLoadError ?? MissEx.UserMsg, UiText.T("Dialog.NoCat"));
                 return;
             }
 

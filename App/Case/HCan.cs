@@ -4,19 +4,19 @@ using R3Config.Svc;
 namespace R3Config.Case;
 
 public sealed class HCanCase(
-    HCanaryPatchAuthoringService authoring,
-    IRpcs3MutationGuard mutationGuard)
+    PatAuth authoring,
+    IMutGd mutationGuard)
 {
-    public IReadOnlyList<HCanaryStoredPatch> Load(
-        Rpcs3InstallDescriptor install)
+    public IReadOnlyList<HCanStor> Load(
+        R3Inst install)
     {
         return authoring.Load(
             R3Paths.ImpPat(install));
     }
 
-    public HCanarySaveResult Save(
-        Rpcs3InstallDescriptor install,
-        HCanaryPatchDraft draft,
+    public SaveRes Save(
+        R3Inst install,
+        HCanDrft draft,
         string? originalIdentity = null,
         bool saveAsNew = false)
     {
@@ -28,14 +28,14 @@ public sealed class HCanCase(
             draft,
             originalIdentity,
             saveAsNew,
-            (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
+            (_, backupRoot, targets) => mutationGuard.CheckCan(
                 install,
                 targets,
                 [backupRoot]));
     }
 
-    public HCanarySaveResult Delete(
-        Rpcs3InstallDescriptor install,
+    public SaveRes Delete(
+        R3Inst install,
         string identity)
     {
         CheckCan(install);
@@ -44,16 +44,16 @@ public sealed class HCanCase(
             R3Paths.ImpPat(install),
             R3Paths.BkpRoot(install),
             identity,
-            (_, backupRoot, targets) => mutationGuard.EnsureCanMutate(
+            (_, backupRoot, targets) => mutationGuard.CheckCan(
                 install,
                 targets,
                 [backupRoot]));
     }
 
     private void CheckCan(
-        Rpcs3InstallDescriptor install)
+        R3Inst install)
     {
-        mutationGuard.EnsureCanMutate(
+        mutationGuard.CheckCan(
             install,
             [
                 R3Paths.ImpPat(install),

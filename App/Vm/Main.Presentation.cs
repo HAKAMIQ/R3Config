@@ -61,14 +61,14 @@ public sealed partial class MainVm : VmBase
 
             UpdateCatalogStatus();
         }
-        catch (CatalogMissingException ex)
+        catch (MissEx ex)
         {
             _catalog = null;
             _catalogLoadError = ex.Message;
             UpdateCatalogStatus();
             Log(UiText.F("Msg.CatLoadFailed", ex.Message));
         }
-        catch (CatalogInvalidException ex)
+        catch (CatBadEx ex)
         {
             _catalog = null;
             _catalogLoadError = ex.Message;
@@ -78,7 +78,7 @@ public sealed partial class MainVm : VmBase
         catch (Exception ex)
         {
             _catalog = null;
-            _catalogLoadError = CatalogInvalidException.UserMessage;
+            _catalogLoadError = CatBadEx.UserMsg;
             UpdateCatalogStatus();
             Log(UiText.F("Msg.CatLoadFailed", ex.Message));
         }
@@ -88,19 +88,19 @@ public sealed partial class MainVm : VmBase
     {
         if (_catalog is null)
         {
-            var message = _catalogLoadError ?? CatalogMissingException.UserMessage;
+            var message = _catalogLoadError ?? MissEx.UserMsg;
             DataStatus = UiText.F("Status.DataError", message);
             RecommendationsStatus = UiText.F("Status.RecCount", 0);
             Advanced.SetCatalogInfo(null, message);
             return;
         }
 
-        var dataSource = string.Equals(_catalog.Info.DataSource, "Built" + "-in", StringComparison.Ordinal)
+        var dataSource = string.Equals(_catalog.Info.DataSrc, "Built" + "-in", StringComparison.Ordinal)
             ? UiText.T("Cat.BuiltIn")
-            : _catalog.Info.DataSource;
+            : _catalog.Info.DataSrc;
 
         DataStatus = UiText.F("Status.DataSource", dataSource);
-        RecommendationsStatus = UiText.F("Status.RecCount", _catalog.Info.RecommendationCount);
+        RecommendationsStatus = UiText.F("Status.RecCount", _catalog.Info.RecNum);
         Advanced.SetCatalogInfo(_catalog.Info, string.Empty);
     }
 
@@ -179,29 +179,29 @@ public sealed partial class MainVm : VmBase
             return UiText.T("Status.HwNotScanned");
         }
 
-        return UiText.F("Status.HwTip", _hwInfo.LogicalProcessorCount, _hwInfo.MemoryDisplay);
+        return UiText.F("Status.HwTip", _hwInfo.CpuNum, _hwInfo.Display);
     }
 
-    private static bool HasSelectedGameHashes(Rpcs3GameDescriptor game)
+    private static bool HasSelectedGameHashes(R3Game game)
     {
-        return game.AllPpuHashes.Count > 0 || game.AllSpuHashes.Count > 0;
+        return game.Hashes.Count > 0 || game.SpuList.Count > 0;
     }
 
-    private static string PatchHashSourceDisplay(Rpcs3GameDescriptor game)
+    private static string PatchHashSourceDisplay(R3Game game)
     {
-        return game.HashEvidenceKind switch
+        return game.HashEvi switch
         {
-            PatchHashEvidenceKind.PlainLog or
-            PatchHashEvidenceKind.CompressedLog =>
+            HashEvi.PlainLog or
+            HashEvi.ZipLog =>
                 UiText.T("PatchReadiness.Source.Log"),
 
-            PatchHashEvidenceKind.GameCache =>
+            HashEvi.Cache =>
                 UiText.T("PatchReadiness.Source.Cache"),
 
-            PatchHashEvidenceKind.ExistingMetadata =>
+            HashEvi.Meta =>
                 UiText.T("PatchReadiness.Source.Metadata"),
 
-            _ => string.IsNullOrWhiteSpace(game.HashSource)
+            _ => string.IsNullOrWhiteSpace(game.HashSrc)
                 ? UiText.T("Ui.Unknown")
                 : UiText.T("PatchReadiness.Source.Metadata")
         };
@@ -211,7 +211,7 @@ public sealed partial class MainVm : VmBase
     {
         get
         {
-            var source = FindPatchSource(PatchSourceOrigin.Official, "patch.yml");
+            var source = FindPatchSource(PatSrc.Official, "patch.yml");
             if (source?.Loaded == true)
             {
                 return UiText.F(
@@ -230,22 +230,22 @@ public sealed partial class MainVm : VmBase
     }
 
     public string OfficialPatchSourcePath =>
-        FindPatchSource(PatchSourceOrigin.Official, "patch.yml")?.Path
+        FindPatchSource(PatSrc.Official, "patch.yml")?.Path
         ?? (_install is null
             ? string.Empty
-            : Path.Combine(_install.PatchesPath, "patch.yml"));
+            : Path.Combine(_install.PatPath, "patch.yml"));
 
     public string OfficialPatchSourceTone =>
-        SourceTone(FindPatchSource(PatchSourceOrigin.Official, "patch.yml"));
+        SourceTone(FindPatchSource(PatSrc.Official, "patch.yml"));
 
     public string OfficialPatchSourceBadgeText =>
-        SourceBadge(FindPatchSource(PatchSourceOrigin.Official, "patch.yml"));
+        SourceBadge(FindPatchSource(PatSrc.Official, "patch.yml"));
 
     public string CanaryPatchSourceStatusText
     {
         get
         {
-            var source = FindPatchSource(PatchSourceOrigin.BundledCanary, "can.yml");
+            var source = FindPatchSource(PatSrc.Can, "can.yml");
             if (source?.Loaded == true)
             {
                 return UiText.F(
@@ -264,17 +264,17 @@ public sealed partial class MainVm : VmBase
     }
 
     public string CanaryPatchSourcePath =>
-        FindPatchSource(PatchSourceOrigin.BundledCanary, "can.yml")?.Path
+        FindPatchSource(PatSrc.Can, "can.yml")?.Path
         ?? BundledCanaryPatchService.GetBundledPath(AppContext.BaseDirectory);
 
     public string CanaryPatchSourceTone =>
-        SourceTone(FindPatchSource(PatchSourceOrigin.BundledCanary, "can.yml"));
+        SourceTone(FindPatchSource(PatSrc.Can, "can.yml"));
 
     public string CanaryPatchSourceBadgeText =>
-        SourceBadge(FindPatchSource(PatchSourceOrigin.BundledCanary, "can.yml"));
+        SourceBadge(FindPatchSource(PatSrc.Can, "can.yml"));
 
     private PatSrcSt? FindPatchSource(
-        PatchSourceOrigin source,
+        PatSrc source,
         string name)
     {
         return _patchCatalogSources.FirstOrDefault(item =>

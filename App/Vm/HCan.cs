@@ -8,12 +8,12 @@ using R3Config.Mdl;
 
 namespace R3Config.Vm;
 
-public sealed class HCanaryHashVm(HCanaryHash hash) : VmBase
+public sealed class HCanaryHashVm(HCanHash hash) : VmBase
 {
-    public HCanaryHash Hash { get; } = hash;
+    public HCanHash Hash { get; } = hash;
     public string Key => Hash.Key;
-    public string Kind => Hash.Kind == PatchHashKind.Ppu ? "PPU" : "SPU";
-    public string Source => $"{Path.GetFileName(Hash.SourcePath)}:{Hash.FirstLine}";
+    public string Kind => Hash.Kind == HashKind.Ppu ? "PPU" : "SPU";
+    public string Source => $"{Path.GetFileName(Hash.SrcPath)}:{Hash.Line}";
 }
 
 public sealed class HCanaryGameTargetVm : VmBase
@@ -28,14 +28,14 @@ public sealed class HCanaryGameTargetVm : VmBase
     public string GameVersion { get => _gameVersion; set => SetProperty(ref _gameVersion, value); }
     public string Error { get => _error; set => SetProperty(ref _error, value); }
 
-    public HCanaryGameTarget ToModel() => new()
+    public HCanTgt ToModel() => new()
     {
-        GameName = GameName, GameId = GameId, GameVersion = GameVersion
+        GameName = GameName, GameId = GameId, GameVer = GameVersion
     };
 
-    public static HCanaryGameTargetVm From(HCanaryGameTarget value) => new()
+    public static HCanaryGameTargetVm From(HCanTgt value) => new()
     {
-        GameName = value.GameName, GameId = value.GameId, GameVersion = value.GameVersion
+        GameName = value.GameName, GameId = value.GameId, GameVersion = value.GameVer
     };
 }
 
@@ -51,14 +51,14 @@ public sealed class HCanaryInstructionVm : VmBase
     public string Value { get => _value; set => SetProperty(ref _value, value); }
     public string Error { get => _error; set => SetProperty(ref _error, value); }
 
-    public HCanaryInstruction ToModel() => new()
+    public HCanInst ToModel() => new()
     {
-        Operation = Operation, Address = Address, Value = Value
+        Op = Operation, Address = Address, Value = Value
     };
 
-    public static HCanaryInstructionVm From(HCanaryInstruction value) => new()
+    public static HCanaryInstructionVm From(HCanInst value) => new()
     {
-        Operation = value.Operation, Address = value.Address, Value = value.Value
+        Operation = value.Op, Address = value.Address, Value = value.Value
     };
 
     public HCanaryInstructionVm Clone() => From(ToModel());
@@ -72,34 +72,34 @@ public sealed class HCanaryAnchorVm : VmBase
     public string Error { get => _error; set => SetProperty(ref _error, value); }
     public ObservableCollection<HCanaryInstructionVm> Instructions { get; } = [];
 
-    public HCanaryAnchor ToModel() => new()
+    public HCanAnc ToModel() => new()
     {
-        Name = Name, Instructions = Instructions.Select(item => item.ToModel()).ToList()
+        Name = Name, Ins = Instructions.Select(item => item.ToModel()).ToList()
     };
 
-    public static HCanaryAnchorVm From(HCanaryAnchor value)
+    public static HCanaryAnchorVm From(HCanAnc value)
     {
         var vm = new HCanaryAnchorVm { Name = value.Name };
-        foreach (var item in value.Instructions) vm.Instructions.Add(HCanaryInstructionVm.From(item));
+        foreach (var item in value.Ins) vm.Instructions.Add(HCanaryInstructionVm.From(item));
         return vm;
     }
 }
 
 public sealed partial class HCanaryVm : VmBase
 {
-    private readonly HCanaryPatchAuthoringService _authoring = new();
-    private readonly HCanaryHashExtractionService _hashReader = new();
+    private readonly PatAuth _authoring = new();
+    private readonly HashExt _hashReader = new();
     private readonly AppFlow _flow;
     private readonly Func<bool> _isRpcs3Running;
     private readonly Func<string, string, bool> _confirm;
-    private Rpcs3InstallDescriptor? _install;
-    private Rpcs3GameDescriptor? _contextGame;
+    private R3Inst? _install;
+    private R3Game? _contextGame;
     private HCanaryHashVm? _selectedHash;
     private HCanaryGameTargetVm? _selectedGameTarget;
     private HCanaryInstructionVm? _selectedInstruction;
     private HCanaryAnchorVm? _selectedAnchor;
     private HCanaryInstructionVm? _selectedAnchorInstruction;
-    private HCanaryStoredPatch? _selectedStoredPatch;
+    private HCanStor? _selectedStoredPatch;
     private string? _currentIdentity;
     private bool _dirty;
     private bool _suppressRefresh;
@@ -111,7 +111,7 @@ public sealed partial class HCanaryVm : VmBase
     private string _notes = string.Empty;
     private string _group = string.Empty;
     private string _patchVersion = "1.0";
-    private HCanaryDraftStatus _status = HCanaryDraftStatus.Draft;
+    private DraftSt _status = DraftSt.Draft;
     private string _yamlPreview = string.Empty;
     private string _validationSummary = string.Empty;
     private string _statusMessage = string.Empty;
@@ -135,7 +135,7 @@ public sealed partial class HCanaryVm : VmBase
     {
         _flow = flow ?? throw new ArgumentNullException(nameof(flow));
         _isRpcs3Running = isRpcs3Running ??
-            Rpcs3InstallService.IsRpcs3Running;
+            InstSvc.IsR3;
         _confirm = confirm ?? UiDlg.Confirm;
 
         NewCommand = new RelayCommand(NewDraft);
@@ -170,13 +170,13 @@ public sealed partial class HCanaryVm : VmBase
     public event EventHandler? CatalogChanged;
 
     public IReadOnlyList<string> PatchTypes { get; } = ["PPU", "SPU"];
-    public IReadOnlyList<string> Operations => HCanaryPatchAuthoringService.Operations;
-    public IReadOnlyList<HCanaryDraftStatus> Statuses { get; } = Enum.GetValues<HCanaryDraftStatus>();
+    public IReadOnlyList<string> Operations => PatAuth.Op;
+    public IReadOnlyList<DraftSt> Statuses { get; } = Enum.GetValues<DraftSt>();
     public ObservableCollection<HCanaryHashVm> Hashes { get; } = [];
     public ObservableCollection<HCanaryGameTargetVm> Games { get; } = [];
     public ObservableCollection<HCanaryInstructionVm> Instructions { get; } = [];
     public ObservableCollection<HCanaryAnchorVm> Anchors { get; } = [];
-    public ObservableCollection<HCanaryStoredPatch> StoredPatches { get; } = [];
+    public ObservableCollection<HCanStor> StoredPatches { get; } = [];
 
     public RelayCommand NewCommand { get; }
     public RelayCommand ReadLogCommand { get; }
@@ -226,7 +226,7 @@ public sealed partial class HCanaryVm : VmBase
     public string Notes { get => _notes; set { if (SetProperty(ref _notes, value)) RefreshDraft(); } }
     public string Group { get => _group; set { if (SetProperty(ref _group, value)) RefreshDraft(); } }
     public string PatchVersion { get => _patchVersion; set { if (SetProperty(ref _patchVersion, value)) RefreshDraft(); } }
-    public HCanaryDraftStatus Status { get => _status; set => SetProperty(ref _status, value); }
+    public DraftSt Status { get => _status; set => SetProperty(ref _status, value); }
     public string YamlPreview { get => _yamlPreview; private set => SetProperty(ref _yamlPreview, value); }
     public string ValidationSummary { get => _validationSummary; private set => SetProperty(ref _validationSummary, value); }
     public string StatusMessage { get => _statusMessage; private set => SetProperty(ref _statusMessage, value); }
@@ -243,7 +243,7 @@ public sealed partial class HCanaryVm : VmBase
     public bool HasHashes => Hashes.Count > 0;
     public string Rpcs3Path => _install?.RootPath ?? UiText.T("HCanary.Error.Rpcs3Missing");
     public string LogPath => _install is null ? string.Empty : Path.Combine(_install.RootPath, "RPCS3.log");
-    public string ImportedPatchPath => _install is null ? string.Empty : Path.Combine(_install.PatchesPath, "imported_patch.yml");
+    public string ImportedPatchPath => _install is null ? string.Empty : Path.Combine(_install.PatPath, "imported_patch.yml");
     public string CurrentGameName => _contextGame?.Title ?? UiText.T("HCanary.Error.GameMissing");
     public string CurrentGameId => _contextGame?.Serial ?? "—";
     public string CurrentGameVersion => _contextGame?.Version ?? "—";
@@ -264,5 +264,5 @@ public sealed partial class HCanaryVm : VmBase
     public HCanaryInstructionVm? SelectedInstruction { get => _selectedInstruction; set { SetProperty(ref _selectedInstruction, value); RaiseCommandStates(); } }
     public HCanaryAnchorVm? SelectedAnchor { get => _selectedAnchor; set { SetProperty(ref _selectedAnchor, value); SelectedAnchorInstruction = null; RaiseCommandStates(); } }
     public HCanaryInstructionVm? SelectedAnchorInstruction { get => _selectedAnchorInstruction; set { SetProperty(ref _selectedAnchorInstruction, value); RaiseCommandStates(); } }
-    public HCanaryStoredPatch? SelectedStoredPatch { get => _selectedStoredPatch; set { SetProperty(ref _selectedStoredPatch, value); RaiseCommandStates(); } }
+    public HCanStor? SelectedStoredPatch { get => _selectedStoredPatch; set { SetProperty(ref _selectedStoredPatch, value); RaiseCommandStates(); } }
 }

@@ -12,9 +12,9 @@ using YamlDotNet.RepresentationModel;
 
 namespace R3Config.Svc;
 
-public static class Rpcs3ConfigYaml
+public static class R3Yaml
 {
-    private static readonly Encoding Utf8NoBom =
+    private static readonly Encoding Utf8Bom =
         new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
     public static bool CanRead(string path)
@@ -27,7 +27,7 @@ public static class Rpcs3ConfigYaml
         try
         {
             var yaml = LoadYaml(path);
-            _ = GetRootMapping(yaml);
+            _ = GetRoot(yaml);
             return true;
         }
         catch (Exception ex) when (
@@ -40,7 +40,7 @@ public static class Rpcs3ConfigYaml
         }
     }
 
-    public static string? ReadValue(
+    public static string? ReadVal(
         string path,
         string section,
         string key)
@@ -53,14 +53,14 @@ public static class Rpcs3ConfigYaml
         try
         {
             var yaml = LoadYaml(path);
-            var root = GetRootMapping(yaml);
+            var root = GetRoot(yaml);
 
-            if (FindValue(root, section) is not YamlMappingNode sectionNode)
+            if (FindVal2(root, section) is not YamlMappingNode sectionNode)
             {
                 return null;
             }
 
-            var value = FindValueByPath(sectionNode, key);
+            var value = FindVal(sectionNode, key);
 
             return value switch
             {
@@ -79,39 +79,39 @@ public static class Rpcs3ConfigYaml
         }
     }
 
-    public static void ApplyChanges(
+    public static void Apply(
         string path,
-        IReadOnlyList<ConfigChange> changes,
+        IReadOnlyList<CfgChg> changes,
         Action? validateBeforeCommit = null)
     {
         var yaml = LoadYaml(path);
-        var root = GetRootMapping(yaml);
+        var root = GetRoot(yaml);
 
         foreach (var sectionGroup in changes.GroupBy(
                      change => change.Section))
         {
-            var section = GetOrCreateMapping(
+            var section = GetOr(
                 root,
                 sectionGroup.Key);
 
             foreach (var change in sectionGroup)
             {
-                SetYamlPath(
+                SetYaml(
                     section,
                     change.Key,
-                    NormalizeScalar(change.Value));
+                    Norm(change.Value));
             }
         }
 
-        SaveAtomically(
+        Save(
             path,
             yaml,
             validateBeforeCommit);
     }
 
-    public static void RemoveChanges(
+    public static void Del(
         string path,
-        IReadOnlyList<ConfigChange> changes,
+        IReadOnlyList<CfgChg> changes,
         Action? validateBeforeCommit = null)
     {
         if (!File.Exists(path) || changes.Count == 0)
@@ -120,24 +120,24 @@ public static class Rpcs3ConfigYaml
         }
 
         var yaml = LoadYaml(path);
-        var root = GetRootMapping(yaml);
+        var root = GetRoot(yaml);
 
         foreach (var sectionGroup in changes.GroupBy(
                      change => change.Section))
         {
-            if (FindValue(root, sectionGroup.Key) is not YamlMappingNode section)
+            if (FindVal2(root, sectionGroup.Key) is not YamlMappingNode section)
             {
                 continue;
             }
 
             foreach (var change in sectionGroup)
             {
-                RemoveYamlPath(section, change.Key);
+                DelYaml(section, change.Key);
             }
 
             if (section.Children.Count == 0)
             {
-                RemoveValue(root, sectionGroup.Key);
+                DelVal(root, sectionGroup.Key);
             }
         }
 
@@ -148,7 +148,7 @@ public static class Rpcs3ConfigYaml
             return;
         }
 
-        SaveAtomically(
+        Save(
             path,
             yaml,
             validateBeforeCommit);
@@ -163,11 +163,11 @@ public static class Rpcs3ConfigYaml
                     new YamlMappingNode()));
         }
 
-        var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+        var text = R3Bound.ReadUtf8(
             path,
-            Rpcs3InputLimits.CustomConfigYamlBytes,
+            R3Limits.CfgByte,
             "RPCS3 custom config YAML");
-        Rpcs3BoundedInput.ValidateYaml(
+        R3Bound.VldYaml(
             text,
             "RPCS3 custom config YAML");
         var yaml = new YamlStream();
@@ -180,7 +180,7 @@ public static class Rpcs3ConfigYaml
                     new YamlMappingNode()));
         }
 
-        if (yaml.Documents.Count > Rpcs3InputLimits.YamlDocuments)
+        if (yaml.Documents.Count > R3Limits.YamlDoc)
         {
             throw new InvalidDataException(
                 "RPCS3 custom config contains too many YAML documents.");
@@ -189,7 +189,7 @@ public static class Rpcs3ConfigYaml
         return yaml;
     }
 
-    private static YamlMappingNode GetRootMapping(YamlStream yaml)
+    private static YamlMappingNode GetRoot(YamlStream yaml)
     {
         if (yaml.Documents[0].RootNode is YamlMappingNode root)
         {
@@ -200,11 +200,11 @@ public static class Rpcs3ConfigYaml
             "RPCS3 config root must be a YAML mapping.");
     }
 
-    private static YamlMappingNode GetOrCreateMapping(
+    private static YamlMappingNode GetOr(
         YamlMappingNode mapping,
         string key)
     {
-        var existing = FindValue(mapping, key);
+        var existing = FindVal2(mapping, key);
 
         if (existing is YamlMappingNode existingMapping)
         {
@@ -222,7 +222,7 @@ public static class Rpcs3ConfigYaml
         return newMapping;
     }
 
-    private static void SetYamlPath(
+    private static void SetYaml(
         YamlMappingNode section,
         string key,
         string value)
@@ -239,7 +239,7 @@ public static class Rpcs3ConfigYaml
             return;
         }
 
-        var nested = GetOrCreateMapping(
+        var nested = GetOr(
             section,
             path[0]);
 
@@ -249,7 +249,7 @@ public static class Rpcs3ConfigYaml
             new YamlScalarNode(value));
     }
 
-    private static YamlNode? FindValueByPath(
+    private static YamlNode? FindVal(
         YamlMappingNode section,
         string key)
     {
@@ -257,15 +257,15 @@ public static class Rpcs3ConfigYaml
 
         if (path.Length == 1)
         {
-            return FindValue(section, key);
+            return FindVal2(section, key);
         }
 
-        return FindValue(section, path[0]) is YamlMappingNode nested
-            ? FindValue(nested, path[1])
+        return FindVal2(section, path[0]) is YamlMappingNode nested
+            ? FindVal2(nested, path[1])
             : null;
     }
 
-    private static void RemoveYamlPath(
+    private static void DelYaml(
         YamlMappingNode section,
         string key)
     {
@@ -273,24 +273,24 @@ public static class Rpcs3ConfigYaml
 
         if (path.Length == 1)
         {
-            RemoveValue(section, key);
+            DelVal(section, key);
             return;
         }
 
-        if (FindValue(section, path[0]) is not YamlMappingNode nested)
+        if (FindVal2(section, path[0]) is not YamlMappingNode nested)
         {
             return;
         }
 
-        RemoveValue(nested, path[1]);
+        DelVal(nested, path[1]);
 
         if (nested.Children.Count == 0)
         {
-            RemoveValue(section, path[0]);
+            DelVal(section, path[0]);
         }
     }
 
-    private static YamlNode? FindValue(
+    private static YamlNode? FindVal2(
         YamlMappingNode mapping,
         string key)
     {
@@ -305,7 +305,7 @@ public static class Rpcs3ConfigYaml
             .FirstOrDefault();
     }
 
-    private static void RemoveValue(
+    private static void DelVal(
         YamlMappingNode mapping,
         string key)
     {
@@ -347,7 +347,7 @@ public static class Rpcs3ConfigYaml
             value);
     }
 
-    private static string NormalizeScalar(string value)
+    private static string Norm(string value)
     {
         if (value.EndsWith('%') &&
             int.TryParse(
@@ -363,7 +363,7 @@ public static class Rpcs3ConfigYaml
         return value;
     }
 
-    private static void SaveAtomically(
+    private static void Save(
         string path,
         YamlStream yaml,
         Action? validateBeforeCommit)
@@ -384,30 +384,30 @@ public static class Rpcs3ConfigYaml
             using (var writer = new StreamWriter(
                        tempPath,
                        append: false,
-                       Utf8NoBom))
+                       Utf8Bom))
             {
                 writer.NewLine = "\r\n";
                 yaml.Save(writer, assignAnchors: false);
             }
 
-            var validationText = Rpcs3BoundedInput.ReadUtf8TextFile(
+            var validationText = R3Bound.ReadUtf8(
                 tempPath,
-                Rpcs3InputLimits.CustomConfigYamlBytes,
+                R3Limits.CfgByte,
                 "Prepared RPCS3 custom config YAML");
             using (var reader = new StringReader(validationText))
             {
                 var validationYaml = new YamlStream();
-                Rpcs3BoundedInput.ValidateYaml(
+                R3Bound.VldYaml(
                     validationText,
                     "Prepared RPCS3 custom config YAML");
                 validationYaml.Load(reader);
                 if (validationYaml.Documents.Count == 0 ||
-                    validationYaml.Documents.Count > Rpcs3InputLimits.YamlDocuments)
+                    validationYaml.Documents.Count > R3Limits.YamlDoc)
                 {
                     throw new InvalidDataException(
                         "Prepared RPCS3 custom config contains an invalid YAML document count.");
                 }
-                _ = GetRootMapping(validationYaml);
+                _ = GetRoot(validationYaml);
             }
 
             validateBeforeCommit?.Invoke();

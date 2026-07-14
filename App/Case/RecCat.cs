@@ -5,7 +5,7 @@ using R3Config.Svc;
 namespace R3Config.Case;
 
 public sealed class RecCat(
-    CatInfoService catalogInfo)
+    Svc.CatSvc catalogInfo)
 {
     public CatLoad LoadData(string baseDirectory)
     {
@@ -17,14 +17,14 @@ public sealed class RecCat(
         try
         {
             return new CatLoad(
-                catalogInfo.LoadCatalog(path),
+                catalogInfo.LoadCat(path),
                 null);
         }
-        catch (CatalogMissingException ex)
+        catch (MissEx ex)
         {
             return new CatLoad(null, ex.Message);
         }
-        catch (CatalogInvalidException ex)
+        catch (CatBadEx ex)
         {
             return new CatLoad(null, ex.Message);
         }
@@ -32,31 +32,31 @@ public sealed class RecCat(
         {
             return new CatLoad(
                 null,
-                CatalogInvalidException.UserMessage);
+                CatBadEx.UserMsg);
         }
     }
 
-    public RecommendationCatalogService Rebuild(
+    public Svc.RecSvc Rebuild(
         string xmlPath)
     {
-        var wiki = WikiRecommendationService.Load(xmlPath);
-        var sourceHash = catalogInfo.ComputeFileHash(xmlPath);
+        var wiki = WikiSvc.Load(xmlPath);
+        var sourceHash = catalogInfo.CalcFile(xmlPath);
 
-        return RecommendationCatalogService.FromRecommendations(
+        return Svc.RecSvc.FromRec(
             "Developer import",
             DateTime.Today.ToString("yyyy-MM-dd"),
-            wiki.Recommendations,
+            wiki.Rec,
             DateTimeOffset.UtcNow,
             sourceHash);
     }
 
-    public string FmtInf(CatalogInfo info)
+    public string FmtInf(Mdl.CatInfo info)
     {
-        return catalogInfo.FormatInfo(info);
+        return catalogInfo.FmtInf(info);
     }
 
     public static void Export(
-        RecommendationCatalogService catalog,
+        Svc.RecSvc catalog,
         string path)
     {
         catalog.Save(path);

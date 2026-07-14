@@ -12,26 +12,26 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class BackupService(
+public sealed class BkpSvc(
     Action<string?, string, bool>? commitRestoreOperation = null,
     Action<string?, string, bool>? rollbackRestoreOperation = null)
 {
-    private const string ManifestFileName = "manifest.json";
+    private const string ManName = "manifest.json";
 
-    private readonly JsonSerializerOptions _jsonOptions = new()
+    private readonly JsonSerializerOptions _Options = new()
     {
         WriteIndented = true
     };
 
-    private readonly object _restoreSync = new();
+    private readonly object _RstSync = new();
 
-    private readonly Action<string?, string, bool> _commitRestoreOperation =
-        commitRestoreOperation ?? CommitRestoreOperation;
+    private readonly Action<string?, string, bool> _commitO =
+        commitRestoreOperation ?? CommitOp;
 
-    private readonly Action<string?, string, bool> _rollbackRestoreOperation =
-        rollbackRestoreOperation ?? RollbackRestoreOperation;
+    private readonly Action<string?, string, bool> _Op =
+        rollbackRestoreOperation ?? Rollback;
 
-    public IReadOnlyList<BackupSnapshot> ListBackups(string backupRootPath)
+    public IReadOnlyList<BkpSnap> ListBkp(string backupRootPath)
     {
         if (!Directory.Exists(backupRootPath))
         {
@@ -41,14 +41,14 @@ public sealed class BackupService(
         return
         [
             .. Directory.EnumerateDirectories(backupRootPath)
-                .Select(TryLoadSnapshot)
+                .Select(TryLoad)
                 .Where(snapshot => snapshot is not null)
-                .Cast<BackupSnapshot>()
-                .OrderByDescending(snapshot => snapshot.CreatedAt)
+                .Cast<BkpSnap>()
+                .OrderByDescending(snapshot => snapshot.MadeAt)
         ];
     }
 
-    public BackupManifest CreateBackup(
+    public BkpMan BuildBkp(
         string backupRootPath,
         IReadOnlyList<string> targetPaths)
     {
@@ -61,7 +61,7 @@ public sealed class BackupService(
                 nameof(targetPaths));
         }
 
-        var normalizedTargets = NormalizeUniqueTargets(targetPaths);
+        var normalizedTargets = NormTgt(targetPaths);
         Directory.CreateDirectory(backupRootPath);
 
         var backupPath = Path.Combine(
@@ -72,14 +72,14 @@ public sealed class BackupService(
 
         try
         {
-            List<BackupFileEntry> entries = [];
+            List<BkpEntry> entries = [];
 
             foreach (var normalizedTargetPath in normalizedTargets)
             {
                 var existed = File.Exists(normalizedTargetPath);
                 var backupFilePath = Path.Combine(
                     backupPath,
-                    MakeBackupFileName(normalizedTargetPath));
+                    MakeBkp(normalizedTargetPath));
                 long? length = null;
                 string? sha256 = null;
 
@@ -91,10 +91,10 @@ public sealed class BackupService(
                         overwrite: false);
 
                     length = new FileInfo(backupFilePath).Length;
-                    sha256 = ComputeSha256(backupFilePath);
+                    sha256 = Calc(backupFilePath);
                 }
 
-                entries.Add(new BackupFileEntry(
+                entries.Add(new BkpEntry(
                     normalizedTargetPath,
                     backupFilePath,
                     existed,
@@ -102,28 +102,28 @@ public sealed class BackupService(
                     sha256));
             }
 
-            var manifest = new BackupManifest(
+            var manifest = new BkpMan(
                 DateTimeOffset.Now,
                 entries);
 
             var manifestPath = Path.Combine(
                 backupPath,
-                ManifestFileName);
+                ManName);
 
             var manifestText = JsonSerializer.Serialize(
                 manifest,
-                _jsonOptions);
-            Rpcs3BoundedInput.EnsureTextLength(
+                _Options);
+            R3Bound.Check(
                 manifestText,
-                Rpcs3InputLimits.BackupManifestBytes,
+                R3Limits.BkpByte,
                 "R3Config backup manifest");
 
             File.WriteAllText(
                 manifestPath,
                 manifestText);
 
-            var persisted = ReadManifest(manifestPath);
-            if (!ManifestsEquivalent(manifest, persisted))
+            var persisted = ReadMan(manifestPath);
+            if (!ManEqual(manifest, persisted))
             {
                 throw new InvalidDataException(
                     "The backup manifest failed read-back validation.");
@@ -145,31 +145,31 @@ public sealed class BackupService(
         }
     }
 
-    public void Restore(BackupManifest manifest)
+    public void Restore(BkpMan manifest)
     {
         ArgumentNullException.ThrowIfNull(manifest);
 
-        var snapshotPath = GetManifestSnapshotPath(manifest);
-        Restore(new BackupSnapshot(
+        var snapshotPath = GetMan(manifest);
+        Restore(new BkpSnap(
             snapshotPath,
-            manifest.CreatedAt,
+            manifest.MadeAt,
             manifest.Files));
     }
 
-    public void Restore(BackupSnapshot snapshot)
+    public void Restore(BkpSnap snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        lock (_restoreSync)
+        lock (_RstSync)
         {
-            var validated = ValidateSnapshot(snapshot);
-            List<RestoreOperation> operations = [];
+            var validated = VldSnap(snapshot);
+            List<RstOp> operations = [];
 
             try
             {
                 foreach (var entry in validated)
                 {
-                    var operation = new RestoreOperation(entry);
+                    var operation = new RstOp(entry);
                     operations.Add(operation);
 
                     if (!entry.Entry.Existed)
@@ -177,43 +177,43 @@ public sealed class BackupService(
                         continue;
                     }
 
-                    var targetDirectory = Path.GetDirectoryName(entry.TargetPath)
+                    var targetDirectory = Path.GetDirectoryName(entry.TgtPath)
                         ?? throw new InvalidDataException(
-                            $"A restore target has no parent directory: {entry.TargetPath}");
+                            $"A restore target has no parent directory: {entry.TgtPath}");
                     Directory.CreateDirectory(targetDirectory);
 
-                    operation.RestoreStagePath = MakeStagePath(
-                        entry.TargetPath,
+                    operation.RstPath = MakeStg(
+                        entry.TgtPath,
                         "r3restore");
                     File.Copy(
-                        entry.BackupPath,
-                        operation.RestoreStagePath,
+                        entry.BkpPath,
+                        operation.RstPath,
                         overwrite: false);
-                    EnsureFilesEqual(
-                        entry.BackupPath,
-                        operation.RestoreStagePath,
+                    Check(
+                        entry.BkpPath,
+                        operation.RstPath,
                         "Restore stage validation failed.");
                 }
 
                 foreach (var operation in operations)
                 {
-                    operation.TargetOriginallyExisted = File.Exists(
-                        operation.Validated.TargetPath);
-                    if (!operation.TargetOriginallyExisted)
+                    operation.Existed = File.Exists(
+                        operation.Vld.TgtPath);
+                    if (!operation.Existed)
                     {
                         continue;
                     }
 
-                    operation.RollbackStagePath = MakeStagePath(
-                        operation.Validated.TargetPath,
+                    operation.Path = MakeStg(
+                        operation.Vld.TgtPath,
                         "r3rollback");
                     File.Copy(
-                        operation.Validated.TargetPath,
-                        operation.RollbackStagePath,
+                        operation.Vld.TgtPath,
+                        operation.Path,
                         overwrite: false);
-                    EnsureFilesEqual(
-                        operation.Validated.TargetPath,
-                        operation.RollbackStagePath,
+                    Check(
+                        operation.Vld.TgtPath,
+                        operation.Path,
                         "Rollback stage validation failed.");
                 }
 
@@ -221,12 +221,12 @@ public sealed class BackupService(
                 {
                     foreach (var operation in operations)
                     {
-                        _commitRestoreOperation(
-                            operation.RestoreStagePath,
-                            operation.Validated.TargetPath,
-                            operation.Validated.Entry.Existed);
+                        _commitO(
+                            operation.RstPath,
+                            operation.Vld.TgtPath,
+                            operation.Vld.Entry.Existed);
 
-                        ValidateCommittedOperation(operation);
+                        VldOp(operation);
                     }
                 }
                 catch (Exception commitException)
@@ -237,10 +237,10 @@ public sealed class BackupService(
                     {
                         try
                         {
-                            _rollbackRestoreOperation(
-                                operation.RollbackStagePath,
-                                operation.Validated.TargetPath,
-                                operation.TargetOriginallyExisted);
+                            _Op(
+                                operation.Path,
+                                operation.Vld.TgtPath,
+                                operation.Existed);
                         }
                         catch (Exception rollbackException)
                         {
@@ -265,32 +265,32 @@ public sealed class BackupService(
             {
                 foreach (var operation in operations)
                 {
-                    TryDelete(operation.RestoreStagePath);
-                    TryDelete(operation.RollbackStagePath);
+                    TryDel(operation.RstPath);
+                    TryDel(operation.Path);
                 }
             }
         }
     }
 
-    private IReadOnlyList<ValidatedBackupEntry> ValidateSnapshot(
-        BackupSnapshot snapshot)
+    private IReadOnlyList<VldBkp> VldSnap(
+        BkpSnap snapshot)
     {
-        if (string.IsNullOrWhiteSpace(snapshot.DirectoryPath))
+        if (string.IsNullOrWhiteSpace(snapshot.DirPath))
         {
             throw new InvalidDataException(
                 "The backup snapshot directory is empty.");
         }
 
-        var snapshotPath = Path.GetFullPath(snapshot.DirectoryPath);
+        var snapshotPath = Path.GetFullPath(snapshot.DirPath);
         if (!Directory.Exists(snapshotPath))
         {
             throw new DirectoryNotFoundException(
                 $"Backup snapshot directory not found: {snapshotPath}");
         }
 
-        var canonicalSnapshotPath = Rpcs3CanonicalPath.ResolveCanonicalExistingPath(
+        var canonicalSnapshotPath = CanPath.GetPath(
             snapshotPath);
-        if (!PathsEqual(
+        if (!Paths(
                 snapshotPath,
                 canonicalSnapshotPath))
         {
@@ -300,7 +300,7 @@ public sealed class BackupService(
 
         var manifestPath = Path.Combine(
             snapshotPath,
-            ManifestFileName);
+            ManName);
         if (!File.Exists(manifestPath))
         {
             throw new FileNotFoundException(
@@ -308,9 +308,9 @@ public sealed class BackupService(
                 manifestPath);
         }
 
-        var canonicalManifestPath = Rpcs3CanonicalPath.ResolveCanonicalExistingPath(
+        var canonicalManifestPath = CanPath.GetPath(
             manifestPath);
-        if (!IsChildPath(
+        if (!IsChild(
                 canonicalSnapshotPath,
                 canonicalManifestPath))
         {
@@ -318,11 +318,11 @@ public sealed class BackupService(
                 "The backup manifest resolves outside its snapshot directory.");
         }
 
-        var persisted = ReadManifest(manifestPath);
-        var requested = new BackupManifest(
-            snapshot.CreatedAt,
+        var persisted = ReadMan(manifestPath);
+        var requested = new BkpMan(
+            snapshot.MadeAt,
             snapshot.Files);
-        if (!ManifestsEquivalent(requested, persisted))
+        if (!ManEqual(requested, persisted))
         {
             throw new InvalidDataException(
                 "The selected backup snapshot does not match its manifest.json file.");
@@ -338,28 +338,28 @@ public sealed class BackupService(
             StringComparer.OrdinalIgnoreCase);
         var seenBackups = new HashSet<string>(
             StringComparer.OrdinalIgnoreCase);
-        var validated = new List<ValidatedBackupEntry>(
+        var validated = new List<VldBkp>(
             persisted.Files.Count);
 
         foreach (var entry in persisted.Files)
         {
-            if (string.IsNullOrWhiteSpace(entry.TargetPath) ||
-                string.IsNullOrWhiteSpace(entry.BackupPath) ||
-                !Path.IsPathFullyQualified(entry.TargetPath) ||
-                !Path.IsPathFullyQualified(entry.BackupPath))
+            if (string.IsNullOrWhiteSpace(entry.TgtPath) ||
+                string.IsNullOrWhiteSpace(entry.BkpPath) ||
+                !Path.IsPathFullyQualified(entry.TgtPath) ||
+                !Path.IsPathFullyQualified(entry.BkpPath))
             {
                 throw new InvalidDataException(
                     "A backup manifest entry contains an invalid path.");
             }
 
-            if (ContainsParentTraversal(entry.BackupPath))
+            if (Contains(entry.BkpPath))
             {
                 throw new InvalidDataException(
                     "A backup manifest path contains parent traversal.");
             }
 
-            var targetPath = Path.GetFullPath(entry.TargetPath);
-            var backupPath = Path.GetFullPath(entry.BackupPath);
+            var targetPath = Path.GetFullPath(entry.TgtPath);
+            var backupPath = Path.GetFullPath(entry.BkpPath);
             if (!seenTargets.Add(targetPath))
             {
                 throw new InvalidDataException(
@@ -374,8 +374,8 @@ public sealed class BackupService(
 
             var expectedBackupPath = Path.Combine(
                 snapshotPath,
-                MakeBackupFileName(targetPath));
-            if (!PathsEqual(backupPath, expectedBackupPath))
+                MakeBkp(targetPath));
+            if (!Paths(backupPath, expectedBackupPath))
             {
                 throw new InvalidDataException(
                     "A backup manifest file does not match the expected snapshot file for its target.");
@@ -396,9 +396,9 @@ public sealed class BackupService(
                         backupPath);
                 }
 
-                var canonicalBackupPath = Rpcs3CanonicalPath.ResolveCanonicalExistingPath(
+                var canonicalBackupPath = CanPath.GetPath(
                     backupPath);
-                if (!IsChildPath(
+                if (!IsChild(
                         canonicalSnapshotPath,
                         canonicalBackupPath))
                 {
@@ -406,10 +406,10 @@ public sealed class BackupService(
                         "A backup file resolves outside its snapshot directory.");
                 }
 
-                ValidateStoredFileMetadata(entry, backupPath);
+                VldMeta(entry, backupPath);
             }
 
-            validated.Add(new ValidatedBackupEntry(
+            validated.Add(new VldBkp(
                 entry,
                 targetPath,
                 backupPath));
@@ -418,7 +418,7 @@ public sealed class BackupService(
         return validated;
     }
 
-    private static List<string> NormalizeUniqueTargets(
+    private static List<string> NormTgt(
         IReadOnlyList<string> targetPaths)
     {
         var output = new List<string>(targetPaths.Count);
@@ -453,8 +453,8 @@ public sealed class BackupService(
         return output;
     }
 
-    private static void ValidateStoredFileMetadata(
-        BackupFileEntry entry,
+    private static void VldMeta(
+        BkpEntry entry,
         string backupPath)
     {
         if (entry.Length is long expectedLength)
@@ -471,7 +471,7 @@ public sealed class BackupService(
         {
             if (!IsSha256(entry.Sha256) ||
                 !string.Equals(
-                    ComputeSha256(backupPath),
+                    Calc(backupPath),
                     entry.Sha256,
                     StringComparison.OrdinalIgnoreCase))
             {
@@ -481,37 +481,37 @@ public sealed class BackupService(
         }
     }
 
-    private static void ValidateCommittedOperation(
-        RestoreOperation operation)
+    private static void VldOp(
+        RstOp operation)
     {
-        if (!operation.Validated.Entry.Existed)
+        if (!operation.Vld.Entry.Existed)
         {
-            if (File.Exists(operation.Validated.TargetPath))
+            if (File.Exists(operation.Vld.TgtPath))
             {
                 throw new IOException(
-                    $"Restore failed to remove target: {operation.Validated.TargetPath}");
+                    $"Restore failed to remove target: {operation.Vld.TgtPath}");
             }
 
             return;
         }
 
-        if (!File.Exists(operation.Validated.TargetPath))
+        if (!File.Exists(operation.Vld.TgtPath))
         {
             throw new IOException(
-                $"Restore failed to create target: {operation.Validated.TargetPath}");
+                $"Restore failed to create target: {operation.Vld.TgtPath}");
         }
 
-        EnsureFilesEqual(
-            operation.Validated.BackupPath,
-            operation.Validated.TargetPath,
+        Check(
+            operation.Vld.BkpPath,
+            operation.Vld.TgtPath,
             "Committed restore validation failed.");
     }
 
-    private BackupSnapshot? TryLoadSnapshot(string backupDirectory)
+    private BkpSnap? TryLoad(string backupDirectory)
     {
         var manifestPath = Path.Combine(
             backupDirectory,
-            ManifestFileName);
+            ManName);
 
         if (!File.Exists(manifestPath))
         {
@@ -520,12 +520,12 @@ public sealed class BackupService(
 
         try
         {
-            var manifest = ReadManifest(manifestPath);
+            var manifest = ReadMan(manifestPath);
             return manifest.Files is null
                 ? null
-                : new BackupSnapshot(
+                : new BkpSnap(
                     backupDirectory,
-                    manifest.CreatedAt,
+                    manifest.MadeAt,
                     manifest.Files);
         }
         catch
@@ -534,22 +534,22 @@ public sealed class BackupService(
         }
     }
 
-    private BackupManifest ReadManifest(string manifestPath)
+    private BkpMan ReadMan(string manifestPath)
     {
-        var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+        var text = R3Bound.ReadUtf8(
             manifestPath,
-            Rpcs3InputLimits.BackupManifestBytes,
+            R3Limits.BkpByte,
             "R3Config backup manifest");
-        var manifest = JsonSerializer.Deserialize<BackupManifest>(
+        var manifest = JsonSerializer.Deserialize<BkpMan>(
             text,
-            _jsonOptions);
+            _Options);
 
         return manifest ?? throw new InvalidDataException(
             "The backup manifest is empty or invalid.");
     }
 
-    private static string GetManifestSnapshotPath(
-        BackupManifest manifest)
+    private static string GetMan(
+        BkpMan manifest)
     {
         if (manifest.Files is null || manifest.Files.Count == 0)
         {
@@ -561,7 +561,7 @@ public sealed class BackupService(
         foreach (var entry in manifest.Files)
         {
             var candidate = Path.GetDirectoryName(
-                Path.GetFullPath(entry.BackupPath))
+                Path.GetFullPath(entry.BkpPath))
                 ?? throw new InvalidDataException(
                     "A backup manifest path has no snapshot directory.");
 
@@ -571,7 +571,7 @@ public sealed class BackupService(
                 continue;
             }
 
-            if (!PathsEqual(snapshotPath, candidate))
+            if (!Paths(snapshotPath, candidate))
             {
                 throw new InvalidDataException(
                     "A backup manifest references more than one snapshot directory.");
@@ -581,9 +581,9 @@ public sealed class BackupService(
         return snapshotPath!;
     }
 
-    private static bool ManifestsEquivalent(
-        BackupManifest left,
-        BackupManifest right)
+    private static bool ManEqual(
+        BkpMan left,
+        BkpMan right)
     {
         if (left.Files is null ||
             right.Files is null ||
@@ -596,8 +596,8 @@ public sealed class BackupService(
         {
             var leftEntry = left.Files[index];
             var rightEntry = right.Files[index];
-            if (!PathsEqual(leftEntry.TargetPath, rightEntry.TargetPath) ||
-                !PathsEqual(leftEntry.BackupPath, rightEntry.BackupPath) ||
+            if (!Paths(leftEntry.TgtPath, rightEntry.TgtPath) ||
+                !Paths(leftEntry.BkpPath, rightEntry.BkpPath) ||
                 leftEntry.Existed != rightEntry.Existed ||
                 leftEntry.Length != rightEntry.Length ||
                 !string.Equals(
@@ -612,7 +612,7 @@ public sealed class BackupService(
         return true;
     }
 
-    private static string MakeBackupFileName(string path)
+    private static string MakeBkp(string path)
     {
         var normalizedPath = Path
             .GetFullPath(path)
@@ -624,7 +624,7 @@ public sealed class BackupService(
         return Convert.ToHexString(hash);
     }
 
-    private static string ComputeSha256(string path)
+    private static string Calc(string path)
     {
         using var stream = File.OpenRead(path);
         return Convert.ToHexString(SHA256.HashData(stream));
@@ -636,7 +636,7 @@ public sealed class BackupService(
                value.All(Uri.IsHexDigit);
     }
 
-    private static void EnsureFilesEqual(
+    private static void Check(
         string expectedPath,
         string actualPath,
         string error)
@@ -645,8 +645,8 @@ public sealed class BackupService(
         var actualInfo = new FileInfo(actualPath);
         if (expectedInfo.Length != actualInfo.Length ||
             !string.Equals(
-                ComputeSha256(expectedPath),
-                ComputeSha256(actualPath),
+                Calc(expectedPath),
+                Calc(actualPath),
                 StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidDataException(
@@ -654,7 +654,7 @@ public sealed class BackupService(
         }
     }
 
-    private static string MakeStagePath(
+    private static string MakeStg(
         string targetPath,
         string suffix)
     {
@@ -667,7 +667,7 @@ public sealed class BackupService(
             $".{Path.GetFileName(targetPath)}.{Guid.NewGuid():N}.{suffix}");
     }
 
-    private static void CommitRestoreOperation(
+    private static void CommitOp(
         string? restoreStagePath,
         string targetPath,
         bool shouldExist)
@@ -704,7 +704,7 @@ public sealed class BackupService(
         }
     }
 
-    private static void RollbackRestoreOperation(
+    private static void Rollback(
         string? rollbackStagePath,
         string targetPath,
         bool shouldExist)
@@ -741,7 +741,7 @@ public sealed class BackupService(
         }
     }
 
-    private static bool ContainsParentTraversal(string path)
+    private static bool Contains(string path)
     {
         return path.Split(
                 [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
@@ -751,7 +751,7 @@ public sealed class BackupService(
                 StringComparison.Ordinal));
     }
 
-    private static bool IsChildPath(
+    private static bool IsChild(
         string parentPath,
         string childPath)
     {
@@ -768,7 +768,7 @@ public sealed class BackupService(
                    StringComparison.Ordinal);
     }
 
-    private static bool PathsEqual(
+    private static bool Paths(
         string left,
         string right)
     {
@@ -778,7 +778,7 @@ public sealed class BackupService(
             StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void TryDelete(string? path)
+    private static void TryDel(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -797,21 +797,21 @@ public sealed class BackupService(
         }
     }
 
-    private sealed record ValidatedBackupEntry(
-        BackupFileEntry Entry,
-        string TargetPath,
-        string BackupPath);
+    private sealed record VldBkp(
+        BkpEntry Entry,
+        string TgtPath,
+        string BkpPath);
 
-    private sealed class RestoreOperation(
-        ValidatedBackupEntry validated)
+    private sealed class RstOp(
+        VldBkp validated)
     {
-        public ValidatedBackupEntry Validated { get; } = validated;
+        public VldBkp Vld { get; } = validated;
 
-        public string? RestoreStagePath { get; set; }
+        public string? RstPath { get; set; }
 
-        public string? RollbackStagePath { get; set; }
+        public string? Path { get; set; }
 
-        public bool TargetOriginallyExisted { get; set; }
+        public bool Existed { get; set; }
     }
 }
 

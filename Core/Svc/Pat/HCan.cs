@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using R3Config.Mdl;
 using YamlDotNet.Core;
@@ -9,28 +10,28 @@ using YamlDotNet.RepresentationModel;
 
 namespace R3Config.Svc;
 
-public sealed class HCanaryCatalogService
+public sealed class HCanCat
 {
-    private const string SupportedVersion = "1.2";
-    private const string DuplicateKeySuffix = "__r3config_duplicate_";
+    private const string ValidVer = "1.2";
+    private const string Suffix = "__r3config_duplicate_";
 
-    private static readonly Regex HashKeyPattern = new(
+    private static readonly Regex Pattern = new(
         @"^(?<kind>PPU|SPU|PRX|OVL)-(?<hash>.+)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly Regex PossibleModuleKeyPattern = new(
+    private static readonly Regex Pattern2 = new(
         @"^[A-Z]{2,8}-",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly Regex WordPattern = new(
+    private static readonly Regex Pattern3 = new(
         @"[\p{L}\p{Nd}]+",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex VersionLinePattern = new(
+    private static readonly Regex Pattern4 = new(
         @"^Version\s*:\s*(?<value>[^#\s]+)(?:\s*#.*)?$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly HashSet<string> KnownInstructionKinds = new(
+    private static readonly HashSet<string> Kinds = new(
         [
             "alloc", "calloc", "jump", "jumpl", "jumpf", "load", "byte", "be8",
             "le16", "le32", "le64", "bef32", "bef64", "be16", "be32", "bd32",
@@ -39,17 +40,17 @@ public sealed class HCanaryCatalogService
         ],
         StringComparer.Ordinal);
 
-    private static readonly HashSet<string> AutomaticKinds = new(
+    private static readonly HashSet<string> Kinds2 = new(
         ["byte", "be8", "be16", "be32", "be64", "bef32", "bef64"],
         StringComparer.Ordinal);
 
-    private static readonly HashSet<string> CodeCaveKinds = new(
+    private static readonly HashSet<string> Kinds3 = new(
         ["alloc", "calloc", "jump", "jumpl", "jumpf"],
         StringComparer.Ordinal);
 
-    private readonly PatchCatalogReader _catalogReader = new();
+    private readonly ReadSvc _Reader = new();
 
-    public CanaryCatalogResult Read(string path)
+    public CanCatRs Read(string path)
     {
         if (!File.Exists(path))
         {
@@ -59,9 +60,9 @@ public sealed class HCanaryCatalogService
         try
         {
             return ReadText(
-                Rpcs3BoundedInput.ReadUtf8TextFile(
+                R3Bound.ReadUtf8(
                     path,
-                    Rpcs3InputLimits.PatchCatalogYamlBytes,
+                    R3Limits.PatCatBy,
                     "Canary catalog"),
                 path);
         }
@@ -71,102 +72,102 @@ public sealed class HCanaryCatalogService
         }
     }
 
-    public CanaryCatalogResult ReadText(string text, string? sourcePath = null)
+    public CanCatRs ReadText(string text, string? sourcePath = null)
     {
         var diagnostics =
-            new BoundedDiagnosticList<CanaryCatalogDiagnostic>(
-                Rpcs3InputLimits.Diagnostics);
-        if (!TryNormalizeVersionHeaders(text, out var normalizedText, out var duplicateVersions, out var versionError))
+            new DiagList<CanDiag>(
+                R3Limits.Diag);
+        if (!TryNorm(text, out var normalizedText, out var duplicateVersions, out var versionError))
         {
-            diagnostics.Add(new CanaryCatalogDiagnostic(
-                CanaryDiagnosticSeverity.Error,
+            diagnostics.Add(new CanDiag(
+                CanSev.Error,
                 "HCAT006",
                 versionError));
-            return new CanaryCatalogResult(
+            return new CanCatRs(
                 false,
-                new CanaryCatalog(null, [], diagnostics, 0, 0));
+                new CanCat(null, [], diagnostics, 0, 0));
         }
 
         if (duplicateVersions > 0)
         {
-            diagnostics.Add(new CanaryCatalogDiagnostic(
-                CanaryDiagnosticSeverity.Warning,
+            diagnostics.Add(new CanDiag(
+                CanSev.Warning,
                 "HCAT018",
-                $"Normalized {duplicateVersions} duplicate top-level Version: {SupportedVersion} header(s) before catalog parsing."));
+                $"Normalized {duplicateVersions} duplicate top-level Version: {ValidVer} header(s) before catalog parsing."));
         }
 
-        var baseline = _catalogReader.ReadText(
+        var baseline = _Reader.ReadText(
             normalizedText,
-            PatchSourceOrigin.BundledCanary,
+            PatSrc.Can,
             sourcePath);
 
-        if (!baseline.Succeeded)
+        if (!baseline.IsOk)
         {
-            diagnostics.Add(new CanaryCatalogDiagnostic(
-                CanaryDiagnosticSeverity.Error,
+            diagnostics.Add(new CanDiag(
+                CanSev.Error,
                 "HCAT003",
                 $"Existing patch catalog validation failed: {baseline.Error}"));
-            return new CanaryCatalogResult(
+            return new CanCatRs(
                 false,
-                new CanaryCatalog(null, [], diagnostics, 0, 0));
+                new CanCat(null, [], diagnostics, 0, 0));
         }
 
         if (!string.IsNullOrWhiteSpace(baseline.Error))
         {
-            diagnostics.Add(new CanaryCatalogDiagnostic(
-                CanaryDiagnosticSeverity.Warning,
+            diagnostics.Add(new CanDiag(
+                CanSev.Warning,
                 "HCAT004",
                 $"Existing patch catalog diagnostics: {baseline.Error}"));
         }
 
         try
         {
-            var yaml = Rpcs3BoundedInput.LoadYaml(
-                PatchCatalogReader.NormalizeDuplicateKeysForRead(
+            var yaml = R3Bound.LoadYaml(
+                ReadSvc.NormDup2(
                     normalizedText),
                 "Canary catalog");
 
             if (yaml.Documents.Count != 1 || yaml.Documents[0].RootNode is not YamlMappingNode root)
             {
-                diagnostics.Add(new CanaryCatalogDiagnostic(
-                    CanaryDiagnosticSeverity.Error,
+                diagnostics.Add(new CanDiag(
+                    CanSev.Error,
                     "HCAT005",
                     "Canary YAML must contain exactly one mapping document."));
-                return new CanaryCatalogResult(
+                return new CanCatRs(
                     false,
-                    new CanaryCatalog(null, [], diagnostics, 0, 0));
+                    new CanCat(null, [], diagnostics, 0, 0));
             }
 
-            var version = Scalar(TryGetNode(root, "Version"));
-            if (!string.Equals(version, SupportedVersion, StringComparison.Ordinal))
+            var version = Scalar(TryGet(root, "Version"));
+            if (!string.Equals(version, ValidVer, StringComparison.Ordinal))
             {
-                diagnostics.Add(new CanaryCatalogDiagnostic(
-                    CanaryDiagnosticSeverity.Error,
+                diagnostics.Add(new CanDiag(
+                    CanSev.Error,
                     "HCAT006",
-                    $"Canary YAML requires Version: {SupportedVersion}; found '{version ?? "<missing>"}'."));
-                return new CanaryCatalogResult(
+                    $"Canary YAML requires Version: {ValidVer}; found '{version ?? "<missing>"}'."));
+                return new CanCatRs(
                     false,
-                    new CanaryCatalog(version, [], diagnostics, 0, CountAnchors(root)));
+                    new CanCat(version, [], diagnostics, 0, NumAnc(root)));
             }
 
-            var baselineEntries = BuildBaselineQueues(baseline.Catalog.Entries);
-            var definitions = new List<CanaryPatchDefinition>();
+            var baselineEntries = Build(baseline.Catalog.Entries);
+            var definitions = new List<CanDef>();
             var rejected = 0;
 
             foreach (var (keyNode, valueNode) in root.Children)
             {
                 var encodedKey = Scalar(keyNode) ?? string.Empty;
-                var rawKey = DecodeDuplicateKey(encodedKey);
-                var hashMatch = HashKeyPattern.Match(rawKey);
+                var rawKey = Decode(encodedKey);
+                var hashMatch = Pattern.Match(rawKey);
 
                 if (!hashMatch.Success)
                 {
-                    if (PossibleModuleKeyPattern.IsMatch(rawKey))
+                    if (Pattern2.IsMatch(rawKey))
                     {
-                        var rejectedHere = CountDefinitions(valueNode);
+                        var rejectedHere = NumDef(valueNode);
                         rejected += rejectedHere;
-                        diagnostics.Add(new CanaryCatalogDiagnostic(
-                            CanaryDiagnosticSeverity.Error,
+                        diagnostics.Add(new CanDiag(
+                            CanSev.Error,
                             "HCAT007",
                             $"Unsupported Canary module key '{rawKey}' rejected with {rejectedHere} definition(s).",
                             rawKey));
@@ -175,18 +176,18 @@ public sealed class HCanaryCatalogService
                     continue;
                 }
 
-                var moduleKind = ParseModuleKind(hashMatch.Groups["kind"].Value);
+                var moduleKind = Parse(hashMatch.Groups["kind"].Value);
                 var moduleHash = hashMatch.Groups["hash"].Value.Trim();
                 var moduleKey = $"{hashMatch.Groups["kind"].Value.ToUpperInvariant()}-{moduleHash}";
                 string? normalizedHash = null;
 
-                if (moduleKind is PatchHashKind.Ppu or PatchHashKind.Spu &&
-                    !Rpcs3ExecutableHash.TryNormalize(moduleHash, out normalizedHash))
+                if (moduleKind is HashKind.Ppu or HashKind.Spu &&
+                    !ExeHash.TryNorm(moduleHash, out normalizedHash))
                 {
-                    var rejectedHere = CountDefinitions(valueNode);
+                    var rejectedHere = NumDef(valueNode);
                     rejected += rejectedHere;
-                    diagnostics.Add(new CanaryCatalogDiagnostic(
-                        CanaryDiagnosticSeverity.Error,
+                    diagnostics.Add(new CanDiag(
+                        CanSev.Error,
                         "HCAT008",
                         $"{moduleKey} is not an exact 40-hex or valid RPCS3 Base57 executable hash; {rejectedHere} definition(s) rejected.",
                         moduleKey));
@@ -196,8 +197,8 @@ public sealed class HCanaryCatalogService
                 if (string.IsNullOrWhiteSpace(moduleHash) || valueNode is not YamlMappingNode patchMap)
                 {
                     rejected++;
-                    diagnostics.Add(new CanaryCatalogDiagnostic(
-                        CanaryDiagnosticSeverity.Error,
+                    diagnostics.Add(new CanDiag(
+                        CanSev.Error,
                         "HCAT009",
                         $"{moduleKey} must contain a non-empty hash and patch mapping.",
                         moduleKey));
@@ -206,12 +207,12 @@ public sealed class HCanaryCatalogService
 
                 foreach (var (titleNode, detailsNode) in patchMap.Children)
                 {
-                    var title = DecodeDuplicateKey(Scalar(titleNode) ?? string.Empty).Trim();
+                    var title = Decode(Scalar(titleNode) ?? string.Empty).Trim();
                     if (string.IsNullOrWhiteSpace(title) || detailsNode is not YamlMappingNode details)
                     {
                         rejected++;
-                        diagnostics.Add(new CanaryCatalogDiagnostic(
-                            CanaryDiagnosticSeverity.Error,
+                        diagnostics.Add(new CanDiag(
+                            CanSev.Error,
                             "HCAT010",
                             $"{moduleKey} contains an empty title or non-mapping patch definition.",
                             moduleKey,
@@ -219,14 +220,14 @@ public sealed class HCanaryCatalogService
                         continue;
                     }
 
-                    var baselineKey = BaselineKey(moduleKind, moduleHash, title);
+                    var baselineKey = Baseline(moduleKind, moduleHash, title);
                     if (!baselineEntries.TryGetValue(baselineKey, out var queue) ||
                         queue.Count == 0 ||
-                        queue.Peek().GameTargets.Count == 0)
+                        queue.Peek().GameTgt.Count == 0)
                     {
                         rejected++;
-                        diagnostics.Add(new CanaryCatalogDiagnostic(
-                            CanaryDiagnosticSeverity.Error,
+                        diagnostics.Add(new CanDiag(
+                            CanSev.Error,
                             "HCAT011",
                             "Definition was rejected because the existing patch catalog could not validate a non-empty Games target mapping.",
                             moduleKey,
@@ -235,15 +236,15 @@ public sealed class HCanaryCatalogService
                     }
 
                     var baselineEntry = queue.Dequeue();
-                    var author = Scalar(TryGetNode(details, "Author"))?.Trim();
-                    var patchVersion = Scalar(TryGetNode(details, "Patch Version"))?.Trim();
-                    var patchNode = TryGetNode(details, "Patch");
+                    var author = Scalar(TryGet(details, "Author"))?.Trim();
+                    var patchVersion = Scalar(TryGet(details, "Patch Version"))?.Trim();
+                    var patchNode = TryGet(details, "Patch");
 
                     if (string.IsNullOrWhiteSpace(author) || string.IsNullOrWhiteSpace(patchVersion))
                     {
                         rejected++;
-                        diagnostics.Add(new CanaryCatalogDiagnostic(
-                            CanaryDiagnosticSeverity.Error,
+                        diagnostics.Add(new CanDiag(
+                            CanSev.Error,
                             "HCAT012",
                             "Definition requires non-empty Author and Patch Version fields.",
                             moduleKey,
@@ -254,8 +255,8 @@ public sealed class HCanaryCatalogService
                     if (patchNode is not YamlSequenceNode patchSequence || patchSequence.Children.Count == 0)
                     {
                         rejected++;
-                        diagnostics.Add(new CanaryCatalogDiagnostic(
-                            CanaryDiagnosticSeverity.Error,
+                        diagnostics.Add(new CanDiag(
+                            CanSev.Error,
                             "HCAT013",
                             "Definition requires a non-empty Patch instruction sequence.",
                             moduleKey,
@@ -264,14 +265,14 @@ public sealed class HCanaryCatalogService
                     }
 
                     var anchors = new HashSet<string>(StringComparer.Ordinal);
-                    AddAnchor(anchors, TryGetNode(details, "Games"));
-                    AddAnchor(anchors, TryGetNode(details, "Author"));
-                    AddAnchor(anchors, TryGetNode(details, "Notes"));
-                    AddAnchor(anchors, TryGetNode(details, "Patch Version"));
-                    AddAnchor(anchors, TryGetNode(details, "Configurable Values"));
+                    AddAnc(anchors, TryGet(details, "Games"));
+                    AddAnc(anchors, TryGet(details, "Author"));
+                    AddAnc(anchors, TryGet(details, "Notes"));
+                    AddAnc(anchors, TryGet(details, "Patch Version"));
+                    AddAnc(anchors, TryGet(details, "Configurable Values"));
 
-                    if (!TryParseConfigValues(
-                            TryGetNode(details, "Configurable Values"),
+                    if (!TryPars2(
+                            TryGet(details, "Configurable Values"),
                             moduleKey,
                             title,
                             diagnostics,
@@ -281,9 +282,9 @@ public sealed class HCanaryCatalogService
                         continue;
                     }
 
-                    var instructions = new List<CanaryInstruction>();
+                    var instructions = new List<CanInst>();
                     var usedInstructionAnchor = false;
-                    if (!TryParseInstructions(
+                    if (!TryParse(
                             patchSequence,
                             moduleKey,
                             title,
@@ -296,24 +297,24 @@ public sealed class HCanaryCatalogService
                         continue;
                     }
 
-                    var fingerprint = BuildInstructionFingerprint(instructions, configValues);
+                    var fingerprint = BuildIns(instructions, configValues);
                     var (complexity, isCandidate, reason) = Classify(
                         moduleKind,
                         instructions,
                         configValues,
                         usedInstructionAnchor);
 
-                    definitions.Add(new CanaryPatchDefinition(
+                    definitions.Add(new CanDef(
                         title,
-                        Normalize(title),
+                        Norm2(title),
                         moduleKind,
                         moduleHash,
                         normalizedHash,
-                        baselineEntry.GameTargets,
+                        baselineEntry.GameTgt,
                         patchVersion,
                         author,
-                        Scalar(TryGetNode(details, "Notes")),
-                        Scalar(TryGetNode(details, "Group")),
+                        Scalar(TryGet(details, "Notes")),
+                        Scalar(TryGet(details, "Group")),
                         anchors.Order(StringComparer.Ordinal).ToArray(),
                         configValues,
                         instructions,
@@ -321,54 +322,54 @@ public sealed class HCanaryCatalogService
                         complexity,
                         isCandidate,
                         reason,
-                        PatchSourceOrigin.BundledCanary,
+                        PatSrc.Can,
                         sourcePath));
                 }
             }
 
-            var catalog = new CanaryCatalog(
+            var catalog = new CanCat(
                 version,
                 definitions
-                    .OrderBy(item => item.NormalizedTitle, StringComparer.Ordinal)
-                    .ThenBy(item => item.ModuleKind)
-                    .ThenBy(item => item.ModuleHash, StringComparer.Ordinal)
+                    .OrderBy(item => item.NormName, StringComparer.Ordinal)
+                    .ThenBy(item => item.ModKind)
+                    .ThenBy(item => item.ModHash, StringComparer.Ordinal)
                     .ThenBy(item => item.Title, StringComparer.Ordinal)
                     .ToArray(),
                 diagnostics,
                 rejected,
-                CountAnchors(root));
+                NumAnc(root));
 
-            return new CanaryCatalogResult(true, catalog);
+            return new CanCatRs(true, catalog);
         }
         catch (YamlException ex)
         {
-            diagnostics.Add(new CanaryCatalogDiagnostic(
-                CanaryDiagnosticSeverity.Error,
+            diagnostics.Add(new CanDiag(
+                CanSev.Error,
                 "HCAT014",
                 ex.Message));
-            return new CanaryCatalogResult(
+            return new CanCatRs(
                 false,
-                new CanaryCatalog(null, [], diagnostics, 0, 0));
+                new CanCat(null, [], diagnostics, 0, 0));
         }
         catch (InvalidOperationException ex)
         {
-            diagnostics.Add(new CanaryCatalogDiagnostic(
-                CanaryDiagnosticSeverity.Error,
+            diagnostics.Add(new CanDiag(
+                CanSev.Error,
                 "HCAT015",
                 ex.Message));
-            return new CanaryCatalogResult(
+            return new CanCatRs(
                 false,
-                new CanaryCatalog(null, [], diagnostics, 0, 0));
+                new CanCat(null, [], diagnostics, 0, 0));
         }
     }
 
-    private static bool TryParseInstructions(
+    private static bool TryParse(
         YamlSequenceNode sequence,
         string moduleKey,
         string title,
         ISet<string> anchors,
-        ICollection<CanaryInstruction> output,
-        ICollection<CanaryCatalogDiagnostic> diagnostics,
+        ICollection<CanInst> output,
+        ICollection<CanDiag> diagnostics,
         ref bool usedInstructionAnchor,
         string? inheritedAnchor = null)
     {
@@ -379,31 +380,31 @@ public sealed class HCanaryCatalogService
                 instruction.Children[0] is not YamlScalarNode kindNode ||
                 string.IsNullOrWhiteSpace(kindNode.Value))
             {
-                return InstructionError("Patch instruction must be a non-empty sequence.");
+                return InsErr("Patch instruction must be a non-empty sequence.");
             }
 
             var kind = kindNode.Value.Trim();
-            if (!KnownInstructionKinds.Contains(kind))
+            if (!Kinds.Contains(kind))
             {
-                return InstructionError($"Unknown RPCS3 patch instruction kind '{kind}'.");
+                return InsErr($"Unknown RPCS3 patch instruction kind '{kind}'.");
             }
 
             if (kind.Equals("load", StringComparison.Ordinal))
             {
                 if (instruction.Children.Count < 2 || instruction.Children[1] is not YamlSequenceNode loaded)
                 {
-                    return InstructionError("load requires a resolved instruction sequence.");
+                    return InsErr("load requires a resolved instruction sequence.");
                 }
 
-                var anchor = AnchorName(loaded);
+                var anchor = AncName(loaded);
                 if (string.IsNullOrWhiteSpace(anchor))
                 {
-                    return InstructionError("load must resolve to a named YAML anchor.");
+                    return InsErr("load must resolve to a named YAML anchor.");
                 }
 
                 anchors.Add(anchor);
                 usedInstructionAnchor = true;
-                if (!TryParseInstructions(
+                if (!TryParse(
                         loaded,
                         moduleKey,
                         title,
@@ -425,16 +426,16 @@ public sealed class HCanaryCatalogService
                 string.IsNullOrWhiteSpace(addressNode.Value) ||
                 valueNode.Value is null)
             {
-                return InstructionError($"Instruction '{kind}' requires scalar address and value fields.");
+                return InsErr($"Instruction '{kind}' requires scalar address and value fields.");
             }
 
             var address = addressNode.Value.Trim();
-            if (UsesNumericAddress(kind) && !TryParseUnsigned(address, out _))
+            if (Numeric(kind) && !TryPars3(address, out _))
             {
-                return InstructionError($"Instruction '{kind}' has invalid address '{address}'.");
+                return InsErr($"Instruction '{kind}' has invalid address '{address}'.");
             }
 
-            output.Add(new CanaryInstruction(
+            output.Add(new CanInst(
                 kind,
                 address,
                 valueNode.Value,
@@ -448,10 +449,10 @@ public sealed class HCanaryCatalogService
 
         return true;
 
-        bool InstructionError(string message)
+        bool InsErr(string message)
         {
-            diagnostics.Add(new CanaryCatalogDiagnostic(
-                CanaryDiagnosticSeverity.Error,
+            diagnostics.Add(new CanDiag(
+                CanSev.Error,
                 "HCAT016",
                 message,
                 moduleKey,
@@ -460,12 +461,12 @@ public sealed class HCanaryCatalogService
         }
     }
 
-    private static bool TryParseConfigValues(
+    private static bool TryPars2(
         YamlNode? node,
         string moduleKey,
         string title,
-        ICollection<CanaryCatalogDiagnostic> diagnostics,
-        out IReadOnlyList<CanaryConfigValue> values)
+        ICollection<CanDiag> diagnostics,
+        out IReadOnlyList<CanVal> values)
     {
         values = [];
         if (node is null)
@@ -475,32 +476,32 @@ public sealed class HCanaryCatalogService
 
         if (node is not YamlMappingNode mapping)
         {
-            return ConfigError("Configurable Values must be a mapping.");
+            return CfgErr("Configurable Values must be a mapping.");
         }
 
-        var parsed = new List<CanaryConfigValue>();
+        var parsed = new List<CanVal>();
         foreach (var (nameNode, detailsNode) in mapping.Children)
         {
             var name = Scalar(nameNode)?.Trim();
             if (string.IsNullOrWhiteSpace(name) || detailsNode is not YamlMappingNode details)
             {
-                return ConfigError("Each configurable value requires a name and mapping body.");
+                return CfgErr("Each configurable value requires a name and mapping body.");
             }
 
-            var type = Scalar(TryGetNode(details, "Type"))?.Trim();
-            var defaultValue = Scalar(TryGetNode(details, "Value"))?.Trim();
+            var type = Scalar(TryGet(details, "Type"))?.Trim();
+            var defaultValue = Scalar(TryGet(details, "Value"))?.Trim();
             if (string.IsNullOrWhiteSpace(type) || string.IsNullOrWhiteSpace(defaultValue))
             {
-                return ConfigError($"Configurable value '{name}' requires Type and Value fields.");
+                return CfgErr($"Configurable value '{name}' requires Type and Value fields.");
             }
 
             var allowed = new Dictionary<string, string>(StringComparer.Ordinal);
-            var allowedNode = TryGetNode(details, "Allowed Values");
+            var allowedNode = TryGet(details, "Allowed Values");
             if (allowedNode is not null)
             {
                 if (allowedNode is not YamlMappingNode allowedMapping)
                 {
-                    return ConfigError($"Allowed Values for '{name}' must be a mapping.");
+                    return CfgErr($"Allowed Values for '{name}' must be a mapping.");
                 }
 
                 foreach (var (labelNode, valueNode) in allowedMapping.Children)
@@ -510,21 +511,21 @@ public sealed class HCanaryCatalogService
                     if (string.IsNullOrWhiteSpace(label) || string.IsNullOrWhiteSpace(allowedValue) ||
                         !allowed.TryAdd(label, allowedValue))
                     {
-                        return ConfigError($"Configurable value '{name}' contains an invalid or duplicate allowed value.");
+                        return CfgErr($"Configurable value '{name}' contains an invalid or duplicate allowed value.");
                     }
                 }
             }
 
-            parsed.Add(new CanaryConfigValue(name, type, defaultValue, allowed));
+            parsed.Add(new CanVal(name, type, defaultValue, allowed));
         }
 
         values = parsed.OrderBy(item => item.Name, StringComparer.Ordinal).ToArray();
         return true;
 
-        bool ConfigError(string message)
+        bool CfgErr(string message)
         {
-            diagnostics.Add(new CanaryCatalogDiagnostic(
-                CanaryDiagnosticSeverity.Error,
+            diagnostics.Add(new CanDiag(
+                CanSev.Error,
                 "HCAT017",
                 message,
                 moduleKey,
@@ -533,72 +534,72 @@ public sealed class HCanaryCatalogService
         }
     }
 
-    private static (CanaryComplexity Complexity, bool IsCandidate, string Reason) Classify(
-        PatchHashKind moduleKind,
-        IReadOnlyList<CanaryInstruction> instructions,
-        IReadOnlyList<CanaryConfigValue> configValues,
+    private static (CanCmp Complexity, bool IsCandidate, string Reason) Classify(
+        HashKind moduleKind,
+        IReadOnlyList<CanInst> instructions,
+        IReadOnlyList<CanVal> configValues,
         bool usedInstructionAnchor)
     {
-        if (moduleKind is PatchHashKind.Prx or PatchHashKind.Ovl or PatchHashKind.Unknown)
+        if (moduleKind is HashKind.Prx or HashKind.Ovl or HashKind.Unknown)
         {
-            return (CanaryComplexity.Unsupported, false, "Module bytes require a proven PRX/OVL resolver before automatic porting.");
+            return (CanCmp.NoSupp, false, "Module bytes require a proven PRX/OVL resolver before automatic porting.");
         }
 
         if (instructions.Any(item => item.Kind == "bpex"))
         {
-            return (CanaryComplexity.Dynamic, false, "Dynamic bpex/runtime scanning is outside the automatic H-Canary subset.");
+            return (CanCmp.Dynamic, false, "Dynamic bpex/runtime scanning is outside the automatic H-Canary subset.");
         }
 
-        if (instructions.Any(item => CodeCaveKinds.Contains(item.Kind)) || LooksLikeCodeCave(instructions))
+        if (instructions.Any(item => Kinds3.Contains(item.Kind)) || Looks(instructions))
         {
-            return (CanaryComplexity.CodeCave, false, "Allocation, injected control flow, or a code-cave write run requires manual review.");
+            return (CanCmp.CodeCave, false, "Allocation, injected control flow, or a code-cave write run requires manual review.");
         }
 
         if (usedInstructionAnchor)
         {
-            return (CanaryComplexity.AnchorBased, false, "Patch instructions depend on a resolved YAML anchor.");
+            return (CanCmp.AncBased, false, "Patch instructions depend on a resolved YAML anchor.");
         }
 
-        if (instructions.Any(item => !AutomaticKinds.Contains(item.Kind)))
+        if (instructions.Any(item => !Kinds2.Contains(item.Kind)))
         {
-            return (CanaryComplexity.Unsupported, false, "One or more instruction kinds are outside the phase-one automatic write subset.");
+            return (CanCmp.NoSupp, false, "One or more instruction kinds are outside the phase-one automatic write subset.");
         }
 
-        if (instructions.Any(IsBranchInstruction))
+        if (instructions.Any(IsBranch))
         {
-            return (CanaryComplexity.BranchPatch, true, "Branch replacement is a candidate only after full target and displacement verification in H2.");
+            return (CanCmp.Pat, true, "Branch replacement is a candidate only after full target and displacement verification in H2.");
         }
 
         if (instructions.Count > 1)
         {
-            return (CanaryComplexity.MultiInstruction, true, "Multiple bounded writes require every site to resolve uniquely in H2.");
+            return (CanCmp.MultiIns, true, "Multiple bounded writes require every site to resolve uniquely in H2.");
         }
 
         if (configValues.Count > 0 || instructions[0].Kind is "bef32" or "bef64")
         {
-            return (CanaryComplexity.ConstantChange, true, "Single constant replacement is within the bounded H2 candidate subset.");
+            return (CanCmp.Change, true, "Single constant replacement is within the bounded H2 candidate subset.");
         }
 
         if (instructions[0].Kind == "be32")
         {
-            return (CanaryComplexity.SingleInstruction, true, "Single big-endian 32-bit replacement requires instruction preimage proof in H2.");
+            return (CanCmp.Ins, true, "Single big-endian 32-bit replacement requires instruction preimage proof in H2.");
         }
 
-        return (CanaryComplexity.SimpleWrite, true, "Single bounded big-endian write is within the H2 candidate subset.");
+        return (CanCmp.Write, true, "Single bounded big-endian write is within the H2 candidate subset.");
     }
 
-    private static bool LooksLikeCodeCave(IReadOnlyList<CanaryInstruction> instructions)
+    private static bool Looks(IReadOnlyList<CanInst> instructions)
     {
-        if (instructions.Count < 8 || !instructions.Any(IsBranchInstruction))
+        if (instructions.Count < 8 || !instructions.Any(IsBranch))
         {
             return false;
         }
 
         var addresses = instructions
-            .Where(item => item.Kind == "be32" && TryParseUnsigned(item.Address, out _))
+            .Where(item => item.Kind == "be32" && TryPars3(item.Address, out _))
             .Select(item =>
             {
-                TryParseUnsigned(item.Address, out var address);
+                TryPars3(item.Address, out var address);
                 return address;
             })
             .Distinct()
@@ -618,9 +619,9 @@ public sealed class HCanaryCatalogService
         return false;
     }
 
-    private static bool IsBranchInstruction(CanaryInstruction instruction)
+    private static bool IsBranch(CanInst instruction)
     {
-        if (instruction.Kind != "be32" || !TryParseUnsigned(instruction.Value, out var parsed) || parsed > uint.MaxValue)
+        if (instruction.Kind != "be32" || !TryPars3(instruction.Value, out var parsed) || parsed > uint.MaxValue)
         {
             return false;
         }
@@ -641,37 +642,37 @@ public sealed class HCanaryCatalogService
         return extendedOpcode is 16 or 528;
     }
 
-    private static string BuildInstructionFingerprint(
-        IReadOnlyList<CanaryInstruction> instructions,
-        IReadOnlyList<CanaryConfigValue> configValues)
+    private static string BuildIns(
+        IReadOnlyList<CanInst> instructions,
+        IReadOnlyList<CanVal> configValues)
     {
         var canonical = new StringBuilder();
         foreach (var instruction in instructions)
         {
             canonical.Append(instruction.Kind)
                 .Append('|')
-                .Append(NormalizeScalar(instruction.Value))
+                .Append(Norm(instruction.Value))
                 .Append('|')
-                .Append(instruction.AnchorName is null ? "direct" : "anchor")
+                .Append(instruction.AncName is null ? "direct" : "anchor")
                 .Append('|')
-                .AppendJoin(',', instruction.ExtraArguments.Select(NormalizeScalar))
+                .AppendJoin(',', instruction.ExtraArg.Select(Norm))
                 .Append(';');
         }
 
         foreach (var value in configValues)
         {
             canonical.Append("cfg|")
-                .Append(Normalize(value.Name))
+                .Append(Norm2(value.Name))
                 .Append('|')
-                .Append(NormalizeScalar(value.Type))
+                .Append(Norm(value.Type))
                 .Append('|')
-                .Append(NormalizeScalar(value.DefaultValue))
+                .Append(Norm(value.DefVal))
                 .Append('|');
-            foreach (var allowed in value.AllowedValues.OrderBy(item => item.Key, StringComparer.Ordinal))
+            foreach (var allowed in value.AllowVal.OrderBy(item => item.Key, StringComparer.Ordinal))
             {
-                canonical.Append(Normalize(allowed.Key))
+                canonical.Append(Norm2(allowed.Key))
                     .Append('=')
-                    .Append(NormalizeScalar(allowed.Value))
+                    .Append(Norm(allowed.Value))
                     .Append(',');
             }
 
@@ -681,10 +682,10 @@ public sealed class HCanaryCatalogService
         return "HCI-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical.ToString())))[..16];
     }
 
-    private static string NormalizeScalar(string value)
+    private static string Norm(string value)
     {
         var trimmed = value.Trim();
-        if (TryParseUnsigned(trimmed, out var numeric))
+        if (TryPars3(trimmed, out var numeric))
         {
             return $"0x{numeric:X}";
         }
@@ -694,19 +695,19 @@ public sealed class HCanaryCatalogService
             return floating.ToString("R", CultureInfo.InvariantCulture);
         }
 
-        return Normalize(trimmed);
+        return Norm2(trimmed);
     }
 
-    private static Dictionary<string, Queue<Rpcs3PatchEntry>> BuildBaselineQueues(
-        IEnumerable<Rpcs3PatchEntry> entries)
+    private static Dictionary<string, Queue<PatEntry>> Build(
+        IEnumerable<PatEntry> entries)
     {
-        var output = new Dictionary<string, Queue<Rpcs3PatchEntry>>(StringComparer.Ordinal);
+        var output = new Dictionary<string, Queue<PatEntry>>(StringComparer.Ordinal);
         foreach (var entry in entries)
         {
-            var key = BaselineKey(entry.HashKind, entry.Hash, entry.Title);
+            var key = Baseline(entry.HashKind, entry.Hash, entry.Title);
             if (!output.TryGetValue(key, out var queue))
             {
-                queue = new Queue<Rpcs3PatchEntry>();
+                queue = new Queue<PatEntry>();
                 output.Add(key, queue);
             }
 
@@ -716,7 +717,7 @@ public sealed class HCanaryCatalogService
         return output;
     }
 
-    private static bool TryNormalizeVersionHeaders(
+    private static bool TryNorm(
         string text,
         out string normalized,
         out int duplicateCount,
@@ -740,7 +741,7 @@ public sealed class HCanaryCatalogService
                 continue;
             }
 
-            var match = VersionLinePattern.Match(line);
+            var match = Pattern4.Match(line);
             if (!match.Success)
             {
                 output.Add(line);
@@ -748,15 +749,15 @@ public sealed class HCanaryCatalogService
             }
 
             var value = match.Groups["value"].Value.Trim('"', '\'');
-            if (!value.Equals(SupportedVersion, StringComparison.Ordinal))
+            if (!value.Equals(ValidVer, StringComparison.Ordinal))
             {
-                error = $"Canary YAML requires every top-level Version header to be {SupportedVersion}; found '{value}'.";
+                error = $"Canary YAML requires every top-level Version header to be {ValidVer}; found '{value}'.";
                 return false;
             }
 
             if (!found)
             {
-                output.Add($"Version: {SupportedVersion}");
+                output.Add($"Version: {ValidVer}");
                 found = true;
             }
             else
@@ -767,7 +768,7 @@ public sealed class HCanaryCatalogService
 
         if (!found)
         {
-            error = $"Canary YAML is missing the required Version: {SupportedVersion} header.";
+            error = $"Canary YAML is missing the required Version: {ValidVer} header.";
             return false;
         }
 
@@ -775,17 +776,17 @@ public sealed class HCanaryCatalogService
         return true;
     }
 
-    private static string BaselineKey(PatchHashKind kind, string hash, string title)
+    private static string Baseline(HashKind kind, string hash, string title)
     {
         return $"{kind}\0{hash.Trim()}\0{title.Trim()}";
     }
 
-    private static int CountDefinitions(YamlNode node)
+    private static int NumDef(YamlNode node)
     {
         return node is YamlMappingNode mapping ? Math.Max(1, mapping.Children.Count) : 1;
     }
 
-    private static int CountAnchors(YamlNode root)
+    private static int NumAnc(YamlNode root)
     {
         var names = new HashSet<string>(StringComparer.Ordinal);
         var visited = new HashSet<YamlNode>(ReferenceEqualityComparer.Instance);
@@ -799,7 +800,7 @@ public sealed class HCanaryCatalogService
                 return;
             }
 
-            var name = AnchorName(node);
+            var name = AncName(node);
             if (!string.IsNullOrWhiteSpace(name))
             {
                 names.Add(name);
@@ -824,31 +825,31 @@ public sealed class HCanaryCatalogService
         }
     }
 
-    private static string? AnchorName(YamlNode node)
+    private static string? AncName(YamlNode node)
     {
         return node.Anchor.IsEmpty ? null : node.Anchor.Value;
     }
 
-    private static void AddAnchor(ISet<string> anchors, YamlNode? node)
+    private static void AddAnc(ISet<string> anchors, YamlNode? node)
     {
         if (node is null)
         {
             return;
         }
 
-        var name = AnchorName(node);
+        var name = AncName(node);
         if (!string.IsNullOrWhiteSpace(name))
         {
             anchors.Add(name);
         }
     }
 
-    private static bool UsesNumericAddress(string kind)
+    private static bool Numeric(string kind)
     {
         return kind is not "move_file" and not "hide_file";
     }
 
-    private static bool TryParseUnsigned(string value, out ulong parsed)
+    private static bool TryPars3(string value, out ulong parsed)
     {
         var candidate = value.Trim();
         if (candidate.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
@@ -859,7 +860,7 @@ public sealed class HCanaryCatalogService
         return ulong.TryParse(candidate, NumberStyles.None, CultureInfo.InvariantCulture, out parsed);
     }
 
-    private static string Normalize(string? value)
+    private static string Norm2(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -867,41 +868,41 @@ public sealed class HCanaryCatalogService
         }
 
         var normalized = value.Normalize(NormalizationForm.FormKC).ToLowerInvariant();
-        return string.Join(' ', WordPattern.Matches(normalized).Select(match => match.Value));
+        return string.Join(' ', Pattern3.Matches(normalized).Select(match => match.Value));
     }
 
-    private static PatchHashKind ParseModuleKind(string value)
+    private static HashKind Parse(string value)
     {
         return value.ToUpperInvariant() switch
         {
-            "PPU" => PatchHashKind.Ppu,
-            "SPU" => PatchHashKind.Spu,
-            "PRX" => PatchHashKind.Prx,
-            "OVL" => PatchHashKind.Ovl,
-            _ => PatchHashKind.Unknown
+            "PPU" => HashKind.Ppu,
+            "SPU" => HashKind.Spu,
+            "PRX" => HashKind.Prx,
+            "OVL" => HashKind.Ovl,
+            _ => HashKind.Unknown
         };
     }
 
-    private static string DecodeDuplicateKey(string value)
+    private static string Decode(string value)
     {
-        var suffix = value.LastIndexOf(DuplicateKeySuffix, StringComparison.Ordinal);
+        var suffix = value.LastIndexOf(Suffix, StringComparison.Ordinal);
         if (suffix < 0)
         {
             return value;
         }
 
-        var number = value[(suffix + DuplicateKeySuffix.Length)..];
+        var number = value[(suffix + Suffix.Length)..];
         return int.TryParse(number, NumberStyles.None, CultureInfo.InvariantCulture, out _)
             ? value[..suffix]
             : value;
     }
 
-    private static YamlNode? TryGetNode(YamlMappingNode mapping, string key)
+    private static YamlNode? TryGet(YamlMappingNode mapping, string key)
     {
         foreach (var (keyNode, valueNode) in mapping.Children)
         {
             if (string.Equals(
-                    DecodeDuplicateKey(Scalar(keyNode) ?? string.Empty),
+                    Decode(Scalar(keyNode) ?? string.Empty),
                     key,
                     StringComparison.OrdinalIgnoreCase))
             {
@@ -917,68 +918,68 @@ public sealed class HCanaryCatalogService
         return node is YamlScalarNode scalar ? scalar.Value : null;
     }
 
-    private static CanaryCatalogResult Failure(string code, string message)
+    private static CanCatRs Failure(string code, string message)
     {
-        var diagnostic = new CanaryCatalogDiagnostic(
-            CanaryDiagnosticSeverity.Error,
+        var diagnostic = new CanDiag(
+            CanSev.Error,
             code,
             message);
-        return new CanaryCatalogResult(
+        return new CanCatRs(
             false,
-            new CanaryCatalog(null, [], [diagnostic], 0, 0));
+            new CanCat(null, [], [diagnostic], 0, 0));
     }
 }
 
-public sealed class HCanaryFamilyIndex
+public sealed class FamIndex
 {
-    public IReadOnlyList<CanaryPatchFamily> Build(CanaryCatalog catalog)
+    public IReadOnlyList<CanFam> ListFam(CanCat catalog)
     {
-        return catalog.Definitions
-            .GroupBy(FamilyKey, StringComparer.Ordinal)
-            .Select(BuildFamily)
-            .OrderBy(family => family.NormalizedTitle, StringComparer.Ordinal)
+        return catalog.DefList
+            .GroupBy(FamKey, StringComparer.Ordinal)
+            .Select(BuildFam)
+            .OrderBy(family => family.NormName, StringComparer.Ordinal)
             .ThenBy(family => family.FamilyId, StringComparer.Ordinal)
             .ToArray();
     }
 
-    public CanaryCatalogReport BuildReport(CanaryCatalog catalog)
+    public CanRpt BuildRpt(CanCat catalog)
     {
-        var families = Build(catalog);
-        var moduleCounts = Enum.GetValues<PatchHashKind>()
-            .Where(kind => kind != PatchHashKind.Unknown)
+        var families = ListFam(catalog);
+        var moduleCounts = Enum.GetValues<HashKind>()
+            .Where(kind => kind != HashKind.Unknown)
             .ToDictionary(
                 kind => kind,
-                kind => catalog.Definitions.Count(item => item.ModuleKind == kind));
+                kind => catalog.DefList.Count(item => item.ModKind == kind));
 
-        var simpleCount = catalog.Definitions.Count(item => item.IsAutomaticCandidate);
-        return new CanaryCatalogReport(
-            catalog.Definitions.Count,
+        var simpleCount = catalog.DefList.Count(item => item.IsAuto);
+        return new CanRpt(
+            catalog.DefList.Count,
             moduleCounts,
-            catalog.RejectedDefinitions,
+            catalog.BadDefs,
             families.Count,
-            families.Count(family => family.ReferenceEntries.Count > 1),
+            families.Count(family => family.RefList.Count > 1),
             simpleCount,
-            catalog.Definitions.Count - simpleCount,
+            catalog.DefList.Count - simpleCount,
             families,
-            catalog.Diagnostics);
+            catalog.Diags);
     }
 
-    private static CanaryPatchFamily BuildFamily(IGrouping<string, CanaryPatchDefinition> group)
+    private static CanFam BuildFam(IGrouping<string, CanDef> group)
     {
         var entries = group
-            .OrderBy(item => item.ModuleKind)
-            .ThenBy(item => item.ModuleHash, StringComparer.Ordinal)
-            .ThenBy(item => item.PatchVersion, StringComparer.Ordinal)
+            .OrderBy(item => item.ModKind)
+            .ThenBy(item => item.ModHash, StringComparer.Ordinal)
+            .ThenBy(item => item.PatVer, StringComparer.Ordinal)
             .ToArray();
-        var complexities = entries.Select(item => item.Complexity).Distinct().ToArray();
-        var complexity = entries.Select(item => item.ModuleKind).Distinct().Count() > 1
-            ? CanaryComplexity.MultiModule
-            : complexities.OrderByDescending(ComplexityRank).First();
+        var complexities = entries.Select(item => item.Cpx).Distinct().ToArray();
+        var complexity = entries.Select(item => item.ModKind).Distinct().Count() > 1
+            ? CanCmp.Module
+            : complexities.OrderByDescending(CpxRank).First();
 
-        return new CanaryPatchFamily(
+        return new CanFam(
             "HCF-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(group.Key)))[..16],
             entries[0].Title,
-            entries[0].NormalizedTitle,
+            entries[0].NormName,
             entries,
             entries.SelectMany(item => item.Serials)
                 .Select(Region)
@@ -989,62 +990,62 @@ public sealed class HCanaryFamilyIndex
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Order(StringComparer.OrdinalIgnoreCase)
                 .ToArray(),
-            entries.Select(item => item.NormalizedModuleHash ?? item.ModuleHash)
+            entries.Select(item => item.NormHash ?? item.ModHash)
                 .Distinct(StringComparer.Ordinal)
                 .Order(StringComparer.Ordinal)
                 .ToArray(),
-            entries.Select(item => item.InstructionFingerprint)
+            entries.Select(item => item.InsPrint)
                 .Distinct(StringComparer.Ordinal)
                 .Order(StringComparer.Ordinal)
                 .ToArray(),
             complexity);
     }
 
-    private static string FamilyKey(CanaryPatchDefinition definition)
+    private static string FamKey(CanDef definition)
     {
-        var gameTitles = definition.GameTargets
-            .Select(target => Normalize(target.Title))
+        var gameTitles = definition.GameTgt
+            .Select(target => Norm(target.Title))
             .Distinct(StringComparer.Ordinal)
             .Order(StringComparer.Ordinal);
-        var anchorStructure = definition.AnchorDependencies.Count == 0
+        var anchorStructure = definition.AncDeps.Count == 0
             ? "none"
-            : string.Join(',', definition.Instructions
-                .Where(item => item.AnchorName is not null)
-                .GroupBy(item => item.AnchorName, StringComparer.Ordinal)
+            : string.Join(',', definition.InsList
+                .Where(item => item.AncName is not null)
+                .GroupBy(item => item.AncName, StringComparer.Ordinal)
                 .Select(group => group.Count())
                 .Order());
 
         return string.Join(
             "\0",
-            definition.NormalizedTitle,
-            definition.InstructionFingerprint,
-            Normalize(definition.Group),
-            Normalize(definition.Notes),
+            definition.NormName,
+            definition.InsPrint,
+            Norm(definition.Group),
+            Norm(definition.Notes),
             string.Join('|', gameTitles),
             anchorStructure,
-            definition.GameTargets.Count == 0 ? "invalid-targets" : "validated-targets");
+            definition.GameTgt.Count == 0 ? "invalid-targets" : "validated-targets");
     }
 
-    private static int ComplexityRank(CanaryComplexity complexity)
+    private static int CpxRank(CanCmp complexity)
     {
         return complexity switch
         {
-            CanaryComplexity.Unsupported => 100,
-            CanaryComplexity.Dynamic => 90,
-            CanaryComplexity.MultiModule => 80,
-            CanaryComplexity.CodeCave => 70,
-            CanaryComplexity.AnchorBased => 60,
-            CanaryComplexity.BranchPatch => 50,
-            CanaryComplexity.MultiInstruction => 40,
-            CanaryComplexity.SingleInstruction => 30,
-            CanaryComplexity.ConstantChange => 20,
+            CanCmp.NoSupp => 100,
+            CanCmp.Dynamic => 90,
+            CanCmp.Module => 80,
+            CanCmp.CodeCave => 70,
+            CanCmp.AncBased => 60,
+            CanCmp.Pat => 50,
+            CanCmp.MultiIns => 40,
+            CanCmp.Ins => 30,
+            CanCmp.Change => 20,
             _ => 10
         };
     }
 
     private static string Region(string serial)
     {
-        if (serial.Equals(Rpcs3PatchVersion.All, StringComparison.Ordinal))
+        if (serial.Equals(PatVer.All, StringComparison.Ordinal))
         {
             return "All";
         }
@@ -1093,7 +1094,7 @@ public sealed class HCanaryFamilyIndex
         return "Unknown";
     }
 
-    private static string Normalize(string? value)
+    private static string Norm(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -1107,15 +1108,15 @@ public sealed class HCanaryFamilyIndex
     }
 }
 
-public sealed class HCanaryPortEvidenceService
+public sealed class PortEvi
 {
-    private static readonly Regex WordPattern = new(
+    private static readonly Regex Pattern = new(
         @"[\p{L}\p{Nd}]+",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    public IReadOnlyList<CanaryPortAnalysis> Analyze(
-        CanaryCatalog catalog,
-        Rpcs3GameDescriptor game)
+    public IReadOnlyList<PortAnlz> Analyze(
+        CanCat catalog,
+        R3Game game)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(game);
@@ -1125,17 +1126,17 @@ public sealed class HCanaryPortEvidenceService
             return [];
         }
 
-        var families = new HCanaryFamilyIndex().Build(catalog);
-        var targetTitle = Normalize(game.Title);
-        var output = new List<CanaryPortAnalysis>();
+        var families = new FamIndex().ListFam(catalog);
+        var targetTitle = Norm2(game.Title);
+        var output = new List<PortAnlz>();
 
         foreach (var family in families)
         {
-            var serialReferences = family.ReferenceEntries
-                .Where(reference => HasSerialTarget(reference, game.Serial))
+            var serialReferences = family.RefList
+                .Where(reference => HasTgt(reference, game.Serial))
                 .ToArray();
-            var titleReferences = family.ReferenceEntries
-                .Where(reference => HasTitleTarget(reference, targetTitle))
+            var titleReferences = family.RefList
+                .Where(reference => HasTitle(reference, targetTitle))
                 .ToArray();
 
             if (serialReferences.Length == 0 && titleReferences.Length == 0)
@@ -1150,7 +1151,7 @@ public sealed class HCanaryPortEvidenceService
             if (serialReferences.Length > 0)
             {
                 var versionReferences = serialReferences
-                    .Where(reference => SupportsVersion(reference, game.Serial, game.Version))
+                    .Where(reference => Supports(reference, game.Serial, game.Version))
                     .ToArray();
 
                 if (versionReferences.Length == 0)
@@ -1158,23 +1159,23 @@ public sealed class HCanaryPortEvidenceService
                     output.Add(Create(
                         family,
                         game,
-                        CanaryPortStatus.VersionUnsupported,
+                        PortStat.NoSupp,
                         candidateReferences,
                         [],
                         false,
-                        $"The selected serial is referenced, but version '{DisplayVersion(game.Version)}' is not declared by this family."));
+                        $"The selected serial is referenced, but version '{Display(game.Version)}' is not declared by this family."));
                     continue;
                 }
 
                 candidateReferences = versionReferences;
             }
 
-            if (RequiresManualModuleEvidence(candidateReferences))
+            if (Requires(candidateReferences))
             {
                 output.Add(Create(
                     family,
                     game,
-                    CanaryPortStatus.ComplexManualReview,
+                    PortStat.Review,
                     candidateReferences,
                     [],
                     false,
@@ -1182,13 +1183,13 @@ public sealed class HCanaryPortEvidenceService
                 continue;
             }
 
-            var targetHashes = TargetHashes(candidateReferences, game);
+            var targetHashes = Tgt(candidateReferences, game);
             if (targetHashes.Count == 0)
             {
                 output.Add(Create(
                     family,
                     game,
-                    CanaryPortStatus.HashEvidenceMissing,
+                    PortStat.Missing,
                     candidateReferences,
                     [],
                     false,
@@ -1197,17 +1198,17 @@ public sealed class HCanaryPortEvidenceService
             }
 
             var exactReferences = candidateReferences
-                .Where(reference => ReferenceHashMatches(reference, game))
+                .Where(reference => RefHash(reference, game))
                 .ToArray();
 
             if (exactReferences.Length > 0)
             {
-                if (HasConflictingLayouts(exactReferences))
+                if (HasClash(exactReferences))
                 {
                     output.Add(Create(
                         family,
                         game,
-                        CanaryPortStatus.ConflictingReferences,
+                        PortStat.ClashRef,
                         candidateReferences,
                         exactReferences,
                         false,
@@ -1216,8 +1217,8 @@ public sealed class HCanaryPortEvidenceService
                 }
 
                 var declaredTarget = exactReferences.Any(reference =>
-                    HasSerialTarget(reference, game.Serial) &&
-                    SupportsVersion(reference, game.Serial, game.Version));
+                    HasTgt(reference, game.Serial) &&
+                    Supports(reference, game.Serial, game.Version));
                 var reason = declaredTarget
                     ? "The target executable hash matches a declared reference for the selected serial and version."
                     : "The target executable hash matches a verified reference for the same normalized game title.";
@@ -1225,7 +1226,7 @@ public sealed class HCanaryPortEvidenceService
                 output.Add(Create(
                     family,
                     game,
-                    CanaryPortStatus.ExactReference,
+                    PortStat.ExactRef,
                     candidateReferences,
                     exactReferences,
                     true,
@@ -1233,23 +1234,23 @@ public sealed class HCanaryPortEvidenceService
                 continue;
             }
 
-            if (!IsAutomaticH2Family(family))
+            if (!IsAuto(family))
             {
                 output.Add(Create(
                     family,
                     game,
-                    CanaryPortStatus.ComplexManualReview,
+                    PortStat.Review,
                     candidateReferences,
                     [],
                     false,
-                    $"Family complexity '{family.Complexity}' is outside the bounded automatic H2 subset."));
+                    $"Family complexity '{family.Cpx}' is outside the bounded automatic H2 subset."));
                 continue;
             }
 
             output.Add(Create(
                 family,
                 game,
-                CanaryPortStatus.NotPortable,
+                PortStat.NoPort,
                 candidateReferences,
                 [],
                 false,
@@ -1262,64 +1263,64 @@ public sealed class HCanaryPortEvidenceService
             .ToArray();
     }
 
-    private static CanaryPortAnalysis Create(
-        CanaryPatchFamily family,
-        Rpcs3GameDescriptor game,
-        CanaryPortStatus status,
-        IReadOnlyList<CanaryPatchDefinition> candidateReferences,
-        IReadOnlyList<CanaryPatchDefinition> exactReferences,
+    private static PortAnlz Create(
+        CanFam family,
+        R3Game game,
+        PortStat status,
+        IReadOnlyList<CanDef> candidateReferences,
+        IReadOnlyList<CanDef> exactReferences,
         bool hasDeterministicEvidence,
         string reason)
     {
-        return new CanaryPortAnalysis(
+        return new PortAnlz(
             family.FamilyId,
             family.Title,
             status,
             game.Serial,
-            Rpcs3PatchVersion.Normalize(game.Version),
-            game.HashEvidenceKind,
-            game.HashSource,
-            TargetHashes(candidateReferences, game),
+            PatVer.Norm(game.Version),
+            game.HashEvi,
+            game.HashSrc,
+            Tgt(candidateReferences, game),
             candidateReferences,
             exactReferences,
             hasDeterministicEvidence,
             reason);
     }
 
-    private static bool HasSerialTarget(
-        CanaryPatchDefinition reference,
+    private static bool HasTgt(
+        CanDef reference,
         string serial)
     {
-        return reference.GameTargets.Any(target =>
+        return reference.GameTgt.Any(target =>
             target.Serial.Equals(serial, StringComparison.OrdinalIgnoreCase) ||
-            Rpcs3PatchVersion.IsAll(target.Serial));
+            PatVer.IsAll(target.Serial));
     }
 
-    private static bool HasTitleTarget(
-        CanaryPatchDefinition reference,
+    private static bool HasTitle(
+        CanDef reference,
         string normalizedTitle)
     {
-        return normalizedTitle.Length > 0 && reference.GameTargets.Any(target =>
-            Normalize(target.Title).Equals(normalizedTitle, StringComparison.Ordinal));
+        return normalizedTitle.Length > 0 && reference.GameTgt.Any(target =>
+            Norm2(target.Title).Equals(normalizedTitle, StringComparison.Ordinal));
     }
 
-    private static bool SupportsVersion(
-        CanaryPatchDefinition reference,
+    private static bool Supports(
+        CanDef reference,
         string serial,
         string? version)
     {
-        var targets = reference.GameTargets.Where(target =>
+        var targets = reference.GameTgt.Where(target =>
             target.Serial.Equals(serial, StringComparison.OrdinalIgnoreCase) ||
-            Rpcs3PatchVersion.IsAll(target.Serial));
+            PatVer.IsAll(target.Serial));
 
         foreach (var target in targets)
         {
-            if (target.Versions.Count == 0 || target.Versions.Any(Rpcs3PatchVersion.IsAll))
+            if (target.Versions.Count == 0 || target.Versions.Any(PatVer.IsAll))
             {
                 return true;
             }
 
-            if (version is not null && target.Versions.Any(candidate => Rpcs3PatchVersion.Equals(candidate, version)))
+            if (version is not null && target.Versions.Any(candidate => PatVer.Equals(candidate, version)))
             {
                 return true;
             }
@@ -1328,24 +1329,24 @@ public sealed class HCanaryPortEvidenceService
         return false;
     }
 
-    private static IReadOnlyList<string> TargetHashes(
-        IReadOnlyList<CanaryPatchDefinition> references,
-        Rpcs3GameDescriptor game)
+    private static IReadOnlyList<string> Tgt(
+        IReadOnlyList<CanDef> references,
+        R3Game game)
     {
         var kinds = references
-            .Select(reference => reference.ModuleKind)
+            .Select(reference => reference.ModKind)
             .Distinct()
             .ToHashSet();
         var hashes = new List<string>();
 
-        if (kinds.Contains(PatchHashKind.Ppu))
+        if (kinds.Contains(HashKind.Ppu))
         {
-            hashes.AddRange(game.AllPpuHashes);
+            hashes.AddRange(game.Hashes);
         }
 
-        if (kinds.Contains(PatchHashKind.Spu))
+        if (kinds.Contains(HashKind.Spu))
         {
-            hashes.AddRange(game.AllSpuHashes);
+            hashes.AddRange(game.SpuList);
         }
 
         return hashes
@@ -1354,57 +1355,57 @@ public sealed class HCanaryPortEvidenceService
             .ToArray();
     }
 
-    private static bool ReferenceHashMatches(
-        CanaryPatchDefinition reference,
-        Rpcs3GameDescriptor game)
+    private static bool RefHash(
+        CanDef reference,
+        R3Game game)
     {
-        var normalized = reference.NormalizedModuleHash;
+        var normalized = reference.NormHash;
         if (normalized is null)
         {
             return false;
         }
 
-        var targetHashes = reference.ModuleKind switch
+        var targetHashes = reference.ModKind switch
         {
-            PatchHashKind.Ppu => game.AllPpuHashes,
-            PatchHashKind.Spu => game.AllSpuHashes,
+            HashKind.Ppu => game.Hashes,
+            HashKind.Spu => game.SpuList,
             _ => []
         };
 
         return targetHashes.Contains(normalized, StringComparer.OrdinalIgnoreCase);
     }
 
-    private static bool HasConflictingLayouts(
-        IReadOnlyList<CanaryPatchDefinition> references)
+    private static bool HasClash(
+        IReadOnlyList<CanDef> references)
     {
         return references
-            .Select(LayoutFingerprint)
+            .Select(Layout)
             .Distinct(StringComparer.Ordinal)
             .Skip(1)
             .Any();
     }
 
-    private static string LayoutFingerprint(CanaryPatchDefinition reference)
+    private static string Layout(CanDef reference)
     {
         var canonical = new StringBuilder();
-        foreach (var instruction in reference.Instructions)
+        foreach (var instruction in reference.InsList)
         {
             canonical.Append(instruction.Kind)
                 .Append('|')
-                .Append(NormalizeLayoutScalar(instruction.Address))
+                .Append(Norm(instruction.Address))
                 .Append('|')
-                .Append(NormalizeLayoutScalar(instruction.Value))
+                .Append(Norm(instruction.Value))
                 .Append('|')
-                .Append(instruction.AnchorName ?? string.Empty)
+                .Append(instruction.AncName ?? string.Empty)
                 .Append('|')
-                .AppendJoin(',', instruction.ExtraArguments.Select(NormalizeLayoutScalar))
+                .AppendJoin(',', instruction.ExtraArg.Select(Norm))
                 .Append(';');
         }
 
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical.ToString())));
     }
 
-    private static string NormalizeLayoutScalar(string value)
+    private static string Norm(string value)
     {
         var trimmed = value.Trim();
         var digits = trimmed.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
@@ -1419,37 +1420,37 @@ public sealed class HCanaryPortEvidenceService
             : trimmed.ToLowerInvariant();
     }
 
-    private static bool RequiresManualModuleEvidence(
-        IReadOnlyList<CanaryPatchDefinition> references)
+    private static bool Requires(
+        IReadOnlyList<CanDef> references)
     {
         var kinds = references
-            .Select(reference => reference.ModuleKind)
+            .Select(reference => reference.ModKind)
             .Distinct()
             .ToArray();
 
-        return kinds.Length != 1 || kinds[0] is not (PatchHashKind.Ppu or PatchHashKind.Spu);
+        return kinds.Length != 1 || kinds[0] is not (HashKind.Ppu or HashKind.Spu);
     }
 
-    private static bool IsAutomaticH2Family(CanaryPatchFamily family)
+    private static bool IsAuto(CanFam family)
     {
-        if (family.ReferenceEntries.Any(reference => !reference.IsAutomaticCandidate))
+        if (family.RefList.Any(reference => !reference.IsAuto))
         {
             return false;
         }
 
-        return family.Complexity is
-            CanaryComplexity.SimpleWrite or
-            CanaryComplexity.ConstantChange or
-            CanaryComplexity.SingleInstruction or
-            CanaryComplexity.MultiInstruction;
+        return family.Cpx is
+            CanCmp.Write or
+            CanCmp.Change or
+            CanCmp.Ins or
+            CanCmp.MultiIns;
     }
 
-    private static string DisplayVersion(string? version)
+    private static string Display(string? version)
     {
-        return Rpcs3PatchVersion.Normalize(version) ?? "<unknown>";
+        return PatVer.Norm(version) ?? "<unknown>";
     }
 
-    private static string Normalize(string? value)
+    private static string Norm2(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -1458,28 +1459,28 @@ public sealed class HCanaryPortEvidenceService
 
         return string.Join(
             ' ',
-            WordPattern.Matches(value.Normalize(NormalizationForm.FormKC).ToLowerInvariant())
+            Pattern.Matches(value.Normalize(NormalizationForm.FormKC).ToLowerInvariant())
                 .Select(match => match.Value));
     }
 }
 
-public sealed class HCanaryHashExtractionService
+public sealed class HashExt
 {
-    private static readonly Regex ExecutableHashPattern = new(
+    private static readonly Regex Pattern = new(
         @"\b(?<kind>PPU|SPU) executable hash:\s*(?<key>(?:PPU|SPU)-(?<hash>[0-9a-f]{40}))(?![0-9a-f])",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    public HCanaryHashReadResult Read(string logPath)
+    public HashRead Read(string logPath)
     {
         if (string.IsNullOrWhiteSpace(logPath))
         {
-            return new HCanaryHashReadResult(false, string.Empty, [], "RPCS3.log path is empty.");
+            return new HashRead(false, string.Empty, [], "RPCS3.log path is empty.");
         }
 
         var fullPath = Path.GetFullPath(logPath);
         if (!File.Exists(fullPath))
         {
-            return new HCanaryHashReadResult(false, fullPath, [], "RPCS3.log was not found.");
+            return new HashRead(false, fullPath, [], "RPCS3.log was not found.");
         }
 
         try
@@ -1491,17 +1492,17 @@ public sealed class HCanaryHashExtractionService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
-            return new HCanaryHashReadResult(false, fullPath, [], ex.Message);
+            return new HashRead(false, fullPath, [], ex.Message);
         }
     }
 
-    public HCanaryHashReadResult Parse(string text, string sourcePath = "RPCS3.log")
+    public HashRead Parse(string text, string sourcePath = "RPCS3.log")
     {
         ArgumentNullException.ThrowIfNull(text);
-        var hashes = new List<HCanaryHash>();
+        var hashes = new List<HCanHash>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (Match match in ExecutableHashPattern.Matches(text))
+        foreach (Match match in Pattern.Matches(text))
         {
             var prefix = match.Groups["kind"].Value.ToUpperInvariant();
             var hash = match.Groups["hash"].Value.ToLowerInvariant();
@@ -1520,47 +1521,47 @@ public sealed class HCanaryHashExtractionService
                 }
             }
 
-            hashes.Add(new HCanaryHash(
-                prefix == "PPU" ? PatchHashKind.Ppu : PatchHashKind.Spu,
+            hashes.Add(new HCanHash(
+                prefix == "PPU" ? HashKind.Ppu : HashKind.Spu,
                 hash,
                 sourcePath,
                 line));
         }
 
-        return new HCanaryHashReadResult(true, sourcePath, hashes);
+        return new HashRead(true, sourcePath, hashes);
     }
 }
 
-public sealed class HCanaryPatchAuthoringService
+public sealed class PatAuth
 {
-    public const string PatchEngineVersion = "1.2";
-    public const string MetadataFileName = "r3config_hcanary.json";
+    public const string PatVer = "1.2";
+    public const string MetaName = "r3config_hcanary.json";
 
-    private static readonly Regex ExecutableHashPattern = new(
+    private static readonly Regex Pattern = new(
         @"^(?<kind>PPU|SPU)-(?<hash>[0-9a-fA-F]{40})$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex HexPattern = new(
+    private static readonly Regex Pattern2 = new(
         @"^0x[0-9a-fA-F]+$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex GameIdPattern = new(
+    private static readonly Regex Pattern3 = new(
         @"^[A-Za-z0-9]{9}$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex VersionPattern = new(
+    private static readonly Regex Pattern4 = new(
         @"^(?:[0-9]{2}\.[0-9]{2}|All)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly Regex PatchVersionPattern = new(
+    private static readonly Regex Pattern5 = new(
         @"^[0-9]+(?:\.[0-9]+){1,2}$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex AnchorPattern = new(
+    private static readonly Regex Pattern6 = new(
         @"^[A-Za-z_][A-Za-z0-9_-]*$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    public static readonly IReadOnlyList<string> Operations =
+    public static readonly IReadOnlyList<string> Op =
     [
         "be32", "be16", "be64", "be8", "byte", "le16", "le32", "le64",
         "bef32", "bef64", "lef32", "lef64", "bd32", "bd64", "bpex",
@@ -1568,23 +1569,23 @@ public sealed class HCanaryPatchAuthoringService
         "move_file", "hide_file", "load"
     ];
 
-    private static readonly HashSet<string> OperationSet = new(Operations, StringComparer.Ordinal);
-    private readonly PatchCatalogReader _reader;
-    private readonly PatchFileTransactionService _transaction;
+    private static readonly HashSet<string> OpSet = new(Op, StringComparer.Ordinal);
+    private readonly ReadSvc _reader;
+    private readonly PatTxn _Txn;
 
-    public HCanaryPatchAuthoringService(
-        PatchCatalogReader? reader = null,
-        PatchFileTransactionService? transaction = null)
+    public PatAuth(
+        ReadSvc? reader = null,
+        PatTxn? transaction = null)
     {
-        _reader = reader ?? new PatchCatalogReader();
-        _transaction = transaction ?? new PatchFileTransactionService();
+        _reader = reader ?? new ReadSvc();
+        _Txn = transaction ?? new PatTxn();
     }
 
-    public HCanaryValidationResult Validate(HCanaryPatchDraft draft)
+    public VldRes Validate(HCanDrft draft)
     {
         ArgumentNullException.ThrowIfNull(draft);
-        var issues = new List<HCanaryValidationIssue>();
-        var hashMatch = ExecutableHashPattern.Match(draft.ExecutableHash.Trim());
+        var issues = new List<VldIssue>();
+        var hashMatch = Pattern.Match(draft.ExeHash.Trim());
         if (!hashMatch.Success)
         {
             Add("Hash.Invalid", "ExecutableHash", "Executable Hash must use PPU-/SPU- followed by 40 hexadecimal characters.");
@@ -1593,18 +1594,18 @@ public sealed class HCanaryPatchAuthoringService
         {
             Add("Hash.Zero", "ExecutableHash", "Executable Hash cannot be all zeroes.");
         }
-        else if (draft.PatchType == HCanaryPatchType.Ppu && !hashMatch.Groups["kind"].Value.Equals("PPU", StringComparison.Ordinal))
+        else if (draft.PatType == HCanType.Ppu && !hashMatch.Groups["kind"].Value.Equals("PPU", StringComparison.Ordinal))
         {
             Add("Hash.Kind", "ExecutableHash", "PPU patch type requires a PPU Hash.");
         }
-        else if (draft.PatchType == HCanaryPatchType.Spu && !hashMatch.Groups["kind"].Value.Equals("SPU", StringComparison.Ordinal))
+        else if (draft.PatType == HCanType.Spu && !hashMatch.Groups["kind"].Value.Equals("SPU", StringComparison.Ordinal))
         {
             Add("Hash.Kind", "ExecutableHash", "SPU patch type requires an SPU Hash.");
         }
 
-        Required(draft.PatchName, "PatchName", "PatchName.Required", "Patch Name is required.");
-        Required(draft.PatchVersion, "PatchVersion", "PatchVersion.Required", "Patch Version is required.");
-        if (!string.IsNullOrWhiteSpace(draft.PatchVersion) && !PatchVersionPattern.IsMatch(draft.PatchVersion.Trim()))
+        Required(draft.PatName, "PatchName", "PatchName.Required", "Patch Name is required.");
+        Required(draft.PatVer, "PatchVersion", "PatchVersion.Required", "Patch Version is required.");
+        if (!string.IsNullOrWhiteSpace(draft.PatVer) && !Pattern5.IsMatch(draft.PatVer.Trim()))
         {
             Add("PatchVersion.Invalid", "PatchVersion", "Patch Version must use western digits, for example 1.0.");
         }
@@ -1619,18 +1620,18 @@ public sealed class HCanaryPatchAuthoringService
             var target = draft.Games[index];
             Required(target.GameName, $"Games[{index}].GameName", "GameName.Required", "Game Name is required.");
             Required(target.GameId, $"Games[{index}].GameId", "GameId.Required", "Game ID is required.");
-            Required(target.GameVersion, $"Games[{index}].GameVersion", "GameVersion.Required", "Game Version is required.");
-            if (!string.IsNullOrWhiteSpace(target.GameId) && !GameIdPattern.IsMatch(target.GameId.Trim()))
+            Required(target.GameVer, $"Games[{index}].GameVersion", "GameVersion.Required", "Game Version is required.");
+            if (!string.IsNullOrWhiteSpace(target.GameId) && !Pattern3.IsMatch(target.GameId.Trim()))
             {
                 Add("GameId.Invalid", $"Games[{index}].GameId", "Game ID must contain exactly nine Latin letters or digits.");
             }
-            if (!string.IsNullOrWhiteSpace(target.GameVersion) && !VersionPattern.IsMatch(target.GameVersion.Trim()))
+            if (!string.IsNullOrWhiteSpace(target.GameVer) && !Pattern4.IsMatch(target.GameVer.Trim()))
             {
                 Add("GameVersion.Invalid", $"Games[{index}].GameVersion", "Game Version must be NN.NN or All.");
             }
         }
 
-        if (draft.Instructions.Count == 0)
+        if (draft.Ins.Count == 0)
         {
             Add("Instructions.Required", "Instructions", "At least one Patch instruction is required.");
         }
@@ -1639,7 +1640,7 @@ public sealed class HCanaryPatchAuthoringService
         for (var index = 0; index < draft.Anchors.Count; index++)
         {
             var anchor = draft.Anchors[index];
-            if (!AnchorPattern.IsMatch(anchor.Name.Trim()))
+            if (!Pattern6.IsMatch(anchor.Name.Trim()))
             {
                 Add("Anchor.Invalid", $"Anchors[{index}].Name", "Anchor name must be a valid ASCII YAML anchor name.");
             }
@@ -1647,21 +1648,21 @@ public sealed class HCanaryPatchAuthoringService
             {
                 Add("Anchor.Duplicate", $"Anchors[{index}].Name", "Anchor name is duplicated.");
             }
-            if (anchor.Instructions.Count == 0)
+            if (anchor.Ins.Count == 0)
             {
                 Add("Anchor.Empty", $"Anchors[{index}].Instructions", "Anchor requires at least one instruction.");
             }
-            ValidateInstructions(anchor.Instructions, $"Anchors[{index}].Instructions", allowLoad: false);
+            VldIns(anchor.Ins, $"Anchors[{index}].Instructions", allowLoad: false);
         }
 
-        ValidateInstructions(draft.Instructions, "Instructions", allowLoad: true);
+        VldIns(draft.Ins, "Instructions", allowLoad: true);
 
         string yaml;
         try
         {
-            yaml = GenerateYaml(draft);
-            var read = _reader.ReadText(yaml, PatchSourceOrigin.Imported);
-            if (!read.Succeeded)
+            yaml = Generate(draft);
+            var read = _reader.ReadText(yaml, PatSrc.Imported);
+            if (!read.IsOk)
             {
                 Add("Yaml.Invalid", "Yaml", read.Error ?? "Generated YAML is invalid.");
             }
@@ -1676,7 +1677,7 @@ public sealed class HCanaryPatchAuthoringService
             Add("Yaml.Invalid", "Yaml", ex.Message);
         }
 
-        return new HCanaryValidationResult(issues, yaml);
+        return new VldRes(issues, yaml);
 
         void Required(string value, string field, string code, string message)
         {
@@ -1687,16 +1688,16 @@ public sealed class HCanaryPatchAuthoringService
         }
 
         void Add(string code, string field, string message) =>
-            issues.Add(new HCanaryValidationIssue(code, field, message));
+            issues.Add(new VldIssue(code, field, message));
 
-        void ValidateInstructions(IReadOnlyList<HCanaryInstruction> instructions, string field, bool allowLoad)
+        void VldIns(IReadOnlyList<HCanInst> instructions, string field, bool allowLoad)
         {
             for (var index = 0; index < instructions.Count; index++)
             {
                 var instruction = instructions[index];
                 var itemField = $"{field}[{index}]";
-                var operation = instruction.Operation.Trim();
-                if (!OperationSet.Contains(operation))
+                var operation = instruction.Op.Trim();
+                if (!OpSet.Contains(operation))
                 {
                     Add("Operation.Invalid", itemField + ".Operation", "Unknown RPCS3 Patch operation.");
                     continue;
@@ -1714,12 +1715,12 @@ public sealed class HCanaryPatchAuthoringService
                     }
                     continue;
                 }
-                if (!HexPattern.IsMatch(instruction.Address.Trim()))
+                if (!Pattern2.IsMatch(instruction.Address.Trim()))
                 {
                     Add("Address.Invalid", itemField + ".Address", "Address must be hexadecimal and start with 0x.");
                 }
                 if (string.IsNullOrWhiteSpace(instruction.Value) ||
-                    (UsesHexValue(operation) && !HexPattern.IsMatch(instruction.Value.Trim())))
+                    (HexVal(operation) && !Pattern2.IsMatch(instruction.Value.Trim())))
                 {
                     Add("Value.Invalid", itemField + ".Value", "Value is invalid for this operation.");
                 }
@@ -1727,7 +1728,7 @@ public sealed class HCanaryPatchAuthoringService
         }
     }
 
-    public string GenerateYaml(HCanaryPatchDraft draft)
+    public string Generate(HCanDrft draft)
     {
         var lines = new List<string> { "Version: 1.2", string.Empty };
         if (draft.Anchors.Count > 0)
@@ -1736,23 +1737,23 @@ public sealed class HCanaryPatchAuthoringService
             foreach (var anchor in draft.Anchors)
             {
                 lines.Add($"  {anchor.Name.Trim()}: &{anchor.Name.Trim()}");
-                foreach (var instruction in anchor.Instructions)
+                foreach (var instruction in anchor.Ins)
                 {
-                    lines.Add("    " + InstructionYaml(instruction));
+                    lines.Add("    " + InsYaml(instruction));
                 }
             }
             lines.Add(string.Empty);
         }
 
-        lines.Add(draft.ExecutableHash.Trim() + ":");
-        lines.Add("  " + Quote(draft.PatchName.Trim()) + ":");
+        lines.Add(draft.ExeHash.Trim() + ":");
+        lines.Add("  " + Quote(draft.PatName.Trim()) + ":");
         lines.Add("    Games:");
         foreach (var titleGroup in draft.Games.GroupBy(item => item.GameName.Trim(), StringComparer.Ordinal))
         {
             lines.Add("      " + Quote(titleGroup.Key) + ":");
             foreach (var idGroup in titleGroup.GroupBy(item => item.GameId.Trim().ToUpperInvariant(), StringComparer.Ordinal))
             {
-                var versions = idGroup.Select(item => NormalizeVersion(item.GameVersion))
+                var versions = idGroup.Select(item => NormVer(item.GameVer))
                     .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
                 lines.Add($"        {idGroup.Key}: [ {string.Join(", ", versions)} ]");
             }
@@ -1760,11 +1761,11 @@ public sealed class HCanaryPatchAuthoringService
         Optional("Author", draft.Author);
         Optional("Notes", draft.Notes);
         Optional("Group", draft.Group);
-        lines.Add("    Patch Version: " + draft.PatchVersion.Trim());
+        lines.Add("    Patch Version: " + draft.PatVer.Trim());
         lines.Add("    Patch:");
-        foreach (var instruction in draft.Instructions)
+        foreach (var instruction in draft.Ins)
         {
-            lines.Add("      " + InstructionYaml(instruction));
+            lines.Add("      " + InsYaml(instruction));
         }
 
         return string.Join("\r\n", lines) + "\r\n";
@@ -1778,32 +1779,32 @@ public sealed class HCanaryPatchAuthoringService
         }
     }
 
-    public IReadOnlyList<HCanaryStoredPatch> Load(string path)
+    public IReadOnlyList<HCanStor> Load(string path)
     {
         if (!File.Exists(path) || new FileInfo(path).Length == 0)
         {
             return [];
         }
 
-        var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+        var text = R3Bound.ReadUtf8(
             path,
-            Rpcs3InputLimits.PatchCatalogYamlBytes,
+            R3Limits.PatCatBy,
             "imported_patch.yml");
-        var catalog = _reader.ReadText(text, PatchSourceOrigin.Imported, path);
-        if (!catalog.Succeeded)
+        var catalog = _reader.ReadText(text, PatSrc.Imported, path);
+        if (!catalog.IsOk)
         {
             throw new InvalidDataException(catalog.Error ?? "imported_patch.yml is invalid.");
         }
 
         var yaml = LoadYaml(text);
         var root = (YamlMappingNode)yaml.Documents[0].RootNode;
-        var anchors = ReadAnchors(root);
-        var output = new List<HCanaryStoredPatch>();
-        var metadata = ReadMetadata(MetadataPath(path));
+        var anchors = ReadAnc(root);
+        var output = new List<HCanStor>();
+        var metadata = ReadMeta(MetaPath(path));
         foreach (var (keyNode, valueNode) in root.Children)
         {
             var hashKey = Scalar(keyNode);
-            var match = ExecutableHashPattern.Match(hashKey);
+            var match = Pattern.Match(hashKey);
             if (!match.Success || valueNode is not YamlMappingNode patches)
             {
                 continue;
@@ -1818,48 +1819,48 @@ public sealed class HCanaryPatchAuthoringService
                 var identity = Identity(hashKey, title);
                 metadata.TryGetValue(identity, out var localMetadata);
                 var inferredPatchType = match.Groups["kind"].Value == "PPU"
-                    ? HCanaryPatchType.Ppu
-                    : HCanaryPatchType.Spu;
+                    ? HCanType.Ppu
+                    : HCanType.Spu;
                 var isLegacyCanary =
-                    localMetadata?.PatchType == HCanaryPatchType.LegacyCanary;
-                var draft = new HCanaryPatchDraft
+                    localMetadata?.PatType == HCanType.Can;
+                var draft = new HCanDrft
                 {
-                    PatchType = isLegacyCanary
+                    PatType = isLegacyCanary
                         ? inferredPatchType
-                        : localMetadata?.PatchType ?? inferredPatchType,
-                    IsExperimental =
-                        localMetadata?.IsExperimental == true ||
+                        : localMetadata?.PatType ?? inferredPatchType,
+                    IsExp =
+                        localMetadata?.IsExp == true ||
                         isLegacyCanary,
-                    ExecutableHash = hashKey,
-                    PatchName = title,
+                    ExeHash = hashKey,
+                    PatName = title,
                     Author = Scalar(TryGet(details, "Author")),
                     Notes = Scalar(TryGet(details, "Notes")),
                     Group = Scalar(TryGet(details, "Group")),
-                    PatchVersion = Scalar(TryGet(details, "Patch Version")),
-                    Status = localMetadata?.Status ?? HCanaryDraftStatus.Saved,
-                    Games = ReadGames(TryGet(details, "Games")),
-                    Instructions = ReadInstructions(TryGet(details, "Patch"), out var dependencies)
+                    PatVer = Scalar(TryGet(details, "Patch Version")),
+                    Status = localMetadata?.Status ?? DraftSt.Saved,
+                    Games = Read(TryGet(details, "Games")),
+                    Ins = ReadIns(TryGet(details, "Patch"), out var dependencies)
                 };
                 draft.Anchors = dependencies.Distinct(StringComparer.Ordinal)
                     .Where(anchors.ContainsKey)
-                    .Select(name => new HCanaryAnchor
+                    .Select(name => new HCanAnc
                     {
                         Name = name,
-                        Instructions = ReadInstructions(anchors[name], out _)
+                        Ins = ReadIns(anchors[name], out _)
                     }).ToList();
-                output.Add(new HCanaryStoredPatch(identity, $"{title} — {hashKey}", draft));
+                output.Add(new HCanStor(identity, $"{title} — {hashKey}", draft));
             }
         }
         return output;
     }
 
-    public HCanarySaveResult Save(
+    public SaveRes Save(
         string importedPatchPath,
         string backupRootPath,
-        HCanaryPatchDraft draft,
+        HCanDrft draft,
         string? originalIdentity = null,
         bool saveAsNew = false,
-        PatchPathValidator? validatePaths = null)
+        PathVld? validatePaths = null)
     {
         var validation = Validate(draft);
         if (!validation.IsValid)
@@ -1868,103 +1869,103 @@ public sealed class HCanaryPatchAuthoringService
         }
 
         var existing = File.Exists(importedPatchPath) && new FileInfo(importedPatchPath).Length > 0
-            ? Rpcs3BoundedInput.ReadUtf8TextFile(
+            ? R3Bound.ReadUtf8(
                 importedPatchPath,
-                Rpcs3InputLimits.PatchCatalogYamlBytes,
+                R3Limits.PatCatBy,
                 "imported_patch.yml")
             : "Version: 1.2\r\n";
         var yaml = LoadYaml(existing);
         var root = (YamlMappingNode)yaml.Documents[0].RootNode;
-        var newIdentity = Identity(draft.ExecutableHash.Trim(), draft.PatchName.Trim());
+        var newIdentity = Identity(draft.ExeHash.Trim(), draft.PatName.Trim());
         var replaced = false;
 
         if (!saveAsNew && !string.IsNullOrWhiteSpace(originalIdentity))
         {
-            replaced = RemovePatch(root, originalIdentity);
+            replaced = DelPat(root, originalIdentity);
         }
-        if (FindPatch(root, newIdentity) is not null)
+        if (FindPat(root, newIdentity) is not null)
         {
             throw new InvalidOperationException("A Patch with the same name and executable Hash already exists.");
         }
 
-        var anchorNodes = MergeAnchors(root, draft.Anchors);
-        var hashMap = GetOrCreateHashMap(root, draft.ExecutableHash.Trim());
-        hashMap.Add(new YamlScalarNode(draft.PatchName.Trim()), BuildDetailsNode(draft, anchorNodes));
-        var text = Serialize(yaml);
-        var read = _reader.ReadText(text, PatchSourceOrigin.Imported, importedPatchPath);
-        if (!read.Succeeded)
+        var anchorNodes = MergeAnc(root, draft.Anchors);
+        var hashMap = GetOr(root, draft.ExeHash.Trim());
+        hashMap.Add(new YamlScalarNode(draft.PatName.Trim()), Build(draft, anchorNodes));
+        var text = Write2(yaml);
+        var read = _reader.ReadText(text, PatSrc.Imported, importedPatchPath);
+        if (!read.IsOk)
         {
             throw new InvalidDataException(read.Error ?? "Merged imported_patch.yml is invalid.");
         }
 
-        var metadataPath = MetadataPath(importedPatchPath);
-        var metadata = ReadMetadata(metadataPath);
+        var metadataPath = MetaPath(importedPatchPath);
+        var metadata = ReadMeta(metadataPath);
         if (!saveAsNew && !string.IsNullOrWhiteSpace(originalIdentity)) metadata.Remove(originalIdentity);
-        metadata[newIdentity] = new LocalMetadata(
-            draft.PatchType,
-            draft.Status == HCanaryDraftStatus.Draft ? HCanaryDraftStatus.Saved : draft.Status,
-            draft.IsExperimental);
-        var metadataText = SerializeMetadata(metadata);
-        var backup = _transaction.Commit(backupRootPath,
+        metadata[newIdentity] = new LocMeta(
+            draft.PatType,
+            draft.Status == DraftSt.Draft ? DraftSt.Saved : draft.Status,
+            draft.IsExp);
+        var metadataText = Write(metadata);
+        var backup = _Txn.Commit(backupRootPath,
         [
-            new PatchPreparedFile(importedPatchPath, text, PatchPreparedFileKind.PatchCatalog,
-                PatchSourceOrigin.Imported, read.Catalog.Entries.Count),
-            new PatchPreparedFile(metadataPath, metadataText, PatchPreparedFileKind.JsonMetadata)
+            new PrepFile(importedPatchPath, text, PrepKind.PatCat,
+                PatSrc.Imported, read.Catalog.Entries.Count),
+            new PrepFile(metadataPath, metadataText, PrepKind.JsonMeta)
         ], validatePaths);
-        return new HCanarySaveResult(importedPatchPath, backup, read.Catalog.Entries.Count, replaced);
+        return new SaveRes(importedPatchPath, backup, read.Catalog.Entries.Count, replaced);
     }
 
-    public HCanarySaveResult Delete(
+    public SaveRes Delete(
         string importedPatchPath,
         string backupRootPath,
         string identity,
-        PatchPathValidator? validatePaths = null)
+        PathVld? validatePaths = null)
     {
         if (!File.Exists(importedPatchPath))
         {
             throw new FileNotFoundException("imported_patch.yml was not found.", importedPatchPath);
         }
         var yaml = LoadYaml(
-            Rpcs3BoundedInput.ReadUtf8TextFile(
+            R3Bound.ReadUtf8(
                 importedPatchPath,
-                Rpcs3InputLimits.PatchCatalogYamlBytes,
+                R3Limits.PatCatBy,
                 "imported_patch.yml"));
         var root = (YamlMappingNode)yaml.Documents[0].RootNode;
-        if (!RemovePatch(root, identity))
+        if (!DelPat(root, identity))
         {
             throw new InvalidOperationException("The selected custom Patch no longer exists.");
         }
-        var text = Serialize(yaml);
-        var read = _reader.ReadText(text, PatchSourceOrigin.Imported, importedPatchPath);
-        if (!read.Succeeded)
+        var text = Write2(yaml);
+        var read = _reader.ReadText(text, PatSrc.Imported, importedPatchPath);
+        if (!read.IsOk)
         {
             throw new InvalidDataException(read.Error ?? "Updated imported_patch.yml is invalid.");
         }
-        var metadataPath = MetadataPath(importedPatchPath);
-        var metadata = ReadMetadata(metadataPath);
+        var metadataPath = MetaPath(importedPatchPath);
+        var metadata = ReadMeta(metadataPath);
         metadata.Remove(identity);
-        var backup = _transaction.Commit(backupRootPath,
+        var backup = _Txn.Commit(backupRootPath,
         [
-            new PatchPreparedFile(importedPatchPath, text, PatchPreparedFileKind.PatchCatalog,
-                PatchSourceOrigin.Imported, read.Catalog.Entries.Count),
-            new PatchPreparedFile(metadataPath, SerializeMetadata(metadata), PatchPreparedFileKind.JsonMetadata)
+            new PrepFile(importedPatchPath, text, PrepKind.PatCat,
+                PatSrc.Imported, read.Catalog.Entries.Count),
+            new PrepFile(metadataPath, Write(metadata), PrepKind.JsonMeta)
         ], validatePaths);
-        return new HCanarySaveResult(importedPatchPath, backup, read.Catalog.Entries.Count, true);
+        return new SaveRes(importedPatchPath, backup, read.Catalog.Entries.Count, true);
     }
 
-    private static bool UsesHexValue(string operation) => operation is not
+    private static bool HexVal(string operation) => operation is not
         ("utf8" or "cutf8" or "move_file" or "hide_file" or "alloc" or "calloc" or "jump" or "jumpl" or "jumpf");
 
-    private static string NormalizeVersion(string value) =>
+    private static string NormVer(string value) =>
         value.Trim().Equals("All", StringComparison.OrdinalIgnoreCase) ? "All" : value.Trim();
 
-    private static string InstructionYaml(HCanaryInstruction instruction)
+    private static string InsYaml(HCanInst instruction)
     {
-        if (instruction.Operation.Trim() == "load")
+        if (instruction.Op.Trim() == "load")
         {
             return $"- [ load, *{instruction.Address.Trim().TrimStart('*')} ]";
         }
-        return $"- [ {instruction.Operation.Trim()}, {instruction.Address.Trim()}, {instruction.Value.Trim()} ]";
+        return $"- [ {instruction.Op.Trim()}, {instruction.Address.Trim()}, {instruction.Value.Trim()} ]";
     }
 
     private static string Quote(string value) => "\"" + value
@@ -1975,9 +1976,9 @@ public sealed class HCanaryPatchAuthoringService
 
     private static string Identity(string hashKey, string title) => hashKey.Trim() + "\0" + title.Trim();
 
-    public Rpcs3PatchCatalog ApplyLocalMetadata(Rpcs3PatchCatalog catalog, string importedPatchPath)
+    public PatCat Apply(PatCat catalog, string importedPatchPath)
     {
-        var metadata = ReadMetadata(MetadataPath(importedPatchPath));
+        var metadata = ReadMeta(MetaPath(importedPatchPath));
         if (metadata.Count == 0) return catalog;
         return catalog with
         {
@@ -1985,33 +1986,33 @@ public sealed class HCanaryPatchAuthoringService
             {
                 var key = $"{entry.HashKind.ToString().ToUpperInvariant()}-{entry.Hash}\0{entry.Title}";
                 if (!metadata.TryGetValue(key, out var value) ||
-                    (!value.IsExperimental &&
-                     value.PatchType != HCanaryPatchType.LegacyCanary))
+                    (!value.IsExp &&
+                     value.PatType != HCanType.Can))
                 {
                     return entry;
                 }
-                return entry with { Risk = PatchRisk.Canary, PatchType = "Canary" };
+                return entry with { Risk = Mdl.PatRisk.Canary, PatType = "Canary" };
             }).ToArray()
         };
     }
 
-    private static string MetadataPath(string importedPatchPath) =>
-        Path.Combine(Path.GetDirectoryName(Path.GetFullPath(importedPatchPath))!, MetadataFileName);
+    private static string MetaPath(string importedPatchPath) =>
+        Path.Combine(Path.GetDirectoryName(Path.GetFullPath(importedPatchPath))!, MetaName);
 
-    private static Dictionary<string, LocalMetadata> ReadMetadata(string path)
+    private static Dictionary<string, LocMeta> ReadMeta(string path)
     {
         if (!File.Exists(path) || new FileInfo(path).Length == 0)
         {
-            return new Dictionary<string, LocalMetadata>(StringComparer.Ordinal);
+            return new Dictionary<string, LocMeta>(StringComparer.Ordinal);
         }
         try
         {
-            var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+            var text = R3Bound.ReadUtf8(
                 path,
-                Rpcs3InputLimits.HCanaryMetadataBytes,
+                R3Limits.HBytes,
                 "R3Config H-Canary metadata");
-            return JsonSerializer.Deserialize<Dictionary<string, LocalMetadata>>(text)
-                   ?? new Dictionary<string, LocalMetadata>(StringComparer.Ordinal);
+            return JsonSerializer.Deserialize<Dictionary<string, LocMeta>>(text)
+                   ?? new Dictionary<string, LocMeta>(StringComparer.Ordinal);
         }
         catch (JsonException ex)
         {
@@ -2019,36 +2020,36 @@ public sealed class HCanaryPatchAuthoringService
         }
     }
 
-    private static string SerializeMetadata(IReadOnlyDictionary<string, LocalMetadata> metadata)
+    private static string Write(IReadOnlyDictionary<string, LocMeta> metadata)
     {
         var text = JsonSerializer.Serialize(
                 metadata,
                 new JsonSerializerOptions { WriteIndented = true })
             .Replace("\n", "\r\n", StringComparison.Ordinal) + "\r\n";
-        Rpcs3BoundedInput.EnsureTextLength(
+        R3Bound.Check(
             text,
-            Rpcs3InputLimits.HCanaryMetadataBytes,
+            R3Limits.HBytes,
             "R3Config H-Canary metadata");
         return text;
     }
 
-    public sealed record LocalMetadata(
-        HCanaryPatchType PatchType,
-        HCanaryDraftStatus Status,
-        bool IsExperimental = false);
+    public sealed record LocMeta(
+        [property: JsonPropertyName("PatchType")] HCanType PatType,
+        DraftSt Status,
+        [property: JsonPropertyName("IsExperimental")] bool IsExp = false);
 
     private static YamlStream LoadYaml(string text)
     {
         try
         {
-            var yaml = Rpcs3BoundedInput.LoadYaml(
+            var yaml = R3Bound.LoadYaml(
                 text,
                 "imported_patch.yml");
             if (yaml.Documents.Count != 1 || yaml.Documents[0].RootNode is not YamlMappingNode root)
             {
                 throw new InvalidDataException("imported_patch.yml must contain one YAML mapping document.");
             }
-            if (!Scalar(TryGet(root, "Version")).Equals(PatchEngineVersion, StringComparison.Ordinal))
+            if (!Scalar(TryGet(root, "Version")).Equals(PatVer, StringComparison.Ordinal))
             {
                 throw new InvalidDataException("imported_patch.yml must begin with Version: 1.2.");
             }
@@ -2060,7 +2061,7 @@ public sealed class HCanaryPatchAuthoringService
         }
     }
 
-    private static string Serialize(YamlStream yaml)
+    private static string Write2(YamlStream yaml)
     {
         using var writer = new StringWriter(CultureInfo.InvariantCulture) { NewLine = "\r\n" };
         yaml.Save(writer, assignAnchors: false);
@@ -2070,7 +2071,7 @@ public sealed class HCanaryPatchAuthoringService
         return text.TrimEnd('\r', '\n') + "\r\n";
     }
 
-    private static Dictionary<string, YamlSequenceNode> ReadAnchors(YamlMappingNode root)
+    private static Dictionary<string, YamlSequenceNode> ReadAnc(YamlMappingNode root)
     {
         var output = new Dictionary<string, YamlSequenceNode>(StringComparer.Ordinal);
         foreach (var (key, value) in root.Children)
@@ -2090,9 +2091,9 @@ public sealed class HCanaryPatchAuthoringService
         return output;
     }
 
-    private static List<HCanaryGameTarget> ReadGames(YamlNode? node)
+    private static List<HCanTgt> Read(YamlNode? node)
     {
-        var output = new List<HCanaryGameTarget>();
+        var output = new List<HCanTgt>();
         if (node is not YamlMappingNode games)
         {
             return output;
@@ -2105,19 +2106,19 @@ public sealed class HCanaryPatchAuthoringService
                 var versions = versionsNode is YamlSequenceNode sequence
                     ? sequence.Children.Select(Scalar)
                     : [Scalar(versionsNode)];
-                output.AddRange(versions.Select(version => new HCanaryGameTarget
+                output.AddRange(versions.Select(version => new HCanTgt
                 {
-                    GameName = Scalar(titleNode), GameId = Scalar(idNode), GameVersion = version
+                    GameName = Scalar(titleNode), GameId = Scalar(idNode), GameVer = version
                 }));
             }
         }
         return output;
     }
 
-    private static List<HCanaryInstruction> ReadInstructions(YamlNode? node, out List<string> dependencies)
+    private static List<HCanInst> ReadIns(YamlNode? node, out List<string> dependencies)
     {
         dependencies = [];
-        var output = new List<HCanaryInstruction>();
+        var output = new List<HCanInst>();
         if (node is not YamlSequenceNode patch) return output;
         foreach (var child in patch.Children.OfType<YamlSequenceNode>())
         {
@@ -2126,13 +2127,13 @@ public sealed class HCanaryPatchAuthoringService
             {
                 var name = loaded.Anchor.IsEmpty ? string.Empty : loaded.Anchor.Value;
                 dependencies.Add(name);
-                output.Add(new HCanaryInstruction { Operation = "load", Address = name, Value = string.Empty });
+                output.Add(new HCanInst { Op = "load", Address = name, Value = string.Empty });
             }
             else if (child.Children.Count >= 3)
             {
-                output.Add(new HCanaryInstruction
+                output.Add(new HCanInst
                 {
-                    Operation = operation,
+                    Op = operation,
                     Address = Scalar(child.Children[1]),
                     Value = Scalar(child.Children[2])
                 });
@@ -2141,9 +2142,9 @@ public sealed class HCanaryPatchAuthoringService
         return output;
     }
 
-    private static Dictionary<string, YamlSequenceNode> MergeAnchors(YamlMappingNode root, IReadOnlyList<HCanaryAnchor> anchors)
+    private static Dictionary<string, YamlSequenceNode> MergeAnc(YamlMappingNode root, IReadOnlyList<HCanAnc> anchors)
     {
-        var nodes = ReadAnchors(root);
+        var nodes = ReadAnc(root);
         YamlMappingNode? anchorMap = root.Children.FirstOrDefault(pair => Scalar(pair.Key).Equals("Anchors", StringComparison.OrdinalIgnoreCase)).Value as YamlMappingNode;
         if (anchors.Count > 0 && anchorMap is null)
         {
@@ -2152,15 +2153,15 @@ public sealed class HCanaryPatchAuthoringService
         }
         if (anchorMap is not null)
         {
-            MovePrimaryAnchorsBeforePatchHashes(root, anchorMap);
+            Move(root, anchorMap);
         }
         foreach (var anchor in anchors)
         {
             var name = anchor.Name.Trim();
-            var newNode = new YamlSequenceNode(anchor.Instructions.Select(BuildInstructionNode)) { Anchor = name };
+            var newNode = new YamlSequenceNode(anchor.Ins.Select(BuildIns)) { Anchor = name };
             if (nodes.TryGetValue(name, out var existing))
             {
-                if (!NodeFingerprint(existing).Equals(NodeFingerprint(newNode), StringComparison.Ordinal))
+                if (!Node(existing).Equals(Node(newNode), StringComparison.Ordinal))
                 {
                     throw new InvalidOperationException($"Anchor '{name}' already exists with different instructions.");
                 }
@@ -2172,7 +2173,7 @@ public sealed class HCanaryPatchAuthoringService
         return nodes;
     }
 
-    private static void MovePrimaryAnchorsBeforePatchHashes(YamlMappingNode root, YamlMappingNode anchorMap)
+    private static void Move(YamlMappingNode root, YamlMappingNode anchorMap)
     {
         var entries = root.Children.ToArray();
         var anchorPair = entries.First(pair => ReferenceEquals(pair.Value, anchorMap));
@@ -2190,7 +2191,7 @@ public sealed class HCanaryPatchAuthoringService
         }
     }
 
-    private static YamlMappingNode BuildDetailsNode(HCanaryPatchDraft draft, IReadOnlyDictionary<string, YamlSequenceNode> anchors)
+    private static YamlMappingNode Build(HCanDrft draft, IReadOnlyDictionary<string, YamlSequenceNode> anchors)
     {
         var details = new YamlMappingNode();
         var games = new YamlMappingNode();
@@ -2199,43 +2200,43 @@ public sealed class HCanaryPatchAuthoringService
             var ids = new YamlMappingNode();
             foreach (var idGroup in titleGroup.GroupBy(item => item.GameId.Trim().ToUpperInvariant(), StringComparer.Ordinal))
             {
-                ids.Add(idGroup.Key, new YamlSequenceNode(idGroup.Select(item => new YamlScalarNode(NormalizeVersion(item.GameVersion)))));
+                ids.Add(idGroup.Key, new YamlSequenceNode(idGroup.Select(item => new YamlScalarNode(NormVer(item.GameVer)))));
             }
             games.Add(titleGroup.Key, ids);
         }
         details.Add("Games", games);
-        AddOptional(details, "Author", draft.Author);
-        AddOptional(details, "Notes", draft.Notes);
-        AddOptional(details, "Group", draft.Group);
-        details.Add("Patch Version", draft.PatchVersion.Trim());
+        Add(details, "Author", draft.Author);
+        Add(details, "Notes", draft.Notes);
+        Add(details, "Group", draft.Group);
+        details.Add("Patch Version", draft.PatVer.Trim());
         var patch = new YamlSequenceNode();
-        foreach (var instruction in draft.Instructions)
+        foreach (var instruction in draft.Ins)
         {
-            if (instruction.Operation.Trim() == "load")
+            if (instruction.Op.Trim() == "load")
             {
                 var name = instruction.Address.Trim().TrimStart('*');
                 patch.Add(new YamlSequenceNode(new YamlScalarNode("load"), anchors[name]));
             }
             else
             {
-                patch.Add(BuildInstructionNode(instruction));
+                patch.Add(BuildIns(instruction));
             }
         }
         details.Add("Patch", patch);
         return details;
     }
 
-    private static YamlSequenceNode BuildInstructionNode(HCanaryInstruction instruction) => new(
-        new YamlScalarNode(instruction.Operation.Trim()),
+    private static YamlSequenceNode BuildIns(HCanInst instruction) => new(
+        new YamlScalarNode(instruction.Op.Trim()),
         new YamlScalarNode(instruction.Address.Trim()),
         new YamlScalarNode(instruction.Value.Trim()));
 
-    private static void AddOptional(YamlMappingNode map, string key, string value)
+    private static void Add(YamlMappingNode map, string key, string value)
     {
         if (!string.IsNullOrWhiteSpace(value)) map.Add(key, value);
     }
 
-    private static YamlMappingNode GetOrCreateHashMap(YamlMappingNode root, string hash)
+    private static YamlMappingNode GetOr(YamlMappingNode root, string hash)
     {
         if (TryGet(root, hash) is YamlMappingNode existing) return existing;
         var created = new YamlMappingNode();
@@ -2243,17 +2244,17 @@ public sealed class HCanaryPatchAuthoringService
         return created;
     }
 
-    private static YamlNode? FindPatch(YamlMappingNode root, string identity)
+    private static YamlNode? FindPat(YamlMappingNode root, string identity)
     {
         var split = identity.Split('\0', 2);
         return split.Length == 2 && TryGet(root, split[0]) is YamlMappingNode map ? TryGet(map, split[1]) : null;
     }
 
-    private static bool RemovePatch(YamlMappingNode root, string identity)
+    private static bool DelPat(YamlMappingNode root, string identity)
     {
         var split = identity.Split('\0', 2);
-        if (split.Length != 2 || TryGetPair(root, split[0]) is not { } hashPair || hashPair.Value is not YamlMappingNode map ||
-            TryGetPair(map, split[1]) is not { } patchPair)
+        if (split.Length != 2 || TryPair(root, split[0]) is not { } hashPair || hashPair.Value is not YamlMappingNode map ||
+            TryPair(map, split[1]) is not { } patchPair)
         {
             return false;
         }
@@ -2262,7 +2263,7 @@ public sealed class HCanaryPatchAuthoringService
         return true;
     }
 
-    private static KeyValuePair<YamlNode, YamlNode>? TryGetPair(YamlMappingNode map, string key)
+    private static KeyValuePair<YamlNode, YamlNode>? TryPair(YamlMappingNode map, string key)
     {
         foreach (var pair in map.Children)
         {
@@ -2271,10 +2272,10 @@ public sealed class HCanaryPatchAuthoringService
         return null;
     }
 
-    private static YamlNode? TryGet(YamlMappingNode map, string key) => TryGetPair(map, key)?.Value;
+    private static YamlNode? TryGet(YamlMappingNode map, string key) => TryPair(map, key)?.Value;
     private static string Scalar(YamlNode? node) => node is YamlScalarNode scalar ? scalar.Value ?? string.Empty : string.Empty;
 
-    private static string NodeFingerprint(YamlNode node)
+    private static string Node(YamlNode node)
     {
         var stream = new YamlStream(new YamlDocument(node));
         using var writer = new StringWriter(CultureInfo.InvariantCulture);

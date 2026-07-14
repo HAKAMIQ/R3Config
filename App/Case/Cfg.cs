@@ -5,35 +5,35 @@ using R3Config.Svc;
 namespace R3Config.Case;
 
 public sealed class CfgCase(
-    PlanService planService,
-    ConfigApplyService applyService,
-    IRpcs3MutationGuard mutationGuard)
+    PlanSvc planService,
+    CfgApply applyService,
+    IMutGd mutationGuard)
 {
-    public ConfigPlan Build(
-        Rpcs3InstallDescriptor install,
-        Rpcs3GameDescriptor game,
-        WikiGameRecommendation? recommendation,
+    public CfgPlan Build(
+        R3Inst install,
+        R3Game game,
+        WikiRec? recommendation,
         HwInfo? hardware)
     {
-        return planService.CreateConfigPlan(
+        return planService.BuildCfg(
             install,
             game,
             recommendation,
             hardware);
     }
 
-    public ConfigApplyResult Apply(
-        ConfigPlan plan,
-        IReadOnlyList<ConfigChange> changes,
-        Rpcs3InstallDescriptor install)
+    public CfgRes Apply(
+        CfgPlan plan,
+        IReadOnlyList<CfgChg> changes,
+        R3Inst install)
     {
         Check(plan, install);
         var backupRoot = R3Paths.BkpRoot(install);
         var validator = VldFunc(install);
         validator(
-            PatchTransactionPhase.BeforeStage,
+            PatPhase.Stg,
             backupRoot,
-            [plan.TargetConfigPath]);
+            [plan.CfgPath]);
 
         return applyService.Apply(
             plan,
@@ -42,18 +42,18 @@ public sealed class CfgCase(
             validator);
     }
 
-    public ConfigApplyResult Remove(
-        ConfigPlan plan,
-        IReadOnlyList<ConfigChange> changes,
-        Rpcs3InstallDescriptor install)
+    public CfgRes Remove(
+        CfgPlan plan,
+        IReadOnlyList<CfgChg> changes,
+        R3Inst install)
     {
         Check(plan, install);
         var backupRoot = R3Paths.BkpRoot(install);
         var validator = VldFunc(install);
         validator(
-            PatchTransactionPhase.BeforeStage,
+            PatPhase.Stg,
             backupRoot,
-            [plan.TargetConfigPath]);
+            [plan.CfgPath]);
 
         return applyService.Remove(
             plan,
@@ -63,28 +63,28 @@ public sealed class CfgCase(
     }
 
     private static void Check(
-        ConfigPlan plan,
-        Rpcs3InstallDescriptor install)
+        CfgPlan plan,
+        R3Inst install)
     {
         var expected = Path.Combine(
-            install.CustomConfigsPath,
-            $"config_{plan.GameSerial}.yml");
+            install.CustPath,
+            $"config_{plan.GameSer}.yml");
 
-        if (!Path.GetFullPath(plan.TargetConfigPath).Equals(
+        if (!Path.GetFullPath(plan.CfgPath).Equals(
                 Path.GetFullPath(expected),
                 StringComparison.OrdinalIgnoreCase))
         {
-            throw new Rpcs3MutationBlockedException(
-                Rpcs3MutationBlockReason.UnsafeTarget,
+            throw new MutBlkEx(
+                MutBlock.Tgt,
                 "The config plan target does not match its RPCS3 installation and game serial.");
         }
     }
 
-    private PatchPathValidator VldFunc(
-        Rpcs3InstallDescriptor install)
+    private PathVld VldFunc(
+        R3Inst install)
     {
         return (_, backupRoot, targets) =>
-            mutationGuard.EnsureCanMutate(
+            mutationGuard.CheckCan(
                 install,
                 targets,
                 [backupRoot]);

@@ -6,7 +6,7 @@ namespace R3Config.Svc;
 
 public sealed class LocalizedGameScanDiagnosticFormatter
 {
-    public string Format(GameScanDiagnostic diagnostic)
+    public string Format(ScanDiag diagnostic)
     {
         ArgumentNullException.ThrowIfNull(diagnostic);
 
@@ -16,15 +16,15 @@ public sealed class LocalizedGameScanDiagnosticFormatter
     }
 
     private static string SafeSourceName(
-        GameScanDiagnostic diagnostic)
+        ScanDiag diagnostic)
     {
-        if (string.IsNullOrWhiteSpace(diagnostic.SourcePath))
+        if (string.IsNullOrWhiteSpace(diagnostic.SrcPath))
         {
-            return diagnostic.SourceKind.ToString();
+            return diagnostic.SrcKind.ToString();
         }
 
         var normalized = Path.TrimEndingDirectorySeparator(
-            diagnostic.SourcePath);
+            diagnostic.SrcPath);
         var name = Path.GetFileName(normalized);
 
         if (name.Equals(
@@ -39,7 +39,7 @@ public sealed class LocalizedGameScanDiagnosticFormatter
         }
 
         return string.IsNullOrWhiteSpace(name)
-            ? diagnostic.SourceKind.ToString()
+            ? diagnostic.SrcKind.ToString()
             : name;
     }
 }

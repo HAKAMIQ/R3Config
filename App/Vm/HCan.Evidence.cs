@@ -17,11 +17,11 @@ public sealed partial class HCanaryVm : VmBase
         Hashes.Clear();
         foreach (var hash in result.Hashes) Hashes.Add(new HCanaryHashVm(hash));
         OnPropertyChanged(nameof(HasHashes));
-        LogStatus = !result.Succeeded
+        LogStatus = !result.IsOk
             ? UiText.F("HCanary.Log.Error", result.Error)
             : result.Hashes.Count == 0
                 ? UiText.T("HCanary.Log.None")
-                : UiText.F("HCanary.Log.Found", result.Hashes.Count, result.SourcePath);
+                : UiText.F("HCanary.Log.Found", result.Hashes.Count, result.SrcPath);
     }
 
     private void LoadContextHashes()
@@ -29,12 +29,12 @@ public sealed partial class HCanaryVm : VmBase
         Hashes.Clear();
         if (_contextGame is not null)
         {
-            var source = _contextGame.HashSource ?? LogPath;
-            foreach (var hash in _contextGame.AllPpuHashes) Hashes.Add(new HCanaryHashVm(new HCanaryHash(PatchHashKind.Ppu, hash, source, 0)));
-            foreach (var hash in _contextGame.AllSpuHashes) Hashes.Add(new HCanaryHashVm(new HCanaryHash(PatchHashKind.Spu, hash, source, 0)));
+            var source = _contextGame.HashSrc ?? LogPath;
+            foreach (var hash in _contextGame.Hashes) Hashes.Add(new HCanaryHashVm(new HCanHash(HashKind.Ppu, hash, source, 0)));
+            foreach (var hash in _contextGame.SpuList) Hashes.Add(new HCanaryHashVm(new HCanHash(HashKind.Spu, hash, source, 0)));
         }
         OnPropertyChanged(nameof(HasHashes));
-        LogStatus = Hashes.Count == 0 ? UiText.T("HCanary.Log.None") : UiText.F("HCanary.Log.Found", Hashes.Count, _contextGame?.HashSource ?? LogPath);
+        LogStatus = Hashes.Count == 0 ? UiText.T("HCanary.Log.None") : UiText.F("HCanary.Log.Found", Hashes.Count, _contextGame?.HashSrc ?? LogPath);
     }
 
     private void RefreshStoredPatches()
@@ -54,16 +54,16 @@ public sealed partial class HCanaryVm : VmBase
         StatusMessage = UiText.T("HCanary.Message.Opened");
     }
 
-    private void LoadDraft(HCanaryPatchDraft draft)
+    private void LoadDraft(HCanDrft draft)
     {
         _suppressRefresh = true;
-        PatchType = draft.PatchType == HCanaryPatchType.Spu ? "SPU" : "PPU";
-        IsExperimental = draft.IsExperimental;
-        ExecutableHash = draft.ExecutableHash; PatchName = draft.PatchName; Author = draft.Author; Notes = draft.Notes;
-        Group = draft.Group; PatchVersion = draft.PatchVersion; Status = draft.Status;
+        PatchType = draft.PatType == HCanType.Spu ? "SPU" : "PPU";
+        IsExperimental = draft.IsExp;
+        ExecutableHash = draft.ExeHash; PatchName = draft.PatName; Author = draft.Author; Notes = draft.Notes;
+        Group = draft.Group; PatchVersion = draft.PatVer; Status = draft.Status;
         Games.Clear(); Instructions.Clear(); Anchors.Clear();
         foreach (var item in draft.Games) AddGame(HCanaryGameTargetVm.From(item));
-        foreach (var item in draft.Instructions) AddInstruction(HCanaryInstructionVm.From(item));
+        foreach (var item in draft.Ins) AddInstruction(HCanaryInstructionVm.From(item));
         foreach (var item in draft.Anchors)
         {
             var anchor = HCanaryAnchorVm.From(item); Subscribe(anchor);

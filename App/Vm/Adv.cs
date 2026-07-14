@@ -22,10 +22,10 @@ public sealed class AdvancedVm : VmBase
     private string _catalogRecommendationCount = "0";
     private string _developerWikiPath = "-";
     private bool _catalogSourceIsBuiltIn;
-    private BackupSnapshot? _selectedBackup;
+    private BkpSnap? _selectedBackup;
     private readonly StringBuilder _log = new();
 
-    public ObservableCollection<BackupSnapshot> Backups { get; } = [];
+    public ObservableCollection<BkpSnap> Backups { get; } = [];
 
     public bool IsBackupsEmpty => Backups.Count == 0;
 
@@ -91,7 +91,7 @@ public sealed class AdvancedVm : VmBase
         set => SetProperty(ref _developerWikiPath, value);
     }
 
-    public BackupSnapshot? SelectedBackup
+    public BkpSnap? SelectedBackup
     {
         get => _selectedBackup;
         set => SetProperty(ref _selectedBackup, value);
@@ -113,7 +113,7 @@ public sealed class AdvancedVm : VmBase
         OnPropertyChanged(nameof(EmptyBackupsText));
     }
 
-    public void SetCatalogInfo(CatalogInfo? info, string unavailableMessage)
+    public void SetCatalogInfo(CatInfo? info, string unavailableMessage)
     {
         if (info is null)
         {
@@ -127,18 +127,18 @@ public sealed class AdvancedVm : VmBase
         }
 
         _catalogSourceIsBuiltIn = string.Equals(
-            info.DataSource,
+            info.DataSrc,
             "Built" + "-in",
             StringComparison.Ordinal);
 
         CatalogSource = _catalogSourceIsBuiltIn
             ? UiText.T("Cat.BuiltIn")
-            : info.DataSource;
+            : info.DataSrc;
 
-        CatalogVersion = info.DataVersion;
-        CatalogGeneratedAt = info.GeneratedAt?.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", CultureInfo.InvariantCulture) ?? "-";
-        CatalogSourceHash = string.IsNullOrWhiteSpace(info.SourceHash) ? "-" : info.SourceHash;
-        CatalogRecommendationCount = info.RecommendationCount.ToString(CultureInfo.InvariantCulture);
+        CatalogVersion = info.DataVer;
+        CatalogGeneratedAt = info.GenAt?.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", CultureInfo.InvariantCulture) ?? "-";
+        CatalogSourceHash = string.IsNullOrWhiteSpace(info.SrcHash) ? "-" : info.SrcHash;
+        CatalogRecommendationCount = info.RecNum.ToString(CultureInfo.InvariantCulture);
     }
 
     public void AppendLog(string message)
@@ -147,7 +147,7 @@ public sealed class AdvancedVm : VmBase
         LogText = _log.ToString();
     }
 
-    public void RefreshBackups(IEnumerable<BackupSnapshot> backups)
+    public void RefreshBackups(IEnumerable<BkpSnap> backups)
     {
         Backups.Clear();
 

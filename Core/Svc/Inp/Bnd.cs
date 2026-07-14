@@ -7,7 +7,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace R3Config.Svc;
 
-internal sealed class BoundedDiagnosticList<T>(int maxCount) :
+internal sealed class DiagList<T>(int maxCount) :
     Collection<T>
 {
     protected override void InsertItem(
@@ -21,45 +21,45 @@ internal sealed class BoundedDiagnosticList<T>(int maxCount) :
     }
 }
 
-public static class Rpcs3BoundedInput
+public static class R3Bound
 {
-    private const int CopyBufferBytes = 80 * 1024;
+    private const int Bytes = 80 * 1024;
 
-    public static string ReadUtf8TextFile(
+    public static string ReadUtf8(
         string path,
         long maxBytes,
         string sourceName)
     {
         var file = new FileInfo(path);
-        EnsureLength(file.Length, maxBytes, sourceName);
+        Check4(file.Length, maxBytes, sourceName);
 
         using var stream = new FileStream(
             path,
             FileMode.Open,
             FileAccess.Read,
             FileShare.ReadWrite | FileShare.Delete);
-        return ReadUtf8Text(
+        return ReadUtf2(
             stream,
             maxBytes,
             sourceName);
     }
 
-    public static string ReadUtf8Text(
+    public static string ReadUtf2(
         Stream stream,
         long maxBytes,
         string sourceName)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        ValidateLimit(maxBytes);
+        VldLimit(maxBytes);
 
         if (stream.CanSeek)
         {
             var remaining = checked(stream.Length - stream.Position);
-            EnsureLength(remaining, maxBytes, sourceName);
+            Check4(remaining, maxBytes, sourceName);
         }
 
         using var boundedBytes = new MemoryStream();
-        var buffer = new byte[CopyBufferBytes];
+        var buffer = new byte[Bytes];
         long total = 0;
 
         while (true)
@@ -75,7 +75,7 @@ public static class Rpcs3BoundedInput
             }
 
             total = checked(total + read);
-            EnsureLength(total, maxBytes, sourceName);
+            Check4(total, maxBytes, sourceName);
             boundedBytes.Write(buffer, 0, read);
         }
 
@@ -89,14 +89,14 @@ public static class Rpcs3BoundedInput
         return reader.ReadToEnd();
     }
 
-    public static void EnsureTextLength(
+    public static void Check(
         string text,
         long maxBytes,
         string sourceName)
     {
         ArgumentNullException.ThrowIfNull(text);
-        ValidateLimit(maxBytes);
-        EnsureLength(
+        VldLimit(maxBytes);
+        Check4(
             Encoding.UTF8.GetByteCount(text),
             maxBytes,
             sourceName);
@@ -107,12 +107,12 @@ public static class Rpcs3BoundedInput
         string sourceName)
     {
         ArgumentNullException.ThrowIfNull(text);
-        ValidateYaml(text, sourceName);
+        VldYaml(text, sourceName);
 
         var yaml = new YamlStream();
         yaml.Load(new StringReader(text));
         if (yaml.Documents.Count == 0 ||
-            yaml.Documents.Count > Rpcs3InputLimits.YamlDocuments)
+            yaml.Documents.Count > R3Limits.YamlDoc)
         {
             throw new InvalidDataException(
                 $"{sourceName} contains an invalid YAML document count.");
@@ -121,7 +121,7 @@ public static class Rpcs3BoundedInput
         return yaml;
     }
 
-    public static void ValidateYaml(
+    public static void VldYaml(
         string text,
         string sourceName)
     {
@@ -141,9 +141,9 @@ public static class Rpcs3BoundedInput
             {
                 case DocumentStart:
                     documents++;
-                    EnsureYamlLimit(
+                    Check3(
                         documents,
-                        Rpcs3InputLimits.YamlDocuments,
+                        R3Limits.YamlDoc,
                         sourceName,
                         "documents");
                     break;
@@ -152,24 +152,24 @@ public static class Rpcs3BoundedInput
                     nodes++;
                     mappings++;
                     depth++;
-                    EnsureYamlLimit(
+                    Check3(
                         mappings,
-                        Rpcs3InputLimits.YamlMappings,
+                        R3Limits.YamlMap,
                         sourceName,
                         "mappings");
-                    EnsureYamlDepth(depth, sourceName);
+                    Check2(depth, sourceName);
                     break;
 
                 case SequenceStart:
                     nodes++;
                     sequences++;
                     depth++;
-                    EnsureYamlLimit(
+                    Check3(
                         sequences,
-                        Rpcs3InputLimits.YamlSequences,
+                        R3Limits.YamlSeq,
                         sourceName,
                         "sequences");
-                    EnsureYamlDepth(depth, sourceName);
+                    Check2(depth, sourceName);
                     break;
 
                 case MappingEnd or SequenceEnd:
@@ -179,9 +179,9 @@ public static class Rpcs3BoundedInput
                 case AnchorAlias:
                     nodes++;
                     aliases++;
-                    EnsureYamlLimit(
+                    Check3(
                         aliases,
-                        Rpcs3InputLimits.YamlAliases,
+                        R3Limits.Aliases,
                         sourceName,
                         "aliases");
                     break;
@@ -191,26 +191,26 @@ public static class Rpcs3BoundedInput
                     break;
             }
 
-            EnsureYamlLimit(
+            Check3(
                 nodes,
-                Rpcs3InputLimits.YamlNodes,
+                R3Limits.Nodes,
                 sourceName,
                 "nodes");
         }
     }
 
-    private static void EnsureYamlDepth(
+    private static void Check2(
         int depth,
         string sourceName)
     {
-        if (depth > Rpcs3InputLimits.YamlDepth)
+        if (depth > R3Limits.Depth)
         {
             throw new InvalidDataException(
-                $"{sourceName} exceeds the YAML depth limit of {Rpcs3InputLimits.YamlDepth}.");
+                $"{sourceName} exceeds the YAML depth limit of {R3Limits.Depth}.");
         }
     }
 
-    private static void EnsureYamlLimit(
+    private static void Check3(
         int count,
         int limit,
         string sourceName,
@@ -223,12 +223,12 @@ public static class Rpcs3BoundedInput
         }
     }
 
-    private static void EnsureLength(
+    private static void Check4(
         long length,
         long maxBytes,
         string sourceName)
     {
-        ValidateLimit(maxBytes);
+        VldLimit(maxBytes);
 
         if (length < 0 || length > maxBytes)
         {
@@ -237,7 +237,7 @@ public static class Rpcs3BoundedInput
         }
     }
 
-    private static void ValidateLimit(long maxBytes)
+    private static void VldLimit(long maxBytes)
     {
         if (maxBytes <= 0 || maxBytes > int.MaxValue)
         {

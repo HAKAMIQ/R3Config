@@ -143,3 +143,91 @@ semantic rename layer is applied.
 | `R3Config.Composition` | `R3Config.Comp` |
 | `AppComposition` | `AppComp` |
 | `AppRuntimeServices` | `AppRun` |
+
+## Core model symbols
+
+| Old type | New type | Old type | New type |
+|---|---|---|---|
+| `BackupFileEntry` | `BkpEntry` | `BackupManifest` | `BkpMan` |
+| `BackupSnapshot` | `BkpSnap` | `CanaryDiagnosticSeverity` | `CanSev` |
+| `CanaryComplexity` | `CanCmp` | `CanaryCatalogDiagnostic` | `CanDiag` |
+| `CanaryInstruction` | `CanInst` | `CanaryConfigValue` | `CanVal` |
+| `CanaryPatchDefinition` | `CanDef` | `CanaryCatalog` | `CanCat` |
+| `CanaryCatalogResult` | `CanCatRs` | `CanaryPatchFamily` | `CanFam` |
+| `CanaryPortStatus` | `PortStat` | `CanaryPortAnalysis` | `PortAnlz` |
+| `CanaryCatalogReport` | `CanRpt` | `HCanaryPatchType` | `HCanType` |
+| `HCanaryDraftStatus` | `DraftSt` | `HCanaryHash` | `HCanHash` |
+| `HCanaryHashReadResult` | `HashRead` | `HCanaryInstruction` | `HCanInst` |
+| `HCanaryGameTarget` | `HCanTgt` | `HCanaryAnchor` | `HCanAnc` |
+| `HCanaryPatchDraft` | `HCanDrft` | `HCanaryValidationIssue` | `VldIssue` |
+| `HCanaryValidationResult` | `VldRes` | `HCanaryStoredPatch` | `HCanStor` |
+| `HCanarySaveResult` | `SaveRes` | `CatalogInfo` | `CatInfo` |
+| `ConfigPlanEntry` | `CfgEntry` | `ConfigPlan` | `CfgPlan` |
+| `ConfigApplyResult` | `CfgRes` | `PatchHashKind` | `HashKind` |
+| `PatchHashEvidenceKind` | `HashEvi` | `Rpcs3ExecutableHash` | `ExeHash` |
+| `PatchSourceOrigin` | `PatSrc` | `PatchRisk` | `PatRisk` |
+| `PatchMatchStatus` | `MatStat` | `Rpcs3PatchGameTarget` | `R3PatTgt` |
+| `Rpcs3PatchEntry` | `PatEntry` | `Rpcs3PatchCatalog` | `PatCat` |
+| `PatchCatalogDiagnostic` | `PatDiag` | `PatchCatalogReadResult` | `PatRead` |
+| `Rpcs3PatchMatchResult` | `PatMatch` | `PatchApplyChange` | `PatChg` |
+| `PatchApplyPlan` | `PatPlan` | `PatchPreparedFileKind` | `PrepKind` |
+| `PatchPreparedFile` | `PrepFile` | `PatchApplyResult` | `PatRes` |
+| `PatchHashProbeResult` | `HashRes` | `PatchCompatibilityVerdict` | `CmpVerd` |
+| `PatchCompatibilityReasonCode` | `CmpCode` | `PatchCompatibilityDecision` | `CmpDec` |
+| `Rpcs3PatchRuntimeKeyInfo` | `KeyInf` | `Rpcs3PatchRuntimeKey` | `RunKey` |
+| `RecStateItem` | `RecItem` | `RecStateSummary` | `RecSum` |
+| `RecommendationRisk` | `RecRisk` | `ConfigChange` | `CfgChg` |
+| `WikiGameRecommendation` | `WikiRec` | `Rpcs3InputLimits` | `R3Limits` |
+| `GameScanDiagnosticCode` | `ScanCode` | `GameScanDiagnosticSeverity` | `ScanSev` |
+| `GameScanSourceKind` | `ScanSrc` | `GameScanDiagnostic` | `ScanDiag` |
+| `GameScanResult` | `ScanRes` | `Rpcs3InstallDescriptor` | `R3Inst` |
+| `Rpcs3GameDescriptor` | `R3Game` | `ParamSfoInfo` | `SfoInfo` |
+
+## Core service symbols
+
+| Old type | New type | Old type | New type |
+|---|---|---|---|
+| `BackupService` | `BkpSvc` | `ValidatedBackupEntry` | `VldBkp` |
+| `RestoreOperation` | `RstOp` | `CatInfoService` | `CatSvc` |
+| `CatalogMissingException` | `MissEx` | `CatalogInvalidException` | `CatBadEx` |
+| `RecommendationCatalogService` | `RecSvc` | `RecommendationCatalogDto` | `RecDto` |
+| `WikiRecommendationService` | `WikiSvc` | `ConfigApplyService` | `CfgApply` |
+| `CfgValueNorm` | `CfgNorm` | `PlanService` | `PlanSvc` |
+| `Rpcs3ConfigYaml` | `R3Yaml` | `MemoryStatusEx` | `MemoryEx` |
+| `BoundedDiagnosticList` | `DiagList` | `Rpcs3BoundedInput` | `R3Bound` |
+| `Rpcs3MutationBlockReason` | `MutBlock` | `Rpcs3MutationBlockedException` | `MutBlkEx` |
+| `IRpcs3MutationGuard` | `IMutGd` | `Rpcs3CanonicalPath` | `CanPath` |
+| `Rpcs3MutationGuard` | `MutGuard` | `CanonicalInstallRoots` | `CanRoots` |
+| `PatchActivationPolicy` | `PatAct` | `PatchApplyService` | `PatApply` |
+| `PatchCatalogReader` | `ReadSvc` | `MappingScope` | `MapScope` |
+| `PatchCompatibilityService` | `PatCmp` | `Candidate` | `Cand` |
+| `PatchHashProbeService` | `HashPrb` | `MetadataCandidate` | `MetaCand` |
+| `CachedMetadata` | `MetaCach` | `CacheProbe` | `CachePrb` |
+| `HCanaryCatalogService` | `HCanCat` | `HCanaryFamilyIndex` | `FamIndex` |
+| `HCanaryPortEvidenceService` | `PortEvi` | `HCanaryHashExtractionService` | `HashExt` |
+| `HCanaryPatchAuthoringService` | `PatAuth` | `LocalMetadata` | `LocMeta` |
+| `PatchMatchService` | `MatchSvc` | `PatchCatalogMergeService` | `PatMerge` |
+| `PatchApplyPlanner` | `PatPlnr` | `PatchConfigReader` | `CfgRead` |
+| `PatchConfigSnapshot` | `CfgSnap` | `PatchRiskPolicy` | `PatPol` |
+| `PatchSelectionCompileResult` | `SelRes` | `PatchSelectionCompiler` | `SelComp` |
+| `SelectionKey` | `SelKey` | `SelectionKeyComparer` | `KeyCmp` |
+| `SourceCandidate` | `SrcCand` | `PatchTransactionPhase` | `PatPhase` |
+| `PatchPathValidator` | `PathVld` | `PatchFileTransactionService` | `PatTxn` |
+| `StagedPatchFile` | `StgFile` | `Rpcs3PatchVersion` | `PatVer` |
+| `PatchConfigWriter` | `CfgWrite` | `RecommendationRiskPolicy` | `RecPol` |
+| `RecStateService` | `StateSvc` | `GameScanner` | `GmScan` |
+| `Rpcs3InstallService` | `InstSvc` | `ParamSfoReader` | `SfoRead` |
+| `ParamSfoProbeResult` | `SfoProbe` |  |  |
+
+Additional registered Core abbreviations: `Calc` (calculate), `Cand`
+(candidate), `Cpx` (complexity), `Loc` (localized), `Plnr` (planner), `Pol`
+(policy), `Prb` (probe), `Ser` (serial), `Unk` (unknown), `Miss` (missing),
+`Bad` (invalid/mismatch),
+`Made` (created), `Mod` (module), `Arg` (argument), `Allow` (allowed),
+`Deps` (dependencies), `Vals` (values), `Print` (fingerprint), `Auto`
+(automatic), `Class` (classification), `Why` (reason), `Sim` (similar),
+`Gen` (generated), `Cpu` (logical processor), `Mem` (memory), `Fall`
+(fallback), `Keep` (kept), `Drop` (dropped), `Mat` (matched), `Chg`
+(change), `Raw` (source values), `Auth` (authoritative), `Diff`
+(different), `Tech` (technical), `Cust` (custom), `Time` (timestamp),
+`Utc` (UTC), `Idx` (index), and `Det` (detected).

@@ -1,43 +1,43 @@
 namespace R3Config.Mdl;
 
-public sealed record ConfigPlanEntry(
-    ConfigChange Change,
-    string? CurrentValue,
-    RecStateItem StateItem)
+public sealed record CfgEntry(
+    CfgChg Change,
+    string? CurVal,
+    RecItem StateIt)
 {
     public string Section => Change.Section;
 
     public string Key => Change.Key;
 
-    public string DisplayPath => Change.DisplayPath;
+    public string Path => Change.Path;
 
-    public string CurrentDisplay => State == RecState.Unknown ? "(unreadable)" : CurrentValue ?? "(not set)";
+    public string Display => State == RecState.Unknown ? "(unreadable)" : CurVal ?? "(not set)";
 
-    public string ProposedValue => Change.Value;
+    public string Val => Change.Value;
 
     public string? Notes => Change.Notes;
 
-    public RecommendationRisk Risk => Change.Risk;
+    public RecRisk Risk => Change.Risk;
 
-    public RecState State => StateItem.State;
+    public RecState State => StateIt.State;
 
-    public bool IsDifferent => StateItem.IsDifferent;
+    public bool IsDiff => StateIt.IsDiff;
 
-    public bool IsActionable => StateItem.IsActionable;
+    public bool IsAction => StateIt.IsAction;
 
-    public bool IsAutoSelectable => StateItem.IsAutoSelectable;
+    public bool IsSel => StateIt.IsSel;
 
     public string Status => State.ToString();
 }
 
-public sealed record ConfigPlan(
-    string GameSerial,
-    string GameTitle,
-    string TargetConfigPath,
-    IReadOnlyList<ConfigPlanEntry> Items,
-    RecStateSummary RecState,
-    bool RequiresBackup);
+public sealed record CfgPlan(
+    string GameSer,
+    string GameName,
+    string CfgPath,
+    IReadOnlyList<CfgEntry> Items,
+    RecSum RecState,
+    bool NeedBkp);
 
-public sealed record ConfigApplyResult(
-    BackupManifest Backup,
-    IReadOnlyList<ConfigChange> AppliedChanges);
+public sealed record CfgRes(
+    BkpMan Backup,
+    IReadOnlyList<CfgChg> ChgList);

@@ -5,52 +5,52 @@ using R3Config.Svc;
 namespace R3Config.Case;
 
 public sealed class PatMut(
-    PatchApplyPlanner planner,
-    PatchApplyService applyService,
+    Svc.PatPlnr planner,
+    PatApply applyService,
     BundledCanaryPatchService bundledCanary,
     BundledCheatPatchService bundledCheats,
-    IRpcs3MutationGuard mutationGuard)
+    IMutGd mutationGuard)
 {
-    public PatchApplyPlan BuildOn(
-        Rpcs3InstallDescriptor install,
-        IReadOnlyList<Rpcs3PatchMatchResult> matches,
+    public Mdl.PatPlan BuildOn(
+        R3Inst install,
+        IReadOnlyList<PatMatch> matches,
         bool expertMode)
     {
-        return planner.CreatePlan(
+        return planner.Build(
             install,
             matches,
             expertMode);
     }
 
-    public PatchApplyPlan BuildOff(
-        Rpcs3InstallDescriptor install,
-        IReadOnlyList<Rpcs3PatchMatchResult> matches)
+    public Mdl.PatPlan BuildOff(
+        R3Inst install,
+        IReadOnlyList<PatMatch> matches)
     {
-        return planner.CreateDisablePlan(
+        return planner.Build2(
             install,
             matches);
     }
 
-    public PatchApplyChange? BuildChg(
-        Rpcs3PatchMatchResult match)
+    public PatChg? BuildChg(
+        PatMatch match)
     {
-        return planner.CreateChangeForMatch(match);
+        return planner.Build3(match);
     }
 
-    public PatchApplyResult ApplyTxn(
-        PatchApplyPlan plan,
-        Rpcs3InstallDescriptor install,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
+    public PatRes ApplyTxn(
+        Mdl.PatPlan plan,
+        R3Inst install,
+        IReadOnlyList<PatMatch> selectedMatches)
     {
         Check(plan, install);
         var backupRoot = R3Paths.BkpRoot(install);
         var declaredTargets = new List<string>
         {
-            plan.PatchConfigPath
+            plan.PatCfg
         };
         if (selectedMatches.Any(match =>
                 match.Patch.Source ==
-                PatchSourceOrigin.BundledCanary))
+                PatSrc.Can))
         {
             declaredTargets.Add(
                 R3Paths.ImpPat(install));
@@ -58,14 +58,14 @@ public sealed class PatMut(
 
         declaredTargets.AddRange(
             BundledCheatPatchService.GetManagedPaths(
-                install.PatchesPath,
+                install.PatPath,
                 selectedMatches));
-        mutationGuard.EnsureCanMutate(
+        mutationGuard.CheckCan(
             install,
             declaredTargets,
             [backupRoot]);
 
-        var preparedFiles = new List<PatchPreparedFile>();
+        var preparedFiles = new List<PrepFile>();
         var messages = new List<string>();
 
         PrepCan(
@@ -79,15 +79,15 @@ public sealed class PatMut(
             preparedFiles,
             messages);
 
-        mutationGuard.EnsureCanMutate(
+        mutationGuard.CheckCan(
             install,
             [
-                plan.PatchConfigPath,
-                .. preparedFiles.Select(file => file.TargetPath)
+                plan.PatCfg,
+                .. preparedFiles.Select(file => file.TgtPath)
             ],
             [backupRoot]);
 
-        var result = applyService.ApplyTransaction(
+        var result = applyService.ApplyTxn(
             plan,
             backupRoot,
             preparedFiles,
@@ -95,21 +95,21 @@ public sealed class PatMut(
 
         return result with
         {
-            PreparationMessages = messages
+            PrepMsgs = messages
         };
     }
 
-    public PatchApplyResult Apply(
-        PatchApplyPlan plan,
-        Rpcs3InstallDescriptor install)
+    public PatRes Apply(
+        Mdl.PatPlan plan,
+        R3Inst install)
     {
         Check(plan, install);
         var backupRoot = R3Paths.BkpRoot(install);
         var validator = VldFunc(install);
         validator(
-            PatchTransactionPhase.BeforeStage,
+            PatPhase.Stg,
             backupRoot,
-            [plan.PatchConfigPath]);
+            [plan.PatCfg]);
 
         return applyService.Apply(
             plan,
@@ -117,17 +117,17 @@ public sealed class PatMut(
             validator);
     }
 
-    public PatchApplyResult Disable(
-        PatchApplyPlan plan,
-        Rpcs3InstallDescriptor install)
+    public PatRes Disable(
+        Mdl.PatPlan plan,
+        R3Inst install)
     {
         Check(plan, install);
         var backupRoot = R3Paths.BkpRoot(install);
         var validator = VldFunc(install);
         validator(
-            PatchTransactionPhase.BeforeStage,
+            PatPhase.Stg,
             backupRoot,
-            [plan.PatchConfigPath]);
+            [plan.PatCfg]);
 
         return applyService.Disable(
             plan,
@@ -136,15 +136,15 @@ public sealed class PatMut(
     }
 
     private void PrepCan(
-        Rpcs3InstallDescriptor install,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches,
-        ICollection<PatchPreparedFile> preparedFiles,
+        R3Inst install,
+        IReadOnlyList<PatMatch> selectedMatches,
+        ICollection<PrepFile> preparedFiles,
         ICollection<string> messages)
     {
         var matches = selectedMatches
             .Where(match =>
                 match.Patch.Source ==
-                PatchSourceOrigin.BundledCanary)
+                PatSrc.Can)
             .ToArray();
 
         if (matches.Length == 0)
@@ -153,7 +153,7 @@ public sealed class PatMut(
         }
 
         var result = bundledCanary.PrepareImportedPatchFile(
-            install.PatchesPath,
+            install.PatPath,
             AppContext.BaseDirectory,
             matches);
 
@@ -167,15 +167,15 @@ public sealed class PatMut(
     }
 
     private void PrepCht(
-        Rpcs3InstallDescriptor install,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches,
-        ICollection<PatchPreparedFile> preparedFiles,
+        R3Inst install,
+        IReadOnlyList<PatMatch> selectedMatches,
+        ICollection<PrepFile> preparedFiles,
         ICollection<string> messages)
     {
         var matches = selectedMatches
             .Where(match =>
                 match.Patch.Source ==
-                PatchSourceOrigin.BundledCheats)
+                PatSrc.Cht)
             .ToArray();
 
         if (matches.Length == 0)
@@ -184,7 +184,7 @@ public sealed class PatMut(
         }
 
         var result = bundledCheats.PrepareManagedPatchFile(
-            install.PatchesPath,
+            install.PatPath,
             AppContext.BaseDirectory,
             matches);
 
@@ -199,10 +199,10 @@ public sealed class PatMut(
 
     private static void AddPrep(
         bool succeeded,
-        PatchPreparedFile? preparedFile,
+        PrepFile? preparedFile,
         string message,
         string? error,
-        ICollection<PatchPreparedFile> preparedFiles,
+        ICollection<PrepFile> preparedFiles,
         ICollection<string> messages)
     {
         if (!succeeded)
@@ -223,24 +223,24 @@ public sealed class PatMut(
     }
 
     private static void Check(
-        PatchApplyPlan plan,
-        Rpcs3InstallDescriptor install)
+        Mdl.PatPlan plan,
+        R3Inst install)
     {
-        if (!Path.GetFullPath(plan.PatchConfigPath).Equals(
-                Path.GetFullPath(install.PatchConfigPath),
+        if (!Path.GetFullPath(plan.PatCfg).Equals(
+                Path.GetFullPath(install.PatCfg),
                 StringComparison.OrdinalIgnoreCase))
         {
-            throw new Rpcs3MutationBlockedException(
-                Rpcs3MutationBlockReason.UnsafeTarget,
+            throw new MutBlkEx(
+                MutBlock.Tgt,
                 "The patch plan target does not match its RPCS3 installation.");
         }
     }
 
-    private PatchPathValidator VldFunc(
-        Rpcs3InstallDescriptor install)
+    private PathVld VldFunc(
+        R3Inst install)
     {
         return (_, backupRoot, targets) =>
-            mutationGuard.EnsureCanMutate(
+            mutationGuard.CheckCan(
                 install,
                 targets,
                 [backupRoot]);

@@ -9,15 +9,15 @@ using YamlDotNet.RepresentationModel;
 
 namespace R3Config.Svc;
 
-public sealed record PatchSelectionCompileResult(
-    bool Succeeded,
-    string PatchText,
-    int SelectedCount,
+public sealed record SelRes(
+    bool IsOk,
+    string PatText,
+    int SelNum,
     string? Error)
 {
-    public static PatchSelectionCompileResult Failure(string error)
+    public static SelRes Failure(string error)
     {
-        return new PatchSelectionCompileResult(
+        return new SelRes(
             false,
             string.Empty,
             0,
@@ -25,78 +25,78 @@ public sealed record PatchSelectionCompileResult(
     }
 }
 
-public sealed partial class PatchSelectionCompiler
+public sealed partial class SelComp
 {
-    private const string PatchEngineVersion = "1.2";
+    private const string PatVer = "1.2";
 
-    private readonly PatchCatalogReader _reader = new();
+    private readonly ReadSvc _reader = new();
 
-    public PatchSelectionCompileResult Compile(
+    public SelRes Compile(
         string sourceText,
-        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches,
-        IReadOnlyList<Rpcs3PatchMatchResult>? requestedMatches = null)
+        IReadOnlyList<Mdl.PatMatch> selectedMatches,
+        IReadOnlyList<Mdl.PatMatch>? requestedMatches = null)
     {
         if (string.IsNullOrWhiteSpace(sourceText))
         {
-            return PatchSelectionCompileResult.Failure(
+            return SelRes.Failure(
                 "The patch library is empty.");
         }
 
         var selected = selectedMatches
-            .Where(PatchActivationPolicy.CanEnable)
+            .Where(PatAct.Can)
             .GroupBy(
-                SelectionKey.FromMatch,
-                SelectionKeyComparer.Instance)
+                SelKey.From,
+                KeyCmp.Instance)
             .Select(group => group.First())
             .ToDictionary(
-                SelectionKey.FromMatch,
-                SelectionKeyComparer.Instance);
+                SelKey.From,
+                KeyCmp.Instance);
 
         if (selected.Count == 0)
         {
-            return PatchSelectionCompileResult.Failure(
+            return SelRes.Failure(
                 "No compatible serial/version target with an RPCS3 executable-hash guard was selected.");
         }
 
-        Rpcs3PatchMatchResult[] requested =
+        Mdl.PatMatch[] requested =
         [
             .. (requestedMatches ?? selectedMatches)
-                .Where(PatchActivationPolicy.CanEnable)
+                .Where(PatAct.Can)
                 .GroupBy(
-                    SelectionKey.FromMatch,
-                    SelectionKeyComparer.Instance)
+                    SelKey.From,
+                    KeyCmp.Instance)
                 .Select(group => group.First())
         ];
 
-        var integrityError = ValidateRequestedSelection(requested);
+        var integrityError = VldReq(requested);
 
         if (integrityError is not null)
         {
-            return PatchSelectionCompileResult.Failure(
+            return SelRes.Failure(
                 integrityError);
         }
 
         try
         {
-            var yaml = Rpcs3BoundedInput.LoadYaml(
-                PatchCatalogReader.NormalizeDuplicateKeysForRead(
+            var yaml = R3Bound.LoadYaml(
+                ReadSvc.NormDup2(
                     sourceText),
                 "Patch selection source");
 
             if (yaml.Documents.Count == 0 ||
                 yaml.Documents[0].RootNode is not YamlMappingNode root)
             {
-                return PatchSelectionCompileResult.Failure(
+                return SelRes.Failure(
                     "The patch library root is not a YAML mapping.");
             }
 
-            var candidates = ReadCandidates(
+            var candidates = ReadCand(
                 root,
                 selected.Keys);
 
             var outputRoot = new YamlMappingNode
             {
-                { "Version", PatchEngineVersion }
+                { "Version", PatVer }
             };
 
             var outputHashes =
@@ -109,21 +109,21 @@ public sealed partial class PatchSelectionCompiler
                         key,
                         out var available))
                 {
-                    return PatchSelectionCompileResult.Failure(
+                    return SelRes.Failure(
                         $"Selected patch '{match.Patch.Title}' was not found in its source library.");
                 }
 
-                var candidate = SelectCandidate(
+                var candidate = Select(
                     available,
-                    match.Patch.PatchVersion);
+                    match.Patch.PatVer);
 
-                var patchNode = TryGetNode(
+                var patchNode = TryGet(
                     candidate.Details,
                     "Patch");
 
                 if (patchNode is not YamlSequenceNode)
                 {
-                    return PatchSelectionCompileResult.Failure(
+                    return SelRes.Failure(
                         $"Selected patch '{match.Patch.Title}' has no executable RPCS3 Patch sequence.");
                 }
 
@@ -138,7 +138,7 @@ public sealed partial class PatchSelectionCompiler
                     outputRoot.Add(hashKey, outputPatchMap);
                 }
 
-                if (ContainsKey(
+                if (Contain2(
                         outputPatchMap,
                         match.Patch.Title))
                 {
@@ -147,7 +147,7 @@ public sealed partial class PatchSelectionCompiler
 
                 outputPatchMap.Add(
                     new YamlScalarNode(match.Patch.Title),
-                    BuildDetails(
+                    Build(
                         match,
                         candidate.Details,
                         patchNode));
@@ -157,23 +157,23 @@ public sealed partial class PatchSelectionCompiler
 
             var validation = _reader.ReadText(
                 compiledText,
-                PatchSourceOrigin.ManagedCheats,
+                PatSrc.ManCht,
                 sourcePath: null);
 
-            if (!validation.Succeeded)
+            if (!validation.IsOk)
             {
-                return PatchSelectionCompileResult.Failure(
+                return SelRes.Failure(
                     "The selected patch document failed RPCS3 validation: " +
                     validation.Error);
             }
 
             if (validation.Catalog.Entries.Count != selected.Count)
             {
-                return PatchSelectionCompileResult.Failure(
+                return SelRes.Failure(
                     $"Selection validation expected {selected.Count} patch(es) but found {validation.Catalog.Entries.Count}.");
             }
 
-            return new PatchSelectionCompileResult(
+            return new SelRes(
                 true,
                 compiledText,
                 selected.Count,
@@ -181,26 +181,26 @@ public sealed partial class PatchSelectionCompiler
         }
         catch (YamlException ex)
         {
-            return PatchSelectionCompileResult.Failure(
+            return SelRes.Failure(
                 ex.Message);
         }
         catch (InvalidOperationException ex)
         {
-            return PatchSelectionCompileResult.Failure(
+            return SelRes.Failure(
                 ex.Message);
         }
     }
 
-    private static string? ValidateRequestedSelection(
-        IReadOnlyList<Rpcs3PatchMatchResult> requested)
+    private static string? VldReq(
+        IReadOnlyList<Mdl.PatMatch> requested)
     {
         foreach (var match in requested)
         {
-            foreach (var dependency in match.Patch.RequiredPatches)
+            foreach (var dependency in match.Patch.Patches)
             {
-                if (!ContainsPatch(
+                if (!Contains(
                         requested,
-                        match.Patch.RuntimeHashKey,
+                        match.Patch.RunKey,
                         dependency))
                 {
                     return
@@ -215,7 +215,7 @@ public sealed partial class PatchSelectionCompiler
                 !string.IsNullOrWhiteSpace(match.Patch.Group))
             .GroupBy(
                 match =>
-                    $"{match.Patch.RuntimeHashKey}|{match.Patch.Group!.Trim()}",
+                    $"{match.Patch.RunKey}|{match.Patch.Group!.Trim()}",
                 StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault(group => group.Count() > 1);
 
@@ -237,8 +237,8 @@ public sealed partial class PatchSelectionCompiler
 
         var requestedByIdentity = requested
             .GroupBy(
-                match => IntegrityIdentity(
-                    match.Patch.RuntimeHashKey,
+                match => Valid(
+                    match.Patch.RunKey,
                     match.Patch.Title),
                 StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
@@ -256,7 +256,7 @@ public sealed partial class PatchSelectionCompiler
 
         foreach (var identity in requestedByIdentity.Keys)
         {
-            if (HasDependencyCycle(
+            if (HasDep(
                     identity,
                     requestedByIdentity,
                     visiting,
@@ -271,14 +271,14 @@ public sealed partial class PatchSelectionCompiler
         return null;
     }
 
-    private static bool ContainsPatch(
-        IReadOnlyList<Rpcs3PatchMatchResult> matches,
+    private static bool Contains(
+        IReadOnlyList<Mdl.PatMatch> matches,
         string runtimeHashKey,
         string title)
     {
         return matches.Any(match =>
             string.Equals(
-                match.Patch.RuntimeHashKey,
+                match.Patch.RunKey,
                 runtimeHashKey,
                 StringComparison.OrdinalIgnoreCase) &&
             string.Equals(
@@ -287,9 +287,9 @@ public sealed partial class PatchSelectionCompiler
                 StringComparison.OrdinalIgnoreCase));
     }
 
-    private static bool HasDependencyCycle(
+    private static bool HasDep(
         string identity,
-        IReadOnlyDictionary<string, Rpcs3PatchMatchResult> requested,
+        IReadOnlyDictionary<string, Mdl.PatMatch> requested,
         ISet<string> visiting,
         ISet<string> visited,
         out string cycle)
@@ -314,10 +314,10 @@ public sealed partial class PatchSelectionCompiler
 
         var match = requested[identity];
 
-        foreach (var dependency in match.Patch.RequiredPatches)
+        foreach (var dependency in match.Patch.Patches)
         {
-            var dependencyIdentity = IntegrityIdentity(
-                match.Patch.RuntimeHashKey,
+            var dependencyIdentity = Valid(
+                match.Patch.RunKey,
                 dependency);
 
             if (!requested.ContainsKey(dependencyIdentity))
@@ -325,7 +325,7 @@ public sealed partial class PatchSelectionCompiler
                 continue;
             }
 
-            if (HasDependencyCycle(
+            if (HasDep(
                     dependencyIdentity,
                     requested,
                     visiting,
@@ -346,32 +346,32 @@ public sealed partial class PatchSelectionCompiler
         return false;
     }
 
-    private static string IntegrityIdentity(
+    private static string Valid(
         string runtimeHashKey,
         string title)
     {
         return $"{runtimeHashKey}|{title}";
     }
 
-    private static Dictionary<SelectionKey, List<SourceCandidate>>
-        ReadCandidates(
+    private static Dictionary<SelKey, List<SrcCand>>
+        ReadCand(
             YamlMappingNode root,
-            IEnumerable<SelectionKey> selectedKeys)
+            IEnumerable<SelKey> selectedKeys)
     {
         var wanted = selectedKeys.ToHashSet(
-            SelectionKeyComparer.Instance);
+            KeyCmp.Instance);
 
         var output =
-            new Dictionary<SelectionKey, List<SourceCandidate>>(
-                SelectionKeyComparer.Instance);
+            new Dictionary<SelKey, List<SrcCand>>(
+                KeyCmp.Instance);
 
         foreach (var (hashNode, valueNode) in root.Children)
         {
             var normalizedHashKey =
-                PatchCatalogReader.DecodeNormalizedHashKey(
-                    ScalarValue(hashNode));
+                ReadSvc.Decode2(
+                    Scalar2(hashNode));
 
-            if (!Rpcs3PatchRuntimeKey.TryParse(
+            if (!RunKey.TryParse(
                     normalizedHashKey,
                     out var runtimeKey) ||
                 valueNode is not YamlMappingNode patchMap)
@@ -387,12 +387,12 @@ public sealed partial class PatchSelectionCompiler
                 }
 
                 var title =
-                    PatchCatalogReader.DecodeNormalizedMappingKey(
-                        ScalarValue(titleNode));
+                    ReadSvc.Decode(
+                        Scalar2(titleNode));
 
                 var key =
-                    new SelectionKey(
-                        runtimeKey.RuntimeKey,
+                    new SelKey(
+                        runtimeKey.RunKey,
                         title);
 
                 if (!wanted.Contains(key))
@@ -407,10 +407,10 @@ public sealed partial class PatchSelectionCompiler
                 }
 
                 list.Add(
-                    new SourceCandidate(
+                    new SrcCand(
                         details,
-                        ScalarText(
-                            TryGetNode(
+                        Scalar(
+                            TryGet(
                                 details,
                                 "Patch Version"))));
             }
@@ -419,15 +419,15 @@ public sealed partial class PatchSelectionCompiler
         return output;
     }
 
-    private static SourceCandidate SelectCandidate(
-        IReadOnlyList<SourceCandidate> candidates,
+    private static SrcCand Select(
+        IReadOnlyList<SrcCand> candidates,
         string? expectedPatchVersion)
     {
         if (!string.IsNullOrWhiteSpace(expectedPatchVersion))
         {
             var exact = candidates.FirstOrDefault(candidate =>
                 string.Equals(
-                    candidate.PatchVersion,
+                    candidate.PatVer,
                     expectedPatchVersion,
                     StringComparison.OrdinalIgnoreCase));
 
@@ -440,36 +440,36 @@ public sealed partial class PatchSelectionCompiler
         return candidates[0];
     }
 
-    private static YamlMappingNode BuildDetails(
-        Rpcs3PatchMatchResult match,
+    private static YamlMappingNode Build(
+        Mdl.PatMatch match,
         YamlMappingNode sourceDetails,
         YamlNode patchNode)
     {
-        var firstTarget = match.Patch.GameTargets.Count > 0
-            ? match.Patch.GameTargets[0]
+        var firstTarget = match.Patch.GameTgt.Count > 0
+            ? match.Patch.GameTgt[0]
             : null;
 
-        var firstSerial = match.Patch.GameSerials.Count > 0
-            ? match.Patch.GameSerials[0]
+        var firstSerial = match.Patch.Serials.Count > 0
+            ? match.Patch.Serials[0]
             : null;
 
         var title =
-            match.MatchedTargetTitle ??
+            match.TgtName ??
             firstTarget?.Title ??
             "Unknown";
 
         var serial =
-            match.MatchedTargetSerial ??
-            match.MatchedSerial ??
+            match.TgtSer ??
+            match.MatSer ??
             firstSerial ??
             throw new InvalidOperationException(
                 "Selected patch has no target serial.");
 
         var version =
-            Rpcs3PatchVersion.Normalize(
-                match.MatchedTargetVersion) ??
-            Rpcs3PatchVersion.Normalize(
-                match.MatchedVersion) ??
+            Svc.PatVer.Norm(
+                match.TgtVer) ??
+            Svc.PatVer.Norm(
+                match.MatVer) ??
             throw new InvalidOperationException(
                 "Selected patch has no exact target version.");
 
@@ -491,39 +491,39 @@ public sealed partial class PatchSelectionCompiler
             { "Games", games }
         };
 
-        CopyOptionalScalar(
+        Copy(
             sourceDetails,
             details,
             "Author");
 
-        CopyOptionalScalar(
+        Copy(
             sourceDetails,
             details,
             "Notes");
 
-        CopyOptionalScalar(
+        Copy(
             sourceDetails,
             details,
             "Group");
 
-        CopyOptionalScalar(
+        Copy(
             sourceDetails,
             details,
             "Patch Version");
 
         var dependencies =
-            TryGetNode(sourceDetails, "Dependencies") ??
-            TryGetNode(sourceDetails, "Depends On");
+            TryGet(sourceDetails, "Dependencies") ??
+            TryGet(sourceDetails, "Depends On");
 
         if (dependencies is not null)
         {
             details.Add(
                 "Dependencies",
-                CloneWithoutAnchors(dependencies));
+                CloneAnc(dependencies));
         }
 
         var configurableValues =
-            TryGetNode(
+            TryGet(
                 sourceDetails,
                 "Configurable Values");
 
@@ -531,22 +531,22 @@ public sealed partial class PatchSelectionCompiler
         {
             details.Add(
                 "Configurable Values",
-                CloneWithoutAnchors(configurableValues));
+                CloneAnc(configurableValues));
         }
 
         details.Add(
             "Patch",
-            CloneWithoutAnchors(patchNode));
+            CloneAnc(patchNode));
 
         return details;
     }
 
-    private static void CopyOptionalScalar(
+    private static void Copy(
         YamlMappingNode source,
         YamlMappingNode destination,
         string key)
     {
-        var node = TryGetNode(source, key);
+        var node = TryGet(source, key);
 
         if (node is YamlScalarNode scalar &&
             scalar.Value is not null)
@@ -560,7 +560,7 @@ public sealed partial class PatchSelectionCompiler
         }
     }
 
-    private static YamlNode CloneWithoutAnchors(
+    private static YamlNode CloneAnc(
         YamlNode node)
     {
         return node switch
@@ -574,17 +574,17 @@ public sealed partial class PatchSelectionCompiler
             YamlSequenceNode sequence =>
                 new YamlSequenceNode(
                     sequence.Children.Select(
-                        CloneWithoutAnchors)),
+                        CloneAnc)),
 
             YamlMappingNode mapping =>
-                CloneMapping(mapping),
+                Clone(mapping),
 
             _ => throw new InvalidOperationException(
                 "Unsupported YAML node in patch selection.")
         };
     }
 
-    private static YamlMappingNode CloneMapping(
+    private static YamlMappingNode Clone(
         YamlMappingNode mapping)
     {
         var clone = new YamlMappingNode();
@@ -592,8 +592,8 @@ public sealed partial class PatchSelectionCompiler
         foreach (var (key, value) in mapping.Children)
         {
             clone.Add(
-                CloneWithoutAnchors(key),
-                CloneWithoutAnchors(value));
+                CloneAnc(key),
+                CloneAnc(value));
         }
 
         return clone;
@@ -636,23 +636,23 @@ public sealed partial class PatchSelectionCompiler
             "\r\n";
     }
 
-    private static bool ContainsKey(
+    private static bool Contain2(
         YamlMappingNode mapping,
         string key)
     {
         return mapping.Children.Keys.Any(node =>
-            ScalarValue(node).Equals(
+            Scalar2(node).Equals(
                 key,
                 StringComparison.OrdinalIgnoreCase));
     }
 
-    private static YamlNode? TryGetNode(
+    private static YamlNode? TryGet(
         YamlMappingNode mapping,
         string key)
     {
         foreach (var (candidate, value) in mapping.Children)
         {
-            if (ScalarValue(candidate).Equals(
+            if (Scalar2(candidate).Equals(
                     key,
                     StringComparison.OrdinalIgnoreCase))
             {
@@ -663,7 +663,7 @@ public sealed partial class PatchSelectionCompiler
         return null;
     }
 
-    private static string? ScalarText(
+    private static string? Scalar(
         YamlNode? node)
     {
         return node is YamlScalarNode scalar &&
@@ -672,7 +672,7 @@ public sealed partial class PatchSelectionCompiler
             : null;
     }
 
-    private static string ScalarValue(
+    private static string Scalar2(
         YamlNode node)
     {
         return node is YamlScalarNode scalar
@@ -680,34 +680,34 @@ public sealed partial class PatchSelectionCompiler
             : node.ToString()?.Trim() ?? string.Empty;
     }
 
-    private readonly record struct SelectionKey(
-        string RuntimeHashKey,
+    private readonly record struct SelKey(
+        string RunHash,
         string Title)
     {
-        public string HashKey => RuntimeHashKey;
+        public string HashKey => RunHash;
 
-        public static SelectionKey FromMatch(
-            Rpcs3PatchMatchResult match)
+        public static SelKey From(
+            Mdl.PatMatch match)
         {
-            return new SelectionKey(
-                match.Patch.RuntimeHashKey,
+            return new SelKey(
+                match.Patch.RunKey,
                 match.Patch.Title);
         }
     }
 
-    private sealed class SelectionKeyComparer :
-        IEqualityComparer<SelectionKey>
+    private sealed class KeyCmp :
+        IEqualityComparer<SelKey>
     {
-        public static SelectionKeyComparer Instance { get; } =
+        public static KeyCmp Instance { get; } =
             new();
 
         public bool Equals(
-            SelectionKey left,
-            SelectionKey right)
+            SelKey left,
+            SelKey right)
         {
             return string.Equals(
-                       left.RuntimeHashKey,
-                       right.RuntimeHashKey,
+                       left.HashKey,
+                       right.HashKey,
                        StringComparison.OrdinalIgnoreCase) &&
                    string.Equals(
                        left.Title,
@@ -716,17 +716,17 @@ public sealed partial class PatchSelectionCompiler
         }
 
         public int GetHashCode(
-            SelectionKey value)
+            SelKey value)
         {
             return HashCode.Combine(
                 StringComparer.OrdinalIgnoreCase.GetHashCode(
-                    value.RuntimeHashKey),
+                    value.HashKey),
                 StringComparer.OrdinalIgnoreCase.GetHashCode(
                     value.Title));
         }
     }
 
-    private sealed record SourceCandidate(
+    private sealed record SrcCand(
         YamlMappingNode Details,
-        string? PatchVersion);
+        string? PatVer);
 }

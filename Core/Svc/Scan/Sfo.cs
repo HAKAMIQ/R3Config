@@ -8,40 +8,40 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public static class ParamSfoReader
+public static class SfoRead
 {
-    public static ParamSfoInfo? TryReadForGamePath(string gamePath)
+    public static SfoInfo? TryGame(string gamePath)
     {
-        return ReadForGamePathDetailed(gamePath).Info;
+        return ReadFor(gamePath).Info;
     }
 
-    public static ParamSfoInfo? TryRead(string sfoPath)
+    public static SfoInfo? TryRead(string sfoPath)
     {
-        return ReadDetailed(sfoPath).Info;
+        return Read(sfoPath).Info;
     }
 
-    internal static ParamSfoProbeResult ReadForGamePathDetailed(
+    internal static SfoProbe ReadFor(
         string gamePath)
     {
-        var sfoPath = FindParamSfo(gamePath);
+        var sfoPath = FindSfo(gamePath);
         if (sfoPath is null)
         {
-            return ParamSfoProbeResult.Failure(
-                GameScanDiagnosticCode.ParamSfoMissing,
+            return SfoProbe.Failure(
+                ScanCode.SfoMiss,
                 gamePath ?? string.Empty,
                 "No PARAM.SFO was found at the bounded game-path locations.");
         }
 
-        return ReadDetailed(sfoPath);
+        return Read(sfoPath);
     }
 
-    internal static ParamSfoProbeResult ReadDetailed(string sfoPath)
+    internal static SfoProbe Read(string sfoPath)
     {
         if (string.IsNullOrWhiteSpace(sfoPath) ||
             !File.Exists(sfoPath))
         {
-            return ParamSfoProbeResult.Failure(
-                GameScanDiagnosticCode.ParamSfoMissing,
+            return SfoProbe.Failure(
+                ScanCode.SfoMiss,
                 sfoPath ?? string.Empty,
                 "PARAM.SFO was not found.");
         }
@@ -49,21 +49,21 @@ public static class ParamSfoReader
         try
         {
             if (new FileInfo(sfoPath).Length >
-                Rpcs3InputLimits.ParamSfoFileBytes)
+                R3Limits.Bytes)
             {
-                return ParamSfoProbeResult.Failure(
-                    GameScanDiagnosticCode.ParamSfoTooLarge,
+                return SfoProbe.Failure(
+                    ScanCode.SfoBig,
                     sfoPath,
-                    $"PARAM.SFO exceeds the {Rpcs3InputLimits.ParamSfoFileBytes}-byte input limit.");
+                    $"PARAM.SFO exceeds the {R3Limits.Bytes}-byte input limit.");
             }
 
-            var values = ReadValues(sfoPath);
+            var values = ReadVal(sfoPath);
             values.TryGetValue("TITLE", out var title);
             values.TryGetValue("TITLE_ID", out var titleId);
             values.TryGetValue("APP_VER", out var appVersion);
 
-            return ParamSfoProbeResult.Success(
-                new ParamSfoInfo(
+            return SfoProbe.Success(
+                new SfoInfo(
                     string.IsNullOrWhiteSpace(title) ? null : title,
                     string.IsNullOrWhiteSpace(titleId) ? null : titleId,
                     string.IsNullOrWhiteSpace(appVersion) ? null : appVersion));
@@ -76,16 +76,16 @@ public static class ParamSfoReader
                 OverflowException or
                 DecoderFallbackException)
         {
-            return ParamSfoProbeResult.Failure(
-                IsTooLarge(sfoPath)
-                    ? GameScanDiagnosticCode.ParamSfoTooLarge
-                    : GameScanDiagnosticCode.ParamSfoMalformed,
+            return SfoProbe.Failure(
+                IsToo(sfoPath)
+                    ? ScanCode.SfoBig
+                    : ScanCode.SfoBad,
                 sfoPath,
                 ex.Message);
         }
     }
 
-    private static string? FindParamSfo(string gamePath)
+    private static string? FindSfo(string gamePath)
     {
         if (string.IsNullOrWhiteSpace(gamePath) ||
             !Directory.Exists(gamePath))
@@ -110,13 +110,13 @@ public static class ParamSfoReader
             : null;
     }
 
-    private static Dictionary<string, string> ReadValues(string sfoPath)
+    private static Dictionary<string, string> ReadVal(string sfoPath)
     {
         var file = new FileInfo(sfoPath);
-        if (file.Length > Rpcs3InputLimits.ParamSfoFileBytes)
+        if (file.Length > R3Limits.Bytes)
         {
             throw new InvalidDataException(
-                $"PARAM.SFO exceeds the {Rpcs3InputLimits.ParamSfoFileBytes}-byte input limit.");
+                $"PARAM.SFO exceeds the {R3Limits.Bytes}-byte input limit.");
         }
 
         using var stream = File.OpenRead(sfoPath);
@@ -131,7 +131,7 @@ public static class ParamSfoReader
                 "PARAM.SFO header is truncated.");
         }
 
-        if (stream.Length > Rpcs3InputLimits.ParamSfoFileBytes)
+        if (stream.Length > R3Limits.Bytes)
         {
             throw new InvalidDataException(
                 "PARAM.SFO grew beyond the supported input limit while it was being read.");
@@ -151,7 +151,7 @@ public static class ParamSfoReader
         var dataTableOffset = reader.ReadUInt32();
         var entryCount = reader.ReadUInt32();
 
-        if (entryCount > Rpcs3InputLimits.ParamSfoEntries)
+        if (entryCount > R3Limits.Entries)
         {
             throw new InvalidDataException(
                 "PARAM.SFO entry count is unreasonable.");
@@ -183,7 +183,7 @@ public static class ParamSfoReader
             _ = reader.ReadUInt32();
             var dataOffset = reader.ReadUInt32();
 
-            if (dataLength > Rpcs3InputLimits.ParamSfoValueBytes ||
+            if (dataLength > R3Limits.SfoValBy ||
                 dataLength > int.MaxValue)
             {
                 throw new InvalidDataException(
@@ -209,12 +209,12 @@ public static class ParamSfoReader
                     "PARAM.SFO entry offsets are out of range.");
             }
 
-            var key = ReadNullTerminatedString(
+            var key = ReadNull(
                 stream,
                 absoluteKeyOffset,
                 dataTableOffset);
 
-            var value = ReadString(
+            var value = Read2(
                 stream,
                 absoluteDataOffset,
                 checked((int)dataLength));
@@ -225,7 +225,7 @@ public static class ParamSfoReader
         return values;
     }
 
-    private static string ReadNullTerminatedString(
+    private static string ReadNull(
         Stream stream,
         long offset,
         long limit)
@@ -249,7 +249,7 @@ public static class ParamSfoReader
                 return Encoding.UTF8.GetString(result);
             }
 
-            if (bytes.Count >= Rpcs3InputLimits.ParamSfoKeyBytes)
+            if (bytes.Count >= R3Limits.SfoKeyBy)
             {
                 throw new InvalidDataException(
                     "PARAM.SFO key length exceeds the supported limit.");
@@ -262,7 +262,7 @@ public static class ParamSfoReader
             "PARAM.SFO key is not null-terminated.");
     }
 
-    private static string ReadString(
+    private static string Read2(
         Stream stream,
         long offset,
         int length)
@@ -284,13 +284,13 @@ public static class ParamSfoReader
             .Trim();
     }
 
-    private static bool IsTooLarge(string path)
+    private static bool IsToo(string path)
     {
         try
         {
             return File.Exists(path) &&
                    new FileInfo(path).Length >
-                   Rpcs3InputLimits.ParamSfoFileBytes;
+                   R3Limits.Bytes;
         }
         catch (Exception ex) when (
             ex is IOException or UnauthorizedAccessException)
@@ -300,26 +300,26 @@ public static class ParamSfoReader
     }
 }
 
-internal sealed record ParamSfoProbeResult(
-    ParamSfoInfo? Info,
-    GameScanDiagnostic? Diagnostic)
+internal sealed record SfoProbe(
+    SfoInfo? Info,
+    ScanDiag? Diag)
 {
-    public static ParamSfoProbeResult Success(ParamSfoInfo info)
+    public static SfoProbe Success(SfoInfo info)
     {
-        return new ParamSfoProbeResult(info, null);
+        return new SfoProbe(info, null);
     }
 
-    public static ParamSfoProbeResult Failure(
-        GameScanDiagnosticCode code,
+    public static SfoProbe Failure(
+        ScanCode code,
         string sourcePath,
         string technicalMessage)
     {
-        return new ParamSfoProbeResult(
+        return new SfoProbe(
             null,
-            new GameScanDiagnostic(
+            new ScanDiag(
                 code,
-                GameScanDiagnosticSeverity.Warning,
-                GameScanSourceKind.ParamSfo,
+                ScanSev.Warning,
+                ScanSrc.ParamSfo,
                 sourcePath,
                 technicalMessage));
     }

@@ -10,21 +10,21 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class WikiRecommendationService
+public sealed class WikiSvc
 {
-    private static readonly Regex GameIdTemplate = new(
+    private static readonly Regex Template = new(
         @"\{\{gameid\|(?<body>.*?)\}\}",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
-    private static readonly Regex SerialPattern = new(
+    private static readonly Regex Pattern = new(
         @"[A-Z]{4}\d{5}",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex HtmlComment = new(
+    private static readonly Regex Comment = new(
         @"<!--.*?-->",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
 
-    private static readonly Regex HtmlBreak = new(
+    private static readonly Regex Break = new(
         @"<br\s*/?>",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
@@ -32,27 +32,27 @@ public sealed class WikiRecommendationService
         @"\[\[(?<body>.*?)\]\]",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
 
-    private static readonly Regex WikiIssue = new(
+    private static readonly Regex Issue = new(
         @"\{\{issue\|(?<id>\d+)\}\}",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly Regex WikiPullRequest = new(
+    private static readonly Regex Request = new(
         @"\{\{pr\|(?<id>\d+)\}\}",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly Regex SquareDimension = new(
+    private static readonly Regex Dim = new(
         @"^(?<width>\d+)\s*[x×]\s*(?<height>\d+)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly Regex IntegerRange = new(
+    private static readonly Regex Range = new(
         @"^\d+\s*[-–—]\s*\d+$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex AnisotropicValue = new(
+    private static readonly Regex AnisoVal = new(
         @"^(?<value>\d+)\s*x$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly IReadOnlySet<string> BooleanConfigKeys =
+    private static readonly IReadOnlySet<string> Keys =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "enable spu loop detection",
@@ -83,7 +83,7 @@ public sealed class WikiRecommendationService
             "enable time stretching"
         };
 
-    private static readonly IReadOnlyDictionary<string, (string Section, string Key)> ConfigMap =
+    private static readonly IReadOnlyDictionary<string, (string Section, string Key)> CfgMap =
         new Dictionary<string, (string Section, string Key)>(StringComparer.OrdinalIgnoreCase)
         {
             ["ppu decoder"] = ("Core", "PPU Decoder"),
@@ -154,33 +154,33 @@ public sealed class WikiRecommendationService
             ["psn status"] = ("Net", "PSN status")
         };
 
-    private readonly IReadOnlyDictionary<string, WikiGameRecommendation> _recommendations;
+    private readonly IReadOnlyDictionary<string, WikiRec> _Rec;
 
-    private WikiRecommendationService(IReadOnlyDictionary<string, WikiGameRecommendation> recommendations)
+    private WikiSvc(IReadOnlyDictionary<string, WikiRec> recommendations)
     {
-        _recommendations = recommendations;
+        _Rec = recommendations;
     }
 
-    public int Count => _recommendations.Count;
+    public int Count => _Rec.Count;
 
-    public IReadOnlyCollection<WikiGameRecommendation> Recommendations => _recommendations.Values.ToArray();
+    public IReadOnlyCollection<WikiRec> Rec => _Rec.Values.ToArray();
 
-    public WikiGameRecommendation? Find(string serial)
+    public WikiRec? Find(string serial)
     {
-        return _recommendations.TryGetValue(serial, out var recommendation)
+        return _Rec.TryGetValue(serial, out var recommendation)
             ? recommendation
             : null;
     }
 
-    public static WikiRecommendationService Load(string wikiXmlPath)
+    public static WikiSvc Load(string wikiXmlPath)
     {
         if (!File.Exists(wikiXmlPath))
         {
-            return new WikiRecommendationService(new Dictionary<string, WikiGameRecommendation>());
+            return new WikiSvc(new Dictionary<string, WikiRec>());
         }
 
         var document = XDocument.Load(wikiXmlPath, LoadOptions.None);
-        var recommendations = new Dictionary<string, WikiGameRecommendation>(StringComparer.OrdinalIgnoreCase);
+        var recommendations = new Dictionary<string, WikiRec>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var page in document.Descendants().Where(element => element.Name.LocalName == "page"))
         {
@@ -192,30 +192,30 @@ public sealed class WikiRecommendationService
                 continue;
             }
 
-            var serials = ExtractSerials(text).ToArray();
+            var serials = Extract(text).ToArray();
             if (serials.Length == 0)
             {
                 continue;
             }
 
-            var changes = ExtractConfigChanges(text).ToArray();
+            var changes = Extract2(text).ToArray();
             foreach (var serial in serials)
             {
-                recommendations[serial] = new WikiGameRecommendation(serial, title.Trim(), changes);
+                recommendations[serial] = new WikiRec(serial, title.Trim(), changes);
             }
         }
 
-        return new WikiRecommendationService(recommendations);
+        return new WikiSvc(recommendations);
     }
 
-    private static IEnumerable<string> ExtractSerials(string text)
+    private static IEnumerable<string> Extract(string text)
     {
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var matches = GameIdTemplate.Matches(text);
+        var matches = Template.Matches(text);
 
         foreach (Match match in matches)
         {
-            foreach (Match serialMatch in SerialPattern.Matches(match.Groups["body"].Value))
+            foreach (Match serialMatch in Pattern.Matches(match.Groups["body"].Value))
             {
                 if (seen.Add(serialMatch.Value))
                 {
@@ -226,7 +226,7 @@ public sealed class WikiRecommendationService
 
         if (seen.Count == 0)
         {
-            foreach (Match serialMatch in SerialPattern.Matches(text))
+            foreach (Match serialMatch in Pattern.Matches(text))
             {
                 if (seen.Add(serialMatch.Value))
                 {
@@ -236,9 +236,9 @@ public sealed class WikiRecommendationService
         }
     }
 
-    private static IEnumerable<ConfigChange> ExtractConfigChanges(string text)
+    private static IEnumerable<CfgChg> Extract2(string text)
     {
-        var block = ExtractConfigBlock(text);
+        var block = Extract3(text);
         if (string.IsNullOrWhiteSpace(block))
         {
             yield break;
@@ -261,8 +261,8 @@ public sealed class WikiRecommendationService
                 continue;
             }
 
-            var rawKey = NormalizeWikiKey(trimmed[1..equalsIndex]);
-            var rawValue = CleanWikiValue(trimmed[(equalsIndex + 1)..]);
+            var rawKey = NormWiki(trimmed[1..equalsIndex]);
+            var rawValue = CleanVal(trimmed[(equalsIndex + 1)..]);
             if (string.IsNullOrWhiteSpace(rawValue))
             {
                 continue;
@@ -280,12 +280,12 @@ public sealed class WikiRecommendationService
 
         foreach (var (wikiKey, rawValue) in values.OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase))
         {
-            if (!ConfigMap.TryGetValue(wikiKey, out var target))
+            if (!CfgMap.TryGetValue(wikiKey, out var target))
             {
                 continue;
             }
 
-            var value = ConvertWikiValue(wikiKey, rawValue);
+            var value = Convert(wikiKey, rawValue);
             if (value is null)
             {
                 continue;
@@ -293,17 +293,17 @@ public sealed class WikiRecommendationService
 
             notes.TryGetValue(wikiKey, out var note);
 
-            yield return new ConfigChange(
+            yield return new CfgChg(
                 Section: target.Section,
                 Key: target.Key,
                 Value: value,
                 WikiKey: wikiKey,
                 Notes: note,
-                Risk: RecommendationRiskPolicy.Classify(wikiKey, value, note));
+                Risk: RecPol.Classify(wikiKey, value, note));
         }
     }
 
-    private static string? ExtractConfigBlock(string text)
+    private static string? Extract3(string text)
     {
         var start = text.IndexOf("{{config", StringComparison.OrdinalIgnoreCase);
         if (start < 0)
@@ -320,17 +320,17 @@ public sealed class WikiRecommendationService
         return text[start..end];
     }
 
-    private static string NormalizeWikiKey(string key)
+    private static string NormWiki(string key)
     {
         return Regex.Replace(key, @"\s+", " ").Trim().ToLowerInvariant();
     }
 
-    private static string CleanWikiValue(string value)
+    private static string CleanVal(string value)
     {
-        value = HtmlComment.Replace(value, string.Empty);
-        value = HtmlBreak.Replace(value, " ");
-        value = WikiIssue.Replace(value, "RPCS3 issue #${id}");
-        value = WikiPullRequest.Replace(value, "RPCS3 PR #${id}");
+        value = Comment.Replace(value, string.Empty);
+        value = Break.Replace(value, " ");
+        value = Issue.Replace(value, "RPCS3 issue #${id}");
+        value = Request.Replace(value, "RPCS3 PR #${id}");
         value = WikiLink.Replace(value, match =>
         {
             var body = match.Groups["body"].Value;
@@ -344,16 +344,16 @@ public sealed class WikiRecommendationService
         return Regex.Replace(value, @"\s+", " ").Trim();
     }
 
-    private static string? ConvertWikiValue(string wikiKey, string value)
+    private static string? Convert(string wikiKey, string value)
     {
         if (wikiKey.Equals("resolution scale threshold", StringComparison.OrdinalIgnoreCase))
         {
-            if (TryParseBoundedInteger(value, 1, 1024, out var directDimension))
+            if (TryParse(value, 1, 1024, out var directDimension))
             {
                 return directDimension.ToString(CultureInfo.InvariantCulture);
             }
 
-            var dimensionMatch = SquareDimension.Match(value);
+            var dimensionMatch = Dim.Match(value);
             if (!dimensionMatch.Success ||
                 !int.TryParse(dimensionMatch.Groups["width"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var width) ||
                 !int.TryParse(dimensionMatch.Groups["height"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var height) ||
@@ -373,29 +373,29 @@ public sealed class WikiRecommendationService
                 return "0";
             }
 
-            var anisotropicMatch = AnisotropicValue.Match(value);
+            var anisotropicMatch = AnisoVal.Match(value);
             var numericValue = anisotropicMatch.Success
                 ? anisotropicMatch.Groups["value"].Value
                 : value;
 
-            return TryParseBoundedInteger(numericValue, 0, 16, out var anisotropic)
+            return TryParse(numericValue, 0, 16, out var anisotropic)
                 ? anisotropic.ToString(CultureInfo.InvariantCulture)
                 : null;
         }
 
         if (wikiKey.Equals("preferred spu threads", StringComparison.OrdinalIgnoreCase))
         {
-            if (IntegerRange.IsMatch(value))
+            if (Range.IsMatch(value))
             {
                 return null;
             }
 
-            return TryParseBoundedInteger(value, 0, 6, out var preferredThreads)
+            return TryParse(value, 0, 6, out var preferredThreads)
                 ? preferredThreads.ToString(CultureInfo.InvariantCulture)
                 : null;
         }
 
-        if (BooleanConfigKeys.Contains(wikiKey))
+        if (Keys.Contains(wikiKey))
         {
             if (value.Equals("On", StringComparison.OrdinalIgnoreCase))
             {
@@ -417,7 +417,7 @@ public sealed class WikiRecommendationService
         return value;
     }
 
-    private static bool TryParseBoundedInteger(string value, int minimum, int maximum, out int result)
+    private static bool TryParse(string value, int minimum, int maximum, out int result)
     {
         return int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out result) &&
                result >= minimum &&

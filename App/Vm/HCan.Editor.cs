@@ -21,17 +21,17 @@ public sealed partial class HCanaryVm : VmBase
         Notes = string.Empty;
         Group = string.Empty;
         PatchVersion = "1.0";
-        Status = HCanaryDraftStatus.Draft;
+        Status = DraftSt.Draft;
         Games.Clear();
         Instructions.Clear();
         Anchors.Clear();
         if (_contextGame is not null)
         {
-            AddGame(HCanaryGameTargetVm.From(new HCanaryGameTarget
+            AddGame(HCanaryGameTargetVm.From(new HCanTgt
             {
                 GameName = _contextGame.Title,
                 GameId = _contextGame.Serial,
-                GameVersion = Rpcs3PatchVersion.Normalize(_contextGame.Version) ?? string.Empty
+                GameVer = PatVer.Norm(_contextGame.Version) ?? string.Empty
             }));
         }
         else AddGame(new HCanaryGameTargetVm());
@@ -47,11 +47,11 @@ public sealed partial class HCanaryVm : VmBase
     private void AddCurrentGame()
     {
         if (_contextGame is null) return;
-        var version = Rpcs3PatchVersion.Normalize(_contextGame.Version) ?? string.Empty;
+        var version = PatVer.Norm(_contextGame.Version) ?? string.Empty;
         if (Games.Any(item => item.GameId.Equals(_contextGame.Serial, StringComparison.OrdinalIgnoreCase) && item.GameVersion == version)) return;
-        AddGame(HCanaryGameTargetVm.From(new HCanaryGameTarget
+        AddGame(HCanaryGameTargetVm.From(new HCanTgt
         {
-            GameName = _contextGame.Title, GameId = _contextGame.Serial, GameVersion = version
+            GameName = _contextGame.Title, GameId = _contextGame.Serial, GameVer = version
         }));
     }
 
@@ -121,26 +121,26 @@ public sealed partial class HCanaryVm : VmBase
     private void ItemChanged(object? sender, PropertyChangedEventArgs e) { if (e.PropertyName != "Error") RefreshDraft(); }
     private void DraftCollectionChanged() { if (!_suppressRefresh) RefreshDraft(); }
 
-    private HCanaryPatchDraft BuildDraft() => new()
+    private HCanDrft BuildDraft() => new()
     {
-        PatchType = PatchType == "SPU" ? HCanaryPatchType.Spu : HCanaryPatchType.Ppu,
-        IsExperimental = IsExperimental,
-        ExecutableHash = ExecutableHash,
-        PatchName = PatchName,
+        PatType = PatchType == "SPU" ? HCanType.Spu : HCanType.Ppu,
+        IsExp = IsExperimental,
+        ExeHash = ExecutableHash,
+        PatName = PatchName,
         Author = Author,
         Notes = Notes,
         Group = Group,
-        PatchVersion = PatchVersion,
+        PatVer = PatchVersion,
         Status = Status,
         Games = Games.Select(item => item.ToModel()).ToList(),
-        Instructions = Instructions.Select(item => item.ToModel()).ToList(),
+        Ins = Instructions.Select(item => item.ToModel()).ToList(),
         Anchors = Anchors.Select(item => item.ToModel()).ToList()
     };
 
     private void RefreshDraft(bool markDirty = true)
     {
         if (_suppressRefresh) return;
-        if (markDirty) { _dirty = true; OnPropertyChanged(nameof(IsDirty)); if (Status == HCanaryDraftStatus.Saved) Status = HCanaryDraftStatus.Draft; }
+        if (markDirty) { _dirty = true; OnPropertyChanged(nameof(IsDirty)); if (Status == DraftSt.Saved) Status = DraftSt.Draft; }
         var result = _authoring.Validate(BuildDraft());
         YamlPreview = string.IsNullOrEmpty(result.Yaml) ? SafePreview() : result.Yaml;
         IsValid = result.IsValid;
@@ -160,17 +160,17 @@ public sealed partial class HCanaryVm : VmBase
 
     private string SafePreview()
     {
-        try { return _authoring.GenerateYaml(BuildDraft()); }
+        try { return _authoring.Generate(BuildDraft()); }
         catch { return "Version: 1.2\r\n"; }
     }
 
-    private static string FieldError(HCanaryValidationResult result, string field) =>
+    private static string FieldError(VldRes result, string field) =>
         result.Issues.FirstOrDefault(issue => issue.Field == field) is { } issue ? LocalizeIssue(issue) : string.Empty;
 
-    private static string FieldPrefixError(HCanaryValidationResult result, string prefix) =>
+    private static string FieldPrefixError(VldRes result, string prefix) =>
         result.Issues.FirstOrDefault(issue => issue.Field.StartsWith(prefix, StringComparison.Ordinal)) is { } issue ? LocalizeIssue(issue) : string.Empty;
 
-    private static string LocalizeIssue(HCanaryValidationIssue issue)
+    private static string LocalizeIssue(VldIssue issue)
     {
         var key = "HCanary.Validation." + issue.Code;
         var text = UiText.T(key);

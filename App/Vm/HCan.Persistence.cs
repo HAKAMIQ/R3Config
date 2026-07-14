@@ -42,9 +42,9 @@ public sealed partial class HCanaryVm : VmBase
         try
         {
             var result = _flow.SaveHCanaryPatch(_install, BuildDraft(), _currentIdentity, saveAsNew);
-            Status = HCanaryDraftStatus.Saved; _dirty = false;
+            Status = DraftSt.Saved; _dirty = false;
             _currentIdentity = ExecutableHash.Trim() + "\0" + PatchName.Trim();
-            StatusMessage = UiText.F("HCanary.Message.Saved", result.Path, result.PatchCount);
+            StatusMessage = UiText.F("HCanary.Message.Saved", result.Path, result.PatNum);
             RefreshStoredPatches(); CatalogChanged?.Invoke(this, EventArgs.Empty); RefreshDraft(markDirty: false);
         }
         catch (Exception ex) { UiDlg.Error(UiText.F("HCanary.Error.Save", ex.Message), UiText.T("HCanary.Title")); StatusMessage = ex.Message; }
@@ -86,7 +86,7 @@ public sealed partial class HCanaryVm : VmBase
         finally { RefreshMutationState(); }
     }
 
-    private void OpenPatchesFolder() { if (_install is not null) OpenPath(_install.PatchesPath); }
+    private void OpenPatchesFolder() { if (_install is not null) OpenPath(_install.PatPath); }
     private void OpenImportedFile() { if (File.Exists(ImportedPatchPath)) OpenPath(ImportedPatchPath); }
     private void OpenRpcs3() { if (_install is not null) Process.Start(new ProcessStartInfo(_install.ExePath) { UseShellExecute = true }); }
     private static void OpenPath(string path) => Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });

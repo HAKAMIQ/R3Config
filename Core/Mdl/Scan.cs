@@ -2,126 +2,126 @@ using System;
 
 namespace R3Config.Mdl;
 
-public static class Rpcs3InputLimits
+public static class R3Limits
 {
-    public const long ParamSfoFileBytes = 16L * 1024 * 1024;
-    public const uint ParamSfoEntries = 4_096;
-    public const int ParamSfoKeyBytes = 256;
-    public const uint ParamSfoValueBytes = 4U * 1024 * 1024;
-    public const long GamesYamlBytes = 32L * 1024 * 1024;
-    public const long PatchCatalogYamlBytes = 128L * 1024 * 1024;
-    public const long PatchConfigYamlBytes = 16L * 1024 * 1024;
-    public const long CustomConfigYamlBytes = 16L * 1024 * 1024;
-    public const long BackupManifestBytes = 4L * 1024 * 1024;
-    public const long HCanaryMetadataBytes = 8L * 1024 * 1024;
-    public const int DirectoryEntries = 100_000;
-    public const int YamlDocuments = 1;
-    public const int YamlDepth = 64;
-    public const int YamlNodes = 250_000;
-    public const int YamlAliases = 4_096;
-    public const int YamlMappings = 100_000;
-    public const int YamlSequences = 100_000;
-    public const int Diagnostics = 1_000;
+    public const long Bytes = 16L * 1024 * 1024;
+    public const uint Entries = 4_096;
+    public const int SfoKeyBy = 256;
+    public const uint SfoValBy = 4U * 1024 * 1024;
+    public const long GameByte = 32L * 1024 * 1024;
+    public const long PatCatBy = 128L * 1024 * 1024;
+    public const long PatCfgBy = 16L * 1024 * 1024;
+    public const long CfgByte = 16L * 1024 * 1024;
+    public const long BkpByte = 4L * 1024 * 1024;
+    public const long HBytes = 8L * 1024 * 1024;
+    public const int DirEnt = 100_000;
+    public const int YamlDoc = 1;
+    public const int Depth = 64;
+    public const int Nodes = 250_000;
+    public const int Aliases = 4_096;
+    public const int YamlMap = 100_000;
+    public const int YamlSeq = 100_000;
+    public const int Diag = 1_000;
 }
 
-public enum GameScanDiagnosticCode
+public enum ScanCode
 {
-    GamesYmlMissing,
-    GamesYmlMalformed,
-    GamesYmlTooLarge,
-    GameDirectoryAccessDenied,
-    ParamSfoMissing,
-    ParamSfoMalformed,
-    ParamSfoTooLarge,
-    DirectoryEntryLimitReached,
-    CustomConfigUnreadable
+    Missing,
+    GameBad,
+    Large,
+    Denied,
+    SfoMiss,
+    SfoBad,
+    SfoBig,
+    Reached,
+    NoRead
 }
 
-public enum GameScanDiagnosticSeverity
+public enum ScanSev
 {
     Info,
     Warning,
     Error
 }
 
-public enum GameScanSourceKind
+public enum ScanSrc
 {
-    GamesYaml,
-    GameDirectory,
+    Yaml,
+    GameDir,
     ParamSfo,
-    CustomConfigDirectory
+    Dir
 }
 
-public sealed record GameScanDiagnostic(
-    GameScanDiagnosticCode Code,
-    GameScanDiagnosticSeverity Severity,
-    GameScanSourceKind SourceKind,
-    string SourcePath,
-    string TechnicalMessage);
+public sealed record ScanDiag(
+    ScanCode Code,
+    ScanSev Severity,
+    ScanSrc SrcKind,
+    string SrcPath,
+    string TechMsg);
 
-public sealed record GameScanResult(
-    IReadOnlyList<Rpcs3GameDescriptor> Games,
-    IReadOnlyList<GameScanDiagnostic> Diagnostics,
-    IReadOnlyList<string> CustomConfigSerials);
+public sealed record ScanRes(
+    IReadOnlyList<R3Game> Games,
+    IReadOnlyList<ScanDiag> Diags,
+    IReadOnlyList<string> CfgSer);
 
-public sealed record Rpcs3InstallDescriptor(
+public sealed record R3Inst(
     string RootPath,
     string ExePath,
-    string ConfigPath,
-    string CustomConfigsPath,
-    string PatchesPath,
-    string PatchConfigPath,
-    string? DataRootPath = null);
+    string CfgPath,
+    string CustPath,
+    string PatPath,
+    string PatCfg,
+    string? DataRoot = null);
 
-public sealed record Rpcs3GameDescriptor(
+public sealed record R3Game(
     string Serial,
     string Title,
-    string InstallPath,
+    string InstPath,
     string? Version,
     string? PpuHash,
     string? SpuHash,
-    IReadOnlyList<string>? PpuHashes = null,
-    IReadOnlyList<string>? SpuHashes = null,
-    string? HashSource = null,
-    string? HashMessage = null,
-    PatchHashEvidenceKind HashEvidenceKind = PatchHashEvidenceKind.None,
-    DateTime? HashEvidenceTimestampUtc = null,
-    IReadOnlyList<string>? PrxHashes = null,
-    IReadOnlyList<string>? OvlHashes = null,
-    IReadOnlyList<string>? AuthoritativePpuHashes = null)
+    IReadOnlyList<string>? PpuRaw = null,
+    IReadOnlyList<string>? SpuRaw = null,
+    string? HashSrc = null,
+    string? HashMsg = null,
+    HashEvi HashEvi = HashEvi.None,
+    DateTime? HashTime = null,
+    IReadOnlyList<string>? PrxRaw = null,
+    IReadOnlyList<string>? OvlRaw = null,
+    IReadOnlyList<string>? AuthPpu = null)
 {
-    public IReadOnlyList<string> AllPpuHashes => MergeHashes(PpuHash, PpuHashes);
+    public IReadOnlyList<string> Hashes => Merge(PpuHash, PpuRaw);
 
-    public IReadOnlyList<string> AllSpuHashes => MergeHashes(SpuHash, SpuHashes);
+    public IReadOnlyList<string> SpuList => Merge(SpuHash, SpuRaw);
 
-    public IReadOnlyList<string> AllPrxHashes => MergeRuntimeHashes(
-        PatchHashKind.Prx,
-        PrxHashes);
+    public IReadOnlyList<string> PrxList => MergeRun(
+        HashKind.Prx,
+        PrxRaw);
 
-    public IReadOnlyList<string> AllOvlHashes => MergeRuntimeHashes(
-        PatchHashKind.Ovl,
-        OvlHashes);
+    public IReadOnlyList<string> OvlList => MergeRun(
+        HashKind.Ovl,
+        OvlRaw);
 
-    public IReadOnlyList<string> AllAuthoritativePpuHashes =>
-        AuthoritativePpuHashes is not null
-            ? MergeHashes(null, AuthoritativePpuHashes)
-            : HashEvidenceKind == PatchHashEvidenceKind.GameCache
+    public IReadOnlyList<string> PpuList =>
+        AuthPpu is not null
+            ? Merge(null, AuthPpu)
+            : HashEvi == HashEvi.Cache
                 ? []
-                : AllPpuHashes;
+                : Hashes;
 
-    public IReadOnlyList<string> HashesFor(PatchHashKind kind)
+    public IReadOnlyList<string> GetHash(HashKind kind)
     {
         return kind switch
         {
-            PatchHashKind.Ppu => AllPpuHashes,
-            PatchHashKind.Spu => AllSpuHashes,
-            PatchHashKind.Prx => AllPrxHashes,
-            PatchHashKind.Ovl => AllOvlHashes,
+            HashKind.Ppu => Hashes,
+            HashKind.Spu => SpuList,
+            HashKind.Prx => PrxList,
+            HashKind.Ovl => OvlList,
             _ => []
         };
     }
 
-    private static IReadOnlyList<string> MergeHashes(
+    private static IReadOnlyList<string> Merge(
         string? primary,
         IReadOnlyList<string>? hashes)
     {
@@ -129,29 +129,29 @@ public sealed record Rpcs3GameDescriptor(
         [
             .. (hashes ?? [])
                 .Append(primary)
-                .Select(NormalizeExecutableHash)
+                .Select(NormExe)
                 .Where(hash => hash is not null)
                 .Select(hash => hash!)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
         ];
     }
 
-    private static string? NormalizeExecutableHash(string? hash)
+    private static string? NormExe(string? hash)
     {
-        return Rpcs3ExecutableHash.TryNormalize(hash, out var normalized)
+        return ExeHash.TryNorm(hash, out var normalized)
             ? normalized
             : null;
     }
 
-    private static IReadOnlyList<string> MergeRuntimeHashes(
-        PatchHashKind kind,
+    private static IReadOnlyList<string> MergeRun(
+        HashKind kind,
         IReadOnlyList<string>? hashes)
     {
         return
         [
             .. (hashes ?? [])
                 .Select(hash =>
-                    Rpcs3PatchRuntimeKey.TryNormalizeEvidence(
+                    RunKey.TryNorm2(
                         kind,
                         hash,
                         out var normalized)
@@ -164,7 +164,7 @@ public sealed record Rpcs3GameDescriptor(
     }
 }
 
-public sealed record ParamSfoInfo(
+public sealed record SfoInfo(
     string? Title,
     string? TitleId,
-    string? AppVersion);
+    string? AppVer);

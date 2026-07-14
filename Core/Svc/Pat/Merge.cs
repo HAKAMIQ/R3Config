@@ -5,34 +5,34 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class PatchCatalogMergeService
+public sealed class PatMerge
 {
-    public Rpcs3PatchCatalog Merge(params Rpcs3PatchCatalog?[] catalogs)
+    public PatCat Merge(params PatCat?[] catalogs)
     {
         var availableCatalogs = catalogs
             .Where(catalog => catalog is not null)
-            .Cast<Rpcs3PatchCatalog>()
+            .Cast<PatCat>()
             .ToArray();
         var version = availableCatalogs
             .FirstOrDefault(catalog => !string.IsNullOrWhiteSpace(catalog.Version))?
             .Version;
-        var selected = new Dictionary<string, Rpcs3PatchEntry>(StringComparer.OrdinalIgnoreCase);
+        var selected = new Dictionary<string, PatEntry>(StringComparer.OrdinalIgnoreCase);
         var rejected = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var order = new List<string>();
         var diagnostics =
-            new BoundedDiagnosticList<PatchCatalogDiagnostic>(
-                Rpcs3InputLimits.Diagnostics);
+            new DiagList<PatDiag>(
+                R3Limits.Diag);
 
         foreach (var entry in availableCatalogs.SelectMany(catalog => catalog.Entries))
         {
             var key = EntryKey(entry);
             if (rejected.Contains(key))
             {
-                diagnostics.Add(new PatchCatalogDiagnostic(
+                diagnostics.Add(new PatDiag(
                     Code: "PATCH_CONFLICT_REJECTED",
-                    Message: BuildRejectedConflictMessage(entry),
-                    KeptSource: PatchSourceOrigin.Unknown,
-                    DroppedSource: entry.Source));
+                    Message: BuildMs3(entry),
+                    KeepSrc: PatSrc.Unknown,
+                    DropSrc: entry.Source));
                 continue;
             }
 
@@ -43,31 +43,31 @@ public sealed class PatchCatalogMergeService
                 continue;
             }
 
-            if (HasSameVersionDefinitionConflict(existing, entry))
+            if (HasSame(existing, entry))
             {
                 selected.Remove(key);
                 rejected.Add(key);
-                diagnostics.Add(new PatchCatalogDiagnostic(
+                diagnostics.Add(new PatDiag(
                     Code: "PATCH_DUPLICATE_CONFLICT",
-                    Message: BuildConflictMessage(existing, entry),
-                    KeptSource: PatchSourceOrigin.Unknown,
-                    DroppedSource: entry.Source));
+                    Message: BuildMs2(existing, entry),
+                    KeepSrc: PatSrc.Unknown,
+                    DropSrc: entry.Source));
                 continue;
             }
 
-            var keepCandidate = ShouldReplace(existing, entry);
+            var keepCandidate = Should(existing, entry);
             var kept = keepCandidate ? entry : existing;
             var dropped = keepCandidate ? existing : entry;
             selected[key] = kept;
 
-            diagnostics.Add(new PatchCatalogDiagnostic(
+            diagnostics.Add(new PatDiag(
                 Code: keepCandidate ? "PATCH_VERSION_OVERRIDE" : "PATCH_DUPLICATE_SKIPPED",
-                Message: BuildDiagnosticMessage(kept, dropped),
-                KeptSource: kept.Source,
-                DroppedSource: dropped.Source));
+                Message: BuildMsg(kept, dropped),
+                KeepSrc: kept.Source,
+                DropSrc: dropped.Source));
         }
 
-        return new Rpcs3PatchCatalog(
+        return new PatCat(
             version,
             order
                 .Where(selected.ContainsKey)
@@ -76,23 +76,23 @@ public sealed class PatchCatalogMergeService
             diagnostics);
     }
 
-    private static bool HasSameVersionDefinitionConflict(
-        Rpcs3PatchEntry existing,
-        Rpcs3PatchEntry candidate)
+    private static bool HasSame(
+        PatEntry existing,
+        PatEntry candidate)
     {
-        return AreEquivalentPatchVersions(existing.PatchVersion, candidate.PatchVersion) &&
+        return AreEqual(existing.PatVer, candidate.PatVer) &&
                !string.Equals(
-                   existing.DefinitionFingerprint,
-                   candidate.DefinitionFingerprint,
+                   existing.DefPrint,
+                   candidate.DefPrint,
                    StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool AreEquivalentPatchVersions(string? left, string? right)
+    private static bool AreEqual(string? left, string? right)
     {
         var leftValue = left?.Trim() ?? string.Empty;
         var rightValue = right?.Trim() ?? string.Empty;
 
-        if (TryComparePatchVersions(leftValue, rightValue, out var comparison))
+        if (TryVer(leftValue, rightValue, out var comparison))
         {
             return comparison == 0;
         }
@@ -100,35 +100,35 @@ public sealed class PatchCatalogMergeService
         return leftValue.Equals(rightValue, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool ShouldReplace(Rpcs3PatchEntry existing, Rpcs3PatchEntry candidate)
+    private static bool Should(PatEntry existing, PatEntry candidate)
     {
         // Bundled catalogs are preview sources. An entry already present in an
         // RPCS3 file is authoritative because that is what RPCS3 will load.
-        if (IsBundledPreview(candidate.Source) &&
-            !IsBundledPreview(existing.Source))
+        if (Is(candidate.Source) &&
+            !Is(existing.Source))
         {
             return false;
         }
 
-        if (IsBundledPreview(existing.Source) &&
-            !IsBundledPreview(candidate.Source))
+        if (Is(existing.Source) &&
+            !Is(candidate.Source))
         {
             return true;
         }
 
-        return TryComparePatchVersions(
-                   candidate.PatchVersion,
-                   existing.PatchVersion,
+        return TryVer(
+                   candidate.PatVer,
+                   existing.PatVer,
                    out var comparison) &&
                comparison > 0;
     }
 
-    private static bool IsBundledPreview(PatchSourceOrigin source)
+    private static bool Is(PatSrc source)
     {
-        return source is PatchSourceOrigin.BundledCanary or PatchSourceOrigin.BundledCheats;
+        return source is PatSrc.Can or PatSrc.Cht;
     }
 
-    private static bool TryComparePatchVersions(
+    private static bool TryVer(
         string? left,
         string? right,
         out int comparison)
@@ -138,8 +138,8 @@ public sealed class PatchCatalogMergeService
         var leftValue = left ?? string.Empty;
         var rightValue = right ?? string.Empty;
 
-        if (!IsRpcS3ComparableVersion(leftValue) ||
-            !IsRpcS3ComparableVersion(rightValue))
+        if (!IsRpc(leftValue) ||
+            !IsRpc(rightValue))
         {
             return false;
         }
@@ -150,9 +150,9 @@ public sealed class PatchCatalogMergeService
 
         for (var index = 0; index < partCount; index++)
         {
-            var leftPart = NormalizeNumericPart(
+            var leftPart = NormPart(
                 index < leftParts.Length ? leftParts[index] : string.Empty);
-            var rightPart = NormalizeNumericPart(
+            var rightPart = NormPart(
                 index < rightParts.Length ? rightParts[index] : string.Empty);
 
             if (leftPart.Length != rightPart.Length)
@@ -172,14 +172,14 @@ public sealed class PatchCatalogMergeService
         return true;
     }
 
-    private static bool IsRpcS3ComparableVersion(string value)
+    private static bool IsRpc(string value)
     {
         return value.All(character =>
             character == '.' ||
             character is >= '0' and <= '9');
     }
 
-    private static string NormalizeNumericPart(string value)
+    private static string NormPart(string value)
     {
         var firstNonZero = 0;
         while (firstNonZero < value.Length && value[firstNonZero] == '0')
@@ -192,12 +192,12 @@ public sealed class PatchCatalogMergeService
             : value[firstNonZero..];
     }
 
-    private static string EntryKey(Rpcs3PatchEntry entry)
+    private static string EntryKey(PatEntry entry)
     {
-        return $"{entry.RuntimeHashKey}|{entry.Title}|{DefinitionChannel(entry)}";
+        return $"{entry.RunKey}|{entry.Title}|{Def(entry)}";
     }
 
-    private static string DefinitionChannel(Rpcs3PatchEntry entry)
+    private static string Def(PatEntry entry)
     {
         // RPCS3 loads normal/Canary definitions and title-specific cheat
         // definitions from separate files. They may legitimately share the
@@ -205,41 +205,41 @@ public sealed class PatchCatalogMergeService
         // using different operations and game-title identities. Keep those
         // channels independent, but continue merging resident and bundled
         // versions inside each channel.
-        return entry.Risk == PatchRisk.Cheat ||
-               entry.Source is PatchSourceOrigin.BundledCheats or
-                   PatchSourceOrigin.ManagedCheats
+        return entry.Risk == Mdl.PatRisk.Cheat ||
+               entry.Source is PatSrc.Cht or
+                   PatSrc.ManCht
             ? "Cheat"
             : "Patch";
     }
 
-    private static string BuildDiagnosticMessage(Rpcs3PatchEntry kept, Rpcs3PatchEntry dropped)
+    private static string BuildMsg(PatEntry kept, PatEntry dropped)
     {
         return $"Patch '{kept.Title}' for {kept.HashKind}-{kept.Hash} from {dropped.Source} " +
                $"was superseded by {kept.Source}.";
     }
 
-    private static string BuildConflictMessage(
-        Rpcs3PatchEntry existing,
-        Rpcs3PatchEntry candidate)
+    private static string BuildMs2(
+        PatEntry existing,
+        PatEntry candidate)
     {
-        var version = string.IsNullOrWhiteSpace(existing.PatchVersion)
+        var version = string.IsNullOrWhiteSpace(existing.PatVer)
             ? "<missing>"
-            : existing.PatchVersion.Trim();
+            : existing.PatVer.Trim();
         return $"Patch '{existing.Title}' for {existing.HashKind}-{existing.Hash} has conflicting " +
-               $"definitions at equivalent Patch Version '{version}' from {DescribeSource(existing)} and " +
-               $"{DescribeSource(candidate)}. Every conflicting variant was rejected.";
+               $"definitions at equivalent Patch Version '{version}' from {Describe(existing)} and " +
+               $"{Describe(candidate)}. Every conflicting variant was rejected.";
     }
 
-    private static string BuildRejectedConflictMessage(Rpcs3PatchEntry entry)
+    private static string BuildMs3(PatEntry entry)
     {
-        return $"Patch '{entry.Title}' for {entry.HashKind}-{entry.Hash} from {DescribeSource(entry)} " +
+        return $"Patch '{entry.Title}' for {entry.HashKind}-{entry.Hash} from {Describe(entry)} " +
                "was rejected because that identity already has an unresolved same-version definition conflict.";
     }
 
-    private static string DescribeSource(Rpcs3PatchEntry entry)
+    private static string Describe(PatEntry entry)
     {
-        return string.IsNullOrWhiteSpace(entry.SourcePath)
+        return string.IsNullOrWhiteSpace(entry.SrcPath)
             ? entry.Source.ToString()
-            : $"{entry.Source} ({entry.SourcePath})";
+            : $"{entry.Source} ({entry.SrcPath})";
     }
 }

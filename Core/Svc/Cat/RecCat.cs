@@ -10,68 +10,68 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed partial class RecommendationCatalogService
+public sealed partial class RecSvc
 {
-    private static readonly Encoding Utf8NoBom =
+    private static readonly Encoding Utf8Bom =
         new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNameCaseInsensitive = true,
         WriteIndented = true,
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new RiskJson(), new JsonStringEnumConverter() }
     };
 
-    private readonly IReadOnlyDictionary<string, WikiGameRecommendation> _recommendations;
+    private readonly IReadOnlyDictionary<string, WikiRec> _Rec;
 
-    private RecommendationCatalogService(
-        CatalogInfo info,
-        IReadOnlyDictionary<string, WikiGameRecommendation> recommendations)
+    private RecSvc(
+        Mdl.CatInfo info,
+        IReadOnlyDictionary<string, WikiRec> recommendations)
     {
         Info = info with
         {
-            RecommendationCount = recommendations.Count
+            RecNum = recommendations.Count
         };
 
-        _recommendations = recommendations;
+        _Rec = recommendations;
     }
 
-    public CatalogInfo Info { get; }
+    public Mdl.CatInfo Info { get; }
 
-    public string DataSource => Info.DataSource;
+    public string DataSrc => Info.DataSrc;
 
-    public string DataVersion => Info.DataVersion;
+    public string DataVer => Info.DataVer;
 
-    public DateTimeOffset? GeneratedAt => Info.GeneratedAt;
+    public DateTimeOffset? GenAt => Info.GenAt;
 
-    public string SourceHash => Info.SourceHash;
+    public string SrcHash => Info.SrcHash;
 
-    public int Count => _recommendations.Count;
+    public int Count => _Rec.Count;
 
-    public IReadOnlyCollection<WikiGameRecommendation> Recommendations =>
+    public IReadOnlyCollection<WikiRec> Rec =>
     [
-        .. _recommendations.Values
+        .. _Rec.Values
     ];
 
-    public WikiGameRecommendation? Find(string serial)
+    public WikiRec? Find(string serial)
     {
-        return _recommendations.TryGetValue(serial, out var recommendation)
+        return _Rec.TryGetValue(serial, out var recommendation)
             ? recommendation
             : null;
     }
 
-    public RecommendationCatalogService WithInfo(CatalogInfo info)
+    public RecSvc WithInfo(Mdl.CatInfo info)
     {
-        return new RecommendationCatalogService(info, _recommendations);
+        return new RecSvc(info, _Rec);
     }
 
-    public static RecommendationCatalogService Load(string catalogPath)
+    public static RecSvc Load(string catalogPath)
     {
         using var stream = File.OpenRead(catalogPath);
         return Load(stream);
     }
 
-    public static RecommendationCatalogService Load(Stream catalogStream)
+    public static RecSvc Load(Stream catalogStream)
     {
         ArgumentNullException.ThrowIfNull(catalogStream);
 
@@ -89,16 +89,16 @@ public sealed partial class RecommendationCatalogService
                 "Recommendation catalog is empty or invalid.");
         }
 
-        RecommendationCatalogDto catalog;
+        RecDto catalog;
 
         try
         {
             using var document = JsonDocument.Parse(bytes);
-            ValidateUniqueJsonKeys(document.RootElement, "$");
+            VldKeys(document.RootElement, "$");
 
-            catalog = JsonSerializer.Deserialize<RecommendationCatalogDto>(
+            catalog = JsonSerializer.Deserialize<RecDto>(
                 bytes,
-                JsonOptions)
+                Options)
                 ?? throw new InvalidDataException(
                     "Recommendation catalog is empty or invalid.");
         }
@@ -109,32 +109,32 @@ public sealed partial class RecommendationCatalogService
                 ex);
         }
 
-        var dataVersion = RequireText(
-            catalog.DataVersion,
+        var dataVersion = Require(
+            catalog.DataVer,
             "DataVersion");
 
-        var recommendations = BuildMap(catalog.Recommendations);
+        var recommendations = BuildMap(catalog.Rec);
 
-        var info = new CatalogInfo(
-            string.IsNullOrWhiteSpace(catalog.DataSource)
+        var info = new Mdl.CatInfo(
+            string.IsNullOrWhiteSpace(catalog.DataSrc)
                 ? "Built-in"
-                : catalog.DataSource.Trim(),
+                : catalog.DataSrc.Trim(),
             dataVersion,
-            catalog.GeneratedAt,
-            string.IsNullOrWhiteSpace(catalog.SourceHash)
+            catalog.GenAt,
+            string.IsNullOrWhiteSpace(catalog.SrcHash)
                 ? string.Empty
-                : catalog.SourceHash.Trim(),
+                : catalog.SrcHash.Trim(),
             recommendations.Count);
 
-        return new RecommendationCatalogService(
+        return new RecSvc(
             info,
             recommendations);
     }
 
-    public static RecommendationCatalogService FromRecommendations(
+    public static RecSvc FromRec(
         string dataSource,
         string dataVersion,
-        IEnumerable<WikiGameRecommendation> recommendations,
+        IEnumerable<WikiRec> recommendations,
         DateTimeOffset? generatedAt = null,
         string? sourceHash = null)
     {
@@ -142,26 +142,26 @@ public sealed partial class RecommendationCatalogService
 
         var map = BuildMap(recommendations);
 
-        var info = new CatalogInfo(
+        var info = new Mdl.CatInfo(
             string.IsNullOrWhiteSpace(dataSource)
                 ? "Built-in"
                 : dataSource.Trim(),
-            RequireText(dataVersion, "DataVersion"),
+            Require(dataVersion, "DataVersion"),
             generatedAt ?? DateTimeOffset.UtcNow,
             string.IsNullOrWhiteSpace(sourceHash)
                 ? string.Empty
                 : sourceHash.Trim(),
             map.Count);
 
-        return new RecommendationCatalogService(info, map);
+        return new RecSvc(info, map);
     }
 
     public static void Save(
         string catalogPath,
         string dataVersion,
-        IEnumerable<WikiGameRecommendation> recommendations)
+        IEnumerable<WikiRec> recommendations)
     {
-        FromRecommendations(
+        FromRec(
             "Built-in",
             dataVersion,
             recommendations)
@@ -170,31 +170,31 @@ public sealed partial class RecommendationCatalogService
 
     public static void Save(
         string catalogPath,
-        CatalogInfo info,
-        IEnumerable<WikiGameRecommendation> recommendations)
+        Mdl.CatInfo info,
+        IEnumerable<WikiRec> recommendations)
     {
-        FromRecommendations(
-            info.DataSource,
-            info.DataVersion,
+        FromRec(
+            info.DataSrc,
+            info.DataVer,
             recommendations,
-            info.GeneratedAt,
-            info.SourceHash)
+            info.GenAt,
+            info.SrcHash)
             .Save(catalogPath);
     }
 
     public void Save(string catalogPath)
     {
-        var catalog = new RecommendationCatalogDto
+        var catalog = new RecDto
         {
-            DataSource = Info.DataSource,
-            DataVersion = Info.DataVersion,
-            GeneratedAt = Info.GeneratedAt,
-            SourceHash = Info.SourceHash,
-            RecommendationCount = Count,
-            Recommendations =
+            DataSrc = Info.DataSrc,
+            DataVer = Info.DataVer,
+            GenAt = Info.GenAt,
+            SrcHash = Info.SrcHash,
+            RecNum = Count,
+            Rec =
             [
-                .. _recommendations.Values
-                    .Select(NormalizeRecommendation)
+                .. _Rec.Values
+                    .Select(NormRec)
                     .OrderBy(
                         item => item.Serial,
                         StringComparer.OrdinalIgnoreCase)
@@ -209,7 +209,7 @@ public sealed partial class RecommendationCatalogService
         }
 
         var json = JsonSerializer
-            .Serialize(catalog, JsonOptions)
+            .Serialize(catalog, Options)
             .Replace(
                 "\r\n",
                 "\n",
@@ -222,11 +222,11 @@ public sealed partial class RecommendationCatalogService
         File.WriteAllText(
             catalogPath,
             json,
-            Utf8NoBom);
+            Utf8Bom);
     }
 
-    private static Dictionary<string, WikiGameRecommendation> BuildMap(
-        IEnumerable<WikiGameRecommendation>? source)
+    private static Dictionary<string, WikiRec> BuildMap(
+        IEnumerable<WikiRec>? source)
     {
         if (source is null)
         {
@@ -235,7 +235,7 @@ public sealed partial class RecommendationCatalogService
         }
 
         var map =
-            new Dictionary<string, WikiGameRecommendation>(
+            new Dictionary<string, WikiRec>(
                 StringComparer.OrdinalIgnoreCase);
 
         foreach (var item in source)
@@ -246,7 +246,7 @@ public sealed partial class RecommendationCatalogService
                     "Recommendation catalog contains a null recommendation.");
             }
 
-            var normalized = NormalizeRecommendation(item);
+            var normalized = NormRec(item);
 
             if (!map.TryAdd(normalized.Serial, normalized))
             {
@@ -258,29 +258,29 @@ public sealed partial class RecommendationCatalogService
         return map;
     }
 
-    private static WikiGameRecommendation NormalizeRecommendation(
-        WikiGameRecommendation recommendation)
+    private static WikiRec NormRec(
+        WikiRec recommendation)
     {
-        var serial = RequireText(
+        var serial = Require(
             recommendation.Serial,
             "Serial")
             .ToUpperInvariant();
 
-        if (!SerialPattern().IsMatch(serial))
+        if (!Serial().IsMatch(serial))
         {
             throw new InvalidDataException(
                 $"Recommendation serial '{serial}' is invalid.");
         }
 
-        var title = RequireText(
-            recommendation.WikiTitle,
+        var title = Require(
+            recommendation.WikiName,
             $"WikiTitle for {serial}");
 
         var sourceChanges = recommendation.Changes
             ?? throw new InvalidDataException(
                 $"Recommendation '{serial}' is missing Changes.");
 
-        List<ConfigChange> changes = [];
+        List<CfgChg> changes = [];
         var paths = new HashSet<string>(
             StringComparer.OrdinalIgnoreCase);
 
@@ -292,19 +292,19 @@ public sealed partial class RecommendationCatalogService
                     $"Recommendation '{serial}' contains a null change.");
             }
 
-            var section = RequireText(
+            var section = Require(
                 change.Section,
                 $"Section for {serial}");
 
-            var key = RequireText(
+            var key = Require(
                 change.Key,
                 $"Key for {serial}");
 
-            var value = RequireText(
+            var value = Require(
                 change.Value,
                 $"Value for {serial} / {section} / {key}");
 
-            var wikiKey = RequireText(
+            var wikiKey = Require(
                 change.WikiKey,
                 $"WikiKey for {serial} / {section} / {key}");
 
@@ -327,7 +327,7 @@ public sealed partial class RecommendationCatalogService
                 Value = value,
                 WikiKey = wikiKey,
                 Notes = notes,
-                Risk = RecommendationRiskPolicy.Classify(
+                Risk = RecPol.Classify(
                     wikiKey,
                     value,
                     notes)
@@ -337,7 +337,7 @@ public sealed partial class RecommendationCatalogService
         return recommendation with
         {
             Serial = serial,
-            WikiTitle = title,
+            WikiName = title,
             Changes =
             [
                 .. changes
@@ -345,7 +345,7 @@ public sealed partial class RecommendationCatalogService
         };
     }
 
-    private static string RequireText(
+    private static string Require(
         string? value,
         string fieldName)
     {
@@ -358,7 +358,7 @@ public sealed partial class RecommendationCatalogService
         return value.Trim();
     }
 
-    private static void ValidateUniqueJsonKeys(
+    private static void VldKeys(
         JsonElement element,
         string path)
     {
@@ -377,7 +377,7 @@ public sealed partial class RecommendationCatalogService
                                 $"Recommendation catalog contains duplicate JSON key '{property.Name}' at '{path}'.");
                         }
 
-                        ValidateUniqueJsonKeys(
+                        VldKeys(
                             property.Value,
                             $"{path}.{property.Name}");
                     }
@@ -391,7 +391,7 @@ public sealed partial class RecommendationCatalogService
 
                     foreach (var item in element.EnumerateArray())
                     {
-                        ValidateUniqueJsonKeys(
+                        VldKeys(
                             item,
                             $"{path}[{index}]");
 
@@ -406,20 +406,72 @@ public sealed partial class RecommendationCatalogService
     [GeneratedRegex(
         @"^[A-Z0-9]{9}$",
         RegexOptions.CultureInvariant)]
-    private static partial Regex SerialPattern();
+    private static partial Regex Serial();
 
-    private sealed class RecommendationCatalogDto
+    private sealed class RecDto
     {
-        public string? DataSource { get; set; } = "Built-in";
+        [JsonPropertyName("DataSource")]
+        public string? DataSrc { get; set; } = "Built-in";
 
-        public string? DataVersion { get; set; }
+        [JsonPropertyName("DataVersion")]
+        public string? DataVer { get; set; }
 
-        public DateTimeOffset? GeneratedAt { get; set; }
+        [JsonPropertyName("GeneratedAt")]
+        public DateTimeOffset? GenAt { get; set; }
 
-        public string? SourceHash { get; set; }
+        [JsonPropertyName("SourceHash")]
+        public string? SrcHash { get; set; }
 
-        public int RecommendationCount { get; set; }
+        [JsonPropertyName("RecommendationCount")]
+        public int RecNum { get; set; }
 
-        public List<WikiGameRecommendation>? Recommendations { get; set; }
+        [JsonPropertyName("Recommendations")]
+        public List<WikiRec>? Rec { get; set; }
+    }
+
+    private sealed class RiskJson : JsonConverter<RecRisk>
+    {
+        public override RecRisk Read(
+            ref Utf8JsonReader reader,
+            Type type,
+            JsonSerializerOptions options)
+        {
+            var value = reader.GetString();
+            return value switch
+            {
+                "Recommended" or "Rec" => RecRisk.Rec,
+                "Conditional" or "Cond" => RecRisk.Cond,
+                "PerformanceCost" or "PerfCost" => RecRisk.PerfCost,
+                "PatchDependent" or "PatDep" => RecRisk.PatDep,
+                "HardwareDependent" or "Dep" => RecRisk.Dep,
+                "ManualTiming" or "Timing" => RecRisk.Timing,
+                "ExpertOnly" or "Only" => RecRisk.Only,
+                _ when Enum.TryParse<RecRisk>(
+                    value,
+                    ignoreCase: true,
+                    out var risk) => risk,
+                _ => throw new JsonException(
+                    $"Unknown recommendation risk '{value}'.")
+            };
+        }
+
+        public override void Write(
+            Utf8JsonWriter writer,
+            RecRisk value,
+            JsonSerializerOptions options)
+        {
+            var text = value switch
+            {
+                RecRisk.Rec => "Recommended",
+                RecRisk.Cond => "Conditional",
+                RecRisk.PerfCost => "PerformanceCost",
+                RecRisk.PatDep => "PatchDependent",
+                RecRisk.Dep => "HardwareDependent",
+                RecRisk.Timing => "ManualTiming",
+                RecRisk.Only => "ExpertOnly",
+                _ => value.ToString()
+            };
+            writer.WriteStringValue(text);
+        }
     }
 }

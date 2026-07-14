@@ -4,11 +4,11 @@ using System.Text.RegularExpressions;
 
 namespace R3Config.Svc;
 
-public static partial class Rpcs3PatchVersion
+public static partial class PatVer
 {
     public const string All = "All";
 
-    public static string? Normalize(string? value)
+    public static string? Norm(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -27,7 +27,7 @@ public static partial class Rpcs3PatchVersion
             return All;
         }
 
-        var match = NumericVersionPattern().Match(trimmed);
+        var match = Numeric().Match(trimmed);
 
         if (!match.Success ||
             !int.TryParse(
@@ -52,8 +52,8 @@ public static partial class Rpcs3PatchVersion
 
     public static bool Equals(string? left, string? right)
     {
-        var normalizedLeft = Normalize(left);
-        var normalizedRight = Normalize(right);
+        var normalizedLeft = Norm(left);
+        var normalizedRight = Norm(right);
 
         return normalizedLeft is not null &&
                normalizedRight is not null &&
@@ -64,7 +64,7 @@ public static partial class Rpcs3PatchVersion
 
     public static bool IsAll(string? value)
     {
-        return Normalize(value)?.Equals(
+        return Norm(value)?.Equals(
             All,
             StringComparison.OrdinalIgnoreCase) == true;
     }
@@ -73,5 +73,5 @@ public static partial class Rpcs3PatchVersion
         @"^(?:v\.?)?(?<major>[0-9]{1,2})\.(?<minor>[0-9]{1,2})$",
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase)]
-    private static partial Regex NumericVersionPattern();
+    private static partial Regex Numeric();
 }

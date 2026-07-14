@@ -6,18 +6,18 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class PlanService
+public sealed class PlanSvc
 {
-    private readonly RecStateService _recStateService = new();
+    private readonly StateSvc _recSvc = new();
 
-    public ConfigPlan CreateConfigPlan(
-        Rpcs3InstallDescriptor install,
-        Rpcs3GameDescriptor game,
-        WikiGameRecommendation? recommendation,
+    public CfgPlan BuildCfg(
+        R3Inst install,
+        R3Game game,
+        WikiRec? recommendation,
         HwInfo? hw = null)
     {
         var targetPath = Path.Combine(
-            install.CustomConfigsPath,
+            install.CustPath,
             $"config_{game.Serial}.yml");
 
         var changes = (recommendation?.Changes ?? [])
@@ -25,13 +25,13 @@ public sealed class PlanService
             .ThenBy(change => change.Key)
             .ToArray();
 
-        WikiGameRecommendation[] recs = recommendation is null
+        WikiRec[] recs = recommendation is null
             ? []
             : [recommendation with { Changes = changes }];
 
-        var canReadConfig = Rpcs3ConfigYaml.CanRead(targetPath);
+        var canReadConfig = R3Yaml.CanRead(targetPath);
 
-        var state = _recStateService.Evaluate(
+        var state = _recSvc.Evaluate(
             game,
             recs,
             (section, key) =>
@@ -42,7 +42,7 @@ public sealed class PlanService
                         "Config file is not readable.");
                 }
 
-                return Rpcs3ConfigYaml.ReadValue(
+                return R3Yaml.ReadVal(
                     targetPath,
                     section,
                     key);
@@ -53,20 +53,20 @@ public sealed class PlanService
             .Zip(
                 state.Items,
                 (change, stateItem) =>
-                    new ConfigPlanEntry(
+                    new CfgEntry(
                         change,
                         stateItem.Current,
                         stateItem))
             .ToArray();
 
-        return new ConfigPlan(
-            GameSerial: game.Serial,
-            GameTitle: recommendation?.WikiTitle ?? game.Title,
-            TargetConfigPath: targetPath,
+        return new CfgPlan(
+            GameSer: game.Serial,
+            GameName: recommendation?.WikiName ?? game.Title,
+            CfgPath: targetPath,
             Items: items,
             RecState: state,
-            RequiresBackup: items.Any(
-                item => item.IsActionable && item.IsDifferent));
+            NeedBkp: items.Any(
+                item => item.IsAction && item.IsDiff));
     }
 }
 

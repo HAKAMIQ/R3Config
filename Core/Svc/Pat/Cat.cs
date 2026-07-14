@@ -12,24 +12,24 @@ using YamlDotNet.RepresentationModel;
 
 namespace R3Config.Svc;
 
-public sealed class PatchCatalogReader
+public sealed class ReadSvc
 {
-    private const string SupportedPatchEngineVersion = "1.2";
-    private const string DuplicateKeySuffix = "__r3config_duplicate_";
+    private const string ValidVer = "1.2";
+    private const string Suffix = "__r3config_duplicate_";
 
-    private static readonly Regex HashKeyPattern = new(
+    private static readonly Regex Pattern = new(
         @"^(?:(?<serial>[A-Z0-9]{9})-)?(?<kind>PPU|SPU|PRX|OVL)-(?<hash>.+)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static readonly Regex SerialPattern = new(
+    private static readonly Regex Pattern2 = new(
         @"^[A-Za-z0-9]{9}$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex AppVersionPattern = new(
+    private static readonly Regex Pattern3 = new(
         @"^[0-9]{2}\.[0-9]{2}$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly HashSet<string> SupportedPatchTypes = new(
+    private static readonly HashSet<string> Types = new(
         [
             "alloc",
             "calloc",
@@ -58,31 +58,31 @@ public sealed class PatchCatalogReader
         ],
         StringComparer.Ordinal);
 
-    private static readonly Regex MappingKeyPattern = new(
+    private static readonly Regex Pattern4 = new(
         @"^(?<spaces>\s*)(?:(?:\""(?<doubleQuoted>(?:[^\""\\]|\\.)*)\"")|(?:'(?<singleQuoted>[^']*)')|(?<plain>[^\s:#][^:#]*?))\s*:(?:\s.*)?$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    public PatchCatalogReadResult Read(string patchYmlPath, bool isCanarySource = false)
+    public Mdl.PatRead Read(string patchYmlPath, bool isCanarySource = false)
     {
         return Read(
             patchYmlPath,
-            isCanarySource ? PatchSourceOrigin.BundledCanary : InferSource(patchYmlPath));
+            isCanarySource ? PatSrc.Can : InferSrc(patchYmlPath));
     }
 
-    public PatchCatalogReadResult Read(string patchYmlPath, PatchSourceOrigin source)
+    public Mdl.PatRead Read(string patchYmlPath, PatSrc source)
     {
         if (!File.Exists(patchYmlPath))
         {
-            return PatchCatalogReadResult.Failure($"Patch file not found: {patchYmlPath}");
+            return Mdl.PatRead.Failure($"Patch file not found: {patchYmlPath}");
         }
 
         try
         {
             if (new FileInfo(patchYmlPath).Length >
-                Rpcs3InputLimits.PatchCatalogYamlBytes)
+                R3Limits.PatCatBy)
             {
-                return PatchCatalogReadResult.Failure(
-                    $"Patch catalog exceeds the {Rpcs3InputLimits.PatchCatalogYamlBytes}-byte input limit.");
+                return Mdl.PatRead.Failure(
+                    $"Patch catalog exceeds the {R3Limits.PatCatBy}-byte input limit.");
             }
 
             using var stream = File.OpenRead(patchYmlPath);
@@ -91,25 +91,25 @@ public sealed class PatchCatalogReader
         catch (Exception ex) when (
             ex is IOException or UnauthorizedAccessException)
         {
-            return PatchCatalogReadResult.Failure(ex.Message);
+            return Mdl.PatRead.Failure(ex.Message);
         }
     }
 
-    public PatchCatalogReadResult Read(Stream patchYmlStream, bool isCanarySource = false)
+    public Mdl.PatRead Read(Stream patchYmlStream, bool isCanarySource = false)
     {
         return Read(
             patchYmlStream,
-            isCanarySource ? PatchSourceOrigin.BundledCanary : PatchSourceOrigin.Unknown,
+            isCanarySource ? PatSrc.Can : PatSrc.Unknown,
             sourcePath: null);
     }
 
-    public PatchCatalogReadResult Read(Stream patchYmlStream, PatchSourceOrigin source, string? sourcePath = null)
+    public Mdl.PatRead Read(Stream patchYmlStream, PatSrc source, string? sourcePath = null)
     {
         try
         {
-            var text = Rpcs3BoundedInput.ReadUtf8Text(
+            var text = R3Bound.ReadUtf2(
                 patchYmlStream,
-                Rpcs3InputLimits.PatchCatalogYamlBytes,
+                R3Limits.PatCatBy,
                 "Patch catalog");
             return ReadText(text, source, sourcePath);
         }
@@ -118,80 +118,80 @@ public sealed class PatchCatalogReader
                 UnauthorizedAccessException or
                 InvalidDataException)
         {
-            return PatchCatalogReadResult.Failure(ex.Message);
+            return Mdl.PatRead.Failure(ex.Message);
         }
     }
 
-    public PatchCatalogReadResult ReadText(string patchYmlText, bool isCanarySource = false)
+    public Mdl.PatRead ReadText(string patchYmlText, bool isCanarySource = false)
     {
         return ReadText(
             patchYmlText,
-            isCanarySource ? PatchSourceOrigin.BundledCanary : PatchSourceOrigin.Unknown,
+            isCanarySource ? PatSrc.Can : PatSrc.Unknown,
             sourcePath: null);
     }
 
-    public PatchCatalogReadResult ReadText(
+    public Mdl.PatRead ReadText(
         string patchYmlText,
-        PatchSourceOrigin source,
+        PatSrc source,
         string? sourcePath = null)
     {
         try
         {
-            Rpcs3BoundedInput.EnsureTextLength(
+            R3Bound.Check(
                 patchYmlText,
-                Rpcs3InputLimits.PatchCatalogYamlBytes,
+                R3Limits.PatCatBy,
                 "Patch catalog");
 
-            var yaml = Rpcs3BoundedInput.LoadYaml(
-                NormalizeDuplicatePatchKeys(
+            var yaml = R3Bound.LoadYaml(
+                NormDup(
                     patchYmlText,
                     allowDuplicatePatchTitles:
-                        source == PatchSourceOrigin.BundledCheats),
+                        source == PatSrc.Cht),
                 "Patch catalog");
 
             if (yaml.Documents.Count == 0 ||
-                yaml.Documents.Count > Rpcs3InputLimits.YamlDocuments ||
+                yaml.Documents.Count > R3Limits.YamlDoc ||
                 yaml.Documents[0].RootNode is not YamlMappingNode root)
             {
-                return PatchCatalogReadResult.Failure("Patch YAML root is not a mapping.");
+                return Mdl.PatRead.Failure("Patch YAML root is not a mapping.");
             }
 
-            var versionNode = TryGetNode(root, "Version");
+            var versionNode = TryGet(root, "Version");
             if (versionNode is not YamlScalarNode versionScalar ||
                 string.IsNullOrWhiteSpace(versionScalar.Value))
             {
-                return PatchCatalogReadResult.Failure(
-                    $"Patch YAML is missing the required Version: {SupportedPatchEngineVersion} entry.");
+                return Mdl.PatRead.Failure(
+                    $"Patch YAML is missing the required Version: {ValidVer} entry.");
             }
 
             var version = versionScalar.Value.Trim();
-            if (!version.Equals(SupportedPatchEngineVersion, StringComparison.Ordinal))
+            if (!version.Equals(ValidVer, StringComparison.Ordinal))
             {
-                return PatchCatalogReadResult.Failure(
-                    $"Patch YAML version '{version}' does not match RPCS3 patch engine version '{SupportedPatchEngineVersion}'.");
+                return Mdl.PatRead.Failure(
+                    $"Patch YAML version '{version}' does not match RPCS3 patch engine version '{ValidVer}'.");
             }
 
-            var entries = new List<Rpcs3PatchEntry>();
-            var diagnostics = new BoundedDiagnosticList<string>(
-                Rpcs3InputLimits.Diagnostics);
+            var entries = new List<PatEntry>();
+            var diagnostics = new DiagList<string>(
+                R3Limits.Diag);
 
             foreach (var (keyNode, valueNode) in root.Children)
             {
-                var rawKey = ScalarValue(keyNode);
+                var rawKey = Scalar(keyNode);
                 if (rawKey.Equals("Version", StringComparison.OrdinalIgnoreCase) ||
                     rawKey.StartsWith("Anchors", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                var hashKey = DecodeDuplicateTopLevelHashKey(rawKey);
-                var match = HashKeyPattern.Match(hashKey);
+                var hashKey = Decode3(rawKey);
+                var match = Pattern.Match(hashKey);
                 if (!match.Success)
                 {
                     continue;
                 }
 
-                if (!Rpcs3PatchRuntimeKey.TryParse(
+                if (!RunKey.TryParse(
                         hashKey,
                         out var runtimeKey))
                 {
@@ -214,11 +214,11 @@ public sealed class PatchCatalogReader
                     continue;
                 }
 
-                foreach (var entry in ParseHashSection(
+                foreach (var entry in Parse(
                              patchMap,
                              hashKind,
                              hash,
-                             runtimeKey.SerialScope,
+                             runtimeKey.SerScope,
                              source,
                              sourcePath,
                              diagnostics))
@@ -227,36 +227,36 @@ public sealed class PatchCatalogReader
                 }
             }
 
-            return PatchCatalogReadResult.Success(
-                new Rpcs3PatchCatalog(version, entries),
-                CombineDiagnostics(diagnostics));
+            return Mdl.PatRead.Success(
+                new PatCat(version, entries),
+                Combine(diagnostics));
         }
         catch (YamlException ex)
         {
-            return PatchCatalogReadResult.Failure(ex.Message);
+            return Mdl.PatRead.Failure(ex.Message);
         }
         catch (InvalidOperationException ex)
         {
-            return PatchCatalogReadResult.Failure(ex.Message);
+            return Mdl.PatRead.Failure(ex.Message);
         }
         catch (InvalidDataException ex)
         {
-            return PatchCatalogReadResult.Failure(ex.Message);
+            return Mdl.PatRead.Failure(ex.Message);
         }
     }
 
-    private static IEnumerable<Rpcs3PatchEntry> ParseHashSection(
+    private static IEnumerable<PatEntry> Parse(
         YamlMappingNode patchMap,
-        PatchHashKind hashKind,
+        HashKind hashKind,
         string hash,
         string? runtimeKeySerial,
-        PatchSourceOrigin source,
+        PatSrc source,
         string? sourcePath,
         ICollection<string> diagnostics)
     {
         foreach (var (titleNode, detailsNode) in patchMap.Children)
         {
-            var title = DecodeDuplicateMappingKey(ScalarValue(titleNode));
+            var title = Decode4(Scalar(titleNode));
             if (string.IsNullOrWhiteSpace(title))
             {
                 diagnostics.Add($"Skipping {hashKind}-{hash}: patch title is empty.");
@@ -269,8 +269,8 @@ public sealed class PatchCatalogReader
                 continue;
             }
 
-            if (!TryParseGameTargets(
-                    TryGetNode(details, "Games"),
+            if (!TryPars2(
+                    TryGet(details, "Games"),
                     title,
                     diagnostics,
                     out var targets))
@@ -278,15 +278,15 @@ public sealed class PatchCatalogReader
                 continue;
             }
 
-            var patchNode = TryGetNode(details, "Patch");
+            var patchNode = TryGet(details, "Patch");
             if (patchNode is not null &&
-                !ValidatePatchNode(patchNode, title, diagnostics))
+                !VldPat(patchNode, title, diagnostics))
             {
                 continue;
             }
 
-            if (!TryParseDependencies(
-                    TryGetNode(details, "Dependencies") ?? TryGetNode(details, "Depends On"),
+            if (!TryParse(
+                    TryGet(details, "Dependencies") ?? TryGet(details, "Depends On"),
                     title,
                     diagnostics,
                     out var dependencies))
@@ -294,40 +294,40 @@ public sealed class PatchCatalogReader
                 continue;
             }
 
-            var notes = NodeText(TryGetNode(details, "Notes"));
-            var author = NodeText(TryGetNode(details, "Author"));
-            var patchVersion = NodeText(TryGetNode(details, "Patch Version"));
-            var group = NodeText(TryGetNode(details, "Group"));
-            var risk = source is PatchSourceOrigin.BundledCheats or PatchSourceOrigin.ManagedCheats
-                ? PatchRisk.Cheat
-                : PatchRiskPolicy.Classify(
+            var notes = NodeText(TryGet(details, "Notes"));
+            var author = NodeText(TryGet(details, "Author"));
+            var patchVersion = NodeText(TryGet(details, "Patch Version"));
+            var group = NodeText(TryGet(details, "Group"));
+            var risk = source is PatSrc.Cht or PatSrc.ManCht
+                ? Mdl.PatRisk.Cheat
+                : PatPol.Classify(
                     title,
                     group,
                     notes,
                     author,
-                    source == PatchSourceOrigin.BundledCanary);
-            var patchType = PatchRiskPolicy.InferPatchType(title, group, risk);
+                    source == PatSrc.Can);
+            var patchType = PatPol.InferPat(title, group, risk);
 
-            yield return new Rpcs3PatchEntry(
+            yield return new PatEntry(
                 Title: title,
                 HashKind: hashKind,
                 Hash: hash,
-                GameTargets: targets,
-                PatchType: patchType,
+                GameTgt: targets,
+                PatType: patchType,
                 Risk: risk,
                 Notes: notes,
                 Author: author,
-                PatchVersion: patchVersion,
+                PatVer: patchVersion,
                 Group: group,
                 Source: source,
-                SourcePath: sourcePath,
-                Dependencies: dependencies,
-                DefinitionFingerprint: ComputeDefinitionFingerprint(patchNode),
-                RuntimeKeySerial: runtimeKeySerial);
+                SrcPath: sourcePath,
+                DepList: dependencies,
+                DefPrint: CalcDef(patchNode),
+                KeySer: runtimeKeySerial);
         }
     }
 
-    private static bool TryParseDependencies(
+    private static bool TryParse(
         YamlNode? dependenciesNode,
         string patchTitle,
         ICollection<string> diagnostics,
@@ -382,7 +382,7 @@ public sealed class PatchCatalogReader
         return true;
     }
 
-    private static string? ComputeDefinitionFingerprint(YamlNode? patchNode)
+    private static string? CalcDef(YamlNode? patchNode)
     {
         if (patchNode is null)
         {
@@ -390,13 +390,13 @@ public sealed class PatchCatalogReader
         }
 
         var canonical = new StringBuilder();
-        AppendCanonicalNode(canonical, patchNode);
+        Append(canonical, patchNode);
         return Convert.ToHexString(
                 SHA256.HashData(Encoding.UTF8.GetBytes(canonical.ToString())))
             .ToLowerInvariant();
     }
 
-    private static void AppendCanonicalNode(StringBuilder output, YamlNode node)
+    private static void Append(StringBuilder output, YamlNode node)
     {
         switch (node)
         {
@@ -413,7 +413,7 @@ public sealed class PatchCatalogReader
                 output.Append("Q[");
                 foreach (var child in sequence.Children)
                 {
-                    AppendCanonicalNode(output, child);
+                    Append(output, child);
                     output.Append(';');
                 }
 
@@ -425,8 +425,8 @@ public sealed class PatchCatalogReader
                 var pairs = mapping.Children
                     .Select(pair => new
                     {
-                        Key = CanonicalText(pair.Key),
-                        Value = CanonicalText(pair.Value)
+                        Key = CanPath(pair.Key),
+                        Value = CanPath(pair.Value)
                     })
                     .OrderBy(pair => pair.Key, StringComparer.Ordinal)
                     .ThenBy(pair => pair.Value, StringComparer.Ordinal);
@@ -458,18 +458,18 @@ public sealed class PatchCatalogReader
         }
     }
 
-    private static string CanonicalText(YamlNode node)
+    private static string CanPath(YamlNode node)
     {
         var output = new StringBuilder();
-        AppendCanonicalNode(output, node);
+        Append(output, node);
         return output.ToString();
     }
 
-    private static bool TryParseGameTargets(
+    private static bool TryPars2(
         YamlNode? gamesNode,
         string patchTitle,
         ICollection<string> diagnostics,
-        out IReadOnlyList<Rpcs3PatchGameTarget> targets)
+        out IReadOnlyList<R3PatTgt> targets)
     {
         targets = [];
 
@@ -484,11 +484,11 @@ public sealed class PatchCatalogReader
             return false;
         }
 
-        var parsedTargets = new List<Rpcs3PatchGameTarget>();
+        var parsedTargets = new List<R3PatTgt>();
 
         foreach (var (gameTitleNode, serialsNode) in games.Children)
         {
-            var gameTitle = DecodeDuplicateMappingKey(ScalarValue(gameTitleNode));
+            var gameTitle = Decode4(Scalar(gameTitleNode));
             if (string.IsNullOrWhiteSpace(gameTitle))
             {
                 diagnostics.Add($"Skipping an empty game title in '{patchTitle}'.");
@@ -501,17 +501,17 @@ public sealed class PatchCatalogReader
                 continue;
             }
 
-            var titleIsAll = gameTitle.Equals(Rpcs3PatchVersion.All, StringComparison.Ordinal);
+            var titleIsAll = gameTitle.Equals(PatVer.All, StringComparison.Ordinal);
 
             foreach (var (serialNode, versionsNode) in serials.Children)
             {
-                var serial = DecodeDuplicateMappingKey(ScalarValue(serialNode));
-                if (!TryValidateSerial(gameTitle, titleIsAll, serial, patchTitle, diagnostics))
+                var serial = Decode4(Scalar(serialNode));
+                if (!TryVld(gameTitle, titleIsAll, serial, patchTitle, diagnostics))
                 {
                     continue;
                 }
 
-                var versions = ParseVersions(
+                var versions = ParseVer(
                     versionsNode,
                     gameTitle,
                     serial,
@@ -522,13 +522,13 @@ public sealed class PatchCatalogReader
                     continue;
                 }
 
-                parsedTargets.Add(new Rpcs3PatchGameTarget(gameTitle, serial, versions));
+                parsedTargets.Add(new R3PatTgt(gameTitle, serial, versions));
             }
         }
 
         targets = parsedTargets
             .GroupBy(target => $"{target.Title}\0{target.Serial}", StringComparer.OrdinalIgnoreCase)
-            .Select(group => new Rpcs3PatchGameTarget(
+            .Select(group => new R3PatTgt(
                 group.First().Title,
                 group.First().Serial,
                 group.SelectMany(target => target.Versions)
@@ -548,7 +548,7 @@ public sealed class PatchCatalogReader
         return true;
     }
 
-    private static bool TryValidateSerial(
+    private static bool TryVld(
         string gameTitle,
         bool titleIsAll,
         string serial,
@@ -561,7 +561,7 @@ public sealed class PatchCatalogReader
             return false;
         }
 
-        var serialIsAll = serial.Equals(Rpcs3PatchVersion.All, StringComparison.Ordinal);
+        var serialIsAll = serial.Equals(PatVer.All, StringComparison.Ordinal);
         if (serialIsAll && !titleIsAll)
         {
             diagnostics.Add(
@@ -576,7 +576,7 @@ public sealed class PatchCatalogReader
             return false;
         }
 
-        if (!serialIsAll && !SerialPattern.IsMatch(serial))
+        if (!serialIsAll && !Pattern2.IsMatch(serial))
         {
             diagnostics.Add(
                 $"Skipping serial '{serial}' in '{patchTitle}': RPCS3 requires exactly nine alphanumeric characters.");
@@ -586,7 +586,7 @@ public sealed class PatchCatalogReader
         return true;
     }
 
-    private static IReadOnlyList<string> ParseVersions(
+    private static IReadOnlyList<string> ParseVer(
         YamlNode versionsNode,
         string gameTitle,
         string serial,
@@ -614,8 +614,8 @@ public sealed class PatchCatalogReader
             }
 
             var version = scalar.Value.Trim();
-            if (!version.Equals(Rpcs3PatchVersion.All, StringComparison.Ordinal) &&
-                !AppVersionPattern.IsMatch(version))
+            if (!version.Equals(PatVer.All, StringComparison.Ordinal) &&
+                !Pattern3.IsMatch(version))
             {
                 diagnostics.Add(
                     $"Skipping app version '{version}' in '{patchTitle}': expected NN.NN or All.");
@@ -643,7 +643,7 @@ public sealed class PatchCatalogReader
             .ToArray();
     }
 
-    private static bool ValidatePatchNode(
+    private static bool VldPat(
         YamlNode patchNode,
         string patchTitle,
         ICollection<string> diagnostics)
@@ -657,7 +657,7 @@ public sealed class PatchCatalogReader
         var isValid = true;
         foreach (var instructionNode in patchSequence.Children)
         {
-            if (!ValidatePatchInstruction(instructionNode, patchTitle, diagnostics))
+            if (!VldPat2(instructionNode, patchTitle, diagnostics))
             {
                 isValid = false;
             }
@@ -666,7 +666,7 @@ public sealed class PatchCatalogReader
         return isValid;
     }
 
-    private static bool ValidatePatchInstruction(
+    private static bool VldPat2(
         YamlNode instructionNode,
         string patchTitle,
         ICollection<string> diagnostics)
@@ -681,7 +681,7 @@ public sealed class PatchCatalogReader
         }
 
         var type = typeNode.Value.Trim();
-        if (!SupportedPatchTypes.Contains(type))
+        if (!Types.Contains(type))
         {
             diagnostics.Add($"Skipping '{patchTitle}': patch instruction type '{type}' is not supported by RPCS3.");
             return false;
@@ -706,7 +706,7 @@ public sealed class PatchCatalogReader
             var isValid = true;
             foreach (var loadedInstruction in loadedSequence.Children)
             {
-                if (!ValidatePatchInstruction(loadedInstruction, patchTitle, diagnostics))
+                if (!VldPat2(loadedInstruction, patchTitle, diagnostics))
                 {
                     isValid = false;
                 }
@@ -725,7 +725,7 @@ public sealed class PatchCatalogReader
             return false;
         }
 
-        if (UsesHexOffset(type) &&
+        if (Hex(type) &&
             !addressNode.Value.Trim().StartsWith("0x", StringComparison.Ordinal))
         {
             diagnostics.Add($"Skipping '{patchTitle}': patch instruction '{type}' requires a hexadecimal 0x address.");
@@ -735,14 +735,14 @@ public sealed class PatchCatalogReader
         return true;
     }
 
-    private static bool UsesHexOffset(string patchType)
+    private static bool Hex(string patchType)
     {
         return !patchType.Equals("load", StringComparison.Ordinal) &&
                !patchType.Equals("move_file", StringComparison.Ordinal) &&
                !patchType.Equals("hide_file", StringComparison.Ordinal);
     }
 
-    private static string? CombineDiagnostics(IReadOnlyCollection<string> diagnostics)
+    private static string? Combine(IReadOnlyCollection<string> diagnostics)
     {
         if (diagnostics.Count == 0)
         {
@@ -764,38 +764,38 @@ public sealed class PatchCatalogReader
             : text;
     }
 
-    private static bool IsSupportedSerial(string value)
+    private static bool IsValid(string value)
     {
-        return value.Equals(Rpcs3PatchVersion.All, StringComparison.Ordinal) ||
-               SerialPattern.IsMatch(value);
+        return value.Equals(PatVer.All, StringComparison.Ordinal) ||
+               Pattern2.IsMatch(value);
     }
 
-    private static PatchSourceOrigin InferSource(string path)
+    private static PatSrc InferSrc(string path)
     {
         var fileName = Path.GetFileName(path);
         if (fileName.Equals("patch.yml", StringComparison.OrdinalIgnoreCase))
         {
-            return PatchSourceOrigin.Official;
+            return PatSrc.Official;
         }
 
         if (fileName.Equals("imported_patch.yml", StringComparison.OrdinalIgnoreCase))
         {
-            return PatchSourceOrigin.Imported;
+            return PatSrc.Imported;
         }
 
         if (fileName.EndsWith("_patch.yml", StringComparison.OrdinalIgnoreCase))
         {
-            return PatchSourceOrigin.TitleSpecific;
+            return PatSrc.TitlePat;
         }
 
-        return PatchSourceOrigin.Unknown;
+        return PatSrc.Unknown;
     }
 
-    private static YamlNode? TryGetNode(YamlMappingNode mapping, string key)
+    private static YamlNode? TryGet(YamlMappingNode mapping, string key)
     {
         foreach (var (candidateKey, value) in mapping.Children)
         {
-            if (ScalarValue(candidateKey).Equals(key, StringComparison.OrdinalIgnoreCase))
+            if (Scalar(candidateKey).Equals(key, StringComparison.OrdinalIgnoreCase))
             {
                 return value;
             }
@@ -804,10 +804,10 @@ public sealed class PatchCatalogReader
         return null;
     }
 
-    private static string? TryGetScalar(YamlMappingNode mapping, string key)
+    private static string? TryGet2(YamlMappingNode mapping, string key)
     {
-        var value = TryGetNode(mapping, key);
-        var scalar = value is null ? null : ScalarValue(value);
+        var value = TryGet(mapping, key);
+        var scalar = value is null ? null : Scalar(value);
         return string.IsNullOrWhiteSpace(scalar) ? null : scalar;
     }
 
@@ -835,7 +835,7 @@ public sealed class PatchCatalogReader
         return null;
     }
 
-    private static string ScalarValue(YamlNode node)
+    private static string Scalar(YamlNode node)
     {
         if (node is YamlScalarNode scalar)
         {
@@ -845,16 +845,16 @@ public sealed class PatchCatalogReader
         return node.ToString()?.Trim() ?? string.Empty;
     }
 
-    private static string NormalizeDuplicatePatchKeys(string yaml, bool allowDuplicatePatchTitles = false)
+    private static string NormDup(string yaml, bool allowDuplicatePatchTitles = false)
     {
         using var source = new StringReader(yaml);
         using var normalized = new StringWriter(CultureInfo.InvariantCulture);
         var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        var scope = new List<MappingScope>();
+        var scope = new List<MapScope>();
 
         while (source.ReadLine() is { } line)
         {
-            if (!TryReadMappingKey(line, out var indent, out var key))
+            if (!TryRead(line, out var indent, out var key))
             {
                 normalized.WriteLine(line);
                 continue;
@@ -873,40 +873,40 @@ public sealed class PatchCatalogReader
             counts[countKey] = count;
 
             var normalizedKey = key;
-            if (count > 1 && ShouldNormalizeDuplicateKey(key, indent, scope, allowDuplicatePatchTitles))
+            if (count > 1 && Should(key, indent, scope, allowDuplicatePatchTitles))
             {
                 normalizedKey = key.Equals("Anchors", StringComparison.OrdinalIgnoreCase)
                     ? $"Anchors_{count.ToString(CultureInfo.InvariantCulture)}"
-                    : key + DuplicateKeySuffix + count.ToString(CultureInfo.InvariantCulture);
-                line = RewriteMappingKey(line, key, normalizedKey);
+                    : key + Suffix + count.ToString(CultureInfo.InvariantCulture);
+                line = Rewrite(line, key, normalizedKey);
             }
 
             normalized.WriteLine(line);
-            scope.Add(new MappingScope(indent, normalizedKey));
+            scope.Add(new MapScope(indent, normalizedKey));
         }
 
         return normalized.ToString();
     }
 
-    public static string NormalizeDuplicateKeysForRead(string yaml)
+    public static string NormDup2(string yaml)
     {
         ArgumentNullException.ThrowIfNull(yaml);
-        return NormalizeDuplicatePatchKeys(yaml, allowDuplicatePatchTitles: true);
+        return NormDup(yaml, allowDuplicatePatchTitles: true);
     }
 
-    public static string DecodeNormalizedMappingKey(string key)
+    public static string Decode(string key)
     {
         ArgumentNullException.ThrowIfNull(key);
-        return DecodeDuplicateMappingKey(key);
+        return Decode4(key);
     }
 
-    public static string DecodeNormalizedHashKey(string key)
+    public static string Decode2(string key)
     {
         ArgumentNullException.ThrowIfNull(key);
-        return DecodeDuplicateTopLevelHashKey(key);
+        return Decode3(key);
     }
 
-    private static bool TryReadMappingKey(string line, out int indent, out string key)
+    private static bool TryRead(string line, out int indent, out string key)
     {
         indent = 0;
         key = string.Empty;
@@ -917,7 +917,7 @@ public sealed class PatchCatalogReader
             return false;
         }
 
-        var match = MappingKeyPattern.Match(line);
+        var match = Pattern4.Match(line);
         if (!match.Success)
         {
             return false;
@@ -940,16 +940,16 @@ public sealed class PatchCatalogReader
         return !string.IsNullOrWhiteSpace(key);
     }
 
-    private static bool ShouldNormalizeDuplicateKey(
+    private static bool Should(
         string key,
         int indent,
-        IReadOnlyList<MappingScope> scope,
+        IReadOnlyList<MapScope> scope,
         bool allowDuplicatePatchTitles)
     {
         if (indent == 0)
         {
             return key.Equals("Anchors", StringComparison.OrdinalIgnoreCase) ||
-                   HashKeyPattern.IsMatch(key);
+                   Pattern.IsMatch(key);
         }
 
         // Community patch expansions are commonly assembled by concatenating
@@ -959,7 +959,7 @@ public sealed class PatchCatalogReader
         if (allowDuplicatePatchTitles &&
             indent == 2 &&
             scope.Count > 0 &&
-            HashKeyPattern.IsMatch(DecodeDuplicateTopLevelHashKey(scope[0].Key)))
+            Pattern.IsMatch(Decode3(scope[0].Key)))
         {
             return true;
         }
@@ -969,7 +969,7 @@ public sealed class PatchCatalogReader
             return true;
         }
 
-        if (IsPatchMetadataKey(key) || IsGameSerialKey(key))
+        if (IsPat(key) || IsGame(key))
         {
             return true;
         }
@@ -978,7 +978,7 @@ public sealed class PatchCatalogReader
                scope[^1].Key.Equals("Games", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool IsPatchMetadataKey(string key)
+    private static bool IsPat(string key)
     {
         return key.Equals("Games", StringComparison.OrdinalIgnoreCase) ||
                key.Equals("Author", StringComparison.OrdinalIgnoreCase) ||
@@ -989,13 +989,13 @@ public sealed class PatchCatalogReader
                key.Equals("Patch", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool IsGameSerialKey(string key)
+    private static bool IsGame(string key)
     {
-        return SerialPattern.IsMatch(key) ||
+        return Pattern2.IsMatch(key) ||
                key.Equals("All", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string RewriteMappingKey(string line, string originalKey, string normalizedKey)
+    private static string Rewrite(string line, string originalKey, string normalizedKey)
     {
         var keyIndex = line.IndexOf(originalKey, StringComparison.Ordinal);
         if (keyIndex < 0)
@@ -1006,11 +1006,11 @@ public sealed class PatchCatalogReader
         return line[..keyIndex] + normalizedKey + line[(keyIndex + originalKey.Length)..];
     }
 
-    private static string DecodeDuplicateTopLevelHashKey(string key)
+    private static string Decode3(string key)
     {
-        var originalKey = DecodeDuplicateMappingKey(key);
+        var originalKey = Decode4(key);
         if (!string.Equals(originalKey, key, StringComparison.Ordinal) &&
-            HashKeyPattern.IsMatch(originalKey))
+            Pattern.IsMatch(originalKey))
         {
             return originalKey;
         }
@@ -1018,20 +1018,20 @@ public sealed class PatchCatalogReader
         return key;
     }
 
-    private static string DecodeDuplicateMappingKey(string key)
+    private static string Decode4(string key)
     {
-        var markerIndex = key.LastIndexOf(DuplicateKeySuffix, StringComparison.OrdinalIgnoreCase);
+        var markerIndex = key.LastIndexOf(Suffix, StringComparison.OrdinalIgnoreCase);
         if (markerIndex <= 0)
         {
             return key;
         }
 
-        var suffix = key[(markerIndex + DuplicateKeySuffix.Length)..];
+        var suffix = key[(markerIndex + Suffix.Length)..];
         var originalKey = key[..markerIndex];
         return int.TryParse(suffix, NumberStyles.None, CultureInfo.InvariantCulture, out _)
             ? originalKey
             : key;
     }
 
-    private sealed record MappingScope(int Indent, string Key);
+    private sealed record MapScope(int Indent, string Key);
 }

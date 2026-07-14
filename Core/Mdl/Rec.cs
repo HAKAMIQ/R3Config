@@ -2,34 +2,34 @@ using System.Text.Json.Serialization;
 
 namespace R3Config.Mdl;
 
-public enum RecommendationRisk
+public enum RecRisk
 {
     Required,
-    Recommended,
+    Rec,
     Optional,
-    Conditional,
-    PerformanceCost,
-    PatchDependent,
-    HardwareDependent,
-    ManualTiming,
-    ExpertOnly,
+    Cond,
+    PerfCost,
+    PatDep,
+    Dep,
+    Timing,
+    Only,
     Risky,
     Unknown
 }
 
-public sealed record ConfigChange(
+public sealed record CfgChg(
     string Section,
     string Key,
     string Value,
     string WikiKey,
     string? Notes,
-    RecommendationRisk Risk)
+    RecRisk Risk)
 {
     [JsonIgnore]
-    public string DisplayPath => $"{Section} / {Key}";
+    public string Path => $"{Section} / {Key}";
 }
 
-public sealed record WikiGameRecommendation(
+public sealed record WikiRec(
     string Serial,
-    string WikiTitle,
-    IReadOnlyList<ConfigChange> Changes);
+    [property: JsonPropertyName("WikiTitle")] string WikiName,
+    IReadOnlyList<CfgChg> Changes);

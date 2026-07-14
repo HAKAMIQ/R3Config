@@ -11,27 +11,27 @@ public sealed class PlanItemVm : VmBase
 {
     private bool _isSelected;
 
-    public PlanItemVm(ConfigPlanEntry entry, bool isSelected)
+    public PlanItemVm(CfgEntry entry, bool isSelected)
     {
         Entry = entry;
-        _isSelected = isSelected && entry.IsActionable;
+        _isSelected = isSelected && entry.IsAction;
     }
 
-    public ConfigPlanEntry Entry { get; }
+    public CfgEntry Entry { get; }
 
-    public ConfigChange Change => Entry.Change;
+    public CfgChg Change => Entry.Change;
 
     public string Section => Entry.Section;
 
     public string Key => Entry.Key;
 
-    public string DisplayPath => Entry.DisplayPath;
+    public string DisplayPath => Entry.Path;
 
-    public string? CurrentValue => Entry.CurrentValue;
+    public string? CurrentValue => Entry.CurVal;
 
-    public string CurrentDisplay => Entry.CurrentDisplay;
+    public string CurrentDisplay => Entry.Display;
 
-    public string ProposedValue => Entry.ProposedValue;
+    public string ProposedValue => Entry.Val;
 
     public string ValueTransitionDisplay => $"{CurrentDisplay} -> {ProposedValue}";
 
@@ -63,7 +63,7 @@ public sealed class PlanItemVm : VmBase
 
     public TextAlignment NoteTextAlignment => UiLayoutService.Current.TextAlignment;
 
-    public RecommendationRisk Risk => Entry.Risk;
+    public RecRisk Risk => Entry.Risk;
 
     public string RiskDisplay => UiText.RecRiskLabel(Entry.Risk);
 
@@ -75,17 +75,17 @@ public sealed class PlanItemVm : VmBase
 
     public string HandlingTone => HandlingToneFor(Entry.Risk);
 
-    public bool IsDifferent => Entry.IsDifferent;
+    public bool IsDifferent => Entry.IsDiff;
 
-    public bool IsActionable => Entry.IsActionable;
+    public bool IsActionable => Entry.IsAction;
 
-    public bool IsAutoSelectable => Entry.IsAutoSelectable;
+    public bool IsAutoSelectable => Entry.IsSel;
 
     public string Status => Entry.Status;
 
     public string StatusDisplay => UiText.RecStateLabel(Entry.State);
 
-    public bool IsApplied => Entry.State == RecState.Applied;
+    public bool IsApplied => Entry.State == Mdl.RecState.Applied;
 
     public bool HasNote => !string.IsNullOrWhiteSpace(Entry.Notes);
 
@@ -148,62 +148,62 @@ public sealed class PlanItemVm : VmBase
         OnPropertyChanged(nameof(NoteTextAlignment));
     }
 
-    private static string HandlingKey(RecommendationRisk risk)
+    private static string HandlingKey(RecRisk risk)
     {
         return risk switch
         {
-            RecommendationRisk.Required or RecommendationRisk.Recommended => "Handling.Auto",
-            RecommendationRisk.Optional => "Handling.Optional",
-            RecommendationRisk.Conditional => "Handling.Conditional",
-            RecommendationRisk.HardwareDependent => "Handling.HardwareDependent",
-            RecommendationRisk.ManualTiming => "Handling.ManualTiming",
-            RecommendationRisk.PatchDependent => "Handling.PatchRequired",
+            RecRisk.Required or RecRisk.Rec => "Handling.Auto",
+            RecRisk.Optional => "Handling.Optional",
+            RecRisk.Cond => "Handling.Conditional",
+            RecRisk.Dep => "Handling.HardwareDependent",
+            RecRisk.Timing => "Handling.ManualTiming",
+            RecRisk.PatDep => "Handling.PatchRequired",
             _ => "Handling.NotAutoSelected"
         };
     }
 
-    private static string HandlingToneFor(RecommendationRisk risk)
+    private static string HandlingToneFor(RecRisk risk)
     {
         return risk switch
         {
-            RecommendationRisk.Required or RecommendationRisk.Recommended => "Auto",
-            RecommendationRisk.Optional => "Optional",
-            RecommendationRisk.Conditional or RecommendationRisk.ManualTiming => "Warning",
-            RecommendationRisk.HardwareDependent or RecommendationRisk.PatchDependent => "Info",
+            RecRisk.Required or RecRisk.Rec => "Auto",
+            RecRisk.Optional => "Optional",
+            RecRisk.Cond or RecRisk.Timing => "Warning",
+            RecRisk.Dep or RecRisk.PatDep => "Info",
             _ => "Muted"
         };
     }
 
     private string NoteTagKey()
     {
-        if (Entry.Risk == RecommendationRisk.ManualTiming)
+        if (Entry.Risk == RecRisk.Timing)
         {
             return "NoteTag.FpsTiming";
         }
 
-        if (Entry.Risk == RecommendationRisk.HardwareDependent)
+        if (Entry.Risk == RecRisk.Dep)
         {
             return "NoteTag.HardwareBased";
         }
 
-        if (Entry.Risk == RecommendationRisk.PerformanceCost)
+        if (Entry.Risk == RecRisk.PerfCost)
         {
             return "NoteTag.Performance";
         }
 
-        if (Entry.Risk == RecommendationRisk.Conditional)
+        if (Entry.Risk == RecRisk.Cond)
         {
             return "NoteTag.CompatibilityWarning";
         }
 
-        if (Entry.Risk == RecommendationRisk.PatchDependent)
+        if (Entry.Risk == RecRisk.PatDep)
         {
             return "NoteTag.PatchRequired";
         }
 
         var notes = Entry.Notes ?? string.Empty;
 
-        if (Entry.Risk == RecommendationRisk.Recommended && ContainsAny(notes, "fix", "fixes", "resolves"))
+        if (Entry.Risk == RecRisk.Rec && ContainsAny(notes, "fix", "fixes", "resolves"))
         {
             return "NoteTag.Fix";
         }
@@ -213,7 +213,7 @@ public sealed class PlanItemVm : VmBase
             return "NoteTag.VisualFix";
         }
 
-        if (Entry.Risk == RecommendationRisk.Optional || ContainsAny(notes, "optional"))
+        if (Entry.Risk == RecRisk.Optional || ContainsAny(notes, "optional"))
         {
             return "NoteTag.Optional";
         }

@@ -10,47 +10,47 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public enum PatchTransactionPhase
+public enum PatPhase
 {
-    BeforeStage,
-    BeforeBackup,
-    BeforeCommit
+    Stg,
+    Bkp,
+    Commit
 }
 
-public delegate void PatchPathValidator(
-    PatchTransactionPhase phase,
+public delegate void PathVld(
+    PatPhase phase,
     string backupRootPath,
     IReadOnlyList<string> targetPaths);
 
-public sealed class PatchFileTransactionService(
-    BackupService? backupService = null,
-    PatchCatalogReader? catalogReader = null,
-    PatchConfigReader? configReader = null,
+public sealed class PatTxn(
+    BkpSvc? backupService = null,
+    ReadSvc? catalogReader = null,
+    CfgRead? configReader = null,
     Action<string, string>? commitFile = null,
     Action<string>? deleteFile = null)
 {
-    private static readonly Encoding Utf8NoBom =
+    private static readonly Encoding Utf8Bom =
         new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
-    private readonly BackupService _backupService =
-        backupService ?? new BackupService();
+    private readonly BkpSvc _BkpSvc =
+        backupService ?? new BkpSvc();
 
-    private readonly PatchCatalogReader _catalogReader =
-        catalogReader ?? new PatchCatalogReader();
+    private readonly ReadSvc _Reader =
+        catalogReader ?? new ReadSvc();
 
-    private readonly PatchConfigReader _configReader =
-        configReader ?? new PatchConfigReader();
+    private readonly CfgRead _Reader2 =
+        configReader ?? new CfgRead();
 
-    private readonly Action<string, string> _commitFile =
-        commitFile ?? CommitStagedFile;
+    private readonly Action<string, string> _File =
+        commitFile ?? Commit;
 
-    private readonly Action<string> _deleteFile =
-        deleteFile ?? CommitDelete;
+    private readonly Action<string> _DelFile =
+        deleteFile ?? Commit2;
 
-    public BackupManifest Commit(
+    public BkpMan Commit(
         string backupRootPath,
-        IReadOnlyList<PatchPreparedFile> preparedFiles,
-        PatchPathValidator? validatePaths = null)
+        IReadOnlyList<PrepFile> preparedFiles,
+        PathVld? validatePaths = null)
     {
         if (preparedFiles.Count == 0)
         {
@@ -58,35 +58,35 @@ public sealed class PatchFileTransactionService(
                 "Patch file transaction is empty.");
         }
 
-        var files = NormalizeAndValidateTargets(preparedFiles);
+        var files = NormAnd(preparedFiles);
         var targets = files
-            .Select(file => file.TargetPath)
+            .Select(file => file.TgtPath)
             .ToArray();
-        List<StagedPatchFile> staged = [];
+        List<StgFile> staged = [];
 
         try
         {
             validatePaths?.Invoke(
-                PatchTransactionPhase.BeforeStage,
+                PatPhase.Stg,
                 backupRootPath,
                 targets);
 
             foreach (var file in files)
             {
-                staged.Add(StageAndValidate(file));
+                staged.Add(StgAnd(file));
             }
 
             validatePaths?.Invoke(
-                PatchTransactionPhase.BeforeBackup,
+                PatPhase.Bkp,
                 backupRootPath,
                 targets);
 
-            var backup = _backupService.CreateBackup(
+            var backup = _BkpSvc.BuildBkp(
                 backupRootPath,
                 targets);
 
             validatePaths?.Invoke(
-                PatchTransactionPhase.BeforeCommit,
+                PatPhase.Commit,
                 backupRootPath,
                 targets);
 
@@ -94,16 +94,16 @@ public sealed class PatchFileTransactionService(
             {
                 foreach (var file in staged)
                 {
-                    if (file.Prepared.DeleteTarget)
+                    if (file.Prepared.DelTgt)
                     {
-                        _deleteFile(file.Prepared.TargetPath);
+                        _DelFile(file.Prepared.TgtPath);
                     }
                     else
                     {
-                        _commitFile(
-                            file.StagedPath ?? throw new InvalidOperationException(
+                        _File(
+                            file.StgPath ?? throw new InvalidOperationException(
                                 "A staged patch file is missing."),
-                            file.Prepared.TargetPath);
+                            file.Prepared.TgtPath);
                     }
                 }
 
@@ -113,7 +113,7 @@ public sealed class PatchFileTransactionService(
             {
                 try
                 {
-                    _backupService.Restore(backup);
+                    _BkpSvc.Restore(backup);
                 }
                 catch (Exception restoreException)
                 {
@@ -131,15 +131,15 @@ public sealed class PatchFileTransactionService(
         {
             foreach (var file in staged)
             {
-                TryDelete(file.StagedPath);
+                TryDel(file.StgPath);
             }
         }
     }
 
-    private static List<PatchPreparedFile> NormalizeAndValidateTargets(
-        IReadOnlyList<PatchPreparedFile> preparedFiles)
+    private static List<PrepFile> NormAnd(
+        IReadOnlyList<PrepFile> preparedFiles)
     {
-        var output = new List<PatchPreparedFile>(
+        var output = new List<PrepFile>(
             preparedFiles.Count);
 
         var seenTargets = new HashSet<string>(
@@ -147,36 +147,36 @@ public sealed class PatchFileTransactionService(
 
         foreach (var file in preparedFiles)
         {
-            if (string.IsNullOrWhiteSpace(file.TargetPath))
+            if (string.IsNullOrWhiteSpace(file.TgtPath))
             {
                 throw new ArgumentException(
                     "A transaction target path is empty.");
             }
 
-            if (file.DeleteTarget &&
+            if (file.DelTgt &&
                 !string.IsNullOrEmpty(file.Content))
             {
                 throw new InvalidDataException(
-                    $"A prepared delete operation contains file content: {file.TargetPath}");
+                    $"A prepared delete operation contains file content: {file.TgtPath}");
             }
 
-            if (!file.DeleteTarget &&
+            if (!file.DelTgt &&
                 string.IsNullOrWhiteSpace(file.Content))
             {
                 throw new InvalidDataException(
-                    $"Prepared patch file is empty: {file.TargetPath}");
+                    $"Prepared patch file is empty: {file.TgtPath}");
             }
 
-            if (!file.DeleteTarget &&
-                file.Kind == PatchPreparedFileKind.JsonMetadata)
+            if (!file.DelTgt &&
+                file.Kind == PrepKind.JsonMeta)
             {
-                Rpcs3BoundedInput.EnsureTextLength(
+                R3Bound.Check(
                     file.Content,
-                    Rpcs3InputLimits.HCanaryMetadataBytes,
+                    R3Limits.HBytes,
                     "R3Config H-Canary metadata");
             }
 
-            var targetPath = Path.GetFullPath(file.TargetPath);
+            var targetPath = Path.GetFullPath(file.TgtPath);
 
             if (!seenTargets.Add(targetPath))
             {
@@ -186,39 +186,39 @@ public sealed class PatchFileTransactionService(
 
             output.Add(file with
             {
-                TargetPath = targetPath
+                TgtPath = targetPath
             });
         }
 
         return output;
     }
 
-    private StagedPatchFile StageAndValidate(
-        PatchPreparedFile prepared)
+    private StgFile StgAnd(
+        PrepFile prepared)
     {
-        if (prepared.DeleteTarget)
+        if (prepared.DelTgt)
         {
-            return new StagedPatchFile(
+            return new StgFile(
                 prepared,
                 stagedPath: null);
         }
 
-        var directory = Path.GetDirectoryName(prepared.TargetPath)
+        var directory = Path.GetDirectoryName(prepared.TgtPath)
             ?? throw new InvalidOperationException(
-                $"Transaction target has no parent directory: {prepared.TargetPath}");
+                $"Transaction target has no parent directory: {prepared.TgtPath}");
 
         Directory.CreateDirectory(directory);
 
         var stagedPath = Path.Combine(
             directory,
-            $".{Path.GetFileName(prepared.TargetPath)}.{Guid.NewGuid():N}.r3stage");
+            $".{Path.GetFileName(prepared.TgtPath)}.{Guid.NewGuid():N}.r3stage");
 
         try
         {
             File.WriteAllText(
                 stagedPath,
                 prepared.Content,
-                Utf8NoBom);
+                Utf8Bom);
 
             var readBack = File.ReadAllText(
                 stagedPath,
@@ -230,65 +230,65 @@ public sealed class PatchFileTransactionService(
                     StringComparison.Ordinal))
             {
                 throw new InvalidDataException(
-                    $"Staged file read-back mismatch: {prepared.TargetPath}");
+                    $"Staged file read-back mismatch: {prepared.TgtPath}");
             }
 
-            ValidateStagedFile(stagedPath, prepared);
+            VldStg(stagedPath, prepared);
 
-            return new StagedPatchFile(
+            return new StgFile(
                 prepared,
                 stagedPath);
         }
         catch
         {
-            TryDelete(stagedPath);
+            TryDel(stagedPath);
             throw;
         }
     }
 
-    private void ValidateStagedFile(
+    private void VldStg(
         string stagedPath,
-        PatchPreparedFile prepared)
+        PrepFile prepared)
     {
         switch (prepared.Kind)
         {
-            case PatchPreparedFileKind.PatchCatalog:
+            case PrepKind.PatCat:
                 {
-                    var read = _catalogReader.Read(
+                    var read = _Reader.Read(
                         stagedPath,
-                        prepared.CatalogSource);
+                        prepared.CatSrc);
 
-                    if (!read.Succeeded)
+                    if (!read.IsOk)
                     {
                         throw new InvalidDataException(
                             read.Error ??
-                            $"Staged patch catalog is invalid: {prepared.TargetPath}");
+                            $"Staged patch catalog is invalid: {prepared.TgtPath}");
                     }
 
-                    if (prepared.ExpectedEntryCount is int expected &&
+                    if (prepared.EntNum is int expected &&
                         read.Catalog.Entries.Count != expected)
                     {
                         throw new InvalidDataException(
-                            $"Staged patch catalog entry count mismatch for {prepared.TargetPath}. " +
+                            $"Staged patch catalog entry count mismatch for {prepared.TgtPath}. " +
                             $"Expected {expected}, actual {read.Catalog.Entries.Count}.");
                     }
 
                     break;
                 }
 
-            case PatchPreparedFileKind.PatchConfig:
-                _configReader.Load(stagedPath);
+            case PrepKind.PatCfg:
+                _Reader2.Load(stagedPath);
                 break;
 
-            case PatchPreparedFileKind.JsonMetadata:
+            case PrepKind.JsonMeta:
                 using (var document = JsonDocument.Parse(
-                           Rpcs3BoundedInput.ReadUtf8TextFile(
+                           R3Bound.ReadUtf8(
                                stagedPath,
-                               Rpcs3InputLimits.HCanaryMetadataBytes,
+                               R3Limits.HBytes,
                                "R3Config H-Canary metadata"),
                            new JsonDocumentOptions
                            {
-                               MaxDepth = Rpcs3InputLimits.YamlDepth
+                               MaxDepth = R3Limits.Depth
                            }))
                 {
                     if (document.RootElement.ValueKind !=
@@ -307,7 +307,7 @@ public sealed class PatchFileTransactionService(
         }
     }
 
-    private static void CommitStagedFile(
+    private static void Commit(
         string stagedPath,
         string targetPath)
     {
@@ -325,7 +325,7 @@ public sealed class PatchFileTransactionService(
         }
     }
 
-    private static void CommitDelete(string targetPath)
+    private static void Commit2(string targetPath)
     {
         if (File.Exists(targetPath))
         {
@@ -333,7 +333,7 @@ public sealed class PatchFileTransactionService(
         }
     }
 
-    private static void TryDelete(string? path)
+    private static void TryDel(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -352,13 +352,13 @@ public sealed class PatchFileTransactionService(
         }
     }
 
-    private sealed class StagedPatchFile(
-        PatchPreparedFile prepared,
+    private sealed class StgFile(
+        PrepFile prepared,
         string? stagedPath)
     {
-        public PatchPreparedFile Prepared { get; } = prepared;
+        public PrepFile Prepared { get; } = prepared;
 
-        public string? StagedPath { get; } = stagedPath;
+        public string? StgPath { get; } = stagedPath;
     }
 }
 

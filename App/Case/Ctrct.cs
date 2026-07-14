@@ -4,11 +4,11 @@ using R3Config.Svc;
 namespace R3Config;
 
 public sealed record CatLoad(
-    RecommendationCatalogService? Cat,
+    RecSvc? Cat,
     string? Error);
 
 public sealed record PatCatRs(
-    Rpcs3PatchCatalog? Cat,
+    PatCat? Cat,
     string? Error,
     IReadOnlyList<PatSrcSt>? Sources = null)
 {
@@ -17,7 +17,7 @@ public sealed record PatCatRs(
 
 public sealed record PatSrcSt(
     string Name,
-    PatchSourceOrigin Source,
+    PatSrc Source,
     string Path,
     bool Exists,
     bool Loaded,
@@ -25,15 +25,15 @@ public sealed record PatSrcSt(
     string? Diagnostic = null);
 
 public sealed record GameRow(
-    Rpcs3GameDescriptor Game,
-    WikiGameRecommendation? Rec,
-    RecStateSummary RecState,
+    R3Game Game,
+    WikiRec? Rec,
+    RecSum RecState,
     bool IsDetectedInRpcs3);
 
 public sealed record AnlzRes(
-    Rpcs3InstallDescriptor Install,
+    R3Inst Install,
     HwInfo Hw,
     IReadOnlyList<GameRow> Games,
     PatCatRs PatchCat,
-    IReadOnlyList<BackupSnapshot> Backups,
-    IReadOnlyList<GameScanDiagnostic> GameScanDiagnostics);
+    IReadOnlyList<BkpSnap> Backups,
+    IReadOnlyList<ScanDiag> GameScanDiagnostics);
