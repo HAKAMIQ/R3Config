@@ -9,8 +9,7 @@ public static class AppComposition
     {
         return new AppRuntimeServices(
             new AppFlow(CreateUseCases()),
-            new AppSettingsService(),
-            new CanaryPatchImportService());
+            new AppSettingsService());
     }
 
     public static AppUseCases CreateUseCases()
@@ -82,5 +81,4 @@ public static class AppComposition
 
 public sealed record AppRuntimeServices(
     AppFlow Flow,
-    AppSettingsService Settings,
-    CanaryPatchImportService CanaryImport);
+    AppSettingsService Settings);

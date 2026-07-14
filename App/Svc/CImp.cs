@@ -528,7 +528,10 @@ public sealed class CanaryPatchImportService
                 return false;
             }
 
-            var text = File.ReadAllText(targetPath, Encoding.UTF8);
+            var text = Rpcs3BoundedInput.ReadUtf8TextFile(
+                targetPath,
+                Rpcs3InputLimits.PatchCatalogYamlBytes,
+                "imported_patch.yml");
             return ContainsManagedBlock(text) || LooksR3ConfigGenerated(text);
         }
         catch

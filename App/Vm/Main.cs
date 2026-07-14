@@ -20,7 +20,6 @@ public sealed partial class MainVm : VmBase
 
     private readonly AppFlow _flow;
     private readonly AppSettingsService _settingsService;
-    private readonly CanaryPatchImportService _canaryPatchImportService;
     private readonly Func<bool> _isRpcs3Running;
     private readonly Func<string, string, bool> _confirm;
     private Rpcs3InstallDescriptor? _install;
@@ -65,7 +64,6 @@ public sealed partial class MainVm : VmBase
         ArgumentNullException.ThrowIfNull(services);
         _flow = services.Flow;
         _settingsService = services.Settings;
-        _canaryPatchImportService = services.CanaryImport;
         _isRpcs3Running = isRpcs3Running ??
             Rpcs3InstallService.IsRpcs3Running;
         _confirm = confirm ?? UiDlg.Confirm;

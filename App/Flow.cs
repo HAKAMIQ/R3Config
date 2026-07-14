@@ -1,74 +1,41 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using R3Config.Lang;
+using R3Config.Composition;
 using R3Config.Mdl;
 using R3Config.Svc;
+using R3Config.UseCases;
 
 namespace R3Config;
 
+/// <summary>
+/// Compatibility facade for the WPF layer. Business workflows live in
+/// Application use cases and are composed in <see cref="AppComposition"/>.
+/// </summary>
 public sealed class AppFlow
 {
-    private readonly GameScanner _scan = new();
-    private readonly PlanService _plan = new();
-    private readonly BackupService _bkp = new();
-    private readonly ConfigApplyService _cfgApply = new();
-    private readonly PatchCatalogReader _patchCat = new();
-    private readonly PatchCatalogMergeService _patchCatMerge = new();
-    private readonly PatchMatchService _patchMatch = new();
-    private readonly PatchConfigReader _patchCfg = new();
-    private readonly PatchApplyPlanner _patchPlan = new();
-    private readonly PatchApplyService _patchApply = new();
-    private readonly CatInfoService _catInfo = new();
-    private readonly HwProbe _hw = new();
-    private readonly PatchHashProbeService _patchHash = new();
-    private readonly BundledCanaryPatchService _bundledCanary = new();
-    private readonly HCanaryPatchAuthoringService _hCanaryAuthoring = new();
+    private readonly AppUseCases _useCases;
+
+    public AppFlow()
+        : this(AppComposition.CreateUseCases())
+    {
+    }
+
+    public AppFlow(AppUseCases useCases)
+    {
+        _useCases = useCases ??
+            throw new ArgumentNullException(nameof(useCases));
+    }
 
     public CatLoadResult LoadBuiltInCat(string baseDir)
     {
-        var path = Path.Combine(baseDir, "Data", "cat.json");
-
-        try
-        {
-            return new CatLoadResult(_catInfo.LoadCatalog(path), null);
-        }
-        catch (CatalogMissingException ex)
-        {
-            return new CatLoadResult(null, ex.Message);
-        }
-        catch (CatalogInvalidException ex)
-        {
-            return new CatLoadResult(null, ex.Message);
-        }
-        catch
-        {
-            return new CatLoadResult(null, CatalogInvalidException.UserMessage);
-        }
+        return _useCases.RecommendationCatalog.LoadBuiltIn(baseDir);
     }
 
-    public async Task<AnalyzeResult> AnalyzeAsync(string rpcs3ExePath, RecommendationCatalogService cat)
+    public Task<AnalyzeResult> AnalyzeAsync(
+        string rpcs3ExePath,
+        RecommendationCatalogService cat)
     {
-        var install = Rpcs3InstallService.FromExePath(rpcs3ExePath);
-        var hw = await Task.Run(() => _hw.Probe());
-        var scanned = await Task.Run(() => _scan.Scan(install));
-        var games = await Task.Run(() => _patchHash.Enrich(install, scanned));
-
-        var rows = games
-            .Select(game =>
-            {
-                var rec = cat.Find(game.Serial);
-                var plan = _plan.CreateConfigPlan(install, game, rec, hw);
-                return new GamePlanRow(game, rec, plan);
-            })
-            .ToArray();
-
-        var patchCat = LoadPatchCat(install);
-        var backups = ListBackups(install);
-
-        return new AnalyzeResult(install, hw, rows, patchCat, backups);
+        return _useCases.Analysis.ExecuteAsync(
+            rpcs3ExePath,
+            cat);
     }
 
     public ConfigPlan BuildCfgPlan(
@@ -77,7 +44,11 @@ public sealed class AppFlow
         WikiGameRecommendation? rec,
         HwInfo? hw)
     {
-        return _plan.CreateConfigPlan(install, game, rec, hw);
+        return _useCases.Config.BuildPlan(
+            install,
+            game,
+            rec,
+            hw);
     }
 
     public ConfigApplyResult ApplyCfg(
@@ -85,7 +56,10 @@ public sealed class AppFlow
         IReadOnlyList<ConfigChange> changes,
         Rpcs3InstallDescriptor install)
     {
-        return _cfgApply.Apply(plan, changes, BkpRoot(install));
+        return _useCases.Config.Apply(
+            plan,
+            changes,
+            install);
     }
 
     public ConfigApplyResult RemoveCfg(
@@ -93,154 +67,71 @@ public sealed class AppFlow
         IReadOnlyList<ConfigChange> changes,
         Rpcs3InstallDescriptor install)
     {
-        return _cfgApply.Remove(plan, changes, BkpRoot(install));
+        return _useCases.Config.Remove(
+            plan,
+            changes,
+            install);
     }
 
-    public PatchCatResult LoadPatchCat(Rpcs3InstallDescriptor install)
+    public PatchCatResult LoadPatchCat(
+        Rpcs3InstallDescriptor install)
     {
-        var officialPath = Path.Combine(install.PatchesPath, "patch.yml");
-        var importedPath = Path.Combine(install.PatchesPath, "imported_patch.yml");
-        var bundledPath = _bundledCanary.GetBundledPath(AppContext.BaseDirectory);
-
-        var hasOfficial = File.Exists(officialPath);
-        var hasImported = File.Exists(importedPath);
-        var hasBundledCanary = File.Exists(bundledPath);
-        var titleSpecificPaths = Directory.Exists(install.PatchesPath)
-            ? Directory.EnumerateFiles(install.PatchesPath, "*_patch.yml", SearchOption.TopDirectoryOnly)
-                .Where(path => !Path.GetFileName(path).Equals("imported_patch.yml", StringComparison.OrdinalIgnoreCase))
-                .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
-                .ToArray()
-            : [];
-
-        var catalogs = new List<Rpcs3PatchCatalog>();
-        var errors = new List<string>();
-        Rpcs3PatchCatalog? importedCatalog = null;
-        Rpcs3PatchCatalog? bundledCanaryCatalog = null;
-
-        if (hasOfficial)
-        {
-            var read = _patchCat.Read(officialPath, PatchSourceOrigin.Official);
-            if (read.Succeeded)
-            {
-                catalogs.Add(read.Catalog);
-                AddPatchReadWarning(errors, read.Error, isImported: false);
-            }
-            else
-            {
-                errors.Add(FormatPatchReadError(read.Error, isImported: false));
-            }
-        }
-
-        if (hasImported)
-        {
-            var read = _patchCat.Read(importedPath, PatchSourceOrigin.Imported);
-            if (read.Succeeded)
-            {
-                importedCatalog = _hCanaryAuthoring.ApplyLocalMetadata(read.Catalog, importedPath);
-                catalogs.Add(importedCatalog);
-                AddPatchReadWarning(errors, read.Error, isImported: true);
-            }
-            else
-            {
-                errors.Add(FormatPatchReadError(read.Error, isImported: true));
-            }
-        }
-
-        foreach (var titleSpecificPath in titleSpecificPaths)
-        {
-            var read = _patchCat.Read(titleSpecificPath, PatchSourceOrigin.TitleSpecific);
-            if (read.Succeeded)
-            {
-                catalogs.Add(read.Catalog);
-                AddPatchReadWarning(errors, read.Error, isImported: true);
-            }
-            else
-            {
-                errors.Add(FormatPatchReadError(read.Error, isImported: true));
-            }
-        }
-
-        if (hasBundledCanary)
-        {
-            try
-            {
-                var bundledText = File.ReadAllText(bundledPath);
-                var normalize = new CanaryPatchImportService().Normalize(bundledText);
-
-                if (normalize.Succeeded)
-                {
-                    var read = _patchCat.ReadText(
-                        normalize.NormalizedText,
-                        PatchSourceOrigin.BundledCanary,
-                        bundledPath);
-                    if (read.Succeeded)
-                    {
-                        bundledCanaryCatalog = read.Catalog;
-                        catalogs.Add(bundledCanaryCatalog);
-                        AddPatchReadWarning(errors, read.Error, isImported: true);
-                    }
-                    else
-                    {
-                        errors.Add(FormatPatchReadError(read.Error, isImported: true));
-                    }
-                }
-                else
-                {
-                    errors.Add(FormatPatchReadError(normalize.Error, isImported: true));
-                }
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                errors.Add(FormatPatchReadError(ex.Message, isImported: true));
-            }
-        }
-
-        if (importedCatalog is not null && bundledCanaryCatalog is not null)
-        {
-            var index = catalogs.IndexOf(importedCatalog);
-            if (index >= 0)
-            {
-                importedCatalog = ClassifyImportedCanaryEntries(importedCatalog, bundledCanaryCatalog);
-                catalogs[index] = importedCatalog;
-            }
-        }
-
-        if (catalogs.Count > 0)
-        {
-            var merged = _patchCatMerge.Merge(catalogs.ToArray());
-            return new PatchCatResult(
-                merged,
-                CombinePatchReadErrors(errors));
-        }
-
-        return new PatchCatResult(
-            null,
-            CombinePatchReadErrors(errors) ??
-            (!hasOfficial && !hasImported && titleSpecificPaths.Length == 0 && !hasBundledCanary
-                ? UiText.T("Patch.FileMissing")
-                : UiText.T("Patch.FileInvalid")));
+        return _useCases.PatchCatalog.Load(install);
     }
 
     public CanaryPatchWriteResult PrepareBundledCanaryPatch(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
     {
-        return _bundledCanary.PrepareImportedPatch(install.PatchesPath, AppContext.BaseDirectory, selectedMatches);
+        return _useCases.PatchMutation.PrepareCanary(
+            install,
+            selectedMatches);
     }
 
-    public CanaryPatchRemoveResult RemovePreparedCanaryPatch(Rpcs3InstallDescriptor install)
+    public CanaryPatchRemoveResult RemovePreparedCanaryPatch(
+        Rpcs3InstallDescriptor install)
     {
-        return _bundledCanary.RemovePreparedCanary(install.PatchesPath);
+        return _useCases.PatchMutation.RemovePreparedCanary(install);
+    }
+
+    public PatchLibraryWriteResult PrepareBundledCheatPatch(
+        Rpcs3InstallDescriptor install,
+        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
+    {
+        return _useCases.PatchMutation.PrepareCheats(
+            install,
+            selectedMatches);
+    }
+
+    public CanaryPatchNormalizeResult NormalizeCanaryPatch(
+        string? sourceText)
+    {
+        return _useCases.CanaryImport.Normalize(sourceText);
+    }
+
+    public bool HasManagedImportedPatch(
+        Rpcs3InstallDescriptor install)
+    {
+        return _useCases.CanaryImport.HasManagedImportedPatch(
+            install);
+    }
+
+    public CanaryPatchWriteResult ImportCanaryPatch(
+        Rpcs3InstallDescriptor install,
+        string sourceText)
+    {
+        return _useCases.CanaryImport.Import(
+            install,
+            sourceText);
     }
 
     public IReadOnlyList<Rpcs3PatchMatchResult> BuildPatchPreview(
         Rpcs3PatchCatalog patchCat,
         Rpcs3GameDescriptor game)
     {
-        return patchCat.Entries
-            .Select(entry => _patchMatch.Match(entry, [game]))
-            .Where(match => match.Status is not PatchMatchStatus.SerialMismatch and not PatchMatchStatus.NoMetadata)
-            .ToArray();
+        return _useCases.PatchCatalog.BuildPreview(
+            patchCat,
+            game);
     }
 
     public PatchApplyPlan BuildPatchPlan(
@@ -248,84 +139,107 @@ public sealed class AppFlow
         IReadOnlyList<Rpcs3PatchMatchResult> matches,
         bool expertMode)
     {
-        return _patchPlan.CreatePlan(install, matches, expertMode);
+        return _useCases.PatchMutation.BuildEnablePlan(
+            install,
+            matches,
+            expertMode);
     }
 
     public PatchApplyPlan BuildPatchDisablePlan(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<Rpcs3PatchMatchResult> matches)
     {
-        return _patchPlan.CreateDisablePlan(install, matches);
+        return _useCases.PatchMutation.BuildDisablePlan(
+            install,
+            matches);
     }
 
-    public PatchApplyChange? CreatePatchChange(Rpcs3PatchMatchResult match)
+    public PatchApplyChange? CreatePatchChange(
+        Rpcs3PatchMatchResult match)
     {
-        return _patchPlan.CreateChangeForMatch(match);
+        return _useCases.PatchMutation.CreateChange(match);
     }
 
-    public PatchApplyResult ApplyPatch(PatchApplyPlan plan, Rpcs3InstallDescriptor install)
+    public PatchApplyResult ApplyPatchTransaction(
+        PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install,
+        IReadOnlyList<Rpcs3PatchMatchResult> selectedMatches)
     {
-        return _patchApply.Apply(plan, BkpRoot(install));
+        return _useCases.PatchMutation.ApplyTransaction(
+            plan,
+            install,
+            selectedMatches);
     }
 
-    public PatchApplyResult DisablePatch(PatchApplyPlan plan, Rpcs3InstallDescriptor install)
+    public PatchApplyResult ApplyPatch(
+        PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install)
     {
-        return _patchApply.Disable(plan, BkpRoot(install));
+        return _useCases.PatchMutation.Apply(
+            plan,
+            install);
     }
 
-    public bool CanReadPatchCfg(Rpcs3InstallDescriptor install)
+    public PatchApplyResult DisablePatch(PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install)
     {
-        try
-        {
-            _patchCfg.Load(install.PatchConfigPath);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        return _useCases.PatchMutation.Disable(
+            plan,
+            install);
+    }
+
+    public bool CanReadPatchCfg(
+        Rpcs3InstallDescriptor install)
+    {
+        return _useCases.PatchCatalog.CanReadPatchConfig(install);
+    }
+
+    public PatchConfigSnapshot ReadPatchCfg(
+        Rpcs3InstallDescriptor install)
+    {
+        return _useCases.PatchCatalog.ReadPatchConfig(install);
     }
 
     public RecommendationCatalogService RebuildCat(string xmlPath)
     {
-        var wiki = WikiRecommendationService.Load(xmlPath);
-        var sourceHash = _catInfo.ComputeFileHash(xmlPath);
-
-        return RecommendationCatalogService.FromRecommendations(
-            "Developer import",
-            DateTime.Today.ToString("yyyy-MM-dd"),
-            wiki.Recommendations,
-            DateTimeOffset.UtcNow,
-            sourceHash);
+        return _useCases.RecommendationCatalog.Rebuild(xmlPath);
     }
 
     public string CatInfoText(CatalogInfo info)
     {
-        return _catInfo.FormatInfo(info);
+        return _useCases.RecommendationCatalog.FormatInfo(info);
     }
 
-    public void ExportCat(RecommendationCatalogService cat, string path)
+    public void ExportCat(
+        RecommendationCatalogService cat,
+        string path)
     {
-        cat.Save(path);
+        RecommendationCatalogUseCase.Export(cat, path);
     }
 
-    public IReadOnlyList<BackupSnapshot> ListBackups(Rpcs3InstallDescriptor install)
+    public IReadOnlyList<BackupSnapshot> ListBackups(
+        Rpcs3InstallDescriptor install)
     {
-        return _bkp.ListBackups(BkpRoot(install));
+        return _useCases.Backup.List(install);
     }
 
-    public void Restore(BackupSnapshot bkp)
+    public void Restore(
+        Rpcs3InstallDescriptor install,
+        BackupSnapshot backup)
     {
-        _bkp.Restore(bkp);
+        _useCases.Backup.Restore(install, backup);
     }
 
-    public static string BkpRoot(Rpcs3InstallDescriptor install)
+    public static string BkpRoot(
+        Rpcs3InstallDescriptor install)
     {
-        return Path.Combine(install.ConfigPath, "R3ConfigBackups");
+        return Rpcs3AppPaths.BackupRoot(install);
     }
-    public IReadOnlyList<HCanaryStoredPatch> LoadHCanaryPatches(Rpcs3InstallDescriptor install)
+
+    public IReadOnlyList<HCanaryStoredPatch> LoadHCanaryPatches(
+        Rpcs3InstallDescriptor install)
     {
-        return _hCanaryAuthoring.Load(Path.Combine(install.PatchesPath, "imported_patch.yml"));
+        return _useCases.HCanary.Load(install);
     }
 
     public HCanarySaveResult SaveHCanaryPatch(
@@ -334,9 +248,8 @@ public sealed class AppFlow
         string? originalIdentity = null,
         bool saveAsNew = false)
     {
-        return _hCanaryAuthoring.Save(
-            Path.Combine(install.PatchesPath, "imported_patch.yml"),
-            BkpRoot(install),
+        return _useCases.HCanary.Save(
+            install,
             draft,
             originalIdentity,
             saveAsNew);
@@ -346,113 +259,8 @@ public sealed class AppFlow
         Rpcs3InstallDescriptor install,
         string identity)
     {
-        return _hCanaryAuthoring.Delete(
-            Path.Combine(install.PatchesPath, "imported_patch.yml"),
-            BkpRoot(install),
+        return _useCases.HCanary.Delete(
+            install,
             identity);
     }
-
-    private static Rpcs3PatchCatalog ClassifyImportedCanaryEntries(
-        Rpcs3PatchCatalog imported,
-        Rpcs3PatchCatalog bundledCanary)
-    {
-        var bundledKeys = bundledCanary.Entries
-            .Select(PatchIdentity)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var entries = imported.Entries
-            .Select(entry => bundledKeys.Contains(PatchIdentity(entry))
-                ? entry with { Risk = PatchRisk.Canary, PatchType = "Canary" }
-                : entry)
-            .ToArray();
-
-        return imported with { Entries = entries };
-    }
-
-    private static string PatchIdentity(Rpcs3PatchEntry entry)
-    {
-        return $"{entry.HashKind}|{entry.Hash}|{entry.Title}";
-    }
-
-    private static void AddPatchReadWarning(
-        ICollection<string> errors,
-        string? warning,
-        bool isImported)
-    {
-        if (!string.IsNullOrWhiteSpace(warning))
-        {
-            errors.Add(FormatPatchReadError(warning, isImported));
-        }
-    }
-
-    private static string FormatPatchReadError(string? rawError, bool isImported)
-    {
-        if (isImported && IsDuplicateKeyError(rawError))
-        {
-            return UiText.T("Patch.ImportedDuplicateKey");
-        }
-
-        if (!isImported && IsDuplicateKeyError(rawError))
-        {
-            return UiText.T("Patch.Localized.DuplicateKey");
-        }
-
-        var fallback = isImported
-            ? UiText.T("Patch.ImportedFileInvalid")
-            : UiText.T("Patch.FileInvalid");
-
-        var detail = string.IsNullOrWhiteSpace(rawError)
-            ? fallback
-            : rawError.Trim();
-
-        return UiText.F(
-            isImported ? "Patch.ImportedReadWarning" : "Patch.OfficialReadWarning",
-            detail);
-    }
-
-    private static string? CombinePatchReadErrors(IReadOnlyList<string> errors)
-    {
-        var cleanErrors = errors
-            .Where(error => !string.IsNullOrWhiteSpace(error))
-            .ToArray();
-
-        return cleanErrors.Length == 0
-            ? null
-            : string.Join(Environment.NewLine, cleanErrors);
-    }
-
-    private static bool IsDuplicateKeyError(string? error)
-    {
-        return ContainsAny(
-            error ?? string.Empty,
-            "duplicate key",
-            "duplicated key",
-            "already contains an entry");
-    }
-
-    private static bool ContainsAny(string value, params string[] needles)
-    {
-        return needles.Any(needle =>
-            value.Contains(needle, StringComparison.OrdinalIgnoreCase));
-    }
 }
-
-public sealed record CatLoadResult(
-    RecommendationCatalogService? Cat,
-    string? Error);
-
-public sealed record PatchCatResult(
-    Rpcs3PatchCatalog? Cat,
-    string? Error);
-
-public sealed record GamePlanRow(
-    Rpcs3GameDescriptor Game,
-    WikiGameRecommendation? Rec,
-    ConfigPlan Plan);
-
-public sealed record AnalyzeResult(
-    Rpcs3InstallDescriptor Install,
-    HwInfo Hw,
-    IReadOnlyList<GamePlanRow> Games,
-    PatchCatResult PatchCat,
-    IReadOnlyList<BackupSnapshot> Backups);

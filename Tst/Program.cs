@@ -23,6 +23,7 @@ try
 {
     RunLangKeyTests();
     RunArchitectureBoundaryTests();
+    RunCanaryCompositionTests(tempRoot);
     RunAppPatchPresentationSourceTests();
     RunPatchCatalogReaderDuplicateTopLevelHashTests();
     RunPatchCompatibilityArchitectureTests(tempRoot);
@@ -1264,6 +1265,21 @@ static void RunArchitectureBoundaryTests()
            !viewModelSource.Contains("File.Delete", StringComparison.Ordinal),
         "ViewModels must route file mutations through use cases instead of writing directly.");
 
+    var mainViewModelSource = string.Join(
+        Environment.NewLine,
+        Directory.EnumerateFiles(
+                viewModelRoot,
+                "Main*.cs",
+                SearchOption.TopDirectoryOnly)
+            .Select(File.ReadAllText));
+    Assert(!mainViewModelSource.Contains(
+               "CanaryPatchImportService",
+               StringComparison.Ordinal) &&
+           !mainViewModelSource.Contains(
+               "_canaryPatchImportService",
+               StringComparison.Ordinal),
+        "MainVm must query Canary state through AppFlow instead of owning a domain writer service.");
+
     var mainParts = Directory.EnumerateFiles(
             viewModelRoot,
             "Main*.cs",
@@ -1274,6 +1290,74 @@ static void RunArchitectureBoundaryTests()
         "Expected MainVm to remain split into bounded responsibility-based partial files.");
 
     Console.WriteLine("Architecture dependency boundaries PASS.");
+}
+
+static void RunCanaryCompositionTests(string tempRoot)
+{
+    var repoRoot = FindRepoRoot();
+    var compositionPath = Path.Combine(
+        repoRoot,
+        "App",
+        "Composition",
+        "AppComposition.cs");
+    var compositionSource = File.ReadAllText(compositionPath);
+    Assert(CountOccurrences(
+               compositionSource,
+               "new CanaryPatchImportService(") == 1,
+        "Expected composition to construct exactly one CanaryPatchImportService instance.");
+    Assert(!compositionSource.Contains(
+               "CanaryPatchImportService CanaryImport",
+               StringComparison.Ordinal),
+        "Expected AppRuntimeServices not to expose a domain writer service to ViewModels.");
+
+    var readOnlyRoot = Path.Combine(
+        tempRoot,
+        "canary-composition-read-only");
+    Directory.CreateDirectory(readOnlyRoot);
+    var patchesPath = Path.Combine(readOnlyRoot, "patches");
+    var configPath = Path.Combine(readOnlyRoot, "config");
+    var install = new Rpcs3InstallDescriptor(
+        readOnlyRoot,
+        Path.Combine(readOnlyRoot, "rpcs3.exe"),
+        configPath,
+        Path.Combine(configPath, "custom_configs"),
+        patchesPath,
+        Path.Combine(configPath, "patch_config.yml"),
+        readOnlyRoot);
+    var runtime = AppComposition.CreateRuntimeServices();
+
+    Assert(!runtime.Flow.HasManagedImportedPatch(install) &&
+           !Directory.Exists(patchesPath),
+        "Expected the Canary state query to remain read-only when patches does not exist.");
+
+    Directory.CreateDirectory(patchesPath);
+    File.WriteAllText(
+        Path.Combine(
+            patchesPath,
+            CanaryPatchImportService.ImportedPatchFileName),
+        "Version: 1.2\r\n" +
+        "# R3Config managed Canary patches - begin\r\n" +
+        "# R3Config managed Canary patches - end\r\n");
+    Assert(runtime.Flow.HasManagedImportedPatch(install),
+        "Expected AppFlow to delegate the managed Canary state query to its use case.");
+
+    var main = new MainVm(
+        runtime,
+        () => false,
+        (_, _) => true);
+    SetPrivateField(main, "_install", install);
+    var refreshCanaryState = typeof(MainVm).GetMethod(
+        "RefreshCanaryState",
+        System.Reflection.BindingFlags.Instance |
+        System.Reflection.BindingFlags.NonPublic)
+        ?? throw new InvalidOperationException(
+            "Expected MainVm Canary state refresh method was not found.");
+    refreshCanaryState.Invoke(main, null);
+    Assert(main.HasPreparedCanaryPatches,
+        "Expected MainVm to refresh managed Canary state through AppFlow.");
+
+    Console.WriteLine(
+        "Canary composition and read-only state query tests PASS.");
 }
 
 static Dictionary<string, string> ReadLangFile(string path)

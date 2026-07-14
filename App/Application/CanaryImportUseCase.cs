@@ -18,6 +18,15 @@ public sealed class CanaryImportUseCase(
         return importService.Normalize(sourceText);
     }
 
+    public bool HasManagedImportedPatch(
+        Rpcs3InstallDescriptor install)
+    {
+        ArgumentNullException.ThrowIfNull(install);
+
+        return importService.HasManagedImportedPatch(
+            install.PatchesPath);
+    }
+
     public CanaryPatchWriteResult Import(
         Rpcs3InstallDescriptor install,
         string sourceText)

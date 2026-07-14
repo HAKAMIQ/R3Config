@@ -328,7 +328,8 @@ public sealed partial class MainVm : VmBase
     private void RefreshCanaryState()
     {
         HasPreparedCanaryPatches = _install is not null &&
-                                   _canaryPatchImportService.HasManagedImportedPatch(_install.PatchesPath);
+                                   _flow.HasManagedImportedPatch(
+                                       _install);
 
         OnPropertyChanged(nameof(HasPreparedCanaryPatches));
         RaiseCommandStates();
