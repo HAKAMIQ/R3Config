@@ -4,24 +4,24 @@ using System.Windows.Input;
 
 namespace R3Config.Vm;
 
-public sealed class RelayCommand : ICommand
+public sealed class RelayCmd : ICommand
 {
     private readonly Action _execute;
-    private readonly Func<bool>? _canExecute;
+    private readonly Func<bool>? _canRun;
 
-    public RelayCommand(Action execute, Func<bool>? canExecute = null)
+    public RelayCmd(Action execute, Func<bool>? canExecute = null)
     {
         ArgumentNullException.ThrowIfNull(execute);
 
         _execute = execute;
-        _canExecute = canExecute;
+        _canRun = canExecute;
     }
 
     public event EventHandler? CanExecuteChanged;
 
     public bool CanExecute(object? parameter)
     {
-        return _canExecute?.Invoke() ?? true;
+        return _canRun?.Invoke() ?? true;
     }
 
     public void Execute(object? parameter)
@@ -29,31 +29,31 @@ public sealed class RelayCommand : ICommand
         _execute();
     }
 
-    public void RaiseCanExecuteChanged()
+    public void RaiseCan()
     {
         CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 }
 
-public sealed class AsyncRelayCommand : ICommand
+public sealed class AsyncCmd : ICommand
 {
     private readonly Func<Task> _execute;
-    private readonly Func<bool>? _canExecute;
-    private bool _isExecuting;
+    private readonly Func<bool>? _canRun;
+    private bool _isRun;
 
-    public AsyncRelayCommand(Func<Task> execute, Func<bool>? canExecute = null)
+    public AsyncCmd(Func<Task> execute, Func<bool>? canExecute = null)
     {
         ArgumentNullException.ThrowIfNull(execute);
 
         _execute = execute;
-        _canExecute = canExecute;
+        _canRun = canExecute;
     }
 
     public event EventHandler? CanExecuteChanged;
 
     public bool CanExecute(object? parameter)
     {
-        return !_isExecuting && (_canExecute?.Invoke() ?? true);
+        return !_isRun && (_canRun?.Invoke() ?? true);
     }
 
     public async void Execute(object? parameter)
@@ -65,19 +65,19 @@ public sealed class AsyncRelayCommand : ICommand
 
         try
         {
-            _isExecuting = true;
-            RaiseCanExecuteChanged();
+            _isRun = true;
+            RaiseCan();
 
             await _execute();
         }
         finally
         {
-            _isExecuting = false;
-            RaiseCanExecuteChanged();
+            _isRun = false;
+            RaiseCan();
         }
     }
 
-    public void RaiseCanExecuteChanged()
+    public void RaiseCan()
     {
         CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }

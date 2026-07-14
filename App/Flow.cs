@@ -11,7 +11,7 @@ namespace R3Config;
 /// </summary>
 public sealed class AppFlow
 {
-    private readonly AppCases _useCases;
+    private readonly AppCases _cases;
 
     public AppFlow()
         : this(AppComp.Build())
@@ -20,31 +20,31 @@ public sealed class AppFlow
 
     public AppFlow(AppCases useCases)
     {
-        _useCases = useCases ??
+        _cases = useCases ??
             throw new ArgumentNullException(nameof(useCases));
     }
 
-    public CatLoad LoadBuiltInCat(string baseDir)
+    public CatLoad LoadCat(string baseDir)
     {
-        return _useCases.RecommendationCatalog.LoadData(baseDir);
+        return _cases.RecCat.LoadData(baseDir);
     }
 
-    public Task<AnlzRes> AnalyzeAsync(
+    public Task<AnlzRes> DoAsync(
         string rpcs3ExePath,
         Svc.RecSvc cat)
     {
-        return _useCases.Analysis.RunAsync(
+        return _cases.Analysis.RunAsync(
             rpcs3ExePath,
             cat);
     }
 
-    public CfgPlan BuildCfgPlan(
+    public CfgPlan CfgPlan(
         R3Inst install,
         R3Game game,
         WikiRec? rec,
         HwInfo? hw)
     {
-        return _useCases.Config.Build(
+        return _cases.Config.Build(
             install,
             game,
             rec,
@@ -56,160 +56,160 @@ public sealed class AppFlow
         IReadOnlyList<CfgChg> changes,
         R3Inst install)
     {
-        return _useCases.Config.Apply(
+        return _cases.Config.Apply(
             plan,
             changes,
             install);
     }
 
-    public CfgRes RemoveCfg(
+    public CfgRes DelCfg(
         CfgPlan plan,
         IReadOnlyList<CfgChg> changes,
         R3Inst install)
     {
-        return _useCases.Config.Remove(
+        return _cases.Config.Remove(
             plan,
             changes,
             install);
     }
 
-    public PatCatRs LoadPatchCat(
+    public PatCatRs LoadPat(
         R3Inst install)
     {
-        return _useCases.PatchCatalog.Load(install);
+        return _cases.PatCat.Load(install);
     }
 
-    public CanDel RemovePreparedCanaryPatch(
+    public CanDel DelCan(
         R3Inst install)
     {
-        return _useCases.CanaryImport.Remove(install);
+        return _cases.CanImp.Remove(install);
     }
 
-    public CanNorm NormalizeCanaryPatch(
+    public CanNorm NormCan(
         string? sourceText)
     {
-        return _useCases.CanaryImport.Norm(sourceText);
+        return _cases.CanImp.Norm(sourceText);
     }
 
-    public bool HasManagedImportedPatch(
+    public bool HasImp(
         R3Inst install)
     {
-        return _useCases.CanaryImport.HasPat(
+        return _cases.CanImp.HasPat(
             install);
     }
 
-    public CanWrite ImportCanaryPatch(
+    public CanWrite ImpCan(
         R3Inst install,
         string sourceText)
     {
-        return _useCases.CanaryImport.Import(
+        return _cases.CanImp.Import(
             install,
             sourceText);
     }
 
-    public IReadOnlyList<PatMatch> BuildPatchPreview(
+    public IReadOnlyList<PatMatch> PatPrev(
         Mdl.PatCat patchCat,
         R3Game game)
     {
-        return _useCases.PatchCatalog.Build(
+        return _cases.PatCat.Build(
             patchCat,
             game);
     }
 
-    public PatPlan BuildPatchPlan(
+    public PatPlan PatPlan(
         R3Inst install,
         IReadOnlyList<PatMatch> matches,
         bool expertMode)
     {
-        return _useCases.PatchMutation.BuildOn(
+        return _cases.PatMut.BuildOn(
             install,
             matches,
             expertMode);
     }
 
-    public PatPlan BuildPatchDisablePlan(
+    public PatPlan OffPlan(
         R3Inst install,
         IReadOnlyList<PatMatch> matches)
     {
-        return _useCases.PatchMutation.BuildOff(
+        return _cases.PatMut.BuildOff(
             install,
             matches);
     }
 
-    public PatChg? CreatePatchChange(
+    public PatChg? PatChg(
         PatMatch match)
     {
-        return _useCases.PatchMutation.BuildChg(match);
+        return _cases.PatMut.BuildChg(match);
     }
 
-    public PatRes ApplyPatchTransaction(
+    public PatRes ApplyTxn(
         PatPlan plan,
         R3Inst install,
         IReadOnlyList<PatMatch> selectedMatches)
     {
-        return _useCases.PatchMutation.ApplyTxn(
+        return _cases.PatMut.ApplyTxn(
             plan,
             install,
             selectedMatches);
     }
 
-    public PatRes ApplyPatch(
+    public PatRes ApplyPat(
         PatPlan plan,
         R3Inst install)
     {
-        return _useCases.PatchMutation.Apply(
+        return _cases.PatMut.Apply(
             plan,
             install);
     }
 
-    public PatRes DisablePatch(PatPlan plan,
+    public PatRes OffPat(PatPlan plan,
         R3Inst install)
     {
-        return _useCases.PatchMutation.Disable(
+        return _cases.PatMut.Disable(
             plan,
             install);
     }
 
-    public bool CanReadPatchCfg(
+    public bool CanRead(
         R3Inst install)
     {
-        return _useCases.PatchCatalog.CanRead(install);
+        return _cases.PatCat.CanRead(install);
     }
 
-    public CfgSnap ReadPatchCfg(
+    public CfgSnap ReadCfg(
         R3Inst install)
     {
-        return _useCases.PatchCatalog.ReadCfg(install);
+        return _cases.PatCat.ReadCfg(install);
     }
 
-    public Svc.RecSvc RebuildCat(string xmlPath)
+    public Svc.RecSvc BuildCat(string xmlPath)
     {
-        return _useCases.RecommendationCatalog.Rebuild(xmlPath);
+        return _cases.RecCat.Rebuild(xmlPath);
     }
 
-    public string CatInfoText(CatInfo info)
+    public string CatText(CatInfo info)
     {
-        return _useCases.RecommendationCatalog.FmtInf(info);
+        return _cases.RecCat.FmtInf(info);
     }
 
-    public void ExportCat(
+    public void ExpCat(
         Svc.RecSvc cat,
         string path)
     {
         Case.RecCat.Export(cat, path);
     }
 
-    public IReadOnlyList<BkpSnap> ListBackups(
+    public IReadOnlyList<BkpSnap> ListBkp(
         R3Inst install)
     {
-        return _useCases.Backup.List(install);
+        return _cases.Backup.List(install);
     }
 
     public void Restore(
         R3Inst install,
         BkpSnap backup)
     {
-        _useCases.Backup.Restore(install, backup);
+        _cases.Backup.Restore(install, backup);
     }
 
     public static string BkpRoot(
@@ -218,30 +218,30 @@ public sealed class AppFlow
         return R3Paths.BkpRoot(install);
     }
 
-    public IReadOnlyList<HCanStor> LoadHCanaryPatches(
+    public IReadOnlyList<HCanStor> LoadHCan(
         R3Inst install)
     {
-        return _useCases.HCanary.Load(install);
+        return _cases.HCanary.Load(install);
     }
 
-    public SaveRes SaveHCanaryPatch(
+    public SaveRes SaveHCan(
         R3Inst install,
         HCanDrft draft,
         string? originalIdentity = null,
         bool saveAsNew = false)
     {
-        return _useCases.HCanary.Save(
+        return _cases.HCanary.Save(
             install,
             draft,
             originalIdentity,
             saveAsNew);
     }
 
-    public SaveRes DeleteHCanaryPatch(
+    public SaveRes DelHCan(
         R3Inst install,
         string identity)
     {
-        return _useCases.HCanary.Delete(
+        return _cases.HCanary.Delete(
             install,
             identity);
     }

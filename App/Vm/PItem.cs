@@ -8,177 +8,177 @@ using R3Config.Mdl;
 
 namespace R3Config.Vm;
 
-public enum PatchSourceKind
+public enum PatSrcKd
 {
     Official,
     Canary,
-    CheatLibrary,
+    ChtLib,
     Local,
     Custom,
     Missing,
     Unknown
 }
 
-public sealed class PatchItemVm : VmBase
+public sealed class PatItVm : VmBase
 {
-    private readonly string _sourceLabel;
-    private readonly bool _isEnabled;
-    private bool _isSelected;
-    private string _displayTitle;
+    private readonly string _srcText;
+    private readonly bool _isOn;
+    private bool _isSel;
+    private string _dspName;
 
-    public PatchItemVm(PatMatch match, string sourceLabel, bool isEnabled = false)
+    public PatItVm(PatMatch match, string sourceLabel, bool isEnabled = false)
     {
         Match = match;
-        _displayTitle = match.Patch.Title;
-        _sourceLabel = sourceLabel;
-        _isEnabled = isEnabled;
-        CanEnable = !isEnabled && Svc.PatPol.Can(match);
-        CanDisable = isEnabled && Svc.PatPol.CanPat(match);
-        IsSelectable = CanEnable || CanDisable;
-        _isSelected = !isEnabled && Svc.PatPol.Should(match.Patch.Risk, match.Status);
+        _dspName = match.Patch.Title;
+        _srcText = sourceLabel;
+        _isOn = isEnabled;
+        CanOn = !isEnabled && Svc.PatPol.Can(match);
+        CanOff = isEnabled && Svc.PatPol.CanPat(match);
+        CanSel = CanOn || CanOff;
+        _isSel = !isEnabled && Svc.PatPol.Should(match.Patch.Risk, match.Status);
     }
 
     public PatMatch Match { get; }
 
     public string Title => Match.Patch.Title;
 
-    public string DisplayTitle => _displayTitle;
+    public string DspTitle => _dspName;
 
     public Mdl.PatRisk Risk => Match.Patch.Risk;
 
-    public string RiskDisplay => UiText.PatchRiskLabel(Match.Patch.Risk);
+    public string RiskDsp => UiText.PatRisk(Match.Patch.Risk);
 
-    public string RiskTooltip => UiText.PatchRiskTip(Match.Patch.Risk, Match.Status);
+    public string RiskTip => UiText.PatTip(Match.Patch.Risk, Match.Status);
 
-    public string HandlingDisplay => UiText.T(HandlingKey(Match.Patch.Risk));
+    public string HandDsp => UiText.GetText(Handling(Match.Patch.Risk));
 
-    public string HandlingTooltip => UiText.PatchRiskTip(Match.Patch.Risk, Match.Status);
+    public string HandTip => UiText.PatTip(Match.Patch.Risk, Match.Status);
 
-    public string HandlingTone => HandlingToneFor(Match.Patch.Risk);
+    public string Tone => HandTone(Match.Patch.Risk);
 
-    public string PatchType => Match.Patch.PatType;
+    public string PatType => Match.Patch.PatType;
 
-    public string PatchTypeDisplay => UiText.PatchTypeLabel(Match.Patch.PatType);
+    public string TypeDsp => UiText.PatType(Match.Patch.PatType);
 
-    public string PatchTitle => Title;
+    public string PatTitle => Title;
 
-    public string PatchDescription => LocalizedMessage;
+    public string PatDesc => LocMsg;
 
-    public string ShortDescription => string.IsNullOrWhiteSpace(LocalizedMessage)
-        ? UiText.T("Patch.NoShortDescription")
-        : LocalizedMessage;
+    public string Desc => string.IsNullOrWhiteSpace(LocMsg)
+        ? UiText.GetText("Patch.NoShortDescription")
+        : LocMsg;
 
-    public bool HasDescription => !string.IsNullOrWhiteSpace(LocalizedMessage);
+    public bool HasDesc => !string.IsNullOrWhiteSpace(LocMsg);
 
-    public PatchSourceKind PatchSourceKind => InferSourceKind(_sourceLabel, Match.Patch);
+    public PatSrcKd PatSrcKd => InferSrc(_srcText, Match.Patch);
 
-    public string PatchSourceDisplay => UiText.T(SourceKey(PatchSourceKind));
+    public string SrcDsp => UiText.GetText(SrcKey(PatSrcKd));
 
-    public string PatchSourceTooltip => PatchSourceKind == PatchSourceKind.Canary
-        ? UiText.T("Patch.CanaryNotice")
-        : UiText.F("Patch.Source.Tooltip", PatchSourceDisplay);
+    public string SrcTip => PatSrcKd == PatSrcKd.Canary
+        ? UiText.GetText("Patch.CanaryNotice")
+        : UiText.Fmt("Patch.Source.Tooltip", SrcDsp);
 
-    public string PatchSourceTone => PatchSourceKind switch
+    public string SrcTone => PatSrcKd switch
     {
-        PatchSourceKind.Official => "Game",
-        PatchSourceKind.Canary => "Canary",
-        PatchSourceKind.CheatLibrary => "Custom",
-        PatchSourceKind.Custom => "Custom",
-        PatchSourceKind.Local => "Local",
-        PatchSourceKind.Missing => "Warning",
+        PatSrcKd.Official => "Game",
+        PatSrcKd.Canary => "Canary",
+        PatSrcKd.ChtLib => "Custom",
+        PatSrcKd.Custom => "Custom",
+        PatSrcKd.Local => "Local",
+        PatSrcKd.Missing => "Warning",
         _ => "Muted"
     };
 
-    public string CanaryScopeDisplay => UiText.F("Patch.CanaryScope", SerialDisplay, CanaryVersionDisplay);
+    public string ScopeDsp => UiText.Fmt("Patch.CanaryScope", SerDsp, CanVer);
 
-    public string CanaryScopeTooltip => UiText.F("Patch.CanaryScopeTip", SerialDisplay, CanaryVersionDisplay, HashStatusDisplay);
+    public string ScopeTip => UiText.Fmt("Patch.CanaryScopeTip", SerDsp, CanVer, HashStat);
 
-    public string CanaryVersionDisplay => !string.IsNullOrWhiteSpace(Match.TgtVer)
+    public string CanVer => !string.IsNullOrWhiteSpace(Match.TgtVer)
         ? Match.TgtVer!
-        : IsVersionSpecific
+        : IsVer
             ? string.Join(", ", Match.Patch.GameVer)
-            : UiText.T("Patch.Version.Any");
+            : UiText.GetText("Patch.Version.Any");
 
-    public bool IsVersionSpecific => Match.Patch.GameVer.Any(version => !string.IsNullOrWhiteSpace(version));
+    public bool IsVer => Match.Patch.GameVer.Any(version => !string.IsNullOrWhiteSpace(version));
 
-    public bool IsOfficial => PatchSourceKind == PatchSourceKind.Official;
+    public bool IsOfcl => PatSrcKd == PatSrcKd.Official;
 
-    public bool IsCanary => PatchSourceKind == PatchSourceKind.Canary;
+    public bool IsCanary => PatSrcKd == PatSrcKd.Canary;
 
-    public bool IsExperimentalPatch =>
+    public bool IsExpPat =>
         IsCanary ||
         Risk is Mdl.PatRisk.Exp or Mdl.PatRisk.Canary;
 
-    public bool IsLocal => PatchSourceKind == PatchSourceKind.Local;
+    public bool IsLocal => PatSrcKd == PatSrcKd.Local;
 
-    public bool IsCustom => PatchSourceKind == PatchSourceKind.Custom;
+    public bool IsCustom => PatSrcKd == PatSrcKd.Custom;
 
-    public bool IsAvailable => PatchSourceKind is not PatchSourceKind.Missing and not PatchSourceKind.Unknown;
+    public bool IsAvail => PatSrcKd is not PatSrcKd.Missing and not PatSrcKd.Unknown;
 
-    public bool IsDefinitionResident => Match.Patch.Source is
+    public bool IsDef => Match.Patch.Source is
         PatSrc.Official or
         PatSrc.Imported or
         PatSrc.ManCht or
         PatSrc.TitlePat;
 
-    public bool HasDefinitionState => Match.Patch.Source switch
+    public bool HasDef => Match.Patch.Source switch
     {
         PatSrc.Can => true,
-        PatSrc.Imported => IsExperimentalPatch,
+        PatSrc.Imported => IsExpPat,
         PatSrc.Cht or PatSrc.ManCht => true,
         PatSrc.TitlePat => Risk == Mdl.PatRisk.Cheat,
         _ => false
     };
 
-    public string DefinitionStateDisplay => Match.Patch.Source switch
+    public string DefState => Match.Patch.Source switch
     {
-        PatSrc.Can => UiText.T("Patch.Definition.NotMerged"),
-        PatSrc.Imported when IsExperimentalPatch => UiText.T("Patch.Definition.Merged"),
-        PatSrc.Cht => UiText.T("Patch.Definition.NotPrepared"),
-        PatSrc.ManCht => UiText.T("Patch.Definition.Prepared"),
-        PatSrc.TitlePat when Risk == Mdl.PatRisk.Cheat => UiText.T("Patch.Definition.Existing"),
+        PatSrc.Can => UiText.GetText("Patch.Definition.NotMerged"),
+        PatSrc.Imported when IsExpPat => UiText.GetText("Patch.Definition.Merged"),
+        PatSrc.Cht => UiText.GetText("Patch.Definition.NotPrepared"),
+        PatSrc.ManCht => UiText.GetText("Patch.Definition.Prepared"),
+        PatSrc.TitlePat when Risk == Mdl.PatRisk.Cheat => UiText.GetText("Patch.Definition.Existing"),
         _ => string.Empty
     };
 
-    public string DefinitionStateTone => IsDefinitionResident ? "Game" : "Muted";
+    public string DefTone => IsDef ? "Game" : "Muted";
 
-    public string PrimaryBadgeDisplay => PatchSourceDisplay;
+    public string BadgeDsp => SrcDsp;
 
-    public string PrimaryBadgeTone => PatchSourceTone;
+    public string MainTone => SrcTone;
 
-    public string PrimaryBadgeTooltip => PatchSourceTooltip;
+    public string BadgeTip => SrcTip;
 
-    public bool HasScopeBadge => IsCanary;
+    public bool HasScope => IsCanary;
 
-    public string GameScopeDisplay => UiText.F("Patch.GameScope", SerialDisplay);
+    public string GameDsp => UiText.Fmt("Patch.GameScope", SerDsp);
 
-    public string GameScopeTooltip => UiText.F("Patch.GameScopeTip", SerialDisplay, CanaryVersionDisplay);
+    public string GameTip => UiText.Fmt("Patch.GameScopeTip", SerDsp, CanVer);
 
-    public string PlayerBenefitText => string.IsNullOrWhiteSpace(LocalizedMessage)
-        ? UiText.T("Patch.PlayerBenefitUnknown")
-        : UiText.F("Patch.PlayerBenefit", ShortDescription);
+    public string Benefit => string.IsNullOrWhiteSpace(LocMsg)
+        ? UiText.GetText("Patch.PlayerBenefitUnknown")
+        : UiText.Fmt("Patch.PlayerBenefit", Desc);
 
-    public string PlayerSourceText => IsCanary
-        ? UiText.T("Patch.PlayerSourceCanary")
-        : UiText.F("Patch.PlayerSource", PatchSourceDisplay);
+    public string SrcText => IsCanary
+        ? UiText.GetText("Patch.PlayerSourceCanary")
+        : UiText.Fmt("Patch.PlayerSource", SrcDsp);
 
-    public string PlayerScopeText => UiText.F("Patch.PlayerScope", FormatTechInline(SerialDisplay), FormatTechInline(CanaryVersionDisplay));
+    public string ScopeTxt => UiText.Fmt("Patch.PlayerScope", FmtTech(SerDsp), FmtTech(CanVer));
 
-    public string PlayerActionText => IsEnabled && CanDisable
-        ? UiText.T("Patch.PlayerActionEnabled")
-        : CanEnable
-            ? UiText.T(IsCanary ? "Patch.PlayerActionCanarySelectable" : "Patch.PlayerActionSelectable")
-            : MatchTooltip;
+    public string ActText => IsOn && CanOff
+        ? UiText.GetText("Patch.PlayerActionEnabled")
+        : CanOn
+            ? UiText.GetText(IsCanary ? "Patch.PlayerActionCanarySelectable" : "Patch.PlayerActionSelectable")
+            : MatchTip;
 
-    public bool IsRuntimeGuarded =>
+    public bool IsGuard =>
         PatAct.IsRun(Match);
 
-    public CmpDec CompatibilityDecision =>
+    public CmpDec Decision =>
         PatAct.Decide(Match);
 
-    public bool HasPlayerInstruction =>
+    public bool HasIns =>
         !string.IsNullOrWhiteSpace(Notes) &&
-        ContainsAny(
+        Contains(
             Notes,
             "requires",
             "required",
@@ -198,23 +198,23 @@ public sealed class PatchItemVm : VmBase
             "عطّل",
             "اضغط");
 
-    public string PlayerInstructionText => HasPlayerInstruction
-        ? UiText.F("Patch.User.Instruction", LocalizedMessage)
+    public string InsText => HasIns
+        ? UiText.Fmt("Patch.User.Instruction", LocMsg)
         : string.Empty;
 
-    public string InstalledVersionDisplay => PatVer.Norm(Match.MatVer)
-        ?? UiText.T("Ui.Unknown");
+    public string InstVer => PatVer.Norm(Match.MatVer)
+        ?? UiText.GetText("Ui.Unknown");
 
-    public string RequiredVersionDisplay => PatVer.Norm(Match.TgtVer)
+    public string ReqVer => PatVer.Norm(Match.TgtVer)
         ?? (Match.Patch.GameVer.Count > 0
             ? string.Join(", ", Match.Patch.GameVer)
-            : UiText.T("Patch.Version.Any"));
+            : UiText.GetText("Patch.Version.Any"));
 
-    public string TargetSerialDisplay => Match.TgtSer
+    public string TgtDsp => Match.TgtSer
         ?? Match.MatSer
-        ?? JoinOrDash(Match.Patch.Serials);
+        ?? JoinOr(Match.Patch.Serials);
 
-    public string HashKindDisplay => Match.Patch.HashKind switch
+    public string KindDsp => Match.Patch.HashKind switch
     {
         HashKind.Ppu => "PPU",
         HashKind.Spu => "SPU",
@@ -223,24 +223,24 @@ public sealed class PatchItemVm : VmBase
         _ => "HASH"
     };
 
-    private string ComparableHash =>
+    private string CmpHash =>
         Match.Patch.NormHash ?? Match.Patch.Hash;
 
-    public string ShortHash => string.IsNullOrWhiteSpace(ComparableHash)
+    public string Hash => string.IsNullOrWhiteSpace(CmpHash)
         ? "-"
-        : ComparableHash[..Math.Min(12, ComparableHash.Length)];
+        : CmpHash[..Math.Min(12, CmpHash.Length)];
 
-    public string TechnicalTargetDisplay => $"{HashKindDisplay}-{ShortHash}";
+    public string TechTgt => $"{KindDsp}-{Hash}";
 
-    public bool HasHashEvidence => Match.Patch.HashKind != HashKind.Unknown;
+    public bool HasEvi => Match.Patch.HashKind != HashKind.Unknown;
 
-    public string RequiredHashDisplay => $"{HashKindDisplay}-{ComparableHash}";
+    public string HashDsp => $"{KindDsp}-{CmpHash}";
 
-    public string DetectedHashDisplay => Match.Hashes.Count == 0
-        ? UiText.T("Ui.Unknown")
-        : string.Join(", ", Match.Hashes.Select(hash => $"{HashKindDisplay}-{hash}"));
+    public string DetHash => Match.Hashes.Count == 0
+        ? UiText.GetText("Ui.Unknown")
+        : string.Join(", ", Match.Hashes.Select(hash => $"{KindDsp}-{hash}"));
 
-    public string HashEvidenceSourceDisplay
+    public string HashSrc
     {
         get
         {
@@ -248,28 +248,28 @@ public sealed class PatchItemVm : VmBase
             {
                 HashEvi.PlainLog or
                 HashEvi.ZipLog =>
-                    UiText.T("PatchReadiness.Source.Log"),
+                    UiText.GetText("PatchReadiness.Source.Log"),
 
                 HashEvi.Cache =>
-                    UiText.T("PatchReadiness.Source.Cache"),
+                    UiText.GetText("PatchReadiness.Source.Cache"),
 
                 HashEvi.Meta =>
-                    UiText.T("PatchReadiness.Source.Metadata"),
+                    UiText.GetText("PatchReadiness.Source.Metadata"),
 
                 _ => string.IsNullOrWhiteSpace(Match.HashSrc)
-                    ? UiText.T("Ui.Unknown")
-                    : UiText.T("PatchReadiness.Source.Metadata")
+                    ? UiText.GetText("Ui.Unknown")
+                    : UiText.GetText("PatchReadiness.Source.Metadata")
             };
         }
     }
 
-    public string HashEvidenceSummary
+    public string EviSum
     {
         get
         {
-            if (IsRuntimeGuarded)
+            if (IsGuard)
             {
-                return UiText.T("Patch.HashEvidence.RuntimeGuarded");
+                return UiText.GetText("Patch.HashEvidence.RuntimeGuarded");
             }
 
             if (Match.Hashes.Any(hash =>
@@ -277,49 +277,49 @@ public sealed class PatchItemVm : VmBase
                         Match.Patch.NormHash,
                         StringComparison.OrdinalIgnoreCase)))
             {
-                return UiText.F(
+                return UiText.Fmt(
                     "Patch.HashEvidence.Proven",
-                    FormatTechInline(RequiredHashDisplay),
-                    HashEvidenceSourceDisplay);
+                    FmtTech(HashDsp),
+                    HashSrc);
             }
 
             return Match.Hashes.Count > 0
-                ? UiText.F(
+                ? UiText.Fmt(
                     "Patch.HashEvidence.Rejected",
-                    FormatTechInline(RequiredHashDisplay),
-                    FormatTechInline(DetectedHashDisplay))
-                : UiText.F(
+                    FmtTech(HashDsp),
+                    FmtTech(DetHash))
+                : UiText.Fmt(
                     "Patch.HashEvidence.Missing",
-                    FormatTechInline(RequiredHashDisplay));
+                    FmtTech(HashDsp));
         }
     }
 
-    public string HashEvidenceDetails => UiText.F(
+    public string EviDet => UiText.Fmt(
         "Patch.HashEvidence.Details",
-        FormatTechInline(RequiredHashDisplay),
-        FormatTechInline(DetectedHashDisplay),
-        HashEvidenceSourceDisplay);
+        FmtTech(HashDsp),
+        FmtTech(DetHash),
+        HashSrc);
 
-    public string GroupDisplay => string.IsNullOrWhiteSpace(Match.Patch.Group)
-        ? PatchTypeDisplay
+    public string GroupDsp => string.IsNullOrWhiteSpace(Match.Patch.Group)
+        ? TypeDsp
         : Match.Patch.Group!;
 
-    public string TargetLine => UiText.F(
+    public string TgtLine => UiText.Fmt(
         "Patch.TargetLine",
-        FormatTechInline(TargetSerialDisplay),
-        FormatTechInline(InstalledVersionDisplay),
-        FormatTechInline(RequiredVersionDisplay));
+        FmtTech(TgtDsp),
+        FmtTech(InstVer),
+        FmtTech(ReqVer));
 
-    public string DirectStatusText
+    public string DirStat
     {
         get
         {
-            if (IsEnabled)
+            if (IsOn)
             {
-                return UiText.T("Patch.Direct.Enabled");
+                return UiText.GetText("Patch.Direct.Enabled");
             }
 
-            var compatibilityKey = CompatibilityDecision.Code switch
+            var compatibilityKey = Decision.Code switch
             {
                 CmpCode.Key =>
                     "Patch.Direct.InvalidRuntimeKey",
@@ -334,233 +334,233 @@ public sealed class PatchItemVm : VmBase
 
             if (compatibilityKey is not null)
             {
-                return UiText.T(compatibilityKey);
+                return UiText.GetText(compatibilityKey);
             }
 
-            if (CanEnable && IsDefinitionResident)
+            if (CanOn && IsDef)
             {
                 return Match.Patch.Source switch
                 {
-                    PatSrc.Imported when IsExperimentalPatch =>
-                        UiText.T("Patch.Direct.MergedDisabled"),
+                    PatSrc.Imported when IsExpPat =>
+                        UiText.GetText("Patch.Direct.MergedDisabled"),
                     PatSrc.ManCht =>
-                        UiText.T("Patch.Direct.PreparedDisabled"),
+                        UiText.GetText("Patch.Direct.PreparedDisabled"),
                     PatSrc.TitlePat when Risk == Mdl.PatRisk.Cheat =>
-                        UiText.T("Patch.Direct.PreparedDisabled"),
-                    _ => UiText.T("Patch.Direct.Disabled")
+                        UiText.GetText("Patch.Direct.PreparedDisabled"),
+                    _ => UiText.GetText("Patch.Direct.Disabled")
                 };
             }
 
-            return MatchStatus switch
+            return MatStat switch
             {
-                MatStat.Match => UiText.T("Patch.Direct.Ready"),
-                MatStat.Unknown when IsRuntimeGuarded =>
-                    UiText.T("Patch.Direct.RuntimeGuarded"),
-                MatStat.Unknown => UiText.F("Patch.Direct.HashUnknown", HashKindDisplay),
-                MatStat.VerUnk => UiText.F("Patch.Direct.VersionUnknown", RequiredVersionDisplay),
-                MatStat.VerBad => UiText.F(
+                MatStat.Match => UiText.GetText("Patch.Direct.Ready"),
+                MatStat.Unknown when IsGuard =>
+                    UiText.GetText("Patch.Direct.RuntimeGuarded"),
+                MatStat.Unknown => UiText.Fmt("Patch.Direct.HashUnknown", KindDsp),
+                MatStat.VerUnk => UiText.Fmt("Patch.Direct.VersionUnknown", ReqVer),
+                MatStat.VerBad => UiText.Fmt(
                     "Patch.Direct.VersionMismatch",
-                    InstalledVersionDisplay,
-                    RequiredVersionDisplay),
-                MatStat.HashBad => UiText.T(
+                    InstVer,
+                    ReqVer),
+                MatStat.HashBad => UiText.GetText(
                     "Patch.Direct.HashMismatch"),
-                _ => UiText.T("Patch.Direct.Unavailable")
+                _ => UiText.GetText("Patch.Direct.Unavailable")
             };
         }
     }
 
-    public string StateDisplay => IsEnabled
-        ? UiText.T("Patch.State.Enabled")
-        : CanEnable
-            ? UiText.T(IsDefinitionResident ? "Patch.State.Disabled" : "Patch.State.Ready")
-            : UiText.T("Patch.State.Blocked");
+    public string StateDsp => IsOn
+        ? UiText.GetText("Patch.State.Enabled")
+        : CanOn
+            ? UiText.GetText(IsDef ? "Patch.State.Disabled" : "Patch.State.Ready")
+            : UiText.GetText("Patch.State.Blocked");
 
-    public string StateTone => IsEnabled
+    public string StateTon => IsOn
         ? "Game"
-        : CanEnable
-            ? IsDefinitionResident ? "Muted" : "Auto"
+        : CanOn
+            ? IsDef ? "Muted" : "Auto"
             : "Warning";
 
-    public string DetailsLine => UiText.F(
+    public string DetLine => UiText.Fmt(
         "Patch.DetailsLine",
-        PatchSourceDisplay,
-        MatchStatusDisplay,
-        PatchTypeDisplay,
-        HashStatusDisplay);
+        SrcDsp,
+        MatchDsp,
+        TypeDsp,
+        HashStat);
 
-    public bool IsEnabled => _isEnabled;
+    public bool IsOn => _isOn;
 
-    public string LocalizedStatus => MatchStatusDisplay;
+    public string Status => MatchDsp;
 
-    public string SerialDisplay => Match.MatSer
-        ?? JoinOrDash(Match.Patch.Serials);
+    public string SerDsp => Match.MatSer
+        ?? JoinOr(Match.Patch.Serials);
 
-    public string VersionDisplay => Match.MatVer
-        ?? JoinOrDash(Match.Patch.GameVer);
+    public string VerDsp => Match.MatVer
+        ?? JoinOr(Match.Patch.GameVer);
 
-    public string HashStatusDisplay => UiText.HashStatusLabel(Match.Status, Match.Patch.HashKind);
+    public string HashStat => UiText.HashStat(Match.Status, Match.Patch.HashKind);
 
-    public MatStat MatchStatus => Match.Status;
+    public MatStat MatStat => Match.Status;
 
-    public string MatchStatusDisplay => UiText.PatchMatchLabel(Match.Status);
+    public string MatchDsp => UiText.PatMatch(Match.Status);
 
-    public string MatchTooltip => UiText.PatchMatchTip(Match.Status);
+    public string MatchTip => UiText.MatchTip(Match.Status);
 
     public string? Notes => Match.Patch.Notes;
 
     public string NoteTag => string.IsNullOrWhiteSpace(Match.Patch.Notes)
-        ? UiText.T("Ui.EmptyValue")
-        : UiText.T(NoteTagKey());
+        ? UiText.GetText("Ui.EmptyValue")
+        : UiText.GetText(TagKey());
 
-    public string NoteTitle => LocalizedNoteTitle;
+    public string NoteName => LocNote;
 
-    public string NoteTypeLine => UiText.F("Plan.NoteTooltipType", LocalizedMessageType);
+    public string TypeLine => UiText.Fmt("Plan.NoteTooltipType", MsgType);
 
-    public string NoteOriginalLabel => UiText.T("Note.OriginalTextLabel");
+    public string NoteOrig => UiText.GetText("Note.OriginalTextLabel");
 
-    public string NoteBody => LocalizedMessage;
+    public string NoteBody => LocMsg;
 
-    public string LocalizedNoteTitle => PatText.PatMsg(Match.Patch.Notes).Title;
+    public string LocNote => PatText.PatMsg(Match.Patch.Notes).Title;
 
-    public string LocalizedMessageType => PatText.PatMsg(Match.Patch.Notes).Type;
+    public string MsgType => PatText.PatMsg(Match.Patch.Notes).Type;
 
-    public string LocalizedMessage => PatText.PatMsg(Match.Patch.Notes).Body;
+    public string LocMsg => PatText.PatMsg(Match.Patch.Notes).Body;
 
-    public string LocalizedOriginalMessage => PatText.PatMsg(Match.Patch.Notes).OrigBody;
+    public string OrigMsg => PatText.PatMsg(Match.Patch.Notes).OrigBody;
 
-    public bool HasOriginalMessage => PatText.PatMsg(Match.Patch.Notes).HasOrig;
+    public bool HasOrig => PatText.PatMsg(Match.Patch.Notes).HasOrig;
 
     public FlowDirection NoteFlow => UiLaySvc.Current.TextFlow;
 
-    public TextAlignment NoteTextAlignment => UiLaySvc.Current.TxtAlign;
+    public TextAlignment NoteText => UiLaySvc.Current.TxtAlign;
 
-    public bool IsSelectable { get; }
+    public bool CanSel { get; }
 
-    public bool CanEnable { get; }
+    public bool CanOn { get; }
 
-    public bool CanDisable { get; }
+    public bool CanOff { get; }
 
-    public bool IsSelected
+    public bool IsSel
     {
-        get => _isSelected;
+        get => _isSel;
         set
         {
-            if (!IsSelectable)
+            if (!CanSel)
             {
                 value = false;
             }
 
-            SetProperty(ref _isSelected, value);
+            Set(ref _isSel, value);
         }
     }
 
-    public void RefreshLanguage()
+    public void SetLang()
     {
-        OnPropertyChanged(nameof(RiskDisplay));
-        OnPropertyChanged(nameof(RiskTooltip));
-        OnPropertyChanged(nameof(HandlingDisplay));
-        OnPropertyChanged(nameof(HandlingTooltip));
-        OnPropertyChanged(nameof(HandlingTone));
-        OnPropertyChanged(nameof(PatchTypeDisplay));
-        OnPropertyChanged(nameof(PatchTitle));
-        OnPropertyChanged(nameof(DisplayTitle));
-        OnPropertyChanged(nameof(PatchDescription));
-        OnPropertyChanged(nameof(ShortDescription));
-        OnPropertyChanged(nameof(HasDescription));
-        OnPropertyChanged(nameof(PatchSourceKind));
-        OnPropertyChanged(nameof(PatchSourceDisplay));
-        OnPropertyChanged(nameof(PatchSourceTooltip));
-        OnPropertyChanged(nameof(PatchSourceTone));
-        OnPropertyChanged(nameof(CanaryScopeDisplay));
-        OnPropertyChanged(nameof(CanaryScopeTooltip));
-        OnPropertyChanged(nameof(CanaryVersionDisplay));
-        OnPropertyChanged(nameof(IsVersionSpecific));
-        OnPropertyChanged(nameof(IsOfficial));
-        OnPropertyChanged(nameof(IsCanary));
-        OnPropertyChanged(nameof(IsExperimentalPatch));
-        OnPropertyChanged(nameof(IsLocal));
-        OnPropertyChanged(nameof(IsCustom));
-        OnPropertyChanged(nameof(IsAvailable));
-        OnPropertyChanged(nameof(IsDefinitionResident));
-        OnPropertyChanged(nameof(HasDefinitionState));
-        OnPropertyChanged(nameof(DefinitionStateDisplay));
-        OnPropertyChanged(nameof(DefinitionStateTone));
-        OnPropertyChanged(nameof(PrimaryBadgeDisplay));
-        OnPropertyChanged(nameof(PrimaryBadgeTone));
-        OnPropertyChanged(nameof(PrimaryBadgeTooltip));
-        OnPropertyChanged(nameof(HasScopeBadge));
-        OnPropertyChanged(nameof(GameScopeDisplay));
-        OnPropertyChanged(nameof(GameScopeTooltip));
-        OnPropertyChanged(nameof(PlayerBenefitText));
-        OnPropertyChanged(nameof(PlayerSourceText));
-        OnPropertyChanged(nameof(PlayerScopeText));
-        OnPropertyChanged(nameof(PlayerActionText));
-        OnPropertyChanged(nameof(IsRuntimeGuarded));
-        OnPropertyChanged(nameof(CompatibilityDecision));
-        OnPropertyChanged(nameof(HasPlayerInstruction));
-        OnPropertyChanged(nameof(PlayerInstructionText));
-        OnPropertyChanged(nameof(InstalledVersionDisplay));
-        OnPropertyChanged(nameof(RequiredVersionDisplay));
-        OnPropertyChanged(nameof(TargetSerialDisplay));
-        OnPropertyChanged(nameof(HashKindDisplay));
-        OnPropertyChanged(nameof(ShortHash));
-        OnPropertyChanged(nameof(TechnicalTargetDisplay));
-        OnPropertyChanged(nameof(HasHashEvidence));
-        OnPropertyChanged(nameof(RequiredHashDisplay));
-        OnPropertyChanged(nameof(DetectedHashDisplay));
-        OnPropertyChanged(nameof(HashEvidenceSourceDisplay));
-        OnPropertyChanged(nameof(HashEvidenceSummary));
-        OnPropertyChanged(nameof(HashEvidenceDetails));
-        OnPropertyChanged(nameof(GroupDisplay));
-        OnPropertyChanged(nameof(TargetLine));
-        OnPropertyChanged(nameof(DirectStatusText));
-        OnPropertyChanged(nameof(StateDisplay));
-        OnPropertyChanged(nameof(StateTone));
-        OnPropertyChanged(nameof(DetailsLine));
-        OnPropertyChanged(nameof(IsEnabled));
-        OnPropertyChanged(nameof(LocalizedStatus));
-        OnPropertyChanged(nameof(HashStatusDisplay));
-        OnPropertyChanged(nameof(MatchStatusDisplay));
-        OnPropertyChanged(nameof(MatchTooltip));
-        OnPropertyChanged(nameof(NoteTag));
-        OnPropertyChanged(nameof(NoteTitle));
-        OnPropertyChanged(nameof(NoteTypeLine));
-        OnPropertyChanged(nameof(NoteOriginalLabel));
-        OnPropertyChanged(nameof(NoteBody));
-        OnPropertyChanged(nameof(LocalizedNoteTitle));
-        OnPropertyChanged(nameof(LocalizedMessageType));
-        OnPropertyChanged(nameof(LocalizedMessage));
-        OnPropertyChanged(nameof(LocalizedOriginalMessage));
-        OnPropertyChanged(nameof(HasOriginalMessage));
-        OnPropertyChanged(nameof(NoteFlow));
-        OnPropertyChanged(nameof(NoteTextAlignment));
+        OnChange(nameof(RiskDsp));
+        OnChange(nameof(RiskTip));
+        OnChange(nameof(HandDsp));
+        OnChange(nameof(HandTip));
+        OnChange(nameof(Tone));
+        OnChange(nameof(TypeDsp));
+        OnChange(nameof(PatTitle));
+        OnChange(nameof(DspTitle));
+        OnChange(nameof(PatDesc));
+        OnChange(nameof(Desc));
+        OnChange(nameof(HasDesc));
+        OnChange(nameof(PatSrcKd));
+        OnChange(nameof(SrcDsp));
+        OnChange(nameof(SrcTip));
+        OnChange(nameof(SrcTone));
+        OnChange(nameof(ScopeDsp));
+        OnChange(nameof(ScopeTip));
+        OnChange(nameof(CanVer));
+        OnChange(nameof(IsVer));
+        OnChange(nameof(IsOfcl));
+        OnChange(nameof(IsCanary));
+        OnChange(nameof(IsExpPat));
+        OnChange(nameof(IsLocal));
+        OnChange(nameof(IsCustom));
+        OnChange(nameof(IsAvail));
+        OnChange(nameof(IsDef));
+        OnChange(nameof(HasDef));
+        OnChange(nameof(DefState));
+        OnChange(nameof(DefTone));
+        OnChange(nameof(BadgeDsp));
+        OnChange(nameof(MainTone));
+        OnChange(nameof(BadgeTip));
+        OnChange(nameof(HasScope));
+        OnChange(nameof(GameDsp));
+        OnChange(nameof(GameTip));
+        OnChange(nameof(Benefit));
+        OnChange(nameof(SrcText));
+        OnChange(nameof(ScopeTxt));
+        OnChange(nameof(ActText));
+        OnChange(nameof(IsGuard));
+        OnChange(nameof(Decision));
+        OnChange(nameof(HasIns));
+        OnChange(nameof(InsText));
+        OnChange(nameof(InstVer));
+        OnChange(nameof(ReqVer));
+        OnChange(nameof(TgtDsp));
+        OnChange(nameof(KindDsp));
+        OnChange(nameof(Hash));
+        OnChange(nameof(TechTgt));
+        OnChange(nameof(HasEvi));
+        OnChange(nameof(HashDsp));
+        OnChange(nameof(DetHash));
+        OnChange(nameof(HashSrc));
+        OnChange(nameof(EviSum));
+        OnChange(nameof(EviDet));
+        OnChange(nameof(GroupDsp));
+        OnChange(nameof(TgtLine));
+        OnChange(nameof(DirStat));
+        OnChange(nameof(StateDsp));
+        OnChange(nameof(StateTon));
+        OnChange(nameof(DetLine));
+        OnChange(nameof(IsOn));
+        OnChange(nameof(Status));
+        OnChange(nameof(HashStat));
+        OnChange(nameof(MatchDsp));
+        OnChange(nameof(MatchTip));
+        OnChange(nameof(TagKey));
+        OnChange(nameof(Title));
+        OnChange(nameof(TypeLine));
+        OnChange(nameof(NoteOrig));
+        OnChange(nameof(NoteBody));
+        OnChange(nameof(LocNote));
+        OnChange(nameof(MsgType));
+        OnChange(nameof(LocMsg));
+        OnChange(nameof(OrigMsg));
+        OnChange(nameof(HasOrig));
+        OnChange(nameof(NoteFlow));
+        OnChange(nameof(NoteText));
     }
 
-    internal void SetDuplicateOrdinal(int ordinal, int count)
+    internal void SetDup(int ordinal, int count)
     {
         var displayTitle = count > 1 ? $"{Title} ({ordinal:00})" : Title;
-        if (!string.Equals(_displayTitle, displayTitle, StringComparison.Ordinal))
+        if (!string.Equals(_dspName, displayTitle, StringComparison.Ordinal))
         {
-            _displayTitle = displayTitle;
-            OnPropertyChanged(nameof(DisplayTitle));
+            _dspName = displayTitle;
+            OnChange(nameof(DspTitle));
         }
     }
 
-    private static PatchSourceKind InferSourceKind(string sourceLabel, PatEntry patch)
+    private static PatSrcKd InferSrc(string sourceLabel, PatEntry patch)
     {
         var explicitSource = patch.Source switch
         {
-            PatSrc.Official => PatchSourceKind.Official,
-            PatSrc.Can => PatchSourceKind.Canary,
-            PatSrc.Cht => PatchSourceKind.CheatLibrary,
-            PatSrc.ManCht => PatchSourceKind.Local,
-            PatSrc.Imported when patch.Risk == Mdl.PatRisk.Canary => PatchSourceKind.Canary,
-            PatSrc.Imported => PatchSourceKind.Local,
-            PatSrc.TitlePat => PatchSourceKind.Custom,
-            _ => PatchSourceKind.Unknown
+            PatSrc.Official => PatSrcKd.Official,
+            PatSrc.Can => PatSrcKd.Canary,
+            PatSrc.Cht => PatSrcKd.ChtLib,
+            PatSrc.ManCht => PatSrcKd.Local,
+            PatSrc.Imported when patch.Risk == Mdl.PatRisk.Canary => PatSrcKd.Canary,
+            PatSrc.Imported => PatSrcKd.Local,
+            PatSrc.TitlePat => PatSrcKd.Custom,
+            _ => PatSrcKd.Unknown
         };
 
-        if (explicitSource != PatchSourceKind.Unknown)
+        if (explicitSource != PatSrcKd.Unknown)
         {
             return explicitSource;
         }
@@ -576,60 +576,60 @@ public sealed class PatchItemVm : VmBase
         if (patch.Risk == Mdl.PatRisk.Canary ||
             string.Equals(patch.PatType, "Canary", StringComparison.OrdinalIgnoreCase))
         {
-            return PatchSourceKind.Canary;
+            return PatSrcKd.Canary;
         }
 
-        if (string.IsNullOrWhiteSpace(sourceLabel) || ContainsAny(sourceLabel, "missing", "not found"))
+        if (string.IsNullOrWhiteSpace(sourceLabel) || Contains(sourceLabel, "missing", "not found"))
         {
-            return PatchSourceKind.Missing;
+            return PatSrcKd.Missing;
         }
 
-        if (ContainsAny(sourceLabel, "custom", "user patch", "user-patch") ||
-            ContainsAny(patchText, "custom", "user patch", "user-patch"))
+        if (Contains(sourceLabel, "custom", "user patch", "user-patch") ||
+            Contains(patchText, "custom", "user patch", "user-patch"))
         {
-            return PatchSourceKind.Custom;
+            return PatSrcKd.Custom;
         }
 
-        if (ContainsAny(sourceLabel, "canary") &&
-            !ContainsAny(sourceLabel, "patch.yml / imported_patch.yml"))
+        if (Contains(sourceLabel, "canary") &&
+            !Contains(sourceLabel, "patch.yml / imported_patch.yml"))
         {
-            return PatchSourceKind.Canary;
+            return PatSrcKd.Canary;
         }
 
-        if (ContainsAny(sourceLabel, "local") &&
-            !ContainsAny(sourceLabel, "patch.yml"))
+        if (Contains(sourceLabel, "local") &&
+            !Contains(sourceLabel, "patch.yml"))
         {
-            return PatchSourceKind.Local;
+            return PatSrcKd.Local;
         }
 
-        if (ContainsAny(sourceLabel, "game patches", "wiki", "rpcs3 patches", "patch.yml"))
+        if (Contains(sourceLabel, "game patches", "wiki", "rpcs3 patches", "patch.yml"))
         {
-            return PatchSourceKind.Official;
+            return PatSrcKd.Official;
         }
 
-        if (ContainsAny(sourceLabel, ".yml", ".yaml"))
+        if (Contains(sourceLabel, ".yml", ".yaml"))
         {
-            return PatchSourceKind.Local;
+            return PatSrcKd.Local;
         }
 
-        return PatchSourceKind.Unknown;
+        return PatSrcKd.Unknown;
     }
 
-    private static string SourceKey(PatchSourceKind sourceKind)
+    private static string SrcKey(PatSrcKd sourceKind)
     {
         return sourceKind switch
         {
-            PatchSourceKind.Official => "Patch.Source.Official",
-            PatchSourceKind.Canary => "Patch.Source.Canary",
-            PatchSourceKind.CheatLibrary => "Patch.Source.CheatLibrary",
-            PatchSourceKind.Local => "Patch.Source.Local",
-            PatchSourceKind.Custom => "Patch.Source.Custom",
-            PatchSourceKind.Missing => "Patch.Source.Missing",
+            PatSrcKd.Official => "Patch.Source.Official",
+            PatSrcKd.Canary => "Patch.Source.Canary",
+            PatSrcKd.ChtLib => "Patch.Source.CheatLibrary",
+            PatSrcKd.Local => "Patch.Source.Local",
+            PatSrcKd.Custom => "Patch.Source.Custom",
+            PatSrcKd.Missing => "Patch.Source.Missing",
             _ => "Patch.Source.Unknown"
         };
     }
 
-    private static string HandlingKey(Mdl.PatRisk risk)
+    private static string Handling(Mdl.PatRisk risk)
     {
         return risk switch
         {
@@ -642,7 +642,7 @@ public sealed class PatchItemVm : VmBase
         };
     }
 
-    private static string HandlingToneFor(Mdl.PatRisk risk)
+    private static string HandTone(Mdl.PatRisk risk)
     {
         return risk switch
         {
@@ -655,11 +655,11 @@ public sealed class PatchItemVm : VmBase
         };
     }
 
-    private string NoteTagKey()
+    private string TagKey()
     {
         var notes = Match.Patch.Notes ?? string.Empty;
 
-        if (Match.Patch.Risk == Mdl.PatRisk.Fps60 || ContainsAny(notes, "fps", "framerate", "frame rate"))
+        if (Match.Patch.Risk == Mdl.PatRisk.Fps60 || Contains(notes, "fps", "framerate", "frame rate"))
         {
             return "NoteTag.FpsTiming";
         }
@@ -669,12 +669,12 @@ public sealed class PatchItemVm : VmBase
             return "NoteTag.Performance";
         }
 
-        if (Match.Patch.Risk == Mdl.PatRisk.Fix || ContainsAny(notes, "color", "flicker", "rendering", "graphics", "visual"))
+        if (Match.Patch.Risk == Mdl.PatRisk.Fix || Contains(notes, "color", "flicker", "rendering", "graphics", "visual"))
         {
             return "NoteTag.VisualFix";
         }
 
-        if (Match.Patch.Risk == Mdl.PatRisk.SafeFix || ContainsAny(notes, "fix", "fixes", "resolves"))
+        if (Match.Patch.Risk == Mdl.PatRisk.SafeFix || Contains(notes, "fix", "fixes", "resolves"))
         {
             return "NoteTag.Fix";
         }
@@ -684,7 +684,7 @@ public sealed class PatchItemVm : VmBase
             return "NoteTag.CompatibilityWarning";
         }
 
-        if (ContainsAny(notes, "optional"))
+        if (Contains(notes, "optional"))
         {
             return "NoteTag.Optional";
         }
@@ -692,12 +692,12 @@ public sealed class PatchItemVm : VmBase
         return "NoteTag.WikiNote";
     }
 
-    private static bool ContainsAny(string value, params string[] needles)
+    private static bool Contains(string value, params string[] needles)
     {
         return needles.Any(needle => value.Contains(needle, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static string FormatTechInline(string value)
+    private static string FmtTech(string value)
     {
         if (!UiText.IsRtl || string.IsNullOrWhiteSpace(value))
         {
@@ -707,7 +707,7 @@ public sealed class PatchItemVm : VmBase
         return "\u200E" + value + "\u200E";
     }
 
-    private static string JoinOrDash(IEnumerable<string> values)
+    private static string JoinOr(IEnumerable<string> values)
     {
         var array = values
             .Where(value => !string.IsNullOrWhiteSpace(value))

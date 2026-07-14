@@ -8,7 +8,7 @@ using R3Config.Mdl;
 
 namespace R3Config.Vm;
 
-public sealed class HCanaryHashVm(HCanHash hash) : VmBase
+public sealed class HashVm(HCanHash hash) : VmBase
 {
     public HCanHash Hash { get; } = hash;
     public string Key => Hash.Key;
@@ -16,253 +16,253 @@ public sealed class HCanaryHashVm(HCanHash hash) : VmBase
     public string Source => $"{Path.GetFileName(Hash.SrcPath)}:{Hash.Line}";
 }
 
-public sealed class HCanaryGameTargetVm : VmBase
+public sealed class TgtVm : VmBase
 {
-    private string _gameName = string.Empty;
+    private string _gmName = string.Empty;
     private string _gameId = string.Empty;
-    private string _gameVersion = string.Empty;
+    private string _gameVer = string.Empty;
     private string _error = string.Empty;
 
-    public string GameName { get => _gameName; set => SetProperty(ref _gameName, value); }
-    public string GameId { get => _gameId; set => SetProperty(ref _gameId, value); }
-    public string GameVersion { get => _gameVersion; set => SetProperty(ref _gameVersion, value); }
-    public string Error { get => _error; set => SetProperty(ref _error, value); }
+    public string GameName { get => _gmName; set => Set(ref _gmName, value); }
+    public string GameId { get => _gameId; set => Set(ref _gameId, value); }
+    public string GameVer { get => _gameVer; set => Set(ref _gameVer, value); }
+    public string Error { get => _error; set => Set(ref _error, value); }
 
     public HCanTgt ToModel() => new()
     {
-        GameName = GameName, GameId = GameId, GameVer = GameVersion
+        GameName = GameName, GameId = GameId, GameVer = GameVer
     };
 
-    public static HCanaryGameTargetVm From(HCanTgt value) => new()
+    public static TgtVm From(HCanTgt value) => new()
     {
-        GameName = value.GameName, GameId = value.GameId, GameVersion = value.GameVer
+        GameName = value.GameName, GameId = value.GameId, GameVer = value.GameVer
     };
 }
 
-public sealed class HCanaryInstructionVm : VmBase
+public sealed class InsVm : VmBase
 {
-    private string _operation = "be32";
+    private string _op = "be32";
     private string _address = "0x00000000";
     private string _value = "0x60000000";
     private string _error = string.Empty;
 
-    public string Operation { get => _operation; set => SetProperty(ref _operation, value); }
-    public string Address { get => _address; set => SetProperty(ref _address, value); }
-    public string Value { get => _value; set => SetProperty(ref _value, value); }
-    public string Error { get => _error; set => SetProperty(ref _error, value); }
+    public string Op { get => _op; set => Set(ref _op, value); }
+    public string Address { get => _address; set => Set(ref _address, value); }
+    public string Value { get => _value; set => Set(ref _value, value); }
+    public string Error { get => _error; set => Set(ref _error, value); }
 
     public HCanInst ToModel() => new()
     {
-        Op = Operation, Address = Address, Value = Value
+        Op = Op, Address = Address, Value = Value
     };
 
-    public static HCanaryInstructionVm From(HCanInst value) => new()
+    public static InsVm From(HCanInst value) => new()
     {
-        Operation = value.Op, Address = value.Address, Value = value.Value
+        Op = value.Op, Address = value.Address, Value = value.Value
     };
 
-    public HCanaryInstructionVm Clone() => From(ToModel());
+    public InsVm Clone() => From(ToModel());
 }
 
-public sealed class HCanaryAnchorVm : VmBase
+public sealed class AncVm : VmBase
 {
     private string _name = string.Empty;
     private string _error = string.Empty;
-    public string Name { get => _name; set => SetProperty(ref _name, value); }
-    public string Error { get => _error; set => SetProperty(ref _error, value); }
-    public ObservableCollection<HCanaryInstructionVm> Instructions { get; } = [];
+    public string Name { get => _name; set => Set(ref _name, value); }
+    public string Error { get => _error; set => Set(ref _error, value); }
+    public ObservableCollection<InsVm> Ins { get; } = [];
 
     public HCanAnc ToModel() => new()
     {
-        Name = Name, Ins = Instructions.Select(item => item.ToModel()).ToList()
+        Name = Name, Ins = Ins.Select(item => item.ToModel()).ToList()
     };
 
-    public static HCanaryAnchorVm From(HCanAnc value)
+    public static AncVm From(HCanAnc value)
     {
-        var vm = new HCanaryAnchorVm { Name = value.Name };
-        foreach (var item in value.Ins) vm.Instructions.Add(HCanaryInstructionVm.From(item));
+        var vm = new AncVm { Name = value.Name };
+        foreach (var item in value.Ins) vm.Ins.Add(InsVm.From(item));
         return vm;
     }
 }
 
-public sealed partial class HCanaryVm : VmBase
+public sealed partial class HCanVm : VmBase
 {
-    private readonly PatAuth _authoring = new();
-    private readonly HashExt _hashReader = new();
+    private readonly PatAuth _auth = new();
+    private readonly HashExt _reader = new();
     private readonly AppFlow _flow;
-    private readonly Func<bool> _isRpcs3Running;
+    private readonly Func<bool> _isRun;
     private readonly Func<string, string, bool> _confirm;
     private R3Inst? _install;
-    private R3Game? _contextGame;
-    private HCanaryHashVm? _selectedHash;
-    private HCanaryGameTargetVm? _selectedGameTarget;
-    private HCanaryInstructionVm? _selectedInstruction;
-    private HCanaryAnchorVm? _selectedAnchor;
-    private HCanaryInstructionVm? _selectedAnchorInstruction;
-    private HCanStor? _selectedStoredPatch;
-    private string? _currentIdentity;
+    private R3Game? _game;
+    private HashVm? _selHash;
+    private TgtVm? _gameTgt;
+    private InsVm? _selIns;
+    private AncVm? _selAnc;
+    private InsVm? _ancIns;
+    private HCanStor? _selPat;
+    private string? _curId;
     private bool _dirty;
-    private bool _suppressRefresh;
-    private string _patchType = "PPU";
-    private bool _isExperimental;
-    private string _executableHash = string.Empty;
-    private string _patchName = string.Empty;
+    private bool _noRfsh;
+    private string _patType = "PPU";
+    private bool _isExp;
+    private string _exeHash = string.Empty;
+    private string _patName = string.Empty;
     private string _author = string.Empty;
     private string _notes = string.Empty;
     private string _group = string.Empty;
-    private string _patchVersion = "1.0";
+    private string _patVer = "1.0";
     private DraftSt _status = DraftSt.Draft;
-    private string _yamlPreview = string.Empty;
-    private string _validationSummary = string.Empty;
-    private string _statusMessage = string.Empty;
-    private string _logStatus = string.Empty;
-    private string _hashError = string.Empty;
-    private string _patchNameError = string.Empty;
-    private string _patchVersionError = string.Empty;
+    private string _preview = string.Empty;
+    private string _vldSum = string.Empty;
+    private string _msg = string.Empty;
+    private string _logStat = string.Empty;
+    private string _hashErr = string.Empty;
+    private string _nameErr = string.Empty;
+    private string _verErr = string.Empty;
     private bool _isValid;
     private bool _isBusy;
-    private bool _isRpcs3RunningPresentation;
+    private bool _runUi;
 
-    public HCanaryVm()
+    public HCanVm()
         : this(new AppFlow())
     {
     }
 
-    public HCanaryVm(
+    public HCanVm(
         AppFlow flow,
         Func<bool>? isRpcs3Running = null,
         Func<string, string, bool>? confirm = null)
     {
         _flow = flow ?? throw new ArgumentNullException(nameof(flow));
-        _isRpcs3Running = isRpcs3Running ??
+        _isRun = isRpcs3Running ??
             InstSvc.IsR3;
         _confirm = confirm ?? UiDlg.Confirm;
 
-        NewCommand = new RelayCommand(NewDraft);
-        ReadLogCommand = new RelayCommand(ReadLog, () => _install is not null);
-        UseSelectedGameCommand = new RelayCommand(AddCurrentGame, () => _contextGame is not null);
-        AddGameCommand = new RelayCommand(() => AddGame(new HCanaryGameTargetVm()));
-        DeleteGameCommand = new RelayCommand(DeleteGame, () => SelectedGameTarget is not null && Games.Count > 1);
-        AddInstructionCommand = new RelayCommand(() => AddInstruction(new HCanaryInstructionVm()));
-        DeleteInstructionCommand = new RelayCommand(DeleteInstruction, () => SelectedInstruction is not null);
-        DuplicateInstructionCommand = new RelayCommand(DuplicateInstruction, () => SelectedInstruction is not null);
-        MoveInstructionUpCommand = new RelayCommand(() => MoveInstruction(-1), () => CanMoveInstruction(-1));
-        MoveInstructionDownCommand = new RelayCommand(() => MoveInstruction(1), () => CanMoveInstruction(1));
-        AddAnchorCommand = new RelayCommand(AddAnchor);
-        DeleteAnchorCommand = new RelayCommand(DeleteAnchor, () => SelectedAnchor is not null);
-        AddAnchorInstructionCommand = new RelayCommand(AddAnchorInstruction, () => SelectedAnchor is not null);
-        DeleteAnchorInstructionCommand = new RelayCommand(DeleteAnchorInstruction, () => SelectedAnchorInstruction is not null && SelectedAnchor is not null);
-        AddAnchorLoadCommand = new RelayCommand(AddAnchorLoad, () => SelectedAnchor is not null);
-        OpenStoredCommand = new RelayCommand(OpenStored, () => SelectedStoredPatch is not null);
-        SaveCommand = new RelayCommand(() => Save(false), () => IsValid && CanMutateCurrentInstall);
-        SaveAsCommand = new RelayCommand(() => Save(true), () => IsValid && CanMutateCurrentInstall);
-        DeleteStoredCommand = new RelayCommand(DeleteStored, () => CanMutateCurrentInstall && _currentIdentity is not null);
-        OpenPatchesFolderCommand = new RelayCommand(OpenPatchesFolder, () => _install is not null);
-        OpenImportedFileCommand = new RelayCommand(OpenImportedFile, () => _install is not null && File.Exists(ImportedPatchPath));
-        OpenRpcs3Command = new RelayCommand(OpenRpcs3, () => _install is not null && File.Exists(_install.ExePath));
-        CopyYamlCommand = new RelayCommand(() => UiDlg.CopyText(YamlPreview), () => !string.IsNullOrWhiteSpace(YamlPreview));
-        Games.CollectionChanged += (_, _) => DraftCollectionChanged();
-        Instructions.CollectionChanged += (_, _) => DraftCollectionChanged();
-        Anchors.CollectionChanged += (_, _) => DraftCollectionChanged();
+        NewCmd = new RelayCmd(NewDraft);
+        ReadCmd = new RelayCmd(ReadLog, () => _install is not null);
+        UseCmd = new RelayCmd(AddCur, () => _game is not null);
+        AddGmCmd = new RelayCmd(() => AddGame(new TgtVm()));
+        DelGmCmd = new RelayCmd(DelGame, () => GameTgt is not null && Games.Count > 1);
+        AddICmd = new RelayCmd(() => AddIns(new InsVm()));
+        DelICmd = new RelayCmd(DelIns, () => SelIns is not null);
+        DupICmd = new RelayCmd(DupIns, () => SelIns is not null);
+        InsUp = new RelayCmd(() => MoveIns(-1), () => CanMove(-1));
+        InsDown = new RelayCmd(() => MoveIns(1), () => CanMove(1));
+        AddACmd = new RelayCmd(AddAnc);
+        DelACmd = new RelayCmd(DelAnc, () => SelAnc is not null);
+        AncAdd = new RelayCmd(AddAncI, () => SelAnc is not null);
+        AncDel = new RelayCmd(DelAncI, () => AncIns is not null && SelAnc is not null);
+        AncLoad = new RelayCmd(LoadAnc, () => SelAnc is not null);
+        OpenCmd = new RelayCmd(OpenSave, () => SelPat is not null);
+        SaveCmd = new RelayCmd(() => Save(false), () => IsValid && CanMut);
+        SaveAs = new RelayCmd(() => Save(true), () => IsValid && CanMut);
+        DelCmd = new RelayCmd(DelSave, () => CanMut && _curId is not null);
+        PatDir = new RelayCmd(OpenDir, () => _install is not null);
+        ImpFile = new RelayCmd(OpenFile, () => _install is not null && File.Exists(PatPath));
+        R3Cmd = new RelayCmd(OpenR3, () => _install is not null && File.Exists(_install.ExePath));
+        CopyCmd = new RelayCmd(() => UiDlg.CopyText(Preview), () => !string.IsNullOrWhiteSpace(Preview));
+        Games.CollectionChanged += (_, _) => OnDraft();
+        Ins.CollectionChanged += (_, _) => OnDraft();
+        Anchors.CollectionChanged += (_, _) => OnDraft();
         NewDraft();
     }
 
-    public event EventHandler? CatalogChanged;
+    public event EventHandler? CatChg;
 
-    public IReadOnlyList<string> PatchTypes { get; } = ["PPU", "SPU"];
-    public IReadOnlyList<string> Operations => PatAuth.Op;
+    public IReadOnlyList<string> PatTypes { get; } = ["PPU", "SPU"];
+    public IReadOnlyList<string> Op => PatAuth.Op;
     public IReadOnlyList<DraftSt> Statuses { get; } = Enum.GetValues<DraftSt>();
-    public ObservableCollection<HCanaryHashVm> Hashes { get; } = [];
-    public ObservableCollection<HCanaryGameTargetVm> Games { get; } = [];
-    public ObservableCollection<HCanaryInstructionVm> Instructions { get; } = [];
-    public ObservableCollection<HCanaryAnchorVm> Anchors { get; } = [];
-    public ObservableCollection<HCanStor> StoredPatches { get; } = [];
+    public ObservableCollection<HashVm> Hashes { get; } = [];
+    public ObservableCollection<TgtVm> Games { get; } = [];
+    public ObservableCollection<InsVm> Ins { get; } = [];
+    public ObservableCollection<AncVm> Anchors { get; } = [];
+    public ObservableCollection<HCanStor> Patches { get; } = [];
 
-    public RelayCommand NewCommand { get; }
-    public RelayCommand ReadLogCommand { get; }
-    public RelayCommand UseSelectedGameCommand { get; }
-    public RelayCommand AddGameCommand { get; }
-    public RelayCommand DeleteGameCommand { get; }
-    public RelayCommand AddInstructionCommand { get; }
-    public RelayCommand DeleteInstructionCommand { get; }
-    public RelayCommand DuplicateInstructionCommand { get; }
-    public RelayCommand MoveInstructionUpCommand { get; }
-    public RelayCommand MoveInstructionDownCommand { get; }
-    public RelayCommand AddAnchorCommand { get; }
-    public RelayCommand DeleteAnchorCommand { get; }
-    public RelayCommand AddAnchorInstructionCommand { get; }
-    public RelayCommand DeleteAnchorInstructionCommand { get; }
-    public RelayCommand AddAnchorLoadCommand { get; }
-    public RelayCommand OpenStoredCommand { get; }
-    public RelayCommand SaveCommand { get; }
-    public RelayCommand SaveAsCommand { get; }
-    public RelayCommand DeleteStoredCommand { get; }
-    public RelayCommand OpenPatchesFolderCommand { get; }
-    public RelayCommand OpenImportedFileCommand { get; }
-    public RelayCommand OpenRpcs3Command { get; }
-    public RelayCommand CopyYamlCommand { get; }
+    public RelayCmd NewCmd { get; }
+    public RelayCmd ReadCmd { get; }
+    public RelayCmd UseCmd { get; }
+    public RelayCmd AddGmCmd { get; }
+    public RelayCmd DelGmCmd { get; }
+    public RelayCmd AddICmd { get; }
+    public RelayCmd DelICmd { get; }
+    public RelayCmd DupICmd { get; }
+    public RelayCmd InsUp { get; }
+    public RelayCmd InsDown { get; }
+    public RelayCmd AddACmd { get; }
+    public RelayCmd DelACmd { get; }
+    public RelayCmd AncAdd { get; }
+    public RelayCmd AncDel { get; }
+    public RelayCmd AncLoad { get; }
+    public RelayCmd OpenCmd { get; }
+    public RelayCmd SaveCmd { get; }
+    public RelayCmd SaveAs { get; }
+    public RelayCmd DelCmd { get; }
+    public RelayCmd PatDir { get; }
+    public RelayCmd ImpFile { get; }
+    public RelayCmd R3Cmd { get; }
+    public RelayCmd CopyCmd { get; }
 
-    public string PatchType { get => _patchType; set { if (SetProperty(ref _patchType, value)) RefreshDraft(); } }
-    public bool IsExperimental
+    public string PatType { get => _patType; set { if (Set(ref _patType, value)) LoadDrft(); } }
+    public bool IsExp
     {
-        get => _isExperimental;
+        get => _isExp;
         set
         {
-            if (SetProperty(ref _isExperimental, value))
+            if (Set(ref _isExp, value))
             {
-                OnPropertyChanged(nameof(PatchCategory));
-                RefreshDraft();
+                OnChange(nameof(Category));
+                LoadDrft();
             }
         }
     }
-    public string PatchCategory
+    public string Category
     {
-        get => IsExperimental ? "Experimental" : "Regular";
-        set => IsExperimental = value == "Experimental";
+        get => IsExp ? "Experimental" : "Regular";
+        set => IsExp = value == "Experimental";
     }
-    public string ExecutableHash { get => _executableHash; set { if (SetProperty(ref _executableHash, value)) RefreshDraft(); } }
-    public string PatchName { get => _patchName; set { if (SetProperty(ref _patchName, value)) RefreshDraft(); } }
-    public string Author { get => _author; set { if (SetProperty(ref _author, value)) RefreshDraft(); } }
-    public string Notes { get => _notes; set { if (SetProperty(ref _notes, value)) RefreshDraft(); } }
-    public string Group { get => _group; set { if (SetProperty(ref _group, value)) RefreshDraft(); } }
-    public string PatchVersion { get => _patchVersion; set { if (SetProperty(ref _patchVersion, value)) RefreshDraft(); } }
-    public DraftSt Status { get => _status; set => SetProperty(ref _status, value); }
-    public string YamlPreview { get => _yamlPreview; private set => SetProperty(ref _yamlPreview, value); }
-    public string ValidationSummary { get => _validationSummary; private set => SetProperty(ref _validationSummary, value); }
-    public string StatusMessage { get => _statusMessage; private set => SetProperty(ref _statusMessage, value); }
-    public string LogStatus { get => _logStatus; private set => SetProperty(ref _logStatus, value); }
-    public string HashError { get => _hashError; private set => SetProperty(ref _hashError, value); }
-    public string PatchNameError { get => _patchNameError; private set => SetProperty(ref _patchNameError, value); }
-    public string PatchVersionError { get => _patchVersionError; private set => SetProperty(ref _patchVersionError, value); }
-    public bool IsValid { get => _isValid; private set { if (SetProperty(ref _isValid, value)) RaiseCommandStates(); } }
+    public string ExeHash { get => _exeHash; set { if (Set(ref _exeHash, value)) LoadDrft(); } }
+    public string PatName { get => _patName; set { if (Set(ref _patName, value)) LoadDrft(); } }
+    public string Author { get => _author; set { if (Set(ref _author, value)) LoadDrft(); } }
+    public string Notes { get => _notes; set { if (Set(ref _notes, value)) LoadDrft(); } }
+    public string Group { get => _group; set { if (Set(ref _group, value)) LoadDrft(); } }
+    public string PatVer { get => _patVer; set { if (Set(ref _patVer, value)) LoadDrft(); } }
+    public DraftSt Status { get => _status; set => Set(ref _status, value); }
+    public string Preview { get => _preview; private set => Set(ref _preview, value); }
+    public string VldSum { get => _vldSum; private set => Set(ref _vldSum, value); }
+    public string Msg { get => _msg; private set => Set(ref _msg, value); }
+    public string LogStat { get => _logStat; private set => Set(ref _logStat, value); }
+    public string HashErr { get => _hashErr; private set => Set(ref _hashErr, value); }
+    public string NameErr { get => _nameErr; private set => Set(ref _nameErr, value); }
+    public string VerErr { get => _verErr; private set => Set(ref _verErr, value); }
+    public bool IsValid { get => _isValid; private set { if (Set(ref _isValid, value)) RaiseCmd(); } }
     public bool IsDirty => _dirty;
-    public bool CanMutateCurrentInstall =>
+    public bool CanMut =>
         _install is not null &&
         !_isBusy &&
-        !_isRpcs3RunningPresentation;
-    public bool HasHashes => Hashes.Count > 0;
-    public string Rpcs3Path => _install?.RootPath ?? UiText.T("HCanary.Error.Rpcs3Missing");
+        !_runUi;
+    public bool HasHash => Hashes.Count > 0;
+    public string R3Path => _install?.RootPath ?? UiText.GetText("HCanary.Error.Rpcs3Missing");
     public string LogPath => _install is null ? string.Empty : Path.Combine(_install.RootPath, "RPCS3.log");
-    public string ImportedPatchPath => _install is null ? string.Empty : Path.Combine(_install.PatPath, "imported_patch.yml");
-    public string CurrentGameName => _contextGame?.Title ?? UiText.T("HCanary.Error.GameMissing");
-    public string CurrentGameId => _contextGame?.Serial ?? "—";
-    public string CurrentGameVersion => _contextGame?.Version ?? "—";
-    public string DraftStateText => UiText.T($"HCanary.DraftStatus.{Status}");
+    public string PatPath => _install is null ? string.Empty : Path.Combine(_install.PatPath, "imported_patch.yml");
+    public string GameName => _game?.Title ?? UiText.GetText("HCanary.Error.GameMissing");
+    public string GameId => _game?.Serial ?? "—";
+    public string GameVer => _game?.Version ?? "—";
+    public string DraftTxt => UiText.GetText($"HCanary.DraftStatus.{Status}");
 
-    public HCanaryHashVm? SelectedHash
+    public HashVm? SelHash
     {
-        get => _selectedHash;
+        get => _selHash;
         set
         {
-            if (!SetProperty(ref _selectedHash, value) || value is null) return;
-            ExecutableHash = value.Key;
-            PatchType = value.Kind;
+            if (!Set(ref _selHash, value) || value is null) return;
+            ExeHash = value.Key;
+            PatType = value.Kind;
         }
     }
 
-    public HCanaryGameTargetVm? SelectedGameTarget { get => _selectedGameTarget; set { SetProperty(ref _selectedGameTarget, value); RaiseCommandStates(); } }
-    public HCanaryInstructionVm? SelectedInstruction { get => _selectedInstruction; set { SetProperty(ref _selectedInstruction, value); RaiseCommandStates(); } }
-    public HCanaryAnchorVm? SelectedAnchor { get => _selectedAnchor; set { SetProperty(ref _selectedAnchor, value); SelectedAnchorInstruction = null; RaiseCommandStates(); } }
-    public HCanaryInstructionVm? SelectedAnchorInstruction { get => _selectedAnchorInstruction; set { SetProperty(ref _selectedAnchorInstruction, value); RaiseCommandStates(); } }
-    public HCanStor? SelectedStoredPatch { get => _selectedStoredPatch; set { SetProperty(ref _selectedStoredPatch, value); RaiseCommandStates(); } }
+    public TgtVm? GameTgt { get => _gameTgt; set { Set(ref _gameTgt, value); RaiseCmd(); } }
+    public InsVm? SelIns { get => _selIns; set { Set(ref _selIns, value); RaiseCmd(); } }
+    public AncVm? SelAnc { get => _selAnc; set { Set(ref _selAnc, value); AncIns = null; RaiseCmd(); } }
+    public InsVm? AncIns { get => _ancIns; set { Set(ref _ancIns, value); RaiseCmd(); } }
+    public HCanStor? SelPat { get => _selPat; set { Set(ref _selPat, value); RaiseCmd(); } }
 }

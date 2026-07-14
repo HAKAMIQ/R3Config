@@ -4,14 +4,14 @@ using System.Windows.Input;
 
 namespace R3Config.View;
 
-public partial class AdvancedDialog : Window
+public partial class AdvDlg : Window
 {
-    public AdvancedDialog()
+    public AdvDlg()
     {
         InitializeComponent();
     }
 
-    private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void DragWin(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton != MouseButton.Left)
         {
@@ -36,7 +36,7 @@ public partial class AdvancedDialog : Window
         }
     }
 
-    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    private void CloseWin(object sender, RoutedEventArgs e)
     {
         Close();
     }

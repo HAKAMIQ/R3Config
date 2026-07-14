@@ -98,7 +98,7 @@ public sealed class PatCat(
                     importedPath,
                     Exists: true,
                     Loaded: false,
-                    EntryCount: 0,
+                    EntNum: 0,
                     read.Error));
             }
         }
@@ -110,7 +110,7 @@ public sealed class PatCat(
                 importedPath,
                 Exists: false,
                 Loaded: false,
-                EntryCount: 0));
+                EntNum: 0));
         }
 
         foreach (var titleSpecificPath in titleSpecificPaths)
@@ -171,7 +171,7 @@ public sealed class PatCat(
                             bundledPath,
                             Exists: true,
                             Loaded: false,
-                            EntryCount: 0,
+                            EntNum: 0,
                             read.Error));
                     }
                 }
@@ -186,7 +186,7 @@ public sealed class PatCat(
                         bundledPath,
                         Exists: true,
                         Loaded: false,
-                        EntryCount: 0,
+                        EntNum: 0,
                         normalized.Error));
                 }
             }
@@ -202,7 +202,7 @@ public sealed class PatCat(
                     bundledPath,
                     Exists: true,
                     Loaded: false,
-                    EntryCount: 0,
+                    EntNum: 0,
                     ex.Message));
             }
         }
@@ -214,7 +214,7 @@ public sealed class PatCat(
                 bundledPath,
                 Exists: false,
                 Loaded: false,
-                EntryCount: 0));
+                EntNum: 0));
         }
 
         sources.Add(ReadFile(
@@ -309,7 +309,7 @@ public sealed class PatCat(
                 path,
                 Exists: false,
                 Loaded: false,
-                EntryCount: 0);
+                EntNum: 0);
         }
 
         try
@@ -338,7 +338,7 @@ public sealed class PatCat(
                 path,
                 Exists: true,
                 Loaded: false,
-                EntryCount: 0,
+                EntNum: 0,
                 read.Error);
         }
         catch (Exception ex) when (
@@ -353,7 +353,7 @@ public sealed class PatCat(
                 path,
                 Exists: true,
                 Loaded: false,
-                EntryCount: 0,
+                EntNum: 0,
                 ex.Message);
         }
     }

@@ -4,13 +4,13 @@ using System.Windows.Markup;
 
 namespace R3Config.Lang;
 
-public sealed class TextExtension : MarkupExtension
+public sealed class TextExt : MarkupExtension
 {
-    public TextExtension()
+    public TextExt()
     {
     }
 
-    public TextExtension(string key)
+    public TextExt(string key)
     {
         Key = key;
     }

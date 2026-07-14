@@ -2,9 +2,9 @@ using System.Windows.Controls;
 
 namespace R3Config.Ctrl;
 
-public partial class HCanaryView : UserControl
+public partial class HCanView : UserControl
 {
-    public HCanaryView()
+    public HCanView()
     {
         InitializeComponent();
     }

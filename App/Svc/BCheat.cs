@@ -119,7 +119,7 @@ public sealed class ChtBndl
                     string.Empty,
                     null,
                     0,
-                    UiText.T("Patch.CheatLibrary.NoPrepare"));
+                    UiText.GetText("Patch.CheatLibrary.NoPrepare"));
             }
 
             if (!TryTgt(
@@ -138,7 +138,7 @@ public sealed class ChtBndl
             {
                 return Failure(
                     targetPath,
-                    UiText.T("Patch.CheatLibrary.Missing"));
+                    UiText.GetText("Patch.CheatLibrary.Missing"));
             }
 
             List<PatMatch> selections =
@@ -159,7 +159,7 @@ public sealed class ChtBndl
                 {
                     return Failure(
                         targetPath,
-                        UiText.T(
+                        UiText.GetText(
                             "Patch.CheatLibrary.UnmanagedConflict"));
                 }
 
@@ -173,7 +173,7 @@ public sealed class ChtBndl
                     return Failure(
                         targetPath,
                         existingRead.Error ??
-                        UiText.T(
+                        UiText.GetText(
                             "Patch.ImportCanaryInvalidYaml"));
                 }
 
@@ -235,7 +235,7 @@ public sealed class ChtBndl
                 return Failure(
                     targetPath,
                     compiled.Error ??
-                    UiText.T(
+                    UiText.GetText(
                         "Patch.ImportCanaryInvalidYaml"));
             }
 
@@ -254,7 +254,7 @@ public sealed class ChtBndl
                     targetPath,
                     null,
                     compiled.SelNum,
-                    UiText.F(
+                    UiText.Fmt(
                         "Patch.CheatLibrary.Ready",
                         compiled.SelNum));
             }
@@ -283,7 +283,7 @@ public sealed class ChtBndl
                     PatSrc.ManCht,
                     compiled.SelNum),
                 compiled.SelNum,
-                UiText.F(
+                UiText.Fmt(
                     "Patch.CheatLibrary.Prepared",
                     bundledSelections.Length,
                     compiled.SelNum));
@@ -362,7 +362,7 @@ public sealed class ChtBndl
 
         if (string.IsNullOrWhiteSpace(patchesPath))
         {
-            error = UiText.T(
+            error = UiText.GetText(
                 "Patch.ImportCanaryNoRpcs3Path");
 
             return false;
@@ -397,7 +397,7 @@ public sealed class ChtBndl
         if (string.IsNullOrWhiteSpace(parent) ||
             !Directory.Exists(parent))
         {
-            error = UiText.T(
+            error = UiText.GetText(
                 "Patch.ImportCanaryNoRpcs3Path");
 
             return false;
@@ -407,7 +407,7 @@ public sealed class ChtBndl
                 targetPath,
                 patchesDirectory))
         {
-            error = UiText.T(
+            error = UiText.GetText(
                 "Patch.ImportCanaryUnsafePath");
 
             return false;

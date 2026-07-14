@@ -85,13 +85,13 @@ public sealed class UiLaySt
 
     public static UiLaySt FromLang(string? language)
     {
-        var normalized = UiText.NormalizeLang(language);
+        var normalized = UiText.NormLang(language);
 
         return new UiLaySt(
             normalized,
             string.Equals(
                 normalized,
-                UiText.ArabicLang,
+                UiText.ArabLang,
                 StringComparison.Ordinal),
             XmlLanguage.GetLanguage(normalized),
             new GridLength(304, GridUnitType.Pixel),
@@ -102,7 +102,7 @@ public sealed class UiLaySt
 public static class UiLaySvc
 {
     public static UiLaySt Current =>
-        UiLaySt.FromLang(UiText.CurrentLang);
+        UiLaySt.FromLang(UiText.CurLang);
 
     public static void Apply()
     {
@@ -144,7 +144,7 @@ public static class UiLaySvc
             HorizontalAlignment.Left;
 
         app.Resources["TechnicalText.Language"] =
-            XmlLanguage.GetLanguage(UiText.EnglishLang);
+            XmlLanguage.GetLanguage(UiText.EnLang);
 
         app.Resources["App.ShellFlowDirection"] =
             layout.ShFlow;

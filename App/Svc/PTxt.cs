@@ -60,7 +60,7 @@ public static class PatText
     {
         return Localize(
             raw,
-            UiText.T("Plan.NoteTooltipTitle"),
+            UiText.GetText("Plan.NoteTooltipTitle"),
             TypeKey(risk));
     }
 
@@ -69,7 +69,7 @@ public static class PatText
     {
         return Localize(
             raw,
-            UiText.T("Patch.NoteTooltipTitle"),
+            UiText.GetText("Patch.NoteTooltipTitle"),
             RawKey(raw));
     }
 
@@ -78,7 +78,7 @@ public static class PatText
     {
         return Localize(
             raw,
-            UiText.T("Patch.Title"),
+            UiText.GetText("Patch.Title"),
             RawKey(raw));
     }
 
@@ -87,14 +87,14 @@ public static class PatText
         string title,
         string typeKey)
     {
-        var type = UiText.T(typeKey);
+        var type = UiText.GetText(typeKey);
 
         if (string.IsNullOrWhiteSpace(raw))
         {
             return new NoteText(
                 title,
                 type,
-                UiText.T("Ui.EmptyValue"),
+                UiText.GetText("Ui.EmptyValue"),
                 string.Empty,
                 false);
         }
@@ -110,7 +110,7 @@ public static class PatText
             return new NoteText(
                 title,
                 type,
-                UiText.T(bodyKey),
+                UiText.GetText(bodyKey),
                 string.Empty,
                 false);
         }
@@ -119,7 +119,7 @@ public static class PatText
                 lookupText,
                 out var exactTypeKey))
         {
-            var exactType = UiText.T(exactTypeKey);
+            var exactType = UiText.GetText(exactTypeKey);
 
             return new NoteText(
                 title,
@@ -134,9 +134,9 @@ public static class PatText
             return new NoteText(
                 title,
                 type,
-                UiText.T("Patch.ImportedDuplicateKeyReadable") +
+                UiText.GetText("Patch.ImportedDuplicateKeyReadable") +
                 Environment.NewLine +
-                UiText.T("Patch.ImportedDuplicateKeySuggestion"),
+                UiText.GetText("Patch.ImportedDuplicateKeySuggestion"),
                 string.Empty,
                 false);
         }
@@ -146,7 +146,7 @@ public static class PatText
             return new NoteText(
                 title,
                 type,
-                UiText.T("Patch.ImportedFileInvalid"),
+                UiText.GetText("Patch.ImportedFileInvalid"),
                 trimmedRaw,
                 true);
         }
@@ -156,9 +156,9 @@ public static class PatText
             return new NoteText(
                 title,
                 type,
-                UiText.T("Patch.DuplicateKeyReadable") +
+                UiText.GetText("Patch.DuplicateKeyReadable") +
                 Environment.NewLine +
-                UiText.T("Patch.DuplicateKeySuggestion"),
+                UiText.GetText("Patch.DuplicateKeySuggestion"),
                 trimmedRaw,
                 true);
         }
@@ -168,7 +168,7 @@ public static class PatText
             return new NoteText(
                 title,
                 type,
-                UiText.T("Patch.Localized.ParseError"),
+                UiText.GetText("Patch.Localized.ParseError"),
                 trimmedRaw,
                 true);
         }
@@ -182,7 +182,7 @@ public static class PatText
             return new NoteText(
                 title,
                 type,
-                UiText.T("Patch.Localized.UnsupportedPatchNote"),
+                UiText.GetText("Patch.Localized.UnsupportedPatchNote"),
                 trimmedRaw,
                 true);
         }

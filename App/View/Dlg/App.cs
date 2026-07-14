@@ -6,9 +6,9 @@ using R3Config.Lang;
 
 namespace R3Config.View.Dlg;
 
-public partial class AppDialog : Window
+public partial class AppDlg : Window
 {
-    public AppDialog(
+    public AppDlg(
         Window? owner,
         string title,
         string message,
@@ -23,23 +23,23 @@ public partial class AppDialog : Window
         Owner = owner;
         Title = title;
 
-        TitleText.Text = title;
-        MessageText.Text = message;
+        TitlTxt.Text = title;
+        MsgText.Text = message;
 
-        PrimaryButton.Content = isConfirm
-            ? UiText.T("Dialog.Yes")
-            : UiText.T("Dialog.Ok");
+        MainBtn.Content = isConfirm
+            ? UiText.GetText("Dialog.Yes")
+            : UiText.GetText("Dialog.Ok");
 
-        SecondaryButton.Content = isConfirm
-            ? UiText.T("Dialog.No")
-            : UiText.T("Dialog.Cancel");
+        AltBtn.Content = isConfirm
+            ? UiText.GetText("Dialog.No")
+            : UiText.GetText("Dialog.Cancel");
 
-        SecondaryButton.Visibility = isConfirm
+        AltBtn.Visibility = isConfirm
             ? Visibility.Visible
             : Visibility.Collapsed;
 
-        ApplyKind(kind);
-        ApplyTextDirection();
+        SetKind(kind);
+        SetFlow();
 
         KeyDown += (_, e) =>
         {
@@ -53,23 +53,23 @@ public partial class AppDialog : Window
         };
     }
 
-    private void ApplyTextDirection()
+    private void SetFlow()
     {
         var layout = UiLaySvc.Current;
 
-        ContentGrid.FlowDirection = layout.TextFlow;
-        ButtonPanel.FlowDirection = layout.TextFlow;
+        CntGrid.FlowDirection = layout.TextFlow;
+        Btns.FlowDirection = layout.TextFlow;
 
-        TitleText.FlowDirection = layout.TextFlow;
-        TitleText.TextAlignment = layout.TxtAlign;
-        TitleText.HorizontalAlignment = HorizontalAlignment.Stretch;
+        TitlTxt.FlowDirection = layout.TextFlow;
+        TitlTxt.TextAlignment = layout.TxtAlign;
+        TitlTxt.HorizontalAlignment = HorizontalAlignment.Stretch;
 
-        MessageText.FlowDirection = layout.TextFlow;
-        MessageText.TextAlignment = layout.TxtAlign;
-        MessageText.HorizontalAlignment = HorizontalAlignment.Stretch;
+        MsgText.FlowDirection = layout.TextFlow;
+        MsgText.TextAlignment = layout.TxtAlign;
+        MsgText.HorizontalAlignment = HorizontalAlignment.Stretch;
     }
 
-    private void ApplyKind(DlgKind kind)
+    private void SetKind(DlgKind kind)
     {
         var accent = (Brush)FindResource("AccentBrush");
         var warning = (Brush)FindResource("WarningBrush");
@@ -84,34 +84,34 @@ public partial class AppDialog : Window
             case DlgKind.Warning:
                 IconText.Text = "!";
                 IconText.Foreground = warning;
-                IconBadge.Background = warningSurface;
-                IconBadge.BorderBrush = warning;
+                IconBdg.Background = warningSurface;
+                IconBdg.BorderBrush = warning;
                 break;
 
             case DlgKind.Error:
                 IconText.Text = "×";
                 IconText.Foreground = danger;
-                IconBadge.Background = dangerSurface;
-                IconBadge.BorderBrush = danger;
+                IconBdg.Background = dangerSurface;
+                IconBdg.BorderBrush = danger;
                 break;
 
             case DlgKind.Confirm:
                 IconText.Text = "?";
                 IconText.Foreground = accent;
-                IconBadge.Background = infoSurface;
-                IconBadge.BorderBrush = accent;
+                IconBdg.Background = infoSurface;
+                IconBdg.BorderBrush = accent;
                 break;
 
             default:
                 IconText.Text = "i";
                 IconText.Foreground = accent;
-                IconBadge.Background = infoSurface;
-                IconBadge.BorderBrush = border;
+                IconBdg.Background = infoSurface;
+                IconBdg.BorderBrush = border;
                 break;
         }
     }
 
-    private void PrimaryButton_Click(
+    private void MainClk(
         object sender,
         RoutedEventArgs e)
     {
@@ -119,7 +119,7 @@ public partial class AppDialog : Window
         Close();
     }
 
-    private void SecondaryButton_Click(
+    private void AltClick(
         object sender,
         RoutedEventArgs e)
     {

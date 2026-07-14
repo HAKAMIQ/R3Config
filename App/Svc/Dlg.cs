@@ -21,8 +21,8 @@ public static class UiDlg
     {
         var dialog = new OpenFileDialog
         {
-            Filter = UiText.T("Picker.Rpcs3Filter"),
-            Title = UiText.T("Picker.Rpcs3Title"),
+            Filter = UiText.GetText("Picker.Rpcs3Filter"),
+            Title = UiText.GetText("Picker.Rpcs3Title"),
             CheckFileExists = true,
             CheckPathExists = true,
             Multiselect = false,
@@ -41,8 +41,8 @@ public static class UiDlg
     {
         var dialog = new OpenFileDialog
         {
-            Filter = UiText.T("Picker.WikiFilter"),
-            Title = UiText.T("Picker.WikiTitle"),
+            Filter = UiText.GetText("Picker.WikiFilter"),
+            Title = UiText.GetText("Picker.WikiTitle"),
             CheckFileExists = true,
             CheckPathExists = true,
             Multiselect = false,
@@ -58,9 +58,9 @@ public static class UiDlg
     {
         var dialog = new SaveFileDialog
         {
-            Filter = UiText.T("Picker.ExportCatFilter"),
-            Title = UiText.T("Picker.ExportCatTitle"),
-            FileName = UiText.T("Picker.ExportCatFileName"),
+            Filter = UiText.GetText("Picker.ExportCatFilter"),
+            Title = UiText.GetText("Picker.ExportCatTitle"),
+            FileName = UiText.GetText("Picker.ExportCatFileName"),
             AddExtension = true,
             CheckPathExists = true,
             OverwritePrompt = true,
@@ -119,7 +119,7 @@ public static class UiDlg
         DlgKind kind,
         bool isConfirm)
     {
-        var dialog = new AppDialog(
+        var dialog = new AppDlg(
             Owner(),
             title,
             message,

@@ -12,7 +12,7 @@ public partial class App : Application
         UiLaySvc.Apply();
         base.OnStartup(e);
 
-        var window = new MainWindow();
+        var window = new MainWin();
         MainWindow = window;
         window.Show();
     }

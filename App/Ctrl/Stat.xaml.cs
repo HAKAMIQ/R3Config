@@ -2,9 +2,9 @@ using System.Windows.Controls;
 
 namespace R3Config.Ctrl;
 
-public partial class StatusBarView : UserControl
+public partial class StatBar : UserControl
 {
-    public StatusBarView()
+    public StatBar()
     {
         InitializeComponent();
     }

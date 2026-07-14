@@ -72,7 +72,7 @@
 		<Setter Property="Margin" Value="0,4,10,0" />
 		<Setter Property="VerticalAlignment" Value="Top" />
 		<Style.Triggers>
-			<DataTrigger Binding="{Binding DataContext.IsRtlLanguage, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="True">
+			<DataTrigger Binding="{Binding DataContext.RtlLang, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="True">
 				<Setter Property="Margin" Value="10,4,0,0" />
 			</DataTrigger>
 		</Style.Triggers>
@@ -149,16 +149,16 @@
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="Thumb">
-					<Border x:Name="ThumbRoot"
+					<Border x:Name="Thumb"
                             Background="{TemplateBinding Background}"
                             CornerRadius="4"
                             Margin="2" />
 					<ControlTemplate.Triggers>
 						<Trigger Property="IsMouseOver" Value="True">
-							<Setter TargetName="ThumbRoot" Property="Background" Value="{StaticResource ScrollThumbHoverBrush}" />
+							<Setter TargetName="Thumb" Property="Background" Value="{StaticResource ScrollThumbHoverBrush}" />
 						</Trigger>
 						<Trigger Property="IsDragging" Value="True">
-							<Setter TargetName="ThumbRoot" Property="Background" Value="{StaticResource ScrollThumbPressedBrush}" />
+							<Setter TargetName="Thumb" Property="Background" Value="{StaticResource ScrollThumbPressedBrush}" />
 						</Trigger>
 					</ControlTemplate.Triggers>
 				</ControlTemplate>
@@ -284,7 +284,7 @@
 		</Style.Triggers>
 	</Style>
 
-	<Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+	<Style x:Key="MainBtn" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
 		<Setter Property="Background" Value="{StaticResource AccentBrush}" />
 		<Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
 		<Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
@@ -530,7 +530,7 @@
 												  TextElement.Foreground="{TemplateBinding Foreground}"
 												  IsHitTestVisible="False" />
 
-								<ToggleButton x:Name="DropDownToggle"
+								<ToggleButton x:Name="DropBtn"
 											  Grid.Column="1"
 											  Focusable="False"
 											  ClickMode="Press"
@@ -743,7 +743,7 @@
                                          VerticalAlignment="Center"
                                          Stretch="Uniform"
                                          Visibility="Collapsed"
-                                         x:Name="CheckGlyphHost">
+                                         x:Name="ChkGlyph">
 									<Path Data="M 1 5 L 4 8 L 9 2"
                                           Stroke="{StaticResource OnAccentBrush}"
                                           StrokeThickness="2"
@@ -751,7 +751,7 @@
                                           StrokeEndLineCap="Round"
                                           StrokeLineJoin="Round" />
 								</Viewbox>
-								<Rectangle x:Name="IndeterminateMark"
+								<Rectangle x:Name="IndMark"
                                            Width="8"
                                            Height="2"
                                            RadiusX="1"
@@ -763,7 +763,7 @@
 							</Grid>
 						</Border>
 
-						<ContentPresenter x:Name="CheckContent"
+						<ContentPresenter x:Name="ChkBody"
                                           Grid.Column="2"
                                           Margin="0"
                                           VerticalAlignment="Center"
@@ -773,22 +773,22 @@
 
 					<ControlTemplate.Triggers>
 						<Trigger Property="FlowDirection" Value="RightToLeft">
-							<Setter TargetName="CheckContent" Property="Margin" Value="0,0,8,0" />
+							<Setter TargetName="ChkBody" Property="Margin" Value="0,0,8,0" />
 						</Trigger>
 						<Trigger Property="FlowDirection" Value="LeftToRight">
-							<Setter TargetName="CheckContent" Property="Margin" Value="8,0,0,0" />
+							<Setter TargetName="ChkBody" Property="Margin" Value="8,0,0,0" />
 						</Trigger>
 
 						<Trigger Property="IsChecked" Value="True">
 							<Setter TargetName="Box" Property="Background" Value="{StaticResource AccentBrush}" />
 							<Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-							<Setter TargetName="CheckGlyphHost" Property="Visibility" Value="Visible" />
+							<Setter TargetName="ChkGlyph" Property="Visibility" Value="Visible" />
 						</Trigger>
 
 						<Trigger Property="IsChecked" Value="{x:Null}">
 							<Setter TargetName="Box" Property="Background" Value="{StaticResource AccentBrush}" />
 							<Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-							<Setter TargetName="IndeterminateMark" Property="Visibility" Value="Visible" />
+							<Setter TargetName="IndMark" Property="Visibility" Value="Visible" />
 						</Trigger>
 
 						<Trigger Property="IsMouseOver" Value="True">
@@ -850,7 +850,7 @@
                             VerticalAlignment="Center"
                             SnapsToDevicePixels="True">
 						<Grid>
-							<Viewbox x:Name="CheckGlyphHost"
+							<Viewbox x:Name="ChkGlyph"
                                      Width="11"
                                      Height="11"
                                      HorizontalAlignment="Center"
@@ -864,7 +864,7 @@
                                       StrokeEndLineCap="Round"
                                       StrokeLineJoin="Round" />
 							</Viewbox>
-							<Rectangle x:Name="IndeterminateMark"
+							<Rectangle x:Name="IndMark"
                                        Width="8"
                                        Height="2"
                                        RadiusX="1"
@@ -880,13 +880,13 @@
 						<Trigger Property="IsChecked" Value="True">
 							<Setter TargetName="Box" Property="Background" Value="{StaticResource AccentBrush}" />
 							<Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-							<Setter TargetName="CheckGlyphHost" Property="Visibility" Value="Visible" />
+							<Setter TargetName="ChkGlyph" Property="Visibility" Value="Visible" />
 						</Trigger>
 
 						<Trigger Property="IsChecked" Value="{x:Null}">
 							<Setter TargetName="Box" Property="Background" Value="{StaticResource AccentBrush}" />
 							<Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-							<Setter TargetName="IndeterminateMark" Property="Visibility" Value="Visible" />
+							<Setter TargetName="IndMark" Property="Visibility" Value="Visible" />
 						</Trigger>
 
 						<Trigger Property="IsMouseOver" Value="True">

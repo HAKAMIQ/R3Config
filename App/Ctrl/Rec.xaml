@@ -1,4 +1,4 @@
-<UserControl x:Class="R3Config.Ctrl.RecPlanView"
+<UserControl x:Class="R3Config.Ctrl.RecView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:lang="clr-namespace:R3Config.Lang"
@@ -29,7 +29,7 @@
                 <StackPanel Grid.Column="0"
                             Orientation="Vertical"
                             HorizontalAlignment="Stretch">
-                    <TextBlock Text="{lang:Text Key=Shell.SettingsSection}"
+                    <TextBlock Text="{lang:TextExt Key=Shell.SettingsSection}"
                                Style="{StaticResource SectionTitleText}"
                                FlowDirection="LeftToRight"
                                TextAlignment="Left"
@@ -39,23 +39,23 @@
                                FlowDirection="{DynamicResource App.FlowDirection}"
                                TextAlignment="{DynamicResource App.DefaultTextAlignment}"
                                Margin="0,3,0,0"
-                               ToolTip="{Binding Plan.TargetConfigPath}" />
+                               ToolTip="{Binding Plan.TgtCfg}" />
                 </StackPanel>
 
                 <Button Grid.Column="2"
-                        Content="{lang:Text Key=Plan.RemoveWikiSettings}"
+                        Content="{lang:TextExt Key=Plan.RemoveWikiSettings}"
                         MinWidth="132"
-                        ToolTip="{lang:Text Key=Plan.RemoveWikiSettingsTip}"
-                        Command="{Binding RemoveWikiSettingsCommand}"
+                        ToolTip="{lang:TextExt Key=Plan.RemoveWikiSettingsTip}"
+                        Command="{Binding DelSet}"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
-                        Visibility="{Binding Plan.HasRemovableSettings, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        Visibility="{Binding Plan.CanDel, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <Button Grid.Column="4"
-                        Content="{lang:Text Key=Plan.ApplySection}"
+                        Content="{lang:TextExt Key=Plan.ApplySection}"
                         MinWidth="132"
-                        ToolTip="{lang:Text Key=Plan.ApplySectionTip}"
-                        Command="{Binding ApplyCheckedCommand}"
+                        ToolTip="{lang:TextExt Key=Plan.ApplySectionTip}"
+                        Command="{Binding ApplyCmd}"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center" />
             </Grid>
@@ -94,7 +94,7 @@
                                                                FlowDirection="LeftToRight"
                                                                TextAlignment="Left" />
 
-                                                    <TextBlock Text="{Binding BeginnerSummary}"
+                                                    <TextBlock Text="{Binding BeginSum}"
                                                                Style="{StaticResource ChecklistToolTipBodyText}"
                                                                FlowDirection="{DynamicResource App.FlowDirection}"
                                                                TextAlignment="{DynamicResource App.DefaultTextAlignment}"
@@ -111,30 +111,30 @@
                                                             <ColumnDefinition Width="*" />
                                                         </Grid.ColumnDefinitions>
                                                         <TextBlock Grid.Column="0"
-                                                                   Text="{lang:Text Key=Plan.Current}"
+                                                                   Text="{lang:TextExt Key=Plan.Current}"
                                                                    Style="{StaticResource ChecklistToolTipLabelText}" />
                                                         <TextBlock Grid.Column="2"
-                                                                   Text="{Binding CurrentDisplay}"
+                                                                   Text="{Binding CurDsp}"
                                                                    Style="{StaticResource ChecklistToolTipValueText}"
-                                                                   ToolTip="{Binding CurrentDisplay}" />
+                                                                   ToolTip="{Binding CurDsp}" />
                                                         <TextBlock Grid.Column="4"
-                                                                   Text="{lang:Text Key=Plan.Proposed}"
+                                                                   Text="{lang:TextExt Key=Plan.Proposed}"
                                                                    Style="{StaticResource ChecklistToolTipLabelText}" />
                                                         <TextBlock Grid.Column="6"
-                                                                   Text="{Binding ProposedValue}"
+                                                                   Text="{Binding Val}"
                                                                    Style="{StaticResource ChecklistToolTipValueText}"
-                                                                   ToolTip="{Binding ProposedValue}" />
+                                                                   ToolTip="{Binding Val}" />
                                                     </Grid>
 
-                                                    <TextBlock Text="{Binding DisplayPath}"
+                                                    <TextBlock Text="{Binding DspPath}"
                                                                Style="{StaticResource ChecklistToolTipSubtleText}"
                                                                FlowDirection="LeftToRight"
                                                                TextAlignment="Left"
                                                                Margin="0,0,0,6" />
-                                                    <TextBlock Text="{Binding LocalizedNoteBody}"
+                                                    <TextBlock Text="{Binding LocBody}"
                                                                Style="{StaticResource ChecklistToolTipBodyText}"
                                                                FlowDirection="{Binding NoteFlow}"
-                                                               TextAlignment="{Binding NoteTextAlignment}"
+                                                               TextAlignment="{Binding NoteText}"
                                                                Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibilityConverter}}" />
                                                 </StackPanel>
                                             </Border>
@@ -150,18 +150,18 @@
 
                                         <CheckBox Grid.Column="0"
                                                   Style="{StaticResource IconCheckBox}"
-                                                  IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  IsEnabled="{Binding IsActionable}"
+                                                  IsChecked="{Binding IsSel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  IsEnabled="{Binding IsAction}"
                                                   HorizontalAlignment="Center"
                                                   VerticalAlignment="Center"
-                                                  ToolTip="{lang:Text Key=Plan.SelectTip}" />
+                                                  ToolTip="{lang:TextExt Key=Plan.SelectTip}" />
 
                                         <TextBlock Grid.Column="2"
                                                    Text="{Binding Key}"
                                                    Style="{StaticResource ChecklistOptionText}"
                                                    FlowDirection="LeftToRight"
                                                    TextAlignment="Left"
-                                                   ToolTip="{Binding BeginnerSummary}" />
+                                                   ToolTip="{Binding BeginSum}" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -175,7 +175,7 @@
                         <Grid HorizontalAlignment="Stretch"
                               VerticalAlignment="Center"
                               MaxWidth="540">
-                            <TextBlock Text="{Binding Plan.EmptyStateText}"
+                            <TextBlock Text="{Binding Plan.EmptyTxt}"
                                        Style="{StaticResource ArabicEmptyStateText}"
                                        FlowDirection="{DynamicResource App.FlowDirection}"
                                        TextAlignment="Center"

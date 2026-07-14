@@ -817,12 +817,12 @@ static void RunGameScanDiagnosticTests(string tempRoot)
         diagnostic => diagnostic.Code ==
             ScanCode.Large);
     var formatter = new GmDiag();
-    var originalLanguage = UiText.CurrentLang;
+    var originalLanguage = UiText.CurLang;
     try
     {
-        UiText.SetLang(UiText.EnglishLang);
+        UiText.SetLang(UiText.EnLang);
         var english = formatter.Format(diagnosticToFormat);
-        UiText.SetLang(UiText.ArabicLang);
+        UiText.SetLang(UiText.ArabLang);
         var arabic = formatter.Format(diagnosticToFormat);
         Assert(!string.IsNullOrWhiteSpace(english) &&
                !string.IsNullOrWhiteSpace(arabic) &&
@@ -908,9 +908,9 @@ static void RunMutationCommandStateTests(string tempRoot)
             [state]),
         true);
     main.Plan.Load(plan);
-    SetPrivateField(main, "_currentPlan", plan);
-    SetPrivateField(main, "_hasPreparedCanaryPatches", true);
-    main.Advanced.RefreshBackups(
+    SetPrivateField(main, "_curPlan", plan);
+    SetPrivateField(main, "_prepCan", true);
+    main.Advanced.LoadBkp(
     [
         new BkpSnap(
             Path.Combine(configPath, "R3ConfigBackups", "snapshot"),
@@ -918,50 +918,50 @@ static void RunMutationCommandStateTests(string tempRoot)
             [new BkpEntry(plan.CfgPath, "backup.yml", true)])
     ]);
 
-    Assert(!main.ApplyCheckedCommand.CanExecute(null) &&
-           !main.RemoveWikiSettingsCommand.CanExecute(null) &&
-           !main.RestoreBackupCommand.CanExecute(null) &&
-           !main.RemoveCanaryPatchesCommand.CanExecute(null) &&
-           !main.ImportCanaryPatchCommand.CanExecute(null),
+    Assert(!main.ApplyCmd.CanExecute(null) &&
+           !main.DelSet.CanExecute(null) &&
+           !main.RstCmd.CanExecute(null) &&
+           !main.CanDel.CanExecute(null) &&
+           !main.CanImp.CanExecute(null),
         "Expected every Main mutation command to be disabled without an analyzed install.");
 
     SetPrivateField(main, "_install", install);
-    main.RefreshRpcs3PresentationState();
-    Assert(!main.ApplyCheckedCommand.CanExecute(null),
+    main.LoadR3Ui();
+    Assert(!main.ApplyCmd.CanExecute(null),
         "Expected config apply to remain disabled without an explicit selection.");
 
-    main.Plan.Items.Single().IsSelected = true;
-    Assert(main.ApplyCheckedCommand.CanExecute(null) &&
-           main.RemoveWikiSettingsCommand.CanExecute(null) &&
-           main.RestoreBackupCommand.CanExecute(null) &&
-           main.RemoveCanaryPatchesCommand.CanExecute(null) &&
-           main.ImportCanaryPatchCommand.CanExecute(null),
+    main.Plan.Items.Single().IsSel = true;
+    Assert(main.ApplyCmd.CanExecute(null) &&
+           main.DelSet.CanExecute(null) &&
+           main.RstCmd.CanExecute(null) &&
+           main.CanDel.CanExecute(null) &&
+           main.CanImp.CanExecute(null),
         "Expected valid Main mutation operations to be enabled while RPCS3 is closed.");
 
     SetPrivateField(main, "_isBusy", true);
-    Assert(!main.ApplyCheckedCommand.CanExecute(null) &&
-           !main.RemoveWikiSettingsCommand.CanExecute(null) &&
-           !main.RestoreBackupCommand.CanExecute(null) &&
-           !main.RemoveCanaryPatchesCommand.CanExecute(null) &&
-           !main.ImportCanaryPatchCommand.CanExecute(null),
+    Assert(!main.ApplyCmd.CanExecute(null) &&
+           !main.DelSet.CanExecute(null) &&
+           !main.RstCmd.CanExecute(null) &&
+           !main.CanDel.CanExecute(null) &&
+           !main.CanImp.CanExecute(null),
         "Expected every Main mutation command to be disabled while analysis is busy.");
 
     SetPrivateField(main, "_isBusy", false);
     running = true;
-    main.RefreshRpcs3PresentationState();
-    Assert(main.IsRpcs3RunningPresentation &&
-           !main.ApplyCheckedCommand.CanExecute(null) &&
-           !main.RemoveWikiSettingsCommand.CanExecute(null) &&
-           !main.RestoreBackupCommand.CanExecute(null) &&
-           !main.RemoveCanaryPatchesCommand.CanExecute(null) &&
-           !main.ImportCanaryPatchCommand.CanExecute(null),
+    main.LoadR3Ui();
+    Assert(main.RunUi &&
+           !main.ApplyCmd.CanExecute(null) &&
+           !main.DelSet.CanExecute(null) &&
+           !main.RstCmd.CanExecute(null) &&
+           !main.CanDel.CanExecute(null) &&
+           !main.CanImp.CanExecute(null),
         "Expected refreshed running state to disable every Main mutation command.");
 
     running = false;
-    main.RefreshRpcs3PresentationState();
-    main.Plan.ClearSelection();
-    Assert(!main.ApplyCheckedCommand.CanExecute(null) &&
-           main.RemoveWikiSettingsCommand.CanExecute(null),
+    main.LoadR3Ui();
+    main.Plan.ClearSel();
+    Assert(!main.ApplyCmd.CanExecute(null) &&
+           main.DelSet.CanExecute(null),
         "Expected only the operation lacking selection to remain disabled.");
 
     var importRoot = Path.Combine(suiteRoot, "import-confirmation");
@@ -975,7 +975,7 @@ static void RunMutationCommandStateTests(string tempRoot)
     var importFlow = AppComp.BuildRun().Flow;
     var allowConfirmation = false;
     var confirmationCalls = 0;
-    var importViewModel = new CanaryPatchImportVm(
+    var importViewModel = new CanImpVm(
         importInstall,
         importFlow,
         () => false,
@@ -985,7 +985,7 @@ static void RunMutationCommandStateTests(string tempRoot)
             return allowConfirmation;
         })
     {
-        ImportText = BuildCanaryImportPatch(
+        ImpText = BuildCanaryImportPatch(
             new string('f', 40),
             "Confirmed Canary Import",
             "0x00003000")
@@ -994,15 +994,15 @@ static void RunMutationCommandStateTests(string tempRoot)
         importPatches,
         R3Config.Svc.ImpSvc.ImpName);
 
-    Assert(importViewModel.CreateFileCommand.CanExecute(null),
+    Assert(importViewModel.MakeCmd.CanExecute(null),
         "Expected a validated import preview to enable its confirmed mutation command.");
-    importViewModel.CreateFileCommand.Execute(null);
+    importViewModel.MakeCmd.Execute(null);
     Assert(confirmationCalls == 1 &&
            !File.Exists(importedPath),
         "Expected rejected Canary import confirmation to produce zero writes.");
 
     allowConfirmation = true;
-    importViewModel.CreateFileCommand.Execute(null);
+    importViewModel.MakeCmd.Execute(null);
     Assert(confirmationCalls == 2 &&
            File.Exists(importedPath),
         "Expected accepted Canary import confirmation to reach the guarded use case.");
@@ -1023,19 +1023,19 @@ static void RunMutationCommandStateTests(string tempRoot)
         [new string('a', 40)],
         []);
     var hCanaryConfirm = false;
-    var hCanary = new HCanaryVm(
+    var hCanary = new HCanVm(
         AppComp.BuildRun().Flow,
         () => running,
         (_, _) => hCanaryConfirm);
-    hCanary.SetContext(hCanaryInstall, hCanaryGame);
-    hCanary.SelectedHash = hCanary.Hashes.Single();
-    hCanary.PatchName = "Confirmed H-Canary Patch";
+    hCanary.SetCtx(hCanaryInstall, hCanaryGame);
+    hCanary.SelHash = hCanary.Hashes.Single();
+    hCanary.PatName = "Confirmed H-Canary Patch";
     hCanary.Author = "R3Config Tests";
-    hCanary.Instructions[0].Address = "0x00004000";
-    hCanary.Instructions[0].Value = "0x60000000";
-    Assert(hCanary.IsValid && hCanary.SaveCommand.CanExecute(null),
+    hCanary.Ins[0].Address = "0x00004000";
+    hCanary.Ins[0].Value = "0x60000000";
+    Assert(hCanary.IsValid && hCanary.SaveCmd.CanExecute(null),
         "Expected a valid H-Canary draft to enable Save while RPCS3 is closed.");
-    hCanary.SaveCommand.Execute(null);
+    hCanary.SaveCmd.Execute(null);
     var hCanaryImportedPath = Path.Combine(
         hCanaryInstall.PatPath,
         "imported_patch.yml");
@@ -1043,30 +1043,30 @@ static void RunMutationCommandStateTests(string tempRoot)
         "Expected rejected H-Canary save confirmation to produce zero writes.");
 
     hCanaryConfirm = true;
-    hCanary.SaveCommand.Execute(null);
+    hCanary.SaveCmd.Execute(null);
     Assert(File.Exists(hCanaryImportedPath) &&
-           hCanary.DeleteStoredCommand.CanExecute(null),
+           hCanary.DelCmd.CanExecute(null),
         "Expected accepted H-Canary save confirmation to reach the guarded use case.");
     var savedBytes = File.ReadAllBytes(hCanaryImportedPath);
     hCanaryConfirm = false;
-    hCanary.DeleteStoredCommand.Execute(null);
+    hCanary.DelCmd.Execute(null);
     Assert(File.ReadAllBytes(hCanaryImportedPath)
             .SequenceEqual(savedBytes),
         "Expected rejected H-Canary delete confirmation to preserve the stored definition byte-for-byte.");
 
     running = true;
-    hCanary.RefreshMutationState();
-    Assert(!hCanary.SaveCommand.CanExecute(null) &&
-           !hCanary.SaveAsCommand.CanExecute(null) &&
-           !hCanary.DeleteStoredCommand.CanExecute(null),
+    hCanary.LoadMut();
+    Assert(!hCanary.SaveCmd.CanExecute(null) &&
+           !hCanary.SaveAs.CanExecute(null) &&
+           !hCanary.DelCmd.CanExecute(null),
         "Expected refreshed RPCS3 running state to disable H-Canary mutation commands.");
     running = false;
-    hCanary.UpdateMutationAvailability(
+    hCanary.SetAvail(
         isBusy: true,
         isRpcs3Running: false);
-    Assert(!hCanary.SaveCommand.CanExecute(null) &&
-           !hCanary.SaveAsCommand.CanExecute(null) &&
-           !hCanary.DeleteStoredCommand.CanExecute(null),
+    Assert(!hCanary.SaveCmd.CanExecute(null) &&
+           !hCanary.SaveAs.CanExecute(null) &&
+           !hCanary.DelCmd.CanExecute(null),
         "Expected busy state to disable H-Canary mutation commands.");
 
     Console.WriteLine(
@@ -1692,7 +1692,7 @@ static void RunCanaryCompositionTests(string tempRoot)
         readOnlyRoot);
     var runtime = AppComp.BuildRun();
 
-    Assert(!runtime.Flow.HasManagedImportedPatch(install) &&
+    Assert(!runtime.Flow.HasImp(install) &&
            !Directory.Exists(patchesPath),
         "Expected the Canary state query to remain read-only when patches does not exist.");
 
@@ -1705,7 +1705,7 @@ static void RunCanaryCompositionTests(string tempRoot)
         "PPU-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:\r\n" +
         "  # R3Config managed Canary patches - begin\r\n" +
         "  # R3Config managed Canary patches - end\r\n");
-    Assert(runtime.Flow.HasManagedImportedPatch(install),
+    Assert(runtime.Flow.HasImp(install),
         "Expected AppFlow to delegate the managed Canary state query to its use case.");
 
     var main = new MainVm(
@@ -1714,13 +1714,13 @@ static void RunCanaryCompositionTests(string tempRoot)
         (_, _) => true);
     SetPrivateField(main, "_install", install);
     var refreshCanaryState = typeof(MainVm).GetMethod(
-        "RefreshCanaryState",
+        "LoadCan",
         System.Reflection.BindingFlags.Instance |
         System.Reflection.BindingFlags.NonPublic)
         ?? throw new InvalidOperationException(
             "Expected MainVm Canary state refresh method was not found.");
     refreshCanaryState.Invoke(main, null);
-    Assert(main.HasPreparedCanaryPatches,
+    Assert(main.PrepCan,
         "Expected MainVm to refresh managed Canary state through AppFlow.");
 
     Console.WriteLine(
@@ -1799,7 +1799,7 @@ static void RunAppPatchPresentationSourceTests()
     var typeThemePath = Path.Combine(appRoot, "Thm", "Type.xaml");
     var hCanaryViewPath = Path.Combine(appRoot, "Ctrl", "HCan.xaml");
     var advancedViewPath = Path.Combine(appRoot, "View", "Adv.xaml");
-    var appDialogPath = Path.Combine(appRoot, "View", "Dlg", "AppDialog.xaml");
+    var appDialogPath = Path.Combine(appRoot, "View", "Dlg", "App.xaml");
     Assert(File.Exists(noteServicePath), "Expected PatchNoteTranslationService to exist in App layer.");
     Assert(File.Exists(importServicePath), "Expected CanaryPatchImportService to exist in App layer.");
     Assert(File.Exists(bundledCanaryServicePath), "Expected BundledCanaryPatchService to exist in App layer.");
@@ -1886,13 +1886,13 @@ static void RunAppPatchPresentationSourceTests()
             Version = "01.11",
             PpuHash = gowAscensionCanary.Hash
         }]);
-    var gowWrongVersionItem = new PatchItemVm(
+    var gowWrongVersionItem = new PatItVm(
         gowWrongVersionMatch,
         "bundled Canary");
     Assert(
         gowWrongVersionMatch.Status == MatStat.VerBad &&
-        gowWrongVersionItem.StateDisplay == UiText.T("Patch.State.Blocked") &&
-        gowWrongVersionItem.DirectStatusText == UiText.F(
+        gowWrongVersionItem.StateDsp == UiText.GetText("Patch.State.Blocked") &&
+        gowWrongVersionItem.DirStat == UiText.Fmt(
             "Patch.Direct.VersionMismatch",
             "01.11",
             "01.12"),
@@ -1907,36 +1907,36 @@ static void RunAppPatchPresentationSourceTests()
         gowAscensionCompiled.PatText.Contains("0x002d024c", StringComparison.OrdinalIgnoreCase),
         "Expected the God of War Ascension Unlock FPS Canary definition to retain both official Wiki operations.");
 
-    var bundledCanaryItem = new PatchItemVm(
+    var bundledCanaryItem = new PatItVm(
         gowAscensionCanaryMatch,
         "bundled Canary");
     Assert(
-        bundledCanaryItem.HasDefinitionState &&
-        !bundledCanaryItem.IsDefinitionResident &&
-        bundledCanaryItem.DefinitionStateDisplay == UiText.T("Patch.Definition.NotMerged") &&
-        bundledCanaryItem.StateDisplay == UiText.T("Patch.State.Ready") &&
-        !bundledCanaryItem.IsSelected,
+        bundledCanaryItem.HasDef &&
+        !bundledCanaryItem.IsDef &&
+        bundledCanaryItem.DefState == UiText.GetText("Patch.Definition.NotMerged") &&
+        bundledCanaryItem.StateDsp == UiText.GetText("Patch.State.Ready") &&
+        !bundledCanaryItem.IsSel,
         "Expected a bundled Canary option to remain explicitly not merged and never preselected.");
     var importedCanaryMatch = new R3Config.Svc.MatchSvc().Match(
         gowAscensionCanary with { Source = PatSrc.Imported },
         [gowAscensionGame]);
-    var importedCanaryItem = new PatchItemVm(
+    var importedCanaryItem = new PatItVm(
         importedCanaryMatch,
         "imported_patch.yml");
     Assert(
-        importedCanaryItem.IsDefinitionResident &&
-        importedCanaryItem.DefinitionStateDisplay == UiText.T("Patch.Definition.Merged") &&
-        importedCanaryItem.StateDisplay == UiText.T("Patch.State.Disabled") &&
-        importedCanaryItem.DirectStatusText == UiText.T("Patch.Direct.MergedDisabled"),
+        importedCanaryItem.IsDef &&
+        importedCanaryItem.DefState == UiText.GetText("Patch.Definition.Merged") &&
+        importedCanaryItem.StateDsp == UiText.GetText("Patch.State.Disabled") &&
+        importedCanaryItem.DirStat == UiText.GetText("Patch.Direct.MergedDisabled"),
         "Expected a resident Canary definition to remain visibly merged after its selection checkmark clears.");
-    var enabledImportedCanaryItem = new PatchItemVm(
+    var enabledImportedCanaryItem = new PatItVm(
         importedCanaryMatch,
         "imported_patch.yml",
         isEnabled: true);
     Assert(
-        enabledImportedCanaryItem.DefinitionStateDisplay == UiText.T("Patch.Definition.Merged") &&
-        enabledImportedCanaryItem.StateDisplay == UiText.T("Patch.State.Enabled") &&
-        !enabledImportedCanaryItem.IsSelected,
+        enabledImportedCanaryItem.DefState == UiText.GetText("Patch.Definition.Merged") &&
+        enabledImportedCanaryItem.StateDsp == UiText.GetText("Patch.State.Enabled") &&
+        !enabledImportedCanaryItem.IsSel,
         "Expected Canary merge state and enable state to remain independently visible without retaining an action checkmark.");
 
     var gowAscensionCheat = bundledCheatStrictRead.Catalog.Entries.Single(entry =>
@@ -1957,36 +1957,36 @@ static void RunAppPatchPresentationSourceTests()
         crossChannelMerge.Entries.Any(entry => entry.Risk == PatRisk.Canary) &&
         crossChannelMerge.Entries.Any(entry => entry.Risk == PatRisk.Cheat),
         "Expected same-title Canary and Artemis definitions to remain independent instead of being rejected as a duplicate conflict.");
-    var crossChannelPreview = new PatchPreviewVm();
+    var crossChannelPreview = new PatPrev();
     crossChannelPreview.Load(
         crossChannelMerge.Entries
             .Select(entry => new MatchSvc().Match(entry, [gowAscensionGame]))
             .ToArray(),
         "Canary and Artemis catalogs");
     Assert(
-        crossChannelPreview.CanaryItems.Any(item => item.Title == "Unlock FPS") &&
-        crossChannelPreview.CheatItems.Any(item => item.Title == "Unlock FPS"),
+        crossChannelPreview.CanItems.Any(item => item.Title == "Unlock FPS") &&
+        crossChannelPreview.ChtItems.Any(item => item.Title == "Unlock FPS"),
         "Expected the God of War Ascension Unlock FPS Canary option to remain visible beside the distinct Artemis cheat.");
     var gowAscensionCheatMatch = new R3Config.Svc.MatchSvc().Match(
         gowAscensionCheat,
         [gowAscensionGame]);
-    var bundledCheatItem = new PatchItemVm(
+    var bundledCheatItem = new PatItVm(
         gowAscensionCheatMatch,
         "bundled cheats");
     Assert(
-        bundledCheatItem.DefinitionStateDisplay == UiText.T("Patch.Definition.NotPrepared") &&
-        !bundledCheatItem.IsDefinitionResident,
+        bundledCheatItem.DefState == UiText.GetText("Patch.Definition.NotPrepared") &&
+        !bundledCheatItem.IsDef,
         "Expected a bundled Artemis cheat to say that its game patch definition is not prepared yet.");
     var managedCheatMatch = new R3Config.Svc.MatchSvc().Match(
         gowAscensionCheat with { Source = PatSrc.ManCht },
         [gowAscensionGame]);
-    var managedCheatItem = new PatchItemVm(
+    var managedCheatItem = new PatItVm(
         managedCheatMatch,
         "BCUS98232_patch.yml");
     Assert(
-        managedCheatItem.DefinitionStateDisplay == UiText.T("Patch.Definition.Prepared") &&
-        managedCheatItem.StateDisplay == UiText.T("Patch.State.Disabled") &&
-        managedCheatItem.DirectStatusText == UiText.T("Patch.Direct.PreparedDisabled"),
+        managedCheatItem.DefState == UiText.GetText("Patch.Definition.Prepared") &&
+        managedCheatItem.StateDsp == UiText.GetText("Patch.State.Disabled") &&
+        managedCheatItem.DirStat == UiText.GetText("Patch.Direct.PreparedDisabled"),
         "Expected a resident Artemis cheat to remain visibly prepared even while disabled.");
     var infamousCanary = bundledCanaryRead.Catalog.Entries.Single(entry =>
         entry.Hash.Equals(
@@ -2052,24 +2052,24 @@ static void RunAppPatchPresentationSourceTests()
     Assert(File.Exists(configViewPath), "Expected config recommendation view source to exist in App/Ctrl.");
     Assert(File.Exists(hCanaryViewPath), "Expected H-Canary view source to exist in App/Ctrl.");
     Assert(File.Exists(advancedViewPath), "Expected the advanced tools view to exist in App/View.");
-    Assert(File.ReadAllText(planVmPath).Contains("_showApplied = true", StringComparison.Ordinal),
+    Assert(File.ReadAllText(planVmPath).Contains("_applied = true", StringComparison.Ordinal),
         "Expected plan view to show applied recommendations by default.");
     Assert(File.ReadAllText(appDialogPath).Contains("AllowsTransparency=\"True\"", StringComparison.Ordinal),
         "Expected custom app dialogs to avoid black rounded-corner artifacts.");
     var mainWindowXaml = File.ReadAllText(mainWindowXamlPath);
-    Assert(mainWindowXaml.Contains("Header=\"{lang:Text Key=Tab.Settings}\"", StringComparison.Ordinal) &&
-           mainWindowXaml.Contains("Header=\"{lang:Text Key=Tab.Patches}\"", StringComparison.Ordinal) &&
-           mainWindowXaml.Contains("Header=\"{lang:Text Key=Tab.Canary}\"", StringComparison.Ordinal) &&
-           mainWindowXaml.Contains("Header=\"{lang:Text Key=Tab.Cheats}\"", StringComparison.Ordinal),
+    Assert(mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Settings}\"", StringComparison.Ordinal) &&
+           mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Patches}\"", StringComparison.Ordinal) &&
+           mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Canary}\"", StringComparison.Ordinal) &&
+           mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Cheats}\"", StringComparison.Ordinal),
         "Expected the main navigation to expose separate settings, regular patch, experimental patch, and cheat pages.");
-    Assert(!mainWindowXaml.Contains("Header=\"{lang:Text Key=Tab.Official}\"", StringComparison.Ordinal) &&
-           !mainWindowXaml.Contains("Header=\"{lang:Text Key=Tab.Advanced}\"", StringComparison.Ordinal) &&
-           !mainWindowXaml.Contains("Header=\"{lang:Text Key=Tab.HCanary}\"", StringComparison.Ordinal),
+    Assert(!mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Official}\"", StringComparison.Ordinal) &&
+           !mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Advanced}\"", StringComparison.Ordinal) &&
+           !mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.HCanary}\"", StringComparison.Ordinal),
         "Expected advanced authoring tools to stay out of the game patch navigation.");
     Assert(mainWindowXaml.Contains("Mode=\"Patches\"", StringComparison.Ordinal) &&
            mainWindowXaml.Contains("Mode=\"Canary\"", StringComparison.Ordinal) &&
            mainWindowXaml.Contains("Mode=\"Cheat\"", StringComparison.Ordinal) &&
-           !mainWindowXaml.Contains("<controls:HCanaryView", StringComparison.Ordinal),
+           !mainWindowXaml.Contains("<controls:HCanView", StringComparison.Ordinal),
         "Expected each player-facing patch class to have one explicit page.");
 
     var gamesView = File.ReadAllText(gamesViewPath);
@@ -2079,7 +2079,7 @@ static void RunAppPatchPresentationSourceTests()
         "Expected the game rail to omit the ambiguous recommendation count badge.");
     var configView = File.ReadAllText(configViewPath);
     Assert(configView.Contains("Key=Plan.ApplySection", StringComparison.Ordinal) &&
-           configView.Contains("Command=\"{Binding ApplyCheckedCommand}\"", StringComparison.Ordinal),
+           configView.Contains("Command=\"{Binding ApplyCmd}\"", StringComparison.Ordinal),
         "Expected game recommendations to expose an explicit guarded apply action.");
 
     var patchView = File.ReadAllText(patchViewPath);
@@ -2087,10 +2087,10 @@ static void RunAppPatchPresentationSourceTests()
            !patchView.Contains("OfficialSelector", StringComparison.Ordinal) &&
            !patchView.Contains("CanarySelector", StringComparison.Ordinal),
         "Expected patch category navigation to remain at the main page level without a nested selector.");
-    Assert(patchView.Contains("ApplyOfficialPatchesCommand", StringComparison.Ordinal) &&
-           patchView.Contains("ApplyCanaryPatchesCommand", StringComparison.Ordinal) &&
-           patchView.Contains("DisableOfficialPatchesCommand", StringComparison.Ordinal) &&
-           patchView.Contains("DisableCanaryPatchesCommand", StringComparison.Ordinal),
+    Assert(patchView.Contains("OfclOn", StringComparison.Ordinal) &&
+           patchView.Contains("CanOn", StringComparison.Ordinal) &&
+           patchView.Contains("OfclOff", StringComparison.Ordinal) &&
+           patchView.Contains("CanOCmd", StringComparison.Ordinal),
         "Expected each patch section to execute only its own selected items.");
     Assert(patchView.Contains("Key=Patch.ApplyOfficialSection", StringComparison.Ordinal) &&
            patchView.Contains("Key=Patch.ApplyCanarySection", StringComparison.Ordinal) &&
@@ -2123,36 +2123,36 @@ static void RunAppPatchPresentationSourceTests()
                "Property=\"ToolTip\"",
                StringComparison.Ordinal),
         "Expected ordinary caption and technical text to avoid implicit copy-of-text hover popups; intentional controls can still opt in explicitly.");
-    Assert(patchView.Contains("Text=\"{lang:Text Key=Patch.ApplyOfficialSectionTip}\"", StringComparison.Ordinal) &&
-           patchView.Contains("Text=\"{lang:Text Key=Patch.ApplyCanarySectionTip}\"", StringComparison.Ordinal) &&
-           patchView.Contains("Text=\"{lang:Text Key=Patch.ApplyCheatSectionTip}\"", StringComparison.Ordinal),
+    Assert(patchView.Contains("Text=\"{lang:TextExt Key=Patch.ApplyOfficialSectionTip}\"", StringComparison.Ordinal) &&
+           patchView.Contains("Text=\"{lang:TextExt Key=Patch.ApplyCanarySectionTip}\"", StringComparison.Ordinal) &&
+           patchView.Contains("Text=\"{lang:TextExt Key=Patch.ApplyCheatSectionTip}\"", StringComparison.Ordinal),
         "Expected each patch workflow explanation to remain visible instead of hiding in a tooltip.");
-    Assert(patchView.Contains("DefinitionStateDisplay", StringComparison.Ordinal) &&
-           patchView.Contains("HasDefinitionState", StringComparison.Ordinal),
+    Assert(patchView.Contains("DefState", StringComparison.Ordinal) &&
+           patchView.Contains("HasDef", StringComparison.Ordinal),
         "Expected patch rows to keep a persistent merged/prepared definition badge separate from the action checkbox.");
     Assert(!patchView.Contains("Key=Patch.SourceStatus.CanaryMatching", StringComparison.Ordinal),
         "Expected the Canary page to avoid a permanent technical matching paragraph on the player surface.");
     Assert(patchView.Split(
-               "Style=\"{StaticResource PrimaryButton}\"",
+               "Style=\"{StaticResource MainBtn}\"",
                StringSplitOptions.None).Length == 4,
         "Expected the three positive patch actions to use the primary action style.");
-    Assert(patchView.Contains("OfficialPatchSourceStatusText", StringComparison.Ordinal) &&
-           patchView.Contains("CanaryPatchSourceStatusText", StringComparison.Ordinal) &&
-           patchView.Contains("OpenRpcs3PatchManagerCommand", StringComparison.Ordinal) &&
-           !patchView.Contains("OfficialPatchSourcePath", StringComparison.Ordinal) &&
-           !patchView.Contains("CanaryPatchSourcePath", StringComparison.Ordinal) &&
-           !patchView.Contains("OpenPatchesFolderCommand", StringComparison.Ordinal),
+    Assert(patchView.Contains("PatSrc", StringComparison.Ordinal) &&
+           patchView.Contains("CanState", StringComparison.Ordinal) &&
+           patchView.Contains("MgrCmd", StringComparison.Ordinal) &&
+           !patchView.Contains("SrcPath", StringComparison.Ordinal) &&
+           !patchView.Contains("CanPath", StringComparison.Ordinal) &&
+           !patchView.Contains("PatDir", StringComparison.Ordinal),
         "Expected player patch pages to expose database readiness and the RPCS3-owned update workflow without file-system details.");
     Assert(!patchView.Contains("Command=\"{Binding PrepareCanaryPatchesCommand}\"", StringComparison.Ordinal) &&
-           !patchView.Contains("Command=\"{Binding ImportCanaryPatchCommand}\"", StringComparison.Ordinal) &&
-           !patchView.Contains("Command=\"{Binding RemoveCanaryPatchesCommand}\"", StringComparison.Ordinal),
+           !patchView.Contains("Command=\"{Binding CanImp}\"", StringComparison.Ordinal) &&
+           !patchView.Contains("Command=\"{Binding CanDel}\"", StringComparison.Ordinal),
         "Expected Canary preparation and authoring to stay automatic or inside advanced tools instead of the player page.");
     var hCanaryView = File.ReadAllText(hCanaryViewPath);
-    Assert(hCanaryView.Contains("Text=\"{lang:Text Key=HCanary.Title}\"", StringComparison.Ordinal) &&
+    Assert(hCanaryView.Contains("Text=\"{lang:TextExt Key=HCanary.Title}\"", StringComparison.Ordinal) &&
            !hCanaryView.Contains("Text=\"إنشاء باتشات H-Canary\"", StringComparison.Ordinal),
         "Expected the H-Canary editor title to use localization instead of hardcoded Arabic text.");
     var advancedView = File.ReadAllText(advancedViewPath);
-    Assert(advancedView.Contains("<controls:HCanaryView", StringComparison.Ordinal) &&
+    Assert(advancedView.Contains("<controls:HCanView", StringComparison.Ordinal) &&
            advancedView.Contains("Key=Adv.PatchDevelopment", StringComparison.Ordinal) &&
            advancedView.Contains("Key=Adv.PatchDev.Template", StringComparison.Ordinal) &&
            advancedView.Contains("Key=Adv.Recovery", StringComparison.Ordinal) &&
@@ -2171,7 +2171,7 @@ static void RunAppPatchPresentationSourceTests()
     Assert(!mainVm.Contains("PrepareCanaryPatchesCommand", StringComparison.Ordinal) &&
            !mainVm.Contains("private void PrepareCanaryPatches()", StringComparison.Ordinal),
         "Expected the obsolete standalone Canary preparation command and handler to be removed.");
-    Assert(mainVm.Contains("ApplyPatchTransaction", StringComparison.Ordinal) &&
+    Assert(mainVm.Contains("ApplyTxn", StringComparison.Ordinal) &&
            !mainVm.Contains("_flow.PrepareBundledCanaryPatch(_install", StringComparison.Ordinal) &&
            !mainVm.Contains("_flow.PrepareBundledCheatPatch(_install", StringComparison.Ordinal),
         "Expected patch enable to use one staged transaction instead of sequential source writes.");
@@ -2181,23 +2181,23 @@ static void RunAppPatchPresentationSourceTests()
            mainVm.Contains("Msg.PatchApplyCheatSuccess", StringComparison.Ordinal),
         "Expected successful settings and patch writes to provide a visible confirmation after disk refresh.");
     Assert(!mainVm.Contains(
-               "CombinePatchWarnings(\r\n                _patchCatalogError",
+               "Combine(\r\n                _catErr",
                StringComparison.Ordinal) &&
            !mainVm.Contains(
-               "CombinePatchWarnings(\n                _patchCatalogError",
+               "Combine(\n                _catErr",
                StringComparison.Ordinal),
         "Expected raw catalog parser diagnostics to stay in source status/logging instead of the global player warning banner.");
     var mainWindow = File.ReadAllText(mainWindowPath);
-    Assert(mainVm.Contains("LanguageChanged?.Invoke", StringComparison.Ordinal) &&
-           mainWindow.Contains("RebuildPatchViews", StringComparison.Ordinal),
+    Assert(mainVm.Contains("LangChg?.Invoke", StringComparison.Ordinal) &&
+           mainWindow.Contains("BuildPat", StringComparison.Ordinal),
         "Expected a live language switch to recreate patch visuals after preserving their view-model state.");
-    Assert(patchView.Contains("DirectStatusText", StringComparison.Ordinal) &&
-           patchView.Contains("PlayerInstructionText", StringComparison.Ordinal) &&
-           !patchView.Contains("HashEvidenceSummary", StringComparison.Ordinal) &&
-           !patchView.Contains("TechnicalTargetDisplay", StringComparison.Ordinal) &&
-           !patchView.Contains("InstalledVersionDisplay", StringComparison.Ordinal),
+    Assert(patchView.Contains("DirStat", StringComparison.Ordinal) &&
+           patchView.Contains("InsText", StringComparison.Ordinal) &&
+           !patchView.Contains("EviSum", StringComparison.Ordinal) &&
+           !patchView.Contains("TechTgt", StringComparison.Ordinal) &&
+           !patchView.Contains("InstVer", StringComparison.Ordinal),
         "Expected player patch rows to render only an actionable state and relevant instructions while keeping technical evidence in optional details.");
-    Assert(patchView.Contains("FlowDirection=\"{Binding PatchPreview.TextFlow}\"", StringComparison.Ordinal) &&
+    Assert(patchView.Contains("FlowDirection=\"{Binding Preview.TextFlow}\"", StringComparison.Ordinal) &&
            patchView.Contains("FlowDirection=\"{Binding NoteFlow}\"", StringComparison.Ordinal) &&
            !patchView.Contains("DynamicResource App.FlowDirection", StringComparison.Ordinal),
         "Expected live patch templates to bind direction to language-aware view models instead of retaining stale dynamic resources.");
@@ -2290,7 +2290,7 @@ static void RunAppPatchPresentationSourceTests()
     var patchMutationUseCase = File.ReadAllText(patchMutationUseCasePath);
     var composition = File.ReadAllText(compositionPath);
     var mutationGuard = File.ReadAllText(mutationGuardPath);
-    Assert(appFlow.Contains("_useCases.PatchMutation.ApplyTxn", StringComparison.Ordinal) &&
+    Assert(appFlow.Contains("_cases.PatMut.ApplyTxn", StringComparison.Ordinal) &&
            !appFlow.Contains("PrepareImportedPatchFile", StringComparison.Ordinal) &&
            !appFlow.Contains("PrepareManagedPatchFile", StringComparison.Ordinal) &&
            !appFlow.Contains("PrepareBundledCanaryPatch", StringComparison.Ordinal),
@@ -4233,7 +4233,7 @@ static string BuildTransactionPatchCatalog(
 
 static void RunGameListSearchTests()
 {
-    var list = new GameListVm();
+    var list = new ListVm();
     var collectionChanges = 0;
     NotifyCollectionChangedAction? lastCollectionAction = null;
     list.Games.CollectionChanged += (_, args) =>
@@ -4252,30 +4252,30 @@ static void RunGameListSearchTests()
     Assert(collectionChanges == 1 &&
            lastCollectionAction == NotifyCollectionChangedAction.Reset,
         "Expected game-list replacement to publish one reset instead of one UI notification per row.");
-    Assert(list.IsSearchEmpty, "Expected initial game search to be empty.");
+    Assert(list.IsSearch, "Expected initial game search to be empty.");
 
-    list.SearchText = "gran";
+    list.Text = "gran";
     Assert(list.Games.Count == 1 && list.Games[0].Serial == "BCES00569", "Expected game search to match title.");
 
-    list.SearchText = "NPEA00137";
+    list.Text = "NPEA00137";
     Assert(list.Games.Count == 1 && list.Games[0].Title == ".detuned", "Expected game search to match serial.");
 
-    list.SearchText = "souls";
-    Assert(list.Games.Count == 0 && list.EmptyStateText == UiText.T("Games.EmptySearch"),
+    list.Text = "souls";
+    Assert(list.Games.Count == 0 && list.EmptyTxt == UiText.GetText("Games.EmptySearch"),
         "Expected search with no visible detected result to show search empty state.");
 
-    list.ShowOnlyDetectedInRpcs3 = false;
+    list.InR3 = false;
     Assert(list.Games.Count == 1 && list.Games[0].Serial == "BLUS30443",
         "Expected search to include catalog-only games when detected-only filter is disabled.");
 
     Console.WriteLine("Game list search/filter smoke PASS.");
 }
 
-static GameItemVm MakeGame(string serial, string title, bool isDetectedInRpcs3)
+static GameVm MakeGame(string serial, string title, bool isDetectedInRpcs3)
 {
     var descriptor = new R3Game(serial, title, @"C:\Games\" + serial, "01.00", null, null);
     var summary = new RecSum(serial, 0, 0, 0, 0, 0, 0, []);
-    return new GameItemVm(descriptor, null, summary, serial, title, isDetectedInRpcs3);
+    return new GameVm(descriptor, null, summary, serial, title, isDetectedInRpcs3);
 }
 
 static void RunAdvancedDialogXamlSmokeTest()
@@ -4288,10 +4288,10 @@ static void RunAdvancedDialogXamlSmokeTest()
         {
             var app = new App();
             app.InitializeComponent();
-            UiText.SetLang(UiText.ArabicLang);
+            UiText.SetLang(UiText.ArabLang);
             UiLaySvc.Apply();
 
-            var dialog = new AdvancedDialog();
+            var dialog = new AdvDlg();
             dialog.Close();
 
             Console.WriteLine("Advanced dialog XAML smoke PASS.");
@@ -4671,7 +4671,7 @@ static void RunAnalysisReadPathTests(
         SynchronizationContext.SetSynchronizationContext(
             synchronizationContext);
         result = new AppFlow()
-            .AnalyzeAsync(env.Install.ExePath, cat.Catalog)
+            .DoAsync(env.Install.ExePath, cat.Catalog)
             .GetAwaiter()
             .GetResult();
     }
@@ -4683,11 +4683,11 @@ static void RunAnalysisReadPathTests(
 
     Assert(synchronizationContext.PostCount == 0,
         "Expected analysis continuations to stay off the caller's WPF synchronization context.");
-    Assert(result.Games.Single(row => row.Game.Serial == "BLUS31465").IsDetectedInRpcs3,
+    Assert(result.Games.Single(row => row.Game.Serial == "BLUS31465").InR3,
         "Expected games.yml discoveries to be marked as detected.");
-    Assert(result.Games.Single(row => row.Game.Serial == "BLES02061").IsDetectedInRpcs3,
+    Assert(result.Games.Single(row => row.Game.Serial == "BLES02061").InR3,
         "Expected an existing custom config to mark a catalog game as detected without UI filesystem probing.");
-    Assert(!result.Games.Single(row => row.Game.Serial == "NPUB31547").IsDetectedInRpcs3,
+    Assert(!result.Games.Single(row => row.Game.Serial == "NPUB31547").InR3,
         "Expected catalog-only games without local evidence to remain undetected.");
     Assert(result.Games.Single(row => row.Game.Serial == "NPUB31547")
         .RecState.Items.All(item => !item.IsAction),
@@ -4714,21 +4714,21 @@ static CfgPlanState RunRecStateTests(
 
     var planViewModel = new PlanVm();
     planViewModel.Load(plan);
-    Assert(planViewModel.Items.All(item => !item.IsSelected),
+    Assert(planViewModel.Items.All(item => !item.IsSel),
         "Expected every item in a newly loaded recommendation plan to start unselected.");
 
-    planViewModel.SelectRecommended();
+    planViewModel.Select();
     Assert(planViewModel.Items
-            .Where(item => item.IsSelected)
-            .All(item => item.IsAutoSelectable && item.IsDifferent && item.IsActionable),
+            .Where(item => item.IsSel)
+            .All(item => item.AutoSel && item.IsDiff && item.IsAction),
         "Expected SelectRecommended to select only safe, different, actionable items.");
     Assert(planViewModel.Items
             .Where(item => item.Entry.State is RecState.Manual or RecState.Blocked or RecState.Unknown)
-            .All(item => !item.IsSelected),
+            .All(item => !item.IsSel),
         "Expected SelectRecommended not to select Manual, Blocked, or Unknown items.");
 
     var selectedChanges = planViewModel.Items
-        .Where(item => item.IsSelected)
+        .Where(item => item.IsSel)
         .Select(item => item.Change)
         .ToArray();
     Assert(selectedChanges.Length == 1,
@@ -4736,10 +4736,10 @@ static CfgPlanState RunRecStateTests(
     Assert(selectedChanges.Single().Key == "Write Color Buffers",
         "Expected the explicit recommended-selection action to select only Write Color Buffers.");
 
-    planViewModel.ClearSelection();
-    Assert(planViewModel.Items.All(item => !item.IsSelected),
+    planViewModel.ClearSel();
+    Assert(planViewModel.Items.All(item => !item.IsSel),
         "Expected ClearSelection to clear every recommendation checkbox.");
-    planViewModel.SelectRecommended();
+    planViewModel.Select();
 
     var recStateService = new R3Config.Svc.StateSvc();
     var recStateRecommendation = BuildRecStateRecommendation();
@@ -4821,13 +4821,13 @@ static void RunPlanVmVisibilityTests()
         "Expected fully applied recommendations to remain visible instead of disappearing.");
     Assert(!viewModel.IsEmpty,
         "Expected fully applied recommendation view not to enter the empty state.");
-    Assert(!viewModel.Items.Single().IsSelected,
+    Assert(!viewModel.Items.Single().IsSel,
         "Expected an applied recommendation to remain a visible state without becoming a current selection.");
-    viewModel.Items.Single().IsSelected = true;
-    Assert(!viewModel.Items.Single().IsSelected,
+    viewModel.Items.Single().IsSel = true;
+    Assert(!viewModel.Items.Single().IsSel,
         "Expected a non-actionable applied recommendation not to become selected.");
-    viewModel.ClearSelection();
-    Assert(!viewModel.Items.Single().IsSelected,
+    viewModel.ClearSel();
+    Assert(!viewModel.Items.Single().IsSel,
         "Expected clearing selection to leave applied recommendations unselected.");
 
     var pendingChange = change with
@@ -4866,44 +4866,44 @@ static void RunPlanVmVisibilityTests()
     };
 
     viewModel.Load(mixedPlan);
-    Assert(viewModel.Items.All(item => !item.IsSelected),
+    Assert(viewModel.Items.All(item => !item.IsSel),
         "Expected reloading a new plan to start with no implicit selection.");
     var pendingItem = viewModel.Items.Single(item =>
         item.Key == "Read Color Buffers");
-    pendingItem.IsSelected = true;
+    pendingItem.IsSel = true;
 
-    viewModel.ShowApplied = false;
+    viewModel.ShowDone = false;
     Assert(viewModel.Items.Count == 1 &&
            viewModel.Items.Single().Key == "Read Color Buffers" &&
-           viewModel.Items.Single().IsSelected,
+           viewModel.Items.Single().IsSel,
         "Expected filtering applied rows to preserve the user's explicit pending selection.");
-    viewModel.ShowApplied = true;
+    viewModel.ShowDone = true;
     Assert(viewModel.Items.Single(item =>
-               item.Key == "Read Color Buffers").IsSelected &&
+               item.Key == "Read Color Buffers").IsSel &&
            !viewModel.Items.Single(item =>
-               item.Key == "Write Color Buffers").IsSelected,
+               item.Key == "Write Color Buffers").IsSel,
         "Expected rebuilding filtered rows to preserve only the explicit prior selection.");
 
-    var originalLanguage = UiText.CurrentLang;
+    var originalLanguage = UiText.CurLang;
     try
     {
         UiText.SetLang(
-            originalLanguage == UiText.ArabicLang
-                ? UiText.EnglishLang
-                : UiText.ArabicLang);
-        viewModel.RefreshLanguage();
-        viewModel.ShowApplied = false;
-        viewModel.ShowApplied = true;
+            originalLanguage == UiText.ArabLang
+                ? UiText.EnLang
+                : UiText.ArabLang);
+        viewModel.SetLang();
+        viewModel.ShowDone = false;
+        viewModel.ShowDone = true;
         Assert(viewModel.Items.Single(item =>
-                   item.Key == "Read Color Buffers").IsSelected &&
+                   item.Key == "Read Color Buffers").IsSel &&
                !viewModel.Items.Single(item =>
-                   item.Key == "Write Color Buffers").IsSelected,
+                   item.Key == "Write Color Buffers").IsSel,
             "Expected a language refresh to preserve only explicit user selection.");
     }
     finally
     {
         UiText.SetLang(originalLanguage);
-        viewModel.RefreshLanguage();
+        viewModel.SetLang();
     }
 }
 
@@ -4999,7 +4999,7 @@ static void RunCanaryImportFileContractTests(SmokeEnv env, string officialPatchY
         "    Patch:\n" +
         "      - [ be32, 0x00000000, 0x60000000 ]\n";
 
-    var result = flow.ImportCanaryPatch(env.Install, canaryPatchText);
+    var result = flow.ImpCan(env.Install, canaryPatchText);
 
     Assert(result.IsOk, "Expected Canary import to write imported_patch.yml: " + result.Error);
     Assert(result.TgtPath == importedPath, "Expected Canary import target to be imported_patch.yml in <RPCS3 folder>\\patches.");
@@ -5016,7 +5016,7 @@ static void RunCanaryImportFileContractTests(SmokeEnv env, string officialPatchY
     Assert(importedRead.Catalog.Entries.Any(patch => patch.Title == "Canary Smoke Patch" && patch.Risk == PatRisk.Canary),
         "Expected imported Canary patch to be classified as Canary.");
 
-    var secondWrite = flow.ImportCanaryPatch(env.Install, canaryPatchText);
+    var secondWrite = flow.ImpCan(env.Install, canaryPatchText);
     Assert(secondWrite.IsOk, "Expected repeated Canary import to remain idempotent: " + secondWrite.Error);
     Assert(secondWrite.BkpPath is null, "Expected repeated identical imported_patch.yml write not to create a needless backup.");
 
@@ -5042,7 +5042,7 @@ static void RunCanaryImportFileContractTests(SmokeEnv env, string officialPatchY
            File.ReadAllText(importedPath, Encoding.UTF8) == beforeManagedStage,
         "Expected Canary preparation to produce validated staged content without touching imported_patch.yml.");
 
-    var managedWrite = flow.ImportCanaryPatch(env.Install, canaryPatchText);
+    var managedWrite = flow.ImpCan(env.Install, canaryPatchText);
     Assert(managedWrite.IsOk, "Expected managed Canary write to merge into existing imported_patch.yml: " + managedWrite.Error);
     var managedText = File.ReadAllText(importedPath);
     Assert(managedText.Contains("Manual Existing Patch", StringComparison.Ordinal),
@@ -5693,7 +5693,7 @@ static void RunRpcs3PatchContractTests(SmokeEnv env, R3Game rogue)
             PpuHash = primaryHash,
             PpuRaw = [primaryHash]
         }]);
-    var unrelatedGlobalPreview = new PatchPreviewVm();
+    var unrelatedGlobalPreview = new PatPrev();
     unrelatedGlobalPreview.Load(
         [unrelatedGlobalMatch],
         "RPCS3 patch catalog",
@@ -5701,13 +5701,13 @@ static void RunRpcs3PatchContractTests(SmokeEnv env, R3Game rogue)
     Assert(unrelatedGlobalPreview.Items.Count == 0,
         "Expected an enabled All/All/All patch to stay off unrelated game pages when its runtime hash does not match.");
 
-    var exactGlobalPreview = new PatchPreviewVm();
+    var exactGlobalPreview = new PatPrev();
     exactGlobalPreview.Load(
         [allTargetMatch],
         "RPCS3 patch catalog",
         isEnabledResolver: _ => true);
     Assert(exactGlobalPreview.Items.Count == 1 &&
-           exactGlobalPreview.Items.Single().IsEnabled,
+           exactGlobalPreview.Items.Single().IsOn,
         "Expected an enabled All/All/All patch to remain visible on a game page with exact runtime-hash evidence.");
 
     const string extendedHashCatalog = """
@@ -5985,38 +5985,38 @@ PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
         matchService.Match(multiTargetPatch, [rogue with { Version = "01.02", PpuRaw = [primaryHash, secondaryHash] }]),
         matchService.Match(duplicateHashPatch, [rogue with { Version = "01.02", PpuRaw = [primaryHash, secondaryHash] }])
     };
-    var preview = new PatchPreviewVm();
+    var preview = new PatPrev();
     preview.Load(
         previewMatches,
         "RPCS3 patch catalog",
         warningMessage: "Contract warning",
         isEnabledResolver: match => match.Patch.Hash == primaryHash);
-    Assert(preview.HasWarning && preview.WarningText == "Contract warning",
+    Assert(preview.HasWarn && preview.WarnText == "Contract warning",
         "Expected real patch catalog warnings to be visible in the preview surface.");
-    Assert(preview.OfficialGroups.Count == 1 && preview.OfficialGroups.Single().Items.Count == 2,
+    Assert(preview.OfclGrp.Count == 1 && preview.OfclGrp.Single().Items.Count == 2,
         "Expected RPCS3 hierarchy to group different hashes under the same game/serial/version node.");
-    Assert(preview.OfficialItems.All(item => !item.IsSelected),
+    Assert(preview.OfclList.All(item => !item.IsSel),
         "Expected no patch to be preselected.");
-    Assert(preview.OfficialItems.Count(item => item.CanEnable) == 1 &&
-           preview.OfficialItems.Count(item => item.CanDisable) == 1,
+    Assert(preview.OfclList.Count(item => item.CanOn) == 1 &&
+           preview.OfclList.Count(item => item.CanOff) == 1,
         "Expected enabled-state resolution to separate enable and disable actions.");
-    Assert(preview.OfficialItems.Select(item => item.DisplayTitle).Distinct().Count() == 2,
+    Assert(preview.OfclList.Select(item => item.DspTitle).Distinct().Count() == 2,
         "Expected duplicate patch titles for different hashes to receive distinct RPCS3-style display ordinals.");
-    var enableItem = preview.OfficialItems.Single(item => item.CanEnable);
-    enableItem.IsSelected = true;
-    preview.OfficialGroups.Single().IsExpanded = false;
-    Assert(preview.HasSelectedOfficialApplyablePatches && preview.SelectedOfficialMatches().Count == 1,
+    var enableItem = preview.OfclList.Single(item => item.CanOn);
+    enableItem.IsSel = true;
+    preview.OfclGrp.Single().IsOpen = false;
+    Assert(preview.OfclOn && preview.SelOfcl().Count == 1,
         "Expected official-tab selection state to be isolated and executable.");
-    preview.RefreshLanguage();
-    var rebuiltEnableItem = preview.OfficialItems.Single(item => item.CanEnable);
+    preview.SetLang();
+    var rebuiltEnableItem = preview.OfclList.Single(item => item.CanOn);
     Assert(!ReferenceEquals(enableItem, rebuiltEnableItem),
         "Expected a live language switch to rebuild patch item containers under the new FlowDirection.");
-    Assert(rebuiltEnableItem.IsSelected && preview.SelectedOfficialMatches().Count == 1,
+    Assert(rebuiltEnableItem.IsSel && preview.SelOfcl().Count == 1,
         "Expected live language container rebuild to preserve explicit patch selection state.");
-    Assert(!preview.OfficialGroups.Single().IsExpanded,
+    Assert(!preview.OfclGrp.Single().IsOpen,
         "Expected live language container rebuild to preserve the user's group expansion state.");
 
-    var experimentalPreview = new PatchPreviewVm();
+    var experimentalPreview = new PatPrev();
     var experimentalPatch = multiTargetPatch with
     {
         Title = "Experimental renderer path",
@@ -6028,8 +6028,8 @@ PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
             experimentalPatch,
             [rogue with { Version = "01.02", PpuRaw = [primaryHash, secondaryHash] }])],
         "RPCS3 patch catalog");
-    Assert(experimentalPreview.CanaryItems.Count == 1 &&
-           experimentalPreview.OfficialItems.Count == 0,
+    Assert(experimentalPreview.CanItems.Count == 1 &&
+           experimentalPreview.OfclList.Count == 0,
         "Expected experimental classification to control the experimental page even when the source catalog is official.");
 
     var configPath = Path.Combine(env.TempRoot, "contract-patch-config.yml");
@@ -6109,41 +6109,41 @@ static void RunAppFlowPatchCatalogLoadSmokeTests(SmokeEnv env, string patchYmlPa
         File.Delete(importedPatchPath);
     }
 
-    var officialOnly = flow.LoadPatchCat(env.Install);
+    var officialOnly = flow.LoadPat(env.Install);
     Assert(officialOnly.Cat is not null, "Expected patch.yml-only AppFlow load to return a catalog.");
     Assert(string.IsNullOrWhiteSpace(officialOnly.Error), "Expected patch.yml-only AppFlow load not to report an error: " + officialOnly.Error);
     Assert(officialOnly.Cat!.Entries.Any(patch => patch.Title == "Skip Intro Videos"),
         "Expected patch.yml-only AppFlow load to include official/local patches.");
     var officialStatus = officialOnly.SrcStat.Single(source =>
         source.Source == PatSrc.Official && source.Name == "patch.yml");
-    Assert(officialStatus is { Exists: true, Loaded: true, EntryCount: > 0 },
+    Assert(officialStatus is { Exists: true, Loaded: true, EntNum: > 0 },
         "Expected source diagnostics to report a loaded official patch.yml with its entry count.");
 
     File.Delete(patchYmlPath);
     File.WriteAllText(importedPatchPath, BuildImportedPatchYml());
-    var importedOnly = flow.LoadPatchCat(env.Install);
+    var importedOnly = flow.LoadPat(env.Install);
     Assert(importedOnly.Cat is not null, "Expected imported_patch.yml-only AppFlow load to return a catalog.");
     Assert(string.IsNullOrWhiteSpace(importedOnly.Error), "Expected imported_patch.yml-only AppFlow load not to report patch.yml missing.");
     Assert(importedOnly.Cat!.Entries.Any(patch => patch.Title == "Imported Canary Display Patch" && patch.Risk == PatRisk.Canary),
         "Expected imported_patch.yml entries to load as Canary patches.");
     Assert(importedOnly.SrcStat.Single(source =>
             source.Source == PatSrc.Official && source.Name == "patch.yml") is
-        { Exists: false, Loaded: false, EntryCount: 0 },
+        { Exists: false, Loaded: false, EntNum: 0 },
         "Expected source diagnostics to distinguish a missing optional patch.yml from an invalid catalog.");
     Assert(importedOnly.SrcStat.Single(source =>
             source.Source == PatSrc.Imported && source.Name == "imported_patch.yml") is
-        { Exists: true, Loaded: true, EntryCount: > 0 },
+        { Exists: true, Loaded: true, EntNum: > 0 },
         "Expected source diagnostics to report imported_patch.yml independently.");
 
     var importedBeforeReplay = File.ReadAllBytes(importedPatchPath);
-    var importResult = flow.ImportCanaryPatch(env.Install, BuildImportedPatchYml());
+    var importResult = flow.ImpCan(env.Install, BuildImportedPatchYml());
     Assert(importResult.IsOk &&
            importResult.BkpPath is null &&
            File.ReadAllBytes(importedPatchPath).SequenceEqual(importedBeforeReplay),
         "Expected an already-present Canary import to remain byte-idempotent without a backup: " + importResult.Error);
 
     File.WriteAllText(patchYmlPath, BuildPatchYml());
-    var merged = flow.LoadPatchCat(env.Install);
+    var merged = flow.LoadPat(env.Install);
     Assert(merged.Cat is not null, "Expected merged AppFlow load to return a catalog.");
     Assert(merged.Cat!.Entries.Any(patch => patch.Title == "Skip Intro Videos"),
         "Expected merged AppFlow load to include patch.yml entries.");
@@ -6151,7 +6151,7 @@ static void RunAppFlowPatchCatalogLoadSmokeTests(SmokeEnv env, string patchYmlPa
         "Expected merged AppFlow load to include imported_patch.yml entries as Canary.");
 
     File.WriteAllText(patchYmlPath, "Version: [invalid");
-    var invalidOfficialWithImported = flow.LoadPatchCat(env.Install);
+    var invalidOfficialWithImported = flow.LoadPat(env.Install);
     Assert(invalidOfficialWithImported.Cat is not null,
         "Expected valid imported_patch.yml to remain visible when patch.yml is invalid.");
     Assert(invalidOfficialWithImported.Cat!.Entries.Any(patch => patch.Title == "Imported Canary Display Patch"),
@@ -6160,24 +6160,24 @@ static void RunAppFlowPatchCatalogLoadSmokeTests(SmokeEnv env, string patchYmlPa
         "Expected invalid patch.yml to produce a readable warning while imported patches load.");
     var invalidOfficialStatus = invalidOfficialWithImported.SrcStat.Single(source =>
         source.Source == PatSrc.Official && source.Name == "patch.yml");
-    Assert(invalidOfficialStatus is { Exists: true, Loaded: false, EntryCount: 0 } &&
-           !string.IsNullOrWhiteSpace(invalidOfficialStatus.Diagnostic),
+    Assert(invalidOfficialStatus is { Exists: true, Loaded: false, EntNum: 0 } &&
+           !string.IsNullOrWhiteSpace(invalidOfficialStatus.Diag),
         "Expected source diagnostics to retain the exact reason an existing patch.yml failed to load.");
 
     File.Delete(patchYmlPath);
     File.Delete(importedPatchPath);
-    var none = flow.LoadPatchCat(env.Install);
+    var none = flow.LoadPat(env.Install);
     Assert(none.Cat is not null && none.Cat.Entries.Any(entry => entry.Source == PatSrc.Can),
         "Expected bundled Canary preview data to remain available when optional RPCS3 patch files are missing.");
     Assert(string.IsNullOrWhiteSpace(none.Error),
         "Expected missing optional RPCS3 patch files not to be reported as corrupt data.");
     Assert(none.SrcStat.Single(source =>
             source.Source == PatSrc.Can && source.Name == "can.yml") is
-        { Exists: true, Loaded: true, EntryCount: > 0 },
+        { Exists: true, Loaded: true, EntNum: > 0 },
         "Expected source diagnostics to prove the complete bundled Canary database was loaded even without patch.yml.");
 
     File.WriteAllText(importedPatchPath, BuildImportedPatchDuplicateKeyYml());
-    var duplicateImported = flow.LoadPatchCat(env.Install);
+    var duplicateImported = flow.LoadPat(env.Install);
     Assert(duplicateImported.Cat is not null && duplicateImported.Cat.Entries.Any(entry => entry.Source == PatSrc.Can),
         "Expected valid bundled Canary data to stay visible when imported_patch.yml is invalid.");
     Assert(duplicateImported.Error?.Contains("imported_patch.yml", StringComparison.OrdinalIgnoreCase) == true,
@@ -6258,7 +6258,7 @@ static void RunReadOnlyRpcs3InstallContract(string rootOrExePath)
     }
 
     var flow = new AppFlow();
-    var flowResult = flow.LoadPatchCat(install);
+    var flowResult = flow.LoadPat(install);
     Assert(flowResult.Cat is not null && flowResult.Cat.Entries.Count > 0,
         "Expected AppFlow to load available RPCS3 and bundled patch sources: " + flowResult.Error);
 
@@ -6273,7 +6273,7 @@ static void RunReadOnlyRpcs3InstallContract(string rootOrExePath)
         game.OvlList.Count > 0);
     if (hashSample is not null)
     {
-        var preview = new AppFlow().BuildPatchPreview(flowResult.Cat!, hashSample);
+        var preview = new AppFlow().PatPrev(flowResult.Cat!, hashSample);
         Assert(preview.All(match => match.MatSer == hashSample.Serial),
             "Expected real-install preview results to stay scoped to the selected game.");
         Console.WriteLine(
@@ -6294,16 +6294,16 @@ static void RunReadOnlyRpcs3InstallContract(string rootOrExePath)
             "Real RPCS3 installation has no bounded boot/cache Hash evidence; safe HashUnknown handling passed.");
     }
 
-    var builtInCatalog = flow.LoadBuiltInCat(AppContext.BaseDirectory);
+    var builtInCatalog = flow.LoadCat(AppContext.BaseDirectory);
     Assert(builtInCatalog.Cat is not null,
         "Expected the bundled recommendation catalog to load during real-install analysis.");
     var analysisTimer = System.Diagnostics.Stopwatch.StartNew();
-    var analysis = flow.AnalyzeAsync(exePath, builtInCatalog.Cat!).GetAwaiter().GetResult();
+    var analysis = flow.DoAsync(exePath, builtInCatalog.Cat!).GetAwaiter().GetResult();
     analysisTimer.Stop();
     Assert(analysis.Games.Count == games.Count,
         "Expected full R3Config analysis to retain every discovered RPCS3 game.");
     var realEvaluations = analysis.Games
-        .SelectMany(row => flow.BuildPatchPreview(
+        .SelectMany(row => flow.PatPrev(
                 analysis.PatchCat.Cat!,
                 row.Game)
             .Select(match => (row.Game, Match: match)))

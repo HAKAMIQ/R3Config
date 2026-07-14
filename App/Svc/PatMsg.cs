@@ -7,10 +7,10 @@ public sealed class PatMsgFm :
     IPatMsg
 {
     public string MissCat =>
-        UiText.T("Patch.FileMissing");
+        UiText.GetText("Patch.FileMissing");
 
     public string BadCat =>
-        UiText.T("Patch.FileInvalid");
+        UiText.GetText("Patch.FileInvalid");
 
     public string FmtRead(
         string? rawError,
@@ -18,22 +18,22 @@ public sealed class PatMsgFm :
     {
         if (isImported && IsDupKey(rawError))
         {
-            return UiText.T("Patch.ImportedDuplicateKey");
+            return UiText.GetText("Patch.ImportedDuplicateKey");
         }
 
         if (!isImported && IsDupKey(rawError))
         {
-            return UiText.T("Patch.Localized.DuplicateKey");
+            return UiText.GetText("Patch.Localized.DuplicateKey");
         }
 
         var fallback = isImported
-            ? UiText.T("Patch.ImportedFileInvalid")
-            : UiText.T("Patch.FileInvalid");
+            ? UiText.GetText("Patch.ImportedFileInvalid")
+            : UiText.GetText("Patch.FileInvalid");
         var detail = string.IsNullOrWhiteSpace(rawError)
             ? fallback
             : rawError.Trim();
 
-        return UiText.F(
+        return UiText.Fmt(
             isImported
                 ? "Patch.ImportedReadWarning"
                 : "Patch.OfficialReadWarning",

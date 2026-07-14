@@ -30,7 +30,7 @@ public sealed class CanBndl
         if (!File.Exists(path))
         {
             throw new FileNotFoundException(
-                UiText.T("Patch.BundledCanaryMissing"),
+                UiText.GetText("Patch.BundledCanaryMissing"),
                 path);
         }
 
@@ -52,7 +52,7 @@ public sealed class CanBndl
                 true,
                 string.Empty,
                 null,
-                UiText.T("Patch.PrepareCanaryNoSelection"),
+                UiText.GetText("Patch.PrepareCanaryNoSelection"),
                 null);
         }
 
@@ -67,7 +67,7 @@ public sealed class CanBndl
                 true,
                 string.Empty,
                 null,
-                UiText.T("Patch.PrepareCanaryAlreadyInImported"),
+                UiText.GetText("Patch.PrepareCanaryAlreadyInImported"),
                 null);
         }
 

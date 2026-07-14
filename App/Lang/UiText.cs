@@ -11,25 +11,25 @@ namespace R3Config.Lang;
 
 public sealed class UiText : INotifyPropertyChanged
 {
-    public const string ArabicLang = "ar-SA";
-    public const string EnglishLang = "en-US";
+    public const string ArabLang = "ar-SA";
+    public const string EnLang = "en-US";
 
-    private static readonly UiText CurrentInstance = CreateDefault();
+    private static readonly UiText CurInst = Build();
     private IReadOnlyDictionary<string, string> _text;
 
     private UiText(string currentLang, IReadOnlyDictionary<string, string> text)
     {
-        CurrentLang = currentLang;
+        CurLang = currentLang;
         _text = text;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public static UiText Current => CurrentInstance;
+    public static UiText Current => CurInst;
 
-    public static string CurrentLang { get; private set; } = ArabicLang;
+    public static string CurLang { get; private set; } = ArabLang;
 
-    public static bool IsRtl => string.Equals(CurrentLang, ArabicLang, StringComparison.Ordinal);
+    public static bool IsRtl => string.Equals(CurLang, ArabLang, StringComparison.Ordinal);
 
     public string this[string key] => Get(key);
 
@@ -38,145 +38,145 @@ public sealed class UiText : INotifyPropertyChanged
         return _text.TryGetValue(key, out var value) ? value : key;
     }
 
-    private static UiText CreateDefault()
+    private static UiText Build()
     {
-        var text = LoadText(ArabicLang, out var effectiveLang);
+        var text = LoadText(ArabLang, out var effectiveLang);
         return new UiText(effectiveLang, text);
     }
 
-    public static string NormalizeLang(string? lang)
+    public static string NormLang(string? lang)
     {
         if (string.IsNullOrWhiteSpace(lang))
         {
-            return ArabicLang;
+            return ArabLang;
         }
 
         var normalized = lang.Trim();
         return normalized switch
         {
-            "ar" or ArabicLang => ArabicLang,
-            "en" or EnglishLang => EnglishLang,
-            _ => ArabicLang
+            "ar" or ArabLang => ArabLang,
+            "en" or EnLang => EnLang,
+            _ => ArabLang
         };
     }
 
     public static void SetLang(string? lang)
     {
-        var normalized = NormalizeLang(lang);
-        CurrentInstance._text = LoadText(normalized, out var effectiveLang);
-        CurrentLang = effectiveLang;
-        ApplyCulture(effectiveLang);
-        CurrentInstance.PropertyChanged?.Invoke(CurrentInstance, new PropertyChangedEventArgs("Item[]"));
+        var normalized = NormLang(lang);
+        CurInst._text = LoadText(normalized, out var effectiveLang);
+        CurLang = effectiveLang;
+        Apply(effectiveLang);
+        CurInst.PropertyChanged?.Invoke(CurInst, new PropertyChangedEventArgs("Item[]"));
     }
 
-    public static string T(string key)
+    public static string GetText(string key)
     {
         return Current.Get(key);
     }
 
-    public static string F(string key, params object?[] args)
+    public static string Fmt(string key, params object?[] args)
     {
-        return string.Format(CultureInfo.CurrentCulture, T(key), args);
+        return string.Format(CultureInfo.CurrentCulture, GetText(key), args);
     }
 
-    public static string RecRiskLabel(RecRisk risk)
+    public static string RecRisk(RecRisk risk)
     {
-        return T($"Risk.Rec.{risk}.Label");
+        return GetText($"Risk.Rec.{risk}.Label");
     }
 
-    public static string RecRiskTip(RecRisk risk)
+    public static string RecTip(RecRisk risk)
     {
-        return T($"Risk.Rec.{risk}.Tip");
+        return GetText($"Risk.Rec.{risk}.Tip");
     }
 
-    public static string RecStateLabel(RecState state)
+    public static string RecState(RecState state)
     {
-        return T($"RecState.{state}");
+        return GetText($"RecState.{state}");
     }
 
-    public static string PatchRiskLabel(PatRisk risk)
+    public static string PatRisk(PatRisk risk)
     {
-        return T($"Risk.Patch.{risk}.Label");
+        return GetText($"Risk.Patch.{risk}.Label");
     }
 
-    public static string PatchRiskTip(PatRisk risk, MatStat matchStatus)
+    public static string PatTip(PatRisk risk, MatStat matchStatus)
     {
         if (matchStatus == MatStat.Unknown)
         {
-            return T("Msg.PatchHashUnknown");
+            return GetText("Msg.PatchHashUnknown");
         }
 
         if (matchStatus != MatStat.Match)
         {
-            return PatchMatchTip(matchStatus);
+            return MatchTip(matchStatus);
         }
 
-        return T($"Risk.Patch.{risk}.Tip");
+        return GetText($"Risk.Patch.{risk}.Tip");
     }
 
-    public static string PatchTypeLabel(string patchType)
+    public static string PatType(string patchType)
     {
         if (string.IsNullOrWhiteSpace(patchType))
         {
-            return T("PatchType.Unknown");
+            return GetText("PatchType.Unknown");
         }
 
         var key = $"PatchType.{patchType}";
         return Current._text.TryGetValue(key, out var value) ? value : patchType;
     }
 
-    public static string HashStatusLabel(MatStat status, HashKind hashKind)
+    public static string HashStat(MatStat status, HashKind hashKind)
     {
         return status switch
         {
-            MatStat.Match => T("PatchHash.Exact"),
-            MatStat.Unknown => T("PatchHash.Unknown"),
-            MatStat.HashBad => T("PatchHash.Mismatch"),
-            MatStat.NoMeta => T("PatchHash.NoMetadata"),
-            _ => hashKind == HashKind.Unknown ? T("PatchHash.Unavailable") : T("PatchHash.NotMatched")
+            MatStat.Match => GetText("PatchHash.Exact"),
+            MatStat.Unknown => GetText("PatchHash.Unknown"),
+            MatStat.HashBad => GetText("PatchHash.Mismatch"),
+            MatStat.NoMeta => GetText("PatchHash.NoMetadata"),
+            _ => hashKind == HashKind.Unknown ? GetText("PatchHash.Unavailable") : GetText("PatchHash.NotMatched")
         };
     }
 
-    public static string PatchMatchLabel(MatStat status)
+    public static string PatMatch(MatStat status)
     {
-        return T($"PatchMatch.{status}.Label");
+        return GetText($"PatchMatch.{status}.Label");
     }
 
-    public static string PatchMatchTip(MatStat status)
+    public static string MatchTip(MatStat status)
     {
-        return T($"PatchMatch.{status}.Tip");
+        return GetText($"PatchMatch.{status}.Tip");
     }
 
     public static string HwStatus(HwInfo info)
     {
-        var tier = T($"HwTier.{info.Tier}");
+        var tier = GetText($"HwTier.{info.Tier}");
         var cpu = info.CpuNum > 0
-            ? F("Hw.CpuThreads", info.CpuNum)
-            : T("Hw.CpuUnknown");
+            ? Fmt("Hw.CpuThreads", info.CpuNum)
+            : GetText("Hw.CpuUnknown");
 
-        return F("Hw.Status", tier, cpu, info.Display);
+        return Fmt("Hw.Status", tier, cpu, info.Display);
     }
 
     public static string HwTip(HwInfo info)
     {
-        return F("Hw.Tip", info.CpuName, info.Display, info.GpuName, info.Tier, info.ProbeMsg);
+        return Fmt("Hw.Tip", info.CpuName, info.Display, info.GpuName, info.Tier, info.ProbeMsg);
     }
 
     private static IReadOnlyDictionary<string, string> LoadText(string lang, out string effectiveLang)
     {
-        var normalized = NormalizeLang(lang);
+        var normalized = NormLang(lang);
         effectiveLang = normalized;
-        var path = ResolveLangPath(normalized);
+        var path = LangPath(normalized);
         if (path is null)
         {
             Trace.TraceWarning($"R3Config UI language file {normalized} not found. Falling back to ar-SA.");
-            if (!string.Equals(normalized, ArabicLang, StringComparison.Ordinal))
+            if (!string.Equals(normalized, ArabLang, StringComparison.Ordinal))
             {
-                return LoadText(ArabicLang, out effectiveLang);
+                return LoadText(ArabLang, out effectiveLang);
             }
 
             Trace.TraceWarning("R3Config Arabic UI language file not found. Falling back to empty UI text map.");
-            effectiveLang = ArabicLang;
+            effectiveLang = ArabLang;
             return new Dictionary<string, string>(StringComparer.Ordinal);
         }
 
@@ -190,19 +190,19 @@ public sealed class UiText : INotifyPropertyChanged
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
             Trace.TraceWarning($"R3Config UI language load failed for {normalized}: {ex.Message}");
-            if (!string.Equals(normalized, ArabicLang, StringComparison.Ordinal))
+            if (!string.Equals(normalized, ArabLang, StringComparison.Ordinal))
             {
-                return LoadText(ArabicLang, out effectiveLang);
+                return LoadText(ArabLang, out effectiveLang);
             }
 
-            effectiveLang = ArabicLang;
+            effectiveLang = ArabLang;
             return new Dictionary<string, string>(StringComparer.Ordinal);
         }
     }
 
-    private static string? ResolveLangPath(string lang)
+    private static string? LangPath(string lang)
     {
-        var fileName = NormalizeLang(lang) + ".json";
+        var fileName = NormLang(lang) + ".json";
         var candidates = new[]
         {
             Path.Combine(AppContext.BaseDirectory, "Lang", fileName),
@@ -222,9 +222,9 @@ public sealed class UiText : INotifyPropertyChanged
         return null;
     }
 
-    private static void ApplyCulture(string lang)
+    private static void Apply(string lang)
     {
-        var culture = CultureInfo.GetCultureInfo(NormalizeLang(lang));
+        var culture = CultureInfo.GetCultureInfo(NormLang(lang));
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
     }

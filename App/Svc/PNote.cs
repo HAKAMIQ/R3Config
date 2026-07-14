@@ -66,7 +66,7 @@ public static class NoteSvc
         if (string.IsNullOrWhiteSpace(raw))
         {
             return new NoteRes(
-                UiText.T("Ui.EmptyValue"),
+                UiText.GetText("Ui.EmptyValue"),
                 string.Empty,
                 false,
                 NoteQual.Original);
@@ -108,7 +108,7 @@ public static class NoteSvc
         }
 
         return new NoteRes(
-            UiText.T("Patch.Note.NoLocalTranslation"),
+            UiText.GetText("Patch.Note.NoLocalTranslation"),
             original,
             true,
             NoteQual.Fallback);

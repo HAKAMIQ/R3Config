@@ -21,14 +21,14 @@ public sealed record PatSrcSt(
     string Path,
     bool Exists,
     bool Loaded,
-    int EntryCount,
-    string? Diagnostic = null);
+    int EntNum,
+    string? Diag = null);
 
 public sealed record GameRow(
     R3Game Game,
     WikiRec? Rec,
     RecSum RecState,
-    bool IsDetectedInRpcs3);
+    bool InR3);
 
 public sealed record AnlzRes(
     R3Inst Install,
@@ -36,4 +36,4 @@ public sealed record AnlzRes(
     IReadOnlyList<GameRow> Games,
     PatCatRs PatchCat,
     IReadOnlyList<BkpSnap> Backups,
-    IReadOnlyList<ScanDiag> GameScanDiagnostics);
+    IReadOnlyList<ScanDiag> ScanDiag);

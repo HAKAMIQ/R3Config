@@ -8,110 +8,110 @@ using R3Config.Lang;
 
 namespace R3Config.Vm;
 
-public sealed class GameListVm : VmBase
+public sealed class ListVm : VmBase
 {
-    private readonly List<GameItemVm> _allGames = [];
-    private readonly BulkObservableCollection<GameItemVm> _games = [];
-    private GameItemVm? _selectedGame;
-    private bool _showOnlyDetectedInRpcs3 = true;
-    private string _searchText = string.Empty;
+    private readonly List<GameVm> _allGame = [];
+    private readonly BulkList<GameVm> _games = [];
+    private GameVm? _selGame;
+    private bool _inR3 = true;
+    private string _text = string.Empty;
 
-    public GameListVm()
+    public ListVm()
     {
         Games.CollectionChanged += (_, _) =>
         {
-            OnPropertyChanged(nameof(IsEmpty));
-            OnPropertyChanged(nameof(HasGames));
+            OnChange(nameof(IsEmpty));
+            OnChange(nameof(HasGames));
         };
     }
 
-    public ObservableCollection<GameItemVm> Games => _games;
+    public ObservableCollection<GameVm> Games => _games;
 
     public bool IsEmpty => Games.Count == 0;
 
     public bool HasGames => Games.Count > 0;
 
-    public bool IsSearchEmpty => string.IsNullOrWhiteSpace(SearchText);
+    public bool IsSearch => string.IsNullOrWhiteSpace(Text);
 
-    public bool ShowOnlyDetectedInRpcs3
+    public bool InR3
     {
-        get => _showOnlyDetectedInRpcs3;
+        get => _inR3;
         set
         {
-            if (SetProperty(ref _showOnlyDetectedInRpcs3, value))
+            if (Set(ref _inR3, value))
             {
-                ApplyFilterPreservingSelection();
-                OnPropertyChanged(nameof(EmptyStateText));
-                OnPropertyChanged(nameof(FilterTooltip));
+                ApplySel();
+                OnChange(nameof(EmptyTxt));
+                OnChange(nameof(Tip));
             }
         }
     }
 
-    public string SearchText
+    public string Text
     {
-        get => _searchText;
+        get => _text;
         set
         {
-            if (SetProperty(ref _searchText, value))
+            if (Set(ref _text, value))
             {
-                ApplyFilterPreservingSelection();
-                OnPropertyChanged(nameof(IsSearchEmpty));
-                OnPropertyChanged(nameof(EmptyStateText));
+                ApplySel();
+                OnChange(nameof(IsSearch));
+                OnChange(nameof(EmptyTxt));
             }
         }
     }
 
-    public string EmptyStateText => !IsSearchEmpty
-        ? UiText.T("Games.EmptySearch")
-        : ShowOnlyDetectedInRpcs3
-            ? UiText.T("Games.EmptyInstalled")
-            : UiText.T("Games.Empty");
+    public string EmptyTxt => !IsSearch
+        ? UiText.GetText("Games.EmptySearch")
+        : InR3
+            ? UiText.GetText("Games.EmptyInstalled")
+            : UiText.GetText("Games.Empty");
 
-    public string FilterTooltip => UiText.T("Games.FilterDetectedOnlyTip");
+    public string Tip => UiText.GetText("Games.FilterDetectedOnlyTip");
 
-    public GameItemVm? SelectedGame
+    public GameVm? SelGame
     {
-        get => _selectedGame;
-        set => SetProperty(ref _selectedGame, value);
+        get => _selGame;
+        set => Set(ref _selGame, value);
     }
 
-    public void Load(IEnumerable<GameItemVm> games)
+    public void Load(IEnumerable<GameVm> games)
     {
-        _allGames.Clear();
-        _allGames.AddRange(games.OrderBy(game => game.Title).ThenBy(game => game.Serial));
+        _allGame.Clear();
+        _allGame.AddRange(games.OrderBy(game => game.Title).ThenBy(game => game.Serial));
 
-        ApplyFilterPreservingSelection();
+        ApplySel();
     }
 
     public void Clear()
     {
-        _allGames.Clear();
-        _games.ReplaceAll([]);
-        SelectedGame = null;
-        SearchText = string.Empty;
+        _allGame.Clear();
+        _games.Replace([]);
+        SelGame = null;
+        Text = string.Empty;
 
-        OnPropertyChanged(nameof(IsEmpty));
-        OnPropertyChanged(nameof(HasGames));
-        OnPropertyChanged(nameof(EmptyStateText));
+        OnChange(nameof(IsEmpty));
+        OnChange(nameof(HasGames));
+        OnChange(nameof(EmptyTxt));
     }
 
-    public void RefreshLanguage()
+    public void SetLang()
     {
-        OnPropertyChanged(nameof(EmptyStateText));
-        OnPropertyChanged(nameof(FilterTooltip));
-        OnPropertyChanged(nameof(IsSearchEmpty));
+        OnChange(nameof(EmptyTxt));
+        OnChange(nameof(Tip));
+        OnChange(nameof(IsSearch));
     }
 
-    private void ApplyFilterPreservingSelection()
+    private void ApplySel()
     {
-        var selectedSerial = SelectedGame?.Serial;
-        var selectedTitle = SelectedGame?.Title;
+        var selectedSerial = SelGame?.Serial;
+        var selectedTitle = SelGame?.Title;
 
-        var search = SearchText.Trim();
+        var search = Text.Trim();
 
-        var visible = ShowOnlyDetectedInRpcs3
-            ? _allGames.Where(game => game.IsDetectedInRpcs3).ToArray()
-            : _allGames.ToArray();
+        var visible = InR3
+            ? _allGame.Where(game => game.InR3).ToArray()
+            : _allGame.ToArray();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -122,7 +122,7 @@ public sealed class GameListVm : VmBase
                 .ToArray();
         }
 
-        _games.ReplaceAll(visible);
+        _games.Replace(visible);
 
         var selected = string.IsNullOrWhiteSpace(selectedSerial)
             ? null
@@ -130,16 +130,16 @@ public sealed class GameListVm : VmBase
                 string.Equals(game.Serial, selectedSerial, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(game.Title, selectedTitle, StringComparison.OrdinalIgnoreCase));
 
-        SelectedGame = selected;
+        SelGame = selected;
 
-        OnPropertyChanged(nameof(IsEmpty));
-        OnPropertyChanged(nameof(HasGames));
-        OnPropertyChanged(nameof(EmptyStateText));
+        OnChange(nameof(IsEmpty));
+        OnChange(nameof(HasGames));
+        OnChange(nameof(EmptyTxt));
     }
 
-    private sealed class BulkObservableCollection<T> : ObservableCollection<T>
+    private sealed class BulkList<T> : ObservableCollection<T>
     {
-        public void ReplaceAll(IEnumerable<T> items)
+        public void Replace(IEnumerable<T> items)
         {
             Items.Clear();
 

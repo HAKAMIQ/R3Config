@@ -254,3 +254,38 @@ Additional registered App service abbreviations: `Bndl` (bundled), `Blk`
 (top-level), `Head` (header), `Arab` (Arabic), `Trans` (translation), `Wide`
 (width), `Algn` (alignment), `Hor` (horizontal), `Rght` (right), `Dwm`
 (Desktop Window Manager), and `Dark` (dark mode).
+
+## View-model symbols
+
+| Old type | New type | Old type | New type |
+|---|---|---|---|
+| `AdvancedVm` | `AdvVm` | `CanaryPatchImportVm` | `CanImpVm` |
+| `GameItemVm` | `GameVm` | `GameListVm` | `ListVm` |
+| `BulkObservableCollection` | `BulkList` | `HCanaryVm` | `HCanVm` |
+| `HCanaryHashVm` | `HashVm` | `HCanaryGameTargetVm` | `TgtVm` |
+| `HCanaryInstructionVm` | `InsVm` | `HCanaryAnchorVm` | `AncVm` |
+| `PlanItemVm` | `PlanItVm` | `PatchItemVm` | `PatItVm` |
+| `PatchPreviewVm` | `PatPrev` | `PatchSurfaceState` | `PatSurf` |
+| `PatchTargetGroupVm` | `TgtGrpVm` | `RelayCommand` | `RelayCmd` |
+| `AsyncRelayCommand` | `AsyncCmd` | `PatchSourceKind` | `PatSrcKd` |
+| `PatchSection` | `PatSect` |  |  |
+
+Additional registered ViewModel abbreviations: `Dsp` (display), `Tip`
+(tooltip), `Warn` (warning), `Ofcl` (official), `Begin` (beginner), `Surf`
+(surface), `Det` (details), `Mgr` (manager), `Rfsh` (refresh), `Wide`
+(width), `Col` (column), `Algn` (alignment), and `Rank` (rank).
+
+## View, control, shell, and language symbols
+
+| Old type | New type | Old type | New type |
+|---|---|---|---|
+| `ActionBarView` | `ActBar` | `GamesListView` | `GameList` |
+| `HCanaryView` | `HCanView` | `PatchViewMode` | `PatMode` |
+| `PatchView` | `PatView` | `RecPlanView` | `RecView` |
+| `StatusBarView` | `StatBar` | `AdvancedDialog` | `AdvDlg` |
+| `CanaryPatchImportDialog` | `CanDlg` | `MainWindow` | `MainWin` |
+| `TextExtension` | `TextExt` | `AppDialog` | `AppDlg` |
+
+Additional registered UI abbreviations: `Prop` (dependency property), `Cap`
+(caption), `Drag` (window drag), `Click` (click handler), `Alt`
+(secondary/alternative), and `Tog` (toggle).

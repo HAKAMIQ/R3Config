@@ -23,7 +23,7 @@ public static class UiPrefs
             var path = GetPath();
             if (!File.Exists(path))
             {
-                return UiText.ArabicLang;
+                return UiText.ArabLang;
             }
 
             using var stream = File.OpenRead(path);
@@ -31,7 +31,7 @@ public static class UiPrefs
                 stream,
                 JsonOpt);
 
-            return UiText.NormalizeLang(prefs?.Lang);
+            return UiText.NormLang(prefs?.Lang);
         }
         catch (Exception ex) when (
             ex is IOException or
@@ -42,7 +42,7 @@ public static class UiPrefs
             Trace.TraceWarning(
                 $"R3Config UI preferences load failed: {ex.Message}");
 
-            return UiText.ArabicLang;
+            return UiText.ArabLang;
         }
     }
 
@@ -64,7 +64,7 @@ public static class UiPrefs
 
             var prefs = new PrefData
             {
-                Lang = UiText.NormalizeLang(lang)
+                Lang = UiText.NormLang(lang)
             };
 
             var json = JsonSerializer.Serialize(

@@ -123,7 +123,7 @@ public sealed class AnlzCase(
                     game,
                     recommendation: null,
                     hardware).RecState,
-                IsDetectedInRpcs3: true));
+                InR3: true));
         }
 
         return rows;

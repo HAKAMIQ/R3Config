@@ -65,7 +65,7 @@ public sealed class ImpSvc
     {
         if (string.IsNullOrWhiteSpace(sourceText))
         {
-            return Failure(UiText.T("Patch.ImportCanaryInvalidYaml"));
+            return Failure(UiText.GetText("Patch.ImportCanaryInvalidYaml"));
         }
 
         var normalizedInput = sourceText
@@ -133,7 +133,7 @@ public sealed class ImpSvc
 
         if (ppuBlocks.Count == 0)
         {
-            return Failure(UiText.T("Patch.ImportCanaryInvalidYaml"));
+            return Failure(UiText.GetText("Patch.ImportCanaryInvalidYaml"));
         }
 
         var output = new List<string> { VerHead };
@@ -155,7 +155,7 @@ public sealed class ImpSvc
         var normalized = string.Join("\r\n", output).TrimEnd() + "\r\n";
         if (HasDup(normalized))
         {
-            return Failure(UiText.T("Patch.ImportCanaryDuplicateKeyUnmerged"));
+            return Failure(UiText.GetText("Patch.ImportCanaryDuplicateKeyUnmerged"));
         }
 
         return new CanNorm(
@@ -163,8 +163,8 @@ public sealed class ImpSvc
             normalized,
             duplicatePpuMerged,
             duplicatePpuMerged
-                ? UiText.T("Patch.ImportCanaryDuplicatePpuMerged")
-                : UiText.T("Patch.ImportCanaryFormatValid"),
+                ? UiText.GetText("Patch.ImportCanaryDuplicatePpuMerged")
+                : UiText.GetText("Patch.ImportCanaryFormatValid"),
             null);
     }
 
@@ -210,7 +210,7 @@ public sealed class ImpSvc
             if (!incomingCatalog.IsOk)
             {
                 var error = incomingCatalog.Error ??
-                            UiText.T("Patch.ImportCanaryInvalidYaml");
+                            UiText.GetText("Patch.ImportCanaryInvalidYaml");
                 return new CanStage(
                     false,
                     targetPath,
@@ -232,7 +232,7 @@ public sealed class ImpSvc
                 if (!existingCatalog.IsOk)
                 {
                     var error = existingCatalog.Error ??
-                                UiText.T("Patch.ImportCanaryInvalidYaml");
+                                UiText.GetText("Patch.ImportCanaryInvalidYaml");
                     return new CanStage(
                         false,
                         targetPath,
@@ -252,7 +252,7 @@ public sealed class ImpSvc
                         true,
                         targetPath,
                         null,
-                        UiText.T("Patch.PrepareCanaryAlreadyReady"),
+                        UiText.GetText("Patch.PrepareCanaryAlreadyReady"),
                         null);
                 }
             }
@@ -272,7 +272,7 @@ public sealed class ImpSvc
                     true,
                     targetPath,
                     null,
-                    UiText.T("Patch.PrepareCanaryAlreadyReady"),
+                    UiText.GetText("Patch.PrepareCanaryAlreadyReady"),
                     null);
             }
 
@@ -286,7 +286,7 @@ public sealed class ImpSvc
                 !finalCatalog.IsOk)
             {
                 var error = finalCatalog.Error ??
-                            UiText.T("Patch.ImportCanaryInvalidYaml");
+                            UiText.GetText("Patch.ImportCanaryInvalidYaml");
                 return new CanStage(
                     false,
                     targetPath,
@@ -304,7 +304,7 @@ public sealed class ImpSvc
                      PrepKind.PatCat,
                      PatSrc.Imported,
                      finalCatalog.Catalog.Entries.Count),
-                 UiText.T("Patch.PrepareCanarySelectedSuccess"),
+                 UiText.GetText("Patch.PrepareCanarySelectedSuccess"),
                  null);
         }
         catch (Exception ex)
@@ -347,7 +347,7 @@ public sealed class ImpSvc
                     true,
                     targetPath,
                     null,
-                    UiText.T("Patch.RemoveCanaryNothing"),
+                    UiText.GetText("Patch.RemoveCanaryNothing"),
                     null);
             }
 
@@ -359,7 +359,7 @@ public sealed class ImpSvc
             if (!existingCatalog.IsOk)
             {
                 var error = existingCatalog.Error ??
-                            UiText.T("Patch.ImportCanaryInvalidYaml");
+                            UiText.GetText("Patch.ImportCanaryInvalidYaml");
                 return new CanStage(
                     false,
                     targetPath,
@@ -375,7 +375,7 @@ public sealed class ImpSvc
                     true,
                     targetPath,
                     null,
-                    UiText.T("Patch.RemoveCanaryNothing"),
+                    UiText.GetText("Patch.RemoveCanaryNothing"),
                     null);
             }
 
@@ -394,7 +394,7 @@ public sealed class ImpSvc
                         PrepKind.PatCat,
                         PatSrc.Imported,
                         DelTgt: true),
-                    UiText.T("Patch.RemoveCanarySuccess"),
+                    UiText.GetText("Patch.RemoveCanarySuccess"),
                     null);
             }
 
@@ -405,7 +405,7 @@ public sealed class ImpSvc
             if (!finalCatalog.IsOk)
             {
                 var error = finalCatalog.Error ??
-                            UiText.T("Patch.ImportCanaryInvalidYaml");
+                            UiText.GetText("Patch.ImportCanaryInvalidYaml");
                 return new CanStage(
                     false,
                     targetPath,
@@ -423,7 +423,7 @@ public sealed class ImpSvc
                     PrepKind.PatCat,
                     PatSrc.Imported,
                     finalCatalog.Catalog.Entries.Count),
-                UiText.T("Patch.RemoveCanarySuccess"),
+                UiText.GetText("Patch.RemoveCanarySuccess"),
                 null);
         }
         catch (Exception ex)
@@ -638,7 +638,7 @@ public sealed class ImpSvc
 
         if (string.IsNullOrWhiteSpace(patchesPath))
         {
-            error = UiText.T("Patch.ImportCanaryNoRpcs3Path");
+            error = UiText.GetText("Patch.ImportCanaryNoRpcs3Path");
             return false;
         }
 
@@ -648,13 +648,13 @@ public sealed class ImpSvc
 
         if (string.IsNullOrWhiteSpace(parentPath) || !Directory.Exists(parentPath))
         {
-            error = UiText.T("Patch.ImportCanaryNoRpcs3Path");
+            error = UiText.GetText("Patch.ImportCanaryNoRpcs3Path");
             return false;
         }
 
         if (!InDir(targetPath, patchesDir) || !InDir(patchesDir, parentPath))
         {
-            error = UiText.T("Patch.ImportCanaryUnsafePath");
+            error = UiText.GetText("Patch.ImportCanaryUnsafePath");
             return false;
         }
 
@@ -1013,7 +1013,7 @@ public sealed class ImpSvc
                     StringComparison.Ordinal))
             {
                 throw new InvalidDataException(
-                    UiText.T("Patch.ImportCanaryDuplicatePatchName"));
+                    UiText.GetText("Patch.ImportCanaryDuplicatePatchName"));
             }
         }
 
@@ -1072,7 +1072,7 @@ public sealed class ImpSvc
     private static string SafeMsg(Exception exception)
     {
         return string.IsNullOrWhiteSpace(exception.Message)
-            ? UiText.T("Patch.ImportCanaryInvalidYaml")
+            ? UiText.GetText("Patch.ImportCanaryInvalidYaml")
             : exception.Message;
     }
 

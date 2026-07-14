@@ -10,7 +10,7 @@ public sealed class GmDiag
     {
         ArgumentNullException.ThrowIfNull(diagnostic);
 
-        return UiText.F(
+        return UiText.Fmt(
             $"ScanDiag.{diagnostic.Code}",
             SrcName(diagnostic));
     }

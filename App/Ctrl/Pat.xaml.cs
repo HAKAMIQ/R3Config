@@ -3,84 +3,84 @@ using System.Windows.Controls;
 
 namespace R3Config.Ctrl;
 
-public enum PatchViewMode
+public enum PatMode
 {
     Patches,
     Canary,
     Cheat
 }
 
-public partial class PatchView : UserControl
+public partial class PatView : UserControl
 {
-    public static readonly DependencyProperty ModeProperty = DependencyProperty.Register(
+    public static readonly DependencyProperty ModeProp = DependencyProperty.Register(
         nameof(Mode),
-        typeof(PatchViewMode),
-        typeof(PatchView),
-        new PropertyMetadata(PatchViewMode.Patches, OnModeChanged));
+        typeof(PatMode),
+        typeof(PatView),
+        new PropertyMetadata(PatMode.Patches, ModeChg));
 
-    public PatchView()
+    public PatView()
     {
         InitializeComponent();
-        UpdateMode();
+        SetMode();
     }
 
-    public PatchViewMode Mode
+    public PatMode Mode
     {
-        get => (PatchViewMode)GetValue(ModeProperty);
-        set => SetValue(ModeProperty, value);
+        get => (PatMode)GetValue(ModeProp);
+        set => SetValue(ModeProp, value);
     }
 
-    private static void OnModeChanged(
+    private static void ModeChg(
         DependencyObject dependencyObject,
         DependencyPropertyChangedEventArgs eventArgs)
     {
-        if (dependencyObject is PatchView view)
+        if (dependencyObject is PatView view)
         {
-            view.UpdateMode();
+            view.SetMode();
         }
     }
 
-    private void UpdateMode()
+    private void SetMode()
     {
-        if (PatchesRoot is null ||
-            CheatRoot is null ||
-            OfficialSourcePanel is null ||
-            CanarySourcePanel is null)
+        if (PatRoot is null ||
+            ChtRoot is null ||
+            OfclSrc is null ||
+            CanSrc is null)
         {
             return;
         }
 
-        var showPatchLibrary = Mode != PatchViewMode.Cheat;
-        PatchesRoot.Visibility = showPatchLibrary
+        var showPatchLibrary = Mode != PatMode.Cheat;
+        PatRoot.Visibility = showPatchLibrary
             ? Visibility.Visible
             : Visibility.Collapsed;
-        CheatRoot.Visibility = showPatchLibrary
+        ChtRoot.Visibility = showPatchLibrary
             ? Visibility.Collapsed
             : Visibility.Visible;
-        OfficialSourcePanel.Visibility = Mode == PatchViewMode.Patches
+        OfclSrc.Visibility = Mode == PatMode.Patches
             ? Visibility.Visible
             : Visibility.Collapsed;
-        CanarySourcePanel.Visibility = Mode == PatchViewMode.Canary
+        CanSrc.Visibility = Mode == PatMode.Canary
             ? Visibility.Visible
             : Visibility.Collapsed;
 
         if (showPatchLibrary)
         {
-            ShowCanary(Mode == PatchViewMode.Canary);
+            ShowCan(Mode == PatMode.Canary);
         }
     }
 
-    private void ShowCanary(bool showCanary)
+    private void ShowCan(bool showCanary)
     {
-        if (OfficialContent is null || CanaryContent is null)
+        if (OfclBody is null || CanBody is null)
         {
             return;
         }
 
-        OfficialContent.Visibility = showCanary
+        OfclBody.Visibility = showCanary
             ? Visibility.Collapsed
             : Visibility.Visible;
-        CanaryContent.Visibility = showCanary
+        CanBody.Visibility = showCanary
             ? Visibility.Visible
             : Visibility.Collapsed;
 

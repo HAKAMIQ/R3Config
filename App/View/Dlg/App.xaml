@@ -1,4 +1,4 @@
-<Window x:Class="R3Config.View.Dlg.AppDialog"
+<Window x:Class="R3Config.View.Dlg.AppDlg"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:lang="clr-namespace:R3Config.Lang"
@@ -19,7 +19,7 @@
         Language="{DynamicResource App.XmlLanguage}"
         Tag="{x:Static lang:UiText.IsRtl}">
     <Window.Resources>
-        <Style x:Key="AppDialogRootFlow"
+        <Style x:Key="AppFlow"
                TargetType="{x:Type FrameworkElement}">
             <Setter Property="FlowDirection" Value="LeftToRight" />
             <Style.Triggers>
@@ -30,7 +30,7 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="AppDialogTitleText"
+        <Style x:Key="AppTitle"
                TargetType="{x:Type TextBlock}"
                BasedOn="{StaticResource R3SettingsTitleText}">
             <Setter Property="FontSize" Value="15" />
@@ -46,7 +46,7 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="AppDialogMessageText"
+        <Style x:Key="AppMsg"
                TargetType="{x:Type TextBlock}"
                BasedOn="{StaticResource R3SettingsDescriptionText}">
             <Setter Property="FontSize" Value="13" />
@@ -63,7 +63,7 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="AppDialogButtonPanel"
+        <Style x:Key="AppBtns"
                TargetType="{x:Type StackPanel}">
             <Setter Property="Orientation" Value="Horizontal" />
             <Setter Property="HorizontalAlignment" Value="Right" />
@@ -85,17 +85,17 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid x:Name="ContentGrid"
+            <Grid x:Name="CntGrid"
                   Grid.Row="0"
                   Margin="16"
-                  Style="{StaticResource AppDialogRootFlow}">
+                  Style="{StaticResource AppFlow}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="12" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <Border x:Name="IconBadge"
+                <Border x:Name="IconBdg"
                         Grid.Column="0"
                         Width="28"
                         Height="28"
@@ -113,28 +113,28 @@
 
                 <StackPanel Grid.Column="2"
                             HorizontalAlignment="Stretch">
-                    <TextBlock x:Name="TitleText"
-                               Style="{StaticResource AppDialogTitleText}" />
+                    <TextBlock x:Name="TitlTxt"
+                               Style="{StaticResource AppTitle}" />
 
-                    <TextBlock x:Name="MessageText"
-                               Style="{StaticResource AppDialogMessageText}" />
+                    <TextBlock x:Name="MsgText"
+                               Style="{StaticResource AppMsg}" />
                 </StackPanel>
             </Grid>
 
             <Border Grid.Row="1"
                     Style="{StaticResource R3DialogActionBar}"
                     CornerRadius="0,0,14,14">
-                <StackPanel x:Name="ButtonPanel"
-                            Style="{StaticResource AppDialogButtonPanel}">
-                    <Button x:Name="SecondaryButton"
+                <StackPanel x:Name="Btns"
+                            Style="{StaticResource AppBtns}">
+                    <Button x:Name="AltBtn"
                             MinWidth="92"
                             Margin="4,0"
-                            Click="SecondaryButton_Click" />
-                    <Button x:Name="PrimaryButton"
-                            Style="{StaticResource PrimaryButton}"
+                            Click="AltClick" />
+                    <Button x:Name="MainBtn"
+                            Style="{StaticResource MainBtn}"
                             MinWidth="92"
                             Margin="4,0"
-                            Click="PrimaryButton_Click" />
+                            Click="MainClk" />
                 </StackPanel>
             </Border>
         </Grid>

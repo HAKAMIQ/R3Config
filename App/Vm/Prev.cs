@@ -10,256 +10,256 @@ using R3Config.Mdl;
 
 namespace R3Config.Vm;
 
-public sealed class PatchPreviewVm : VmBase
+public sealed class PatPrev : VmBase
 {
-    private const string DefaultSourceLabel = "patch.yml / imported_patch.yml / bundled Canary";
+    private const string SrcLabel = "patch.yml / imported_patch.yml / bundled Canary";
 
     private readonly List<PatMatch> _matches = [];
-    private string _title = UiText.T("Patch.Title");
-    private string _summary = UiText.T("Patch.Empty");
-    private string _emptyStateText = UiText.T("Patch.Empty");
-    private string _warningText = string.Empty;
-    private string _sourceLabel = DefaultSourceLabel;
-    private string? _surfaceRawMessage;
-    private string? _warningRawMessage;
-    private PatchSurfaceState _surfaceState = PatchSurfaceState.NotAnalyzed;
-    private bool _showExpertPatches = true;
-    private Func<PatMatch, bool>? _isEnabledResolver;
+    private string _title = UiText.GetText("Patch.Title");
+    private string _summary = UiText.GetText("Patch.Empty");
+    private string _empty = UiText.GetText("Patch.Empty");
+    private string _warnTxt = string.Empty;
+    private string _srcText = SrcLabel;
+    private string? _surfRaw;
+    private string? _warnRaw;
+    private PatSurf _state = PatSurf.NoAnlz;
+    private bool _showExp = true;
+    private Func<PatMatch, bool>? _isOnFn;
 
-    public event EventHandler? SelectionStateChanged;
+    public event EventHandler? SelState;
 
-    public ObservableCollection<PatchItemVm> Items { get; } = [];
+    public ObservableCollection<PatItVm> Items { get; } = [];
 
-    public ObservableCollection<PatchItemVm> OfficialItems { get; } = [];
+    public ObservableCollection<PatItVm> OfclList { get; } = [];
 
-    public ObservableCollection<PatchItemVm> CanaryItems { get; } = [];
+    public ObservableCollection<PatItVm> CanItems { get; } = [];
 
-    public ObservableCollection<PatchItemVm> CheatItems { get; } = [];
+    public ObservableCollection<PatItVm> ChtItems { get; } = [];
 
-    public ObservableCollection<PatchTargetGroupVm> OfficialGroups { get; } = [];
+    public ObservableCollection<TgtGrpVm> OfclGrp { get; } = [];
 
-    public ObservableCollection<PatchTargetGroupVm> CanaryGroups { get; } = [];
+    public ObservableCollection<TgtGrpVm> CanGrps { get; } = [];
 
-    public ObservableCollection<PatchTargetGroupVm> CheatGroups { get; } = [];
+    public ObservableCollection<TgtGrpVm> ChtGrps { get; } = [];
 
-    public bool HasSelectedApplyablePatches => Items.Any(item => item.IsSelected && item.CanEnable);
+    public bool HasSelOn => Items.Any(item => item.IsSel && item.CanOn);
 
-    public bool HasSelectedDisableablePatches => Items.Any(item => item.IsSelected && item.CanDisable);
+    public bool HasOff => Items.Any(item => item.IsSel && item.CanOff);
 
-    public bool HasSelectedCanaryPatches => CanaryItems.Any(item => item.IsSelected && item.CanEnable);
+    public bool HasCanP => CanItems.Any(item => item.IsSel && item.CanOn);
 
-    public bool HasSelectedOfficialApplyablePatches => OfficialItems.Any(item => item.IsSelected && item.CanEnable);
+    public bool OfclOn => OfclList.Any(item => item.IsSel && item.CanOn);
 
-    public bool HasSelectedOfficialDisableablePatches => OfficialItems.Any(item => item.IsSelected && item.CanDisable);
+    public bool OfclOff => OfclList.Any(item => item.IsSel && item.CanOff);
 
-    public bool HasSelectedCanaryApplyablePatches => CanaryItems.Any(item => item.IsSelected && item.CanEnable);
+    public bool SelCanOn => CanItems.Any(item => item.IsSel && item.CanOn);
 
-    public bool HasSelectedCanaryDisableablePatches => CanaryItems.Any(item => item.IsSelected && item.CanDisable);
+    public bool CanOff => CanItems.Any(item => item.IsSel && item.CanOff);
 
-    public bool HasSelectedCheatApplyablePatches => CheatItems.Any(item => item.IsSelected && item.CanEnable);
+    public bool SelChtOn => ChtItems.Any(item => item.IsSel && item.CanOn);
 
-    public bool HasSelectedCheatDisableablePatches => CheatItems.Any(item => item.IsSelected && item.CanDisable);
+    public bool ChtOff => ChtItems.Any(item => item.IsSel && item.CanOff);
 
     public bool IsEmpty => Items.Count == 0;
 
     public bool HasItems => Items.Count > 0;
 
-    public bool HasOfficialItems => OfficialItems.Count > 0;
+    public bool HasOfcl => OfclList.Count > 0;
 
-    public bool HasCanaryItems => CanaryItems.Count > 0;
+    public bool HasCan => CanItems.Count > 0;
 
-    public bool HasCheatItems => CheatItems.Count > 0;
+    public bool HasCht => ChtItems.Count > 0;
 
-    public bool HasSelectedOfficialOrLocalPatches => OfficialItems.Any(item => item.IsSelected && item.IsSelectable);
+    public bool HasLocal => OfclList.Any(item => item.IsSel && item.CanSel);
 
-    public string OfficialSummary => BuildSubsetSummary(OfficialItems, "Patch.OfficialSummary");
+    public string OfclSum => SubSum(OfclList, "Patch.OfficialSummary");
 
-    public string CanarySummary => BuildSubsetSummary(CanaryItems, "Patch.CanarySummary");
+    public string CanSum => SubSum(CanItems, "Patch.CanarySummary");
 
-    public string CheatSummary => BuildSubsetSummary(CheatItems, "Patch.CheatSummary");
+    public string ChtSum => SubSum(ChtItems, "Patch.CheatSummary");
 
-    public string OfficialActionHint => BuildActionHint(OfficialItems);
+    public string OfclHint => ActHint(OfclList);
 
-    public string CanaryActionHint => BuildActionHint(CanaryItems);
+    public string CanHint => ActHint(CanItems);
 
-    public string CheatActionHint => BuildActionHint(CheatItems);
+    public string ChtHint => ActHint(ChtItems);
 
-    public bool IsOfficialEmpty => OfficialItems.Count == 0;
+    public bool IsOfcl => OfclList.Count == 0;
 
-    public bool IsCanaryEmpty => CanaryItems.Count == 0;
+    public bool CanEmpty => CanItems.Count == 0;
 
-    public bool IsCheatEmpty => CheatItems.Count == 0;
+    public bool ChtEmpty => ChtItems.Count == 0;
 
-    public bool HasWarning => !string.IsNullOrWhiteSpace(WarningText);
+    public bool HasWarn => !string.IsNullOrWhiteSpace(WarnText);
 
-    public string WarningText
+    public string WarnText
     {
-        get => _warningText;
+        get => _warnTxt;
         private set
         {
-            if (SetProperty(ref _warningText, value))
+            if (Set(ref _warnTxt, value))
             {
-                OnPropertyChanged(nameof(HasWarning));
+                OnChange(nameof(HasWarn));
             }
         }
     }
 
-    public string EmptyStateText
+    public string EmptyTxt
     {
-        get => _emptyStateText;
-        private set => SetProperty(ref _emptyStateText, value);
+        get => _empty;
+        private set => Set(ref _empty, value);
     }
 
     public string Title
     {
         get => _title;
-        set => SetProperty(ref _title, value);
+        set => Set(ref _title, value);
     }
 
     public string Summary
     {
         get => _summary;
-        set => SetProperty(ref _summary, value);
+        set => Set(ref _summary, value);
     }
 
     public FlowDirection TextFlow => UiLaySvc.Current.TextFlow;
 
-    public TextAlignment TextAlignment => UiLaySvc.Current.TxtAlign;
+    public TextAlignment TxtAlign => UiLaySvc.Current.TxtAlign;
 
-    public bool ShowExpertPatches
+    public bool ShowExp
     {
-        get => _showExpertPatches;
+        get => _showExp;
         set
         {
-            if (SetProperty(ref _showExpertPatches, value))
+            if (Set(ref _showExp, value))
             {
-                RefreshVisibleItems();
+                LoadView();
             }
         }
     }
 
-    public void RefreshLanguage()
+    public void SetLang()
     {
-        Title = UiText.T("Patch.Title");
-        OnPropertyChanged(nameof(TextFlow));
-        OnPropertyChanged(nameof(TextAlignment));
+        Title = UiText.GetText("Patch.Title");
+        OnChange(nameof(TextFlow));
+        OnChange(nameof(TxtAlign));
 
-        if (_surfaceState == PatchSurfaceState.Loaded)
+        if (_state == PatSurf.Loaded)
         {
             // WPF can retain the old FlowDirection inside already-materialized
             // DataTemplate containers after a live Arabic/English switch. Rebuild
             // the item containers under the new application resources while
             // preserving every explicit checkbox state.
             var selection = Items.ToDictionary(
-                SelectionIdentity,
-                item => item.IsSelected,
+                SelId,
+                item => item.IsSel,
                 StringComparer.OrdinalIgnoreCase);
-            var expansion = OfficialGroups
-                .Concat(CanaryGroups)
-                .Concat(CheatGroups)
+            var expansion = OfclGrp
+                .Concat(CanGrps)
+                .Concat(ChtGrps)
                 .ToDictionary(
-                    GroupIdentity,
-                    group => group.IsExpanded,
+                    GroupId,
+                    group => group.IsOpen,
                     StringComparer.OrdinalIgnoreCase);
 
-            RefreshVisibleItems();
+            LoadView();
             foreach (var item in Items)
             {
-                if (selection.TryGetValue(SelectionIdentity(item), out var isSelected))
+                if (selection.TryGetValue(SelId(item), out var isSelected))
                 {
-                    item.IsSelected = isSelected;
+                    item.IsSel = isSelected;
                 }
             }
-            foreach (var group in OfficialGroups.Concat(CanaryGroups).Concat(CheatGroups))
+            foreach (var group in OfclGrp.Concat(CanGrps).Concat(ChtGrps))
             {
-                if (expansion.TryGetValue(GroupIdentity(group), out var isExpanded))
+                if (expansion.TryGetValue(GroupId(group), out var isExpanded))
                 {
-                    group.IsExpanded = isExpanded;
+                    group.IsOpen = isExpanded;
                 }
             }
 
             return;
         }
 
-        switch (_surfaceState)
+        switch (_state)
         {
-            case PatchSurfaceState.NotAnalyzed:
-                Summary = UiText.T("Patch.Empty");
-                EmptyStateText = UiText.T("Patch.Empty");
+            case PatSurf.NoAnlz:
+                Summary = UiText.GetText("Patch.Empty");
+                EmptyTxt = UiText.GetText("Patch.Empty");
                 break;
 
-            case PatchSurfaceState.Error:
-                var message = FormatPatchSurfaceMessage(_surfaceRawMessage);
+            case PatSurf.Error:
+                var message = FmtPat(_surfRaw);
                 Summary = message;
-                EmptyStateText = message;
+                EmptyTxt = message;
                 break;
 
-            case PatchSurfaceState.NoPatchesForGame:
-                Summary = WithWarning(UiText.T("Patch.NoneForGame"));
-                EmptyStateText = UiText.T("Patch.NoneForGame");
+            case PatSurf.NoPat:
+                Summary = WithWarn(UiText.GetText("Patch.NoneForGame"));
+                EmptyTxt = UiText.GetText("Patch.NoneForGame");
                 break;
 
-            case PatchSurfaceState.Loaded:
-                EmptyStateText = Items.Count == 0 ? UiText.T("Patch.EmptyVisible") : string.Empty;
-                Summary = BuildSummary();
+            case PatSurf.Loaded:
+                EmptyTxt = Items.Count == 0 ? UiText.GetText("Patch.EmptyVisible") : string.Empty;
+                Summary = AllSum();
                 break;
         }
 
         foreach (var item in Items)
         {
-            item.RefreshLanguage();
+            item.SetLang();
         }
 
-        foreach (var group in OfficialGroups.Concat(CanaryGroups).Concat(CheatGroups))
+        foreach (var group in OfclGrp.Concat(CanGrps).Concat(ChtGrps))
         {
-            group.RefreshLanguage();
+            group.SetLang();
         }
     }
 
-    private static string SelectionIdentity(PatchItemVm item)
+    private static string SelId(PatItVm item)
     {
         return string.Join(
             "\0",
             item.Match.Patch.HashKind,
             item.Match.Patch.Hash,
             item.Match.Patch.Title,
-            PatchTargetGroupVm.BuildKey(item));
+            TgtGrpVm.BuildKey(item));
     }
 
-    private static string GroupIdentity(PatchTargetGroupVm group)
+    private static string GroupId(TgtGrpVm group)
     {
         var first = group.Items[0];
-        var surface = first.IsExperimentalPatch
+        var surface = first.IsExpPat
             ? "Canary"
             : first.Risk == Mdl.PatRisk.Cheat
                 ? "Cheat"
                 : "Official";
-        return string.Join("\0", surface, PatchTargetGroupVm.BuildKey(first));
+        return string.Join("\0", surface, TgtGrpVm.BuildKey(first));
     }
 
     public void Clear()
     {
         _matches.Clear();
         Items.Clear();
-        OfficialItems.Clear();
-        CanaryItems.Clear();
-        CheatItems.Clear();
-        OfficialGroups.Clear();
-        CanaryGroups.Clear();
-        CheatGroups.Clear();
-        _sourceLabel = DefaultSourceLabel;
-        _surfaceRawMessage = null;
-        _warningRawMessage = null;
-        WarningText = string.Empty;
-        _surfaceState = PatchSurfaceState.NotAnalyzed;
-        _isEnabledResolver = null;
+        OfclList.Clear();
+        CanItems.Clear();
+        ChtItems.Clear();
+        OfclGrp.Clear();
+        CanGrps.Clear();
+        ChtGrps.Clear();
+        _srcText = SrcLabel;
+        _surfRaw = null;
+        _warnRaw = null;
+        WarnText = string.Empty;
+        _state = PatSurf.NoAnlz;
+        _isOnFn = null;
 
-        Title = UiText.T("Patch.Title");
-        Summary = UiText.T("Patch.Empty");
-        EmptyStateText = UiText.T("Patch.Empty");
+        Title = UiText.GetText("Patch.Title");
+        Summary = UiText.GetText("Patch.Empty");
+        EmptyTxt = UiText.GetText("Patch.Empty");
 
-        OnPropertyChanged(nameof(IsEmpty));
-        RaiseSelectionChanged();
+        OnChange(nameof(IsEmpty));
+        RaiseSel();
     }
 
     public void Load(
@@ -272,139 +272,139 @@ public sealed class PatchPreviewVm : VmBase
         _matches.Clear();
         _matches.AddRange(matches);
 
-        _sourceLabel = string.IsNullOrWhiteSpace(sourceLabel)
-            ? DefaultSourceLabel
+        _srcText = string.IsNullOrWhiteSpace(sourceLabel)
+            ? SrcLabel
             : sourceLabel;
 
-        _surfaceRawMessage = null;
-        _warningRawMessage = warningMessage;
-        WarningText = warningMessage?.Trim() ?? string.Empty;
-        _isEnabledResolver = isEnabledResolver;
-        _surfaceState = matches.Count == 0
-            ? PatchSurfaceState.NoPatchesForGame
-            : PatchSurfaceState.Loaded;
+        _surfRaw = null;
+        _warnRaw = warningMessage;
+        WarnText = warningMessage?.Trim() ?? string.Empty;
+        _isOnFn = isEnabledResolver;
+        _state = matches.Count == 0
+            ? PatSurf.NoPat
+            : PatSurf.Loaded;
 
-        Title = title ?? UiText.T("Patch.Title");
-        RefreshVisibleItems();
+        Title = title ?? UiText.GetText("Patch.Title");
+        LoadView();
 
-        if (_surfaceState == PatchSurfaceState.NoPatchesForGame)
+        if (_state == PatSurf.NoPat)
         {
-            EmptyStateText = UiText.T("Patch.NoneForGame");
-            Summary = BuildSummary();
+            EmptyTxt = UiText.GetText("Patch.NoneForGame");
+            Summary = AllSum();
         }
         else
         {
-            EmptyStateText = Items.Count == 0 ? UiText.T("Patch.EmptyVisible") : string.Empty;
-            Summary = BuildSummary();
+            EmptyTxt = Items.Count == 0 ? UiText.GetText("Patch.EmptyVisible") : string.Empty;
+            Summary = AllSum();
         }
 
-        OnPropertyChanged(nameof(IsEmpty));
+        OnChange(nameof(IsEmpty));
     }
 
-    public void LoadError(string message)
+    public void LoadErr(string message)
     {
         _matches.Clear();
         Items.Clear();
-        OfficialItems.Clear();
-        CanaryItems.Clear();
-        CheatItems.Clear();
-        OfficialGroups.Clear();
-        CanaryGroups.Clear();
-        CheatGroups.Clear();
-        _sourceLabel = DefaultSourceLabel;
-        _surfaceRawMessage = message;
-        _warningRawMessage = null;
-        WarningText = string.Empty;
-        _surfaceState = PatchSurfaceState.Error;
-        _isEnabledResolver = null;
+        OfclList.Clear();
+        CanItems.Clear();
+        ChtItems.Clear();
+        OfclGrp.Clear();
+        CanGrps.Clear();
+        ChtGrps.Clear();
+        _srcText = SrcLabel;
+        _surfRaw = message;
+        _warnRaw = null;
+        WarnText = string.Empty;
+        _state = PatSurf.Error;
+        _isOnFn = null;
 
-        Title = UiText.T("Patch.Title");
+        Title = UiText.GetText("Patch.Title");
 
-        var localizedMessage = FormatPatchSurfaceMessage(message);
+        var localizedMessage = FmtPat(message);
         Summary = localizedMessage;
-        EmptyStateText = localizedMessage;
+        EmptyTxt = localizedMessage;
 
-        OnPropertyChanged(nameof(IsEmpty));
-        RaiseSelectionChanged();
+        OnChange(nameof(IsEmpty));
+        RaiseSel();
     }
 
-    public IReadOnlyList<PatMatch> SelectedMatches()
+    public IReadOnlyList<PatMatch> Sel()
     {
         return Items
-            .Where(item => item.IsSelected && item.CanEnable)
+            .Where(item => item.IsSel && item.CanOn)
             .Select(item => item.Match)
             .ToArray();
     }
 
-    public IReadOnlyList<PatMatch> SelectedDisableMatches()
+    public IReadOnlyList<PatMatch> SelOff()
     {
         return Items
-            .Where(item => item.IsSelected && item.CanDisable)
+            .Where(item => item.IsSel && item.CanOff)
             .Select(item => item.Match)
             .ToArray();
     }
 
-    public IReadOnlyList<PatMatch> SelectedCanaryMatches()
+    public IReadOnlyList<PatMatch> SelCan()
     {
-        return CanaryItems
-            .Where(item => item.IsSelected && item.CanEnable)
+        return CanItems
+            .Where(item => item.IsSel && item.CanOn)
             .Select(item => item.Match)
             .ToArray();
     }
 
-    public IReadOnlyList<PatMatch> SelectedOfficialMatches()
+    public IReadOnlyList<PatMatch> SelOfcl()
     {
-        return OfficialItems
-            .Where(item => item.IsSelected && item.CanEnable)
+        return OfclList
+            .Where(item => item.IsSel && item.CanOn)
             .Select(item => item.Match)
             .ToArray();
     }
 
-    public IReadOnlyList<PatMatch> SelectedOfficialDisableMatches()
+    public IReadOnlyList<PatMatch> SelOfOff()
     {
-        return OfficialItems
-            .Where(item => item.IsSelected && item.CanDisable)
+        return OfclList
+            .Where(item => item.IsSel && item.CanOff)
             .Select(item => item.Match)
             .ToArray();
     }
 
-    public IReadOnlyList<PatMatch> SelectedCanaryDisableMatches()
+    public IReadOnlyList<PatMatch> SelCanOf()
     {
-        return CanaryItems
-            .Where(item => item.IsSelected && item.CanDisable)
+        return CanItems
+            .Where(item => item.IsSel && item.CanOff)
             .Select(item => item.Match)
             .ToArray();
     }
 
-    public IReadOnlyList<PatMatch> SelectedCheatMatches()
+    public IReadOnlyList<PatMatch> SelCht()
     {
-        return CheatItems
-            .Where(item => item.IsSelected && item.CanEnable)
+        return ChtItems
+            .Where(item => item.IsSel && item.CanOn)
             .Select(item => item.Match)
             .ToArray();
     }
 
-    public IReadOnlyList<PatMatch> SelectedCheatDisableMatches()
+    public IReadOnlyList<PatMatch> SelChtOf()
     {
-        return CheatItems
-            .Where(item => item.IsSelected && item.CanDisable)
+        return ChtItems
+            .Where(item => item.IsSel && item.CanOff)
             .Select(item => item.Match)
             .ToArray();
     }
 
-    private void RefreshVisibleItems()
+    private void LoadView()
     {
         Items.Clear();
-        OfficialItems.Clear();
-        CanaryItems.Clear();
-        CheatItems.Clear();
-        OfficialGroups.Clear();
-        CanaryGroups.Clear();
-        CheatGroups.Clear();
+        OfclList.Clear();
+        CanItems.Clear();
+        ChtItems.Clear();
+        OfclGrp.Clear();
+        CanGrps.Clear();
+        ChtGrps.Clear();
 
-        foreach (var match in _matches.Where(match => PatPol.Is(match.Patch.Risk, ShowExpertPatches)))
+        foreach (var match in _matches.Where(match => PatPol.Is(match.Patch.Risk, ShowExp)))
         {
-            var isEnabled = _isEnabledResolver?.Invoke(match) == true;
+            var isEnabled = _isOnFn?.Invoke(match) == true;
             if (PatVer.IsAll(match.TgtSer) &&
                 match.Status != MatStat.Match)
             {
@@ -415,170 +415,170 @@ public sealed class PatchPreviewVm : VmBase
                 continue;
             }
 
-            var item = new PatchItemVm(match, _sourceLabel, isEnabled);
-            item.PropertyChanged += PatchItem_PropertyChanged;
+            var item = new PatItVm(match, _srcText, isEnabled);
+            item.PropertyChanged += PatItem;
             Items.Add(item);
 
-            if (item.IsExperimentalPatch)
+            if (item.IsExpPat)
             {
-                CanaryItems.Add(item);
+                CanItems.Add(item);
             }
             else if (item.Risk == PatRisk.Cheat)
             {
-                CheatItems.Add(item);
+                ChtItems.Add(item);
             }
             else
             {
-                OfficialItems.Add(item);
+                OfclList.Add(item);
             }
         }
 
-        BuildTargetGroups(OfficialItems, OfficialGroups);
-        BuildTargetGroups(CanaryItems, CanaryGroups);
-        BuildTargetGroups(CheatItems, CheatGroups);
+        BuildTgt(OfclList, OfclGrp);
+        BuildTgt(CanItems, CanGrps);
+        BuildTgt(ChtItems, ChtGrps);
 
         if (_matches.Count > 0)
         {
-            EmptyStateText = Items.Count == 0 ? UiText.T("Patch.EmptyVisible") : string.Empty;
-            OnPropertyChanged(nameof(IsEmpty));
-            Summary = BuildSummary();
+            EmptyTxt = Items.Count == 0 ? UiText.GetText("Patch.EmptyVisible") : string.Empty;
+            OnChange(nameof(IsEmpty));
+            Summary = AllSum();
         }
 
-        RaiseSelectionChanged();
+        RaiseSel();
     }
 
-    private static void BuildTargetGroups(
-        IReadOnlyCollection<PatchItemVm> source,
-        ObservableCollection<PatchTargetGroupVm> destination)
+    private static void BuildTgt(
+        IReadOnlyCollection<PatItVm> source,
+        ObservableCollection<TgtGrpVm> destination)
     {
         foreach (var group in source
-                     .GroupBy(PatchTargetGroupVm.BuildKey, StringComparer.OrdinalIgnoreCase)
-                     .Select(items => new PatchTargetGroupVm(items.ToArray()))
-                     .OrderBy(group => group.MatchRank)
-                     .ThenBy(group => group.GameTitle, StringComparer.OrdinalIgnoreCase)
+                     .GroupBy(TgtGrpVm.BuildKey, StringComparer.OrdinalIgnoreCase)
+                     .Select(items => new TgtGrpVm(items.ToArray()))
+                     .OrderBy(group => group.Rank)
+                     .ThenBy(group => group.Title, StringComparer.OrdinalIgnoreCase)
                      .ThenBy(group => group.Serial, StringComparer.OrdinalIgnoreCase)
-                     .ThenBy(group => group.VersionSortKey, StringComparer.OrdinalIgnoreCase))
+                     .ThenBy(group => group.SortKey, StringComparer.OrdinalIgnoreCase))
         {
             destination.Add(group);
         }
     }
 
-    private void PatchItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void PatItem(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PatchItemVm.IsSelected))
+        if (e.PropertyName == nameof(PatItVm.IsSel))
         {
-            Summary = BuildSummary();
-            RaiseSelectionChanged();
+            Summary = AllSum();
+            RaiseSel();
         }
     }
 
-    private void RaiseSelectionChanged()
+    private void RaiseSel()
     {
-        OnPropertyChanged(nameof(IsEmpty));
-        OnPropertyChanged(nameof(HasItems));
-        OnPropertyChanged(nameof(HasOfficialItems));
-        OnPropertyChanged(nameof(HasCanaryItems));
-        OnPropertyChanged(nameof(HasCheatItems));
-        OnPropertyChanged(nameof(OfficialGroups));
-        OnPropertyChanged(nameof(CanaryGroups));
-        OnPropertyChanged(nameof(CheatGroups));
-        OnPropertyChanged(nameof(OfficialSummary));
-        OnPropertyChanged(nameof(CanarySummary));
-        OnPropertyChanged(nameof(CheatSummary));
-        OnPropertyChanged(nameof(OfficialActionHint));
-        OnPropertyChanged(nameof(CanaryActionHint));
-        OnPropertyChanged(nameof(CheatActionHint));
-        OnPropertyChanged(nameof(IsOfficialEmpty));
-        OnPropertyChanged(nameof(IsCanaryEmpty));
-        OnPropertyChanged(nameof(IsCheatEmpty));
-        OnPropertyChanged(nameof(HasSelectedApplyablePatches));
-        OnPropertyChanged(nameof(HasSelectedDisableablePatches));
-        OnPropertyChanged(nameof(HasSelectedCanaryPatches));
-        OnPropertyChanged(nameof(HasSelectedOfficialApplyablePatches));
-        OnPropertyChanged(nameof(HasSelectedOfficialDisableablePatches));
-        OnPropertyChanged(nameof(HasSelectedCanaryApplyablePatches));
-        OnPropertyChanged(nameof(HasSelectedCanaryDisableablePatches));
-        OnPropertyChanged(nameof(HasSelectedCheatApplyablePatches));
-        OnPropertyChanged(nameof(HasSelectedCheatDisableablePatches));
-        OnPropertyChanged(nameof(HasSelectedOfficialOrLocalPatches));
-        SelectionStateChanged?.Invoke(this, EventArgs.Empty);
+        OnChange(nameof(IsEmpty));
+        OnChange(nameof(HasItems));
+        OnChange(nameof(HasOfcl));
+        OnChange(nameof(HasCan));
+        OnChange(nameof(HasCht));
+        OnChange(nameof(OfclGrp));
+        OnChange(nameof(CanGrps));
+        OnChange(nameof(ChtGrps));
+        OnChange(nameof(OfclSum));
+        OnChange(nameof(CanSum));
+        OnChange(nameof(ChtSum));
+        OnChange(nameof(OfclHint));
+        OnChange(nameof(CanHint));
+        OnChange(nameof(ChtHint));
+        OnChange(nameof(IsOfcl));
+        OnChange(nameof(CanEmpty));
+        OnChange(nameof(ChtEmpty));
+        OnChange(nameof(HasSelOn));
+        OnChange(nameof(HasOff));
+        OnChange(nameof(HasCanP));
+        OnChange(nameof(OfclOn));
+        OnChange(nameof(OfclOff));
+        OnChange(nameof(SelCanOn));
+        OnChange(nameof(CanOff));
+        OnChange(nameof(SelChtOn));
+        OnChange(nameof(ChtOff));
+        OnChange(nameof(HasLocal));
+        SelState?.Invoke(this, EventArgs.Empty);
     }
 
-    private static string BuildSubsetSummary(IReadOnlyCollection<PatchItemVm> items, string key)
+    private static string SubSum(IReadOnlyCollection<PatItVm> items, string key)
     {
         if (items.Count == 0)
         {
             return string.Empty;
         }
 
-        var selectedCount = items.Count(item => item.IsSelected);
-        var actionableCount = items.Count(item => item.IsSelectable);
-        return UiText.F(key, items.Count, actionableCount, selectedCount);
+        var selectedCount = items.Count(item => item.IsSel);
+        var actionableCount = items.Count(item => item.CanSel);
+        return UiText.Fmt(key, items.Count, actionableCount, selectedCount);
     }
 
-    private static string BuildActionHint(IReadOnlyCollection<PatchItemVm> items)
+    private static string ActHint(IReadOnlyCollection<PatItVm> items)
     {
-        var enableCount = items.Count(item => item.IsSelected && item.CanEnable);
-        var disableCount = items.Count(item => item.IsSelected && item.CanDisable);
+        var enableCount = items.Count(item => item.IsSel && item.CanOn);
+        var disableCount = items.Count(item => item.IsSel && item.CanOff);
         if (enableCount > 0 || disableCount > 0)
         {
-            return UiText.F("Patch.ActionHint.Selected", enableCount, disableCount);
+            return UiText.Fmt("Patch.ActionHint.Selected", enableCount, disableCount);
         }
 
-        return items.Any(item => item.IsSelectable)
-            ? UiText.T("Patch.ActionHint.Select")
-            : UiText.T("Patch.ActionHint.None");
+        return items.Any(item => item.CanSel)
+            ? UiText.GetText("Patch.ActionHint.Select")
+            : UiText.GetText("Patch.ActionHint.None");
     }
 
-    private string BuildSummary()
+    private string AllSum()
     {
         if (_matches.Count == 0 || Items.Count == 0)
         {
             return string.Empty;
         }
 
-        var selectedCount = Items.Count(item => item.IsSelected);
-        var readyCount = Items.Count(item => item.CanEnable || item.CanDisable);
-        var canaryCount = Items.Count(item => item.IsExperimentalPatch);
+        var selectedCount = Items.Count(item => item.IsSel);
+        var readyCount = Items.Count(item => item.CanOn || item.CanOff);
+        var canaryCount = Items.Count(item => item.IsExpPat);
 
         if (canaryCount > 0)
         {
-            return WithWarning(UiText.F("Patch.SummaryWithCanary", Items.Count, canaryCount, readyCount, selectedCount));
+            return WithWarn(UiText.Fmt("Patch.SummaryWithCanary", Items.Count, canaryCount, readyCount, selectedCount));
         }
 
-        return WithWarning(UiText.F("Patch.SummaryClean", Items.Count, readyCount, selectedCount));
+        return WithWarn(UiText.Fmt("Patch.SummaryClean", Items.Count, readyCount, selectedCount));
     }
 
-    private string WithWarning(string summary)
+    private string WithWarn(string summary)
     {
         return summary;
     }
 
-    private static string FormatPatchSurfaceMessage(string? raw)
+    private static string FmtPat(string? raw)
     {
         var localized = PatText.SurfMsg(raw);
         return localized.HasOrig
-            ? $"{localized.Body}{Environment.NewLine}{UiText.T("Note.OriginalTextLabel")}{Environment.NewLine}{localized.OrigBody}"
+            ? $"{localized.Body}{Environment.NewLine}{UiText.GetText("Note.OriginalTextLabel")}{Environment.NewLine}{localized.OrigBody}"
             : localized.Body;
     }
 
-    private enum PatchSurfaceState
+    private enum PatSurf
     {
-        NotAnalyzed,
+        NoAnlz,
         Error,
-        NoPatchesForGame,
+        NoPat,
         Loaded
     }
 }
 
-public sealed class PatchTargetGroupVm : VmBase
+public sealed class TgtGrpVm : VmBase
 {
-    private readonly MatStat _bestStatus;
-    private readonly string _gameTitle;
-    private readonly string? _installedVersion;
-    private bool _isExpanded;
+    private readonly MatStat _status;
+    private readonly string _title;
+    private readonly string? _instVer;
+    private bool _isOpen;
 
-    public PatchTargetGroupVm(IReadOnlyList<PatchItemVm> items)
+    public TgtGrpVm(IReadOnlyList<PatItVm> items)
     {
         if (items.Count == 0)
         {
@@ -586,7 +586,7 @@ public sealed class PatchTargetGroupVm : VmBase
         }
 
         var first = items[0];
-        var target = ResolveTarget(first.Match);
+        var target = GetTgt(first.Match);
 
         Serial = first.Match.TgtSer
             ?? target?.Serial
@@ -603,16 +603,16 @@ public sealed class PatchTargetGroupVm : VmBase
                 .ToArray()
                 ?? [];
 
-        _installedVersion = PatVer.Norm(first.Match.MatVer);
-        _gameTitle = first.Match.TgtName
+        _instVer = PatVer.Norm(first.Match.MatVer);
+        _title = first.Match.TgtName
             ?? target?.Title
             ?? first.Match.Patch.GameTgt.FirstOrDefault()?.Title
             ?? "-";
-        _bestStatus = items
-            .Select(item => item.MatchStatus)
-            .OrderBy(MatchRankFor)
+        _status = items
+            .Select(item => item.MatStat)
+            .OrderBy(MatchFor)
             .First();
-        _isExpanded = _bestStatus is
+        _isOpen = _status is
             MatStat.Match or
             MatStat.Unknown;
 
@@ -624,97 +624,97 @@ public sealed class PatchTargetGroupVm : VmBase
                 .ToArray();
             for (var index = 0; index < duplicates.Length; index++)
             {
-                duplicates[index].SetDuplicateOrdinal(index + 1, duplicates.Length);
+                duplicates[index].SetDup(index + 1, duplicates.Length);
             }
         }
 
         foreach (var item in items
-                     .OrderBy(item => item.GroupDisplay, StringComparer.OrdinalIgnoreCase)
-                     .ThenBy(item => item.DisplayTitle, StringComparer.OrdinalIgnoreCase))
+                     .OrderBy(item => item.GroupDsp, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(item => item.DspTitle, StringComparer.OrdinalIgnoreCase))
         {
             Items.Add(item);
         }
     }
 
-    public ObservableCollection<PatchItemVm> Items { get; } = [];
+    public ObservableCollection<PatItVm> Items { get; } = [];
 
     public string Serial { get; }
 
-    public string GameTitle => _gameTitle;
+    public string Title => _title;
 
     public IReadOnlyList<string> Versions { get; }
 
-    public string VersionDisplay => Versions.Count == 0
-        ? UiText.T("Patch.Version.Any")
+    public string VerDsp => Versions.Count == 0
+        ? UiText.GetText("Patch.Version.Any")
         : string.Join(", ", Versions);
 
-    public string InstalledVersionDisplay => _installedVersion ?? UiText.T("Ui.Unknown");
+    public string InstVer => _instVer ?? UiText.GetText("Ui.Unknown");
 
-    public string VersionSortKey => Versions.Count == 0
+    public string SortKey => Versions.Count == 0
         ? "~~~~"
         : string.Join("|", Versions);
 
-    public string Header => _gameTitle;
+    public string Header => _title;
 
-    public string Details => UiText.F(
+    public string Details => UiText.Fmt(
         "Patch.GroupUserDetails",
-        FormatTechInline(InstalledVersionDisplay),
+        FmtTech(InstVer),
         Items.Count);
 
     public string Tooltip => string.Join(
         Environment.NewLine,
         Header,
         Details,
-        UiText.PatchMatchLabel(_bestStatus));
+        UiText.PatMatch(_status));
 
-    public string StatusDisplay => Items.Any(item => item.IsEnabled)
-        ? UiText.T("Patch.State.Enabled")
-        : Items.Any(item => item.CanEnable && item.IsDefinitionResident)
-            ? UiText.T("Patch.State.Disabled")
-        : Items.Any(item => item.CanEnable)
-            ? UiText.T("Patch.State.Ready")
-            : UiText.PatchMatchLabel(_bestStatus);
+    public string StatDsp => Items.Any(item => item.IsOn)
+        ? UiText.GetText("Patch.State.Enabled")
+        : Items.Any(item => item.CanOn && item.IsDef)
+            ? UiText.GetText("Patch.State.Disabled")
+        : Items.Any(item => item.CanOn)
+            ? UiText.GetText("Patch.State.Ready")
+            : UiText.PatMatch(_status);
 
-    public string StatusTone => Items.Any(item => item.IsEnabled)
+    public string Tone => Items.Any(item => item.IsOn)
         ? "Game"
-        : Items.Any(item => item.CanEnable && item.IsDefinitionResident)
+        : Items.Any(item => item.CanOn && item.IsDef)
             ? "Muted"
-            : _bestStatus switch
+            : _status switch
             {
                 MatStat.Match => "Auto",
-                MatStat.Unknown when Items.Any(item => item.CanEnable) => "Auto",
+                MatStat.Unknown when Items.Any(item => item.CanOn) => "Auto",
                 MatStat.Unknown => "Warning",
                 _ => "Muted"
             };
 
     public FlowDirection TextFlow => UiLaySvc.Current.TextFlow;
 
-    public TextAlignment TextAlignment => UiLaySvc.Current.TxtAlign;
+    public TextAlignment TxtAlign => UiLaySvc.Current.TxtAlign;
 
-    public bool IsExpanded
+    public bool IsOpen
     {
-        get => _isExpanded;
-        set => SetProperty(ref _isExpanded, value);
+        get => _isOpen;
+        set => Set(ref _isOpen, value);
     }
 
-    public int MatchRank => MatchRankFor(_bestStatus);
+    public int Rank => MatchFor(_status);
 
-    public void RefreshLanguage()
+    public void SetLang()
     {
-        OnPropertyChanged(nameof(TextFlow));
-        OnPropertyChanged(nameof(TextAlignment));
-        OnPropertyChanged(nameof(VersionDisplay));
-        OnPropertyChanged(nameof(InstalledVersionDisplay));
-        OnPropertyChanged(nameof(Header));
-        OnPropertyChanged(nameof(Details));
-        OnPropertyChanged(nameof(Tooltip));
-        OnPropertyChanged(nameof(StatusDisplay));
-        OnPropertyChanged(nameof(StatusTone));
+        OnChange(nameof(TextFlow));
+        OnChange(nameof(TxtAlign));
+        OnChange(nameof(VerDsp));
+        OnChange(nameof(InstVer));
+        OnChange(nameof(Header));
+        OnChange(nameof(Details));
+        OnChange(nameof(Tooltip));
+        OnChange(nameof(StatDsp));
+        OnChange(nameof(Tone));
     }
 
-    public static string BuildKey(PatchItemVm item)
+    public static string BuildKey(PatItVm item)
     {
-        var target = ResolveTarget(item.Match);
+        var target = GetTgt(item.Match);
         var title = item.Match.TgtName
             ?? target?.Title
             ?? item.Match.Patch.GameTgt.FirstOrDefault()?.Title
@@ -740,7 +740,7 @@ public sealed class PatchTargetGroupVm : VmBase
             versions);
     }
 
-    private static R3PatTgt? ResolveTarget(PatMatch match)
+    private static R3PatTgt? GetTgt(PatMatch match)
     {
         var serial = match.TgtSer
             ?? match.MatSer
@@ -758,7 +758,7 @@ public sealed class PatchTargetGroupVm : VmBase
                ?? match.Patch.GameTgt.FirstOrDefault();
     }
 
-    private static int MatchRankFor(MatStat status)
+    private static int MatchFor(MatStat status)
     {
         return status switch
         {
@@ -772,7 +772,7 @@ public sealed class PatchTargetGroupVm : VmBase
         };
     }
 
-    private static string FormatTechInline(string value)
+    private static string FmtTech(string value)
     {
         return UiText.IsRtl && !string.IsNullOrWhiteSpace(value)
             ? "\u200E" + value + "\u200E"

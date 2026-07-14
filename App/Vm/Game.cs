@@ -2,11 +2,11 @@ using R3Config.Mdl;
 
 namespace R3Config.Vm;
 
-public sealed class GameItemVm : VmBase
+public sealed class GameVm : VmBase
 {
-    private RecSum _recState;
+    private RecSum _recStat;
 
-    public GameItemVm(
+    public GameVm(
         R3Game game,
         WikiRec? recommendation,
         RecSum recState,
@@ -15,25 +15,25 @@ public sealed class GameItemVm : VmBase
         bool isDetectedInRpcs3)
     {
         Game = game;
-        Recommendation = recommendation;
-        _recState = recState;
+        Rec = recommendation;
+        _recStat = recState;
         Serial = serial;
         Title = title;
-        IsDetectedInRpcs3 = isDetectedInRpcs3;
+        InR3 = isDetectedInRpcs3;
     }
 
     public R3Game Game { get; }
 
-    public WikiRec? Recommendation { get; }
+    public WikiRec? Rec { get; }
 
     public RecSum RecState
     {
-        get => _recState;
+        get => _recStat;
         set
         {
-            if (SetProperty(ref _recState, value))
+            if (Set(ref _recStat, value))
             {
-                OnPropertyChanged(nameof(Pending));
+                OnChange(nameof(Pending));
             }
         }
     }
@@ -42,7 +42,7 @@ public sealed class GameItemVm : VmBase
 
     public string Title { get; }
 
-    public bool IsDetectedInRpcs3 { get; }
+    public bool InR3 { get; }
 
     public int Pending => RecState.Pending;
 }

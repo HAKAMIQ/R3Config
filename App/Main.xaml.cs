@@ -8,45 +8,45 @@ using R3Config.View;
 
 namespace R3Config;
 
-public partial class MainWindow : Window
+public partial class MainWin : Window
 {
-    private readonly MainVm _viewModel = new();
+    private readonly MainVm _vm = new();
 
-    public MainWindow()
+    public MainWin()
     {
         InitializeComponent();
 
-        DataContext = _viewModel;
+        DataContext = _vm;
 
-        _viewModel.RequestAdvancedDialog += (_, _) => ShowAdvancedDialog();
-        _viewModel.LanguageChanged += (_, _) => RebuildPatchViews();
+        _vm.AdvReq += (_, _) => ShowAdv();
+        _vm.LangChg += (_, _) => BuildPat();
         Activated += (_, _) =>
-            _viewModel.RefreshRpcs3PresentationState();
-        StateChanged += (_, _) => UpdateCaptionButtons();
-        UpdateCaptionButtons();
+            _vm.LoadR3Ui();
+        StateChanged += (_, _) => SetCap();
+        SetCap();
     }
 
-    private void ShowAdvancedDialog()
+    private void ShowAdv()
     {
-        var dialog = new AdvancedDialog
+        var dialog = new AdvDlg
         {
             Owner = this,
-            DataContext = _viewModel
+            DataContext = _vm
         };
 
         dialog.ShowDialog();
     }
 
-    private void RebuildPatchViews()
+    private void BuildPat()
     {
-        PatchesTab.Content = CreatePatchView(Ctrl.PatchViewMode.Patches);
-        CanaryPatchTab.Content = CreatePatchView(Ctrl.PatchViewMode.Canary);
-        CheatPatchTab.Content = CreatePatchView(Ctrl.PatchViewMode.Cheat);
+        PatTab.Content = MakePat(Ctrl.PatMode.Patches);
+        CanTab.Content = MakePat(Ctrl.PatMode.Canary);
+        ChtTab.Content = MakePat(Ctrl.PatMode.Cheat);
     }
 
-    private static Ctrl.PatchView CreatePatchView(Ctrl.PatchViewMode mode)
+    private static Ctrl.PatView MakePat(Ctrl.PatMode mode)
     {
-        return new Ctrl.PatchView
+        return new Ctrl.PatView
         {
             Mode = mode,
             HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -54,7 +54,7 @@ public partial class MainWindow : Window
         };
     }
 
-    private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void DragWin(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton != MouseButton.Left)
         {
@@ -63,7 +63,7 @@ public partial class MainWindow : Window
 
         if (e.ClickCount == 2)
         {
-            ToggleWindowState();
+            TogState();
             return;
         }
 
@@ -77,49 +77,49 @@ public partial class MainWindow : Window
         }
     }
 
-    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+    private void MinWin(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState.Minimized;
     }
 
-    private void MaximizeRestoreButton_Click(object sender, RoutedEventArgs e)
+    private void MaxWin(object sender, RoutedEventArgs e)
     {
-        ToggleWindowState();
+        TogState();
     }
 
-    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    private void CloseWin(object sender, RoutedEventArgs e)
     {
         Close();
     }
 
-    private void ToggleWindowState()
+    private void TogState()
     {
         WindowState = WindowState == WindowState.Maximized
             ? WindowState.Normal
             : WindowState.Maximized;
 
-        UpdateCaptionButtons();
+        SetCap();
     }
 
-    private void UpdateCaptionButtons()
+    private void SetCap()
     {
-        if (MaximizeRestoreButton is null)
+        if (MaxBtn is null)
         {
             return;
         }
 
         var isMaximized = WindowState == WindowState.Maximized;
 
-        MaximizeRestoreButton.Content = isMaximized
-            ? CreateRestoreIcon()
-            : CreateMaximizeIcon();
+        MaxBtn.Content = isMaximized
+            ? RstIcon()
+            : MaxIcon();
 
-        MaximizeRestoreButton.ToolTip = isMaximized
-            ? Lang.UiText.T("Window.RestoreTip")
-            : Lang.UiText.T("Window.MaximizeTip");
+        MaxBtn.ToolTip = isMaximized
+            ? Lang.UiText.GetText("Window.RestoreTip")
+            : Lang.UiText.GetText("Window.MaximizeTip");
     }
 
-    private FrameworkElement CreateMaximizeIcon()
+    private FrameworkElement MaxIcon()
     {
         var root = new Grid
         {
@@ -150,7 +150,7 @@ public partial class MainWindow : Window
         return root;
     }
 
-    private FrameworkElement CreateRestoreIcon()
+    private FrameworkElement RstIcon()
     {
         var root = new Grid
         {

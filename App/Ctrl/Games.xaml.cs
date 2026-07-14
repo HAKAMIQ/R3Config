@@ -2,9 +2,9 @@ using System.Windows.Controls;
 
 namespace R3Config.Ctrl;
 
-public partial class GamesListView : UserControl
+public partial class GameList : UserControl
 {
-    public GamesListView()
+    public GameList()
     {
         InitializeComponent();
     }

@@ -30,7 +30,7 @@
 
 	<Style x:Key="ArabicText" TargetType="TextBlock" BasedOn="{StaticResource ArabicBlockText}" />
 
-	<Style x:Key="TitleText" TargetType="TextBlock" BasedOn="{StaticResource ArabicHeadingText}">
+	<Style x:Key="TitlTxt" TargetType="TextBlock" BasedOn="{StaticResource ArabicHeadingText}">
 		<Setter Property="FontSize" Value="15" />
 	</Style>
 

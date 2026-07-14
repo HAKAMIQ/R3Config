@@ -218,39 +218,39 @@ internal static class HCanTests
             var game = new R3Game("NPUB30899", "TEKKEN TAG TOURNAMENT 2", "game", "01.01",
                 "8645cfa235c9980ff74b5e06388b29e97fdbbed9", null,
                 ["8645cfa235c9980ff74b5e06388b29e97fdbbed9"], [], Path.Combine(root, "RPCS3.log"));
-            var vm = new HCanaryVm();
-            vm.SetContext(install, game);
+            var vm = new HCanVm();
+            vm.SetCtx(install, game);
             Assert(vm.Games.Count == 1 && vm.Games[0].GameId == "NPUB30899", "Selected game should initialize a new authoring draft.");
             Assert(vm.Hashes.Count == 1, "Selected game Hash evidence should populate the chooser.");
-            vm.SelectedHash = vm.Hashes[0];
-            vm.PatchName = "VM Patch";
+            vm.SelHash = vm.Hashes[0];
+            vm.PatName = "VM Patch";
             vm.Author = "Author";
-            var previewBefore = vm.YamlPreview;
-            vm.Instructions[0].Address = "0x0001c310";
-            vm.Instructions[0].Value = "0x39200000";
-            Assert(vm.YamlPreview != previewBefore && vm.YamlPreview.Contains("0x39200000", StringComparison.Ordinal), "Preview should update when an instruction changes.");
-            Assert(vm.IsValid && vm.SaveCommand.CanExecute(null), "CanExecute should allow a complete valid draft.");
-            vm.AddInstructionCommand.Execute(null);
-            Assert(vm.Instructions.Count == 2, "ViewModel should add instructions.");
-            vm.DeleteInstructionCommand.Execute(null);
-            Assert(vm.Instructions.Count == 1, "ViewModel should delete the selected instruction.");
-            vm.AddGameCommand.Execute(null);
+            var previewBefore = vm.Preview;
+            vm.Ins[0].Address = "0x0001c310";
+            vm.Ins[0].Value = "0x39200000";
+            Assert(vm.Preview != previewBefore && vm.Preview.Contains("0x39200000", StringComparison.Ordinal), "Preview should update when an instruction changes.");
+            Assert(vm.IsValid && vm.SaveCmd.CanExecute(null), "CanExecute should allow a complete valid draft.");
+            vm.AddICmd.Execute(null);
+            Assert(vm.Ins.Count == 2, "ViewModel should add instructions.");
+            vm.DelICmd.Execute(null);
+            Assert(vm.Ins.Count == 1, "ViewModel should delete the selected instruction.");
+            vm.AddGmCmd.Execute(null);
             Assert(vm.Games.Count == 2, "ViewModel should add game targets.");
-            vm.DeleteGameCommand.Execute(null);
+            vm.DelGmCmd.Execute(null);
             Assert(vm.Games.Count == 1, "ViewModel should delete the selected game target.");
-            vm.AddAnchorCommand.Execute(null);
+            vm.AddACmd.Execute(null);
             Assert(vm.Anchors.Count == 1, "ViewModel should add Anchors.");
-            vm.AddAnchorLoadCommand.Execute(null);
-            Assert(vm.Instructions.Any(item => item.Operation == "load"), "ViewModel should add a load reference.");
-            vm.SelectedInstruction = vm.Instructions.Last(); vm.DeleteInstructionCommand.Execute(null);
+            vm.AncLoad.Execute(null);
+            Assert(vm.Ins.Any(item => item.Op == "load"), "ViewModel should add a load reference.");
+            vm.SelIns = vm.Ins.Last(); vm.DelICmd.Execute(null);
 
-            var draftName = vm.PatchName;
-            var instructionOrder = vm.Instructions.Select(item => item.Address).ToArray();
-            UiText.SetLang(UiText.EnglishLang); vm.RefreshLanguage();
-            UiText.SetLang(UiText.ArabicLang); vm.RefreshLanguage();
-            Assert(vm.PatchName == draftName && vm.Instructions.Select(item => item.Address).SequenceEqual(instructionOrder), "Live language switching must preserve the draft and instruction order.");
-            vm.SetContext(install, game with { Serial = "BLUS00001", Title = "Other Game" });
-            Assert(vm.PatchName == draftName && vm.IsDirty, "Changing the selected game must preserve an active draft.");
+            var draftName = vm.PatName;
+            var instructionOrder = vm.Ins.Select(item => item.Address).ToArray();
+            UiText.SetLang(UiText.EnLang); vm.SetLang();
+            UiText.SetLang(UiText.ArabLang); vm.SetLang();
+            Assert(vm.PatName == draftName && vm.Ins.Select(item => item.Address).SequenceEqual(instructionOrder), "Live language switching must preserve the draft and instruction order.");
+            vm.SetCtx(install, game with { Serial = "BLUS00001", Title = "Other Game" });
+            Assert(vm.PatName == draftName && vm.IsDirty, "Changing the selected game must preserve an active draft.");
         }
         finally { Directory.Delete(temp, true); }
     }
@@ -264,7 +264,7 @@ internal static class HCanTests
         Assert(en.Keys.Any(key => key.StartsWith("HCanary.Validation.", StringComparison.Ordinal)), "H-Canary validation messages must be localized.");
         var xaml = File.ReadAllText(Path.Combine(root, "App", "Ctrl", "HCan.xaml"));
         Assert(!xaml.Contains("CheckBox", StringComparison.OrdinalIgnoreCase), "H-Canary authoring view must not be an activation checklist.");
-        Assert(xaml.Contains("HCanary.Instructions", StringComparison.Ordinal) && xaml.Contains("HCanary.Anchors", StringComparison.Ordinal) && xaml.Contains("YamlPreview", StringComparison.Ordinal),
+        Assert(xaml.Contains("HCanary.Instructions", StringComparison.Ordinal) && xaml.Contains("HCanary.Anchors", StringComparison.Ordinal) && xaml.Contains("HCanary.Preview", StringComparison.Ordinal),
             "H-Canary view must expose instruction, Anchor, and true YAML preview editing.");
         Assert(xaml.Contains("FlowDirection=\"LeftToRight\"", StringComparison.Ordinal) && xaml.Contains("TextAlignment=\"Left\"", StringComparison.Ordinal),
             "Technical YAML content must remain LTR and left aligned.");

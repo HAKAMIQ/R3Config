@@ -6,9 +6,9 @@ using R3Config.Vm;
 
 namespace R3Config.View;
 
-public partial class CanaryPatchImportDialog : Window
+public partial class CanDlg : Window
 {
-    public CanaryPatchImportDialog(Window? owner, CanaryPatchImportVm viewModel)
+    public CanDlg(Window? owner, CanImpVm viewModel)
     {
         InitializeComponent();
 
@@ -17,16 +17,16 @@ public partial class CanaryPatchImportDialog : Window
 
         Owner = owner;
         DataContext = viewModel;
-        Activated += (_, _) => viewModel.RefreshMutationState();
+        Activated += (_, _) => viewModel.LoadMut();
 
-        viewModel.RequestClose += (_, result) =>
+        viewModel.CloseReq += (_, result) =>
         {
             DialogResult = result;
             Close();
         };
     }
 
-    private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void DragWin(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton != MouseButton.Left)
         {
@@ -51,7 +51,7 @@ public partial class CanaryPatchImportDialog : Window
         }
     }
 
-    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    private void CloseWin(object sender, RoutedEventArgs e)
     {
         DialogResult = false;
         Close();
