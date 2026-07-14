@@ -9,7 +9,7 @@
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <UseAppHost>true</UseAppHost>
     <DebugType>embedded</DebugType>
-    <AssemblyName>R3Config</AssemblyName>
+    <AssemblyName>R3App</AssemblyName>
     <RootNamespace>R3Config</RootNamespace>
     <Version>1.0.1</Version>
     <AssemblyVersion>1.0.1.0</AssemblyVersion>
@@ -20,11 +20,11 @@
     <Company>HAKAMIQ</Company>
     <Description>Offline Windows companion for safe RPCS3 per-game configuration and patch management.</Description>
     <Copyright>Copyright © 2026 HAKAMIQ. All rights reserved.</Copyright>
-    <ApplicationIcon>Asset\Icon.ico</ApplicationIcon>
+    <ApplicationIcon>Data\Icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Core\R3Config.Core.csproj" />
+    <ProjectReference Include="..\Core\R3Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,7 +33,7 @@
     <Content Include="Data\cheats.yml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Lang\ar-SA.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Lang\en-US.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Resource Include="Asset\Icon.ico" />
+    <Resource Include="Data\Icon.ico" />
   </ItemGroup>
 
   <ItemGroup>

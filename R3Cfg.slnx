@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Tst/R3Test.csproj" />
+  <Project Path="App/R3App.csproj" />
+  <Project Path="Core/R3Core.csproj" />
+</Solution>

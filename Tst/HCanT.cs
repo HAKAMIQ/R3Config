@@ -301,7 +301,7 @@ internal static class HCanTests
         var current = new DirectoryInfo(Environment.CurrentDirectory);
         while (current is not null)
         {
-            if (File.Exists(Path.Combine(current.FullName, "R3Config.slnx"))) return current.FullName;
+            if (File.Exists(Path.Combine(current.FullName, "R3Cfg.slnx"))) return current.FullName;
             current = current.Parent;
         }
         throw new DirectoryNotFoundException("R3Config repository root was not found.");

@@ -5,7 +5,7 @@
         xmlns:lang="clr-namespace:R3Config.Lang"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="{lang:Text Key=App.Title}"
-        Icon="Asset/Icon.ico"
+        Icon="Data/Icon.ico"
         Width="1180"
         Height="740"
         MinWidth="1040"

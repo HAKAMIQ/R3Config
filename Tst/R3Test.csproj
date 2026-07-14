@@ -6,14 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <AssemblyName>R3Config.Tests</AssemblyName>
+    <AssemblyName>R3Test</AssemblyName>
     <RootNamespace>R3Config.Tests</RootNamespace>
     <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\App\R3Config.App.csproj" />
-    <ProjectReference Include="..\Core\R3Config.Core.csproj" />
+    <ProjectReference Include="..\App\R3App.csproj" />
+    <ProjectReference Include="..\Core\R3Core.csproj" />
   </ItemGroup>
 
 </Project>

@@ -100,7 +100,7 @@ try {
     )
     Set-Content -LiteralPath (Join-Path $stagingRoot 'SOURCE-HANDOFF.txt') -Value $manifest -Encoding UTF8
 
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $stagingRoot 'scripts\Verify-SourceClean.ps1') -Path $stagingRoot -StrictTree
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $stagingRoot 'Script\SrcChk.ps1') -Path $stagingRoot -StrictTree
     if ($LASTEXITCODE -ne 0) {
         throw "Staged source verification failed with exit code $LASTEXITCODE."
     }
@@ -117,7 +117,7 @@ try {
         [IO.Compression.CompressionLevel]::Optimal,
         $false)
 
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'scripts\Verify-SourceClean.ps1') -Path $archivePath
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'Script\SrcChk.ps1') -Path $archivePath
     if ($LASTEXITCODE -ne 0) {
         throw "Source ZIP verification failed with exit code $LASTEXITCODE."
     }

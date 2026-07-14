@@ -85,19 +85,19 @@ New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 
 Push-Location $repoRoot
 try {
-    Invoke-DotNet -Arguments @('restore', '.\R3Config.slnx')
-    Invoke-DotNet -Arguments @('restore', '.\App\R3Config.App.csproj', '-r', $Runtime)
-    Invoke-DotNet -Arguments @('build', '.\R3Config.slnx', '-c', $Configuration, '--no-restore', '--nologo')
+    Invoke-DotNet -Arguments @('restore', '.\R3Cfg.slnx')
+    Invoke-DotNet -Arguments @('restore', '.\App\R3App.csproj', '-r', $Runtime)
+    Invoke-DotNet -Arguments @('build', '.\R3Cfg.slnx', '-c', $Configuration, '--no-restore', '--nologo')
 
     $testArguments = @(
-        'run', '--project', '.\Tst\R3Config.Tests.csproj',
+        'run', '--project', '.\Tst\R3Test.csproj',
         '-c', $Configuration, '--no-build', '--',
         $resolvedRpcs3Path
     )
     Invoke-DotNet -Arguments $testArguments
 
     Invoke-DotNet -Arguments @(
-        'publish', '.\App\R3Config.App.csproj',
+        'publish', '.\App\R3App.csproj',
         '-c', $Configuration,
         '-r', $Runtime,
         '--self-contained', 'true',
@@ -120,7 +120,7 @@ try {
         }
     Set-Content -LiteralPath $manifestPath -Value $manifestLines -Encoding ascii
 
-    & (Join-Path $scriptRoot 'Verify-PortableRelease.ps1') -Path $publishDir -Version $Version
+    & (Join-Path $scriptRoot 'PortChk.ps1') -Path $publishDir -Version $Version
     if ($LASTEXITCODE -ne 0) {
         throw "Portable release verification failed with exit code $LASTEXITCODE."
     }

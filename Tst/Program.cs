@@ -1746,7 +1746,7 @@ static string FindRepoRoot()
     var current = new DirectoryInfo(Directory.GetCurrentDirectory());
     while (current is not null)
     {
-        if (File.Exists(Path.Combine(current.FullName, "R3Config.slnx")) &&
+        if (File.Exists(Path.Combine(current.FullName, "R3Cfg.slnx")) &&
             Directory.Exists(Path.Combine(current.FullName, "App", "Lang")))
         {
             return current.FullName;

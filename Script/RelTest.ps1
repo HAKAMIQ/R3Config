@@ -20,10 +20,10 @@ $repoRoot = (Resolve-Path (Join-Path $scriptRoot '..')).Path
 
 Push-Location $repoRoot
 try {
-    Invoke-DotNet -Arguments @('restore', '.\R3Config.slnx')
-    Invoke-DotNet -Arguments @('build', '.\R3Config.slnx', '-c', $Configuration, '--no-restore', '--nologo')
+    Invoke-DotNet -Arguments @('restore', '.\R3Cfg.slnx')
+    Invoke-DotNet -Arguments @('build', '.\R3Cfg.slnx', '-c', $Configuration, '--no-restore', '--nologo')
 
-    $testArguments = @('run', '--project', '.\Tst\R3Config.Tests.csproj', '-c', $Configuration, '--no-build', '--')
+    $testArguments = @('run', '--project', '.\Tst\R3Test.csproj', '-c', $Configuration, '--no-build', '--')
     if (-not [string]::IsNullOrWhiteSpace($Rpcs3Path)) {
         $testArguments += $Rpcs3Path
     }
@@ -31,7 +31,7 @@ try {
 
     if ($LaunchApp) {
         Write-Host 'Launching R3Config for manual QA. Close the window to finish.'
-        Invoke-DotNet -Arguments @('run', '--project', '.\App\R3Config.App.csproj', '-c', $Configuration, '--no-build')
+        Invoke-DotNet -Arguments @('run', '--project', '.\App\R3App.csproj', '-c', $Configuration, '--no-build')
     }
 }
 finally {
