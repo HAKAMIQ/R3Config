@@ -10,7 +10,7 @@ public sealed class PatCat(
     Svc.MatchSvc patchMatch,
     CfgRead patchConfig,
     PatAuth hCanaryAuthoring,
-    CanaryPatchImportService canaryImport,
+    Svc.ImpSvc canaryImport,
     IPatMsg messages)
 {
     public PatCatRs Load(
@@ -20,9 +20,9 @@ public sealed class PatCat(
             install.PatPath,
             "patch.yml");
         var importedPath = R3Paths.ImpPat(install);
-        var bundledPath = BundledCanaryPatchService.GetBundledPath(
+        var bundledPath = CanBndl.GetPath(
             AppContext.BaseDirectory);
-        var bundledCheatPath = BundledCheatPatchService.GetBundledPath(
+        var bundledCheatPath = ChtBndl.GetBndl(
             AppContext.BaseDirectory);
 
         var hasOfficial = File.Exists(officialPath);
@@ -36,14 +36,14 @@ public sealed class PatCat(
                     "*_patch.yml",
                     SearchOption.TopDirectoryOnly)
                 .Where(path => !Path.GetFileName(path).Equals(
-                    CanaryPatchImportService.ImportedPatchFileName,
+                    Svc.ImpSvc.ImpName,
                     StringComparison.OrdinalIgnoreCase))
                 // Legacy R3Config builds wrote this arbitrary wildcard name.
                 // RPCS3's boot path never loads it, so do not present it as a
                 // resident definition. The cheat service reads it only while
                 // migrating entries into <TITLE_ID>_patch.yml.
                 .Where(path => !Path.GetFileName(path).Equals(
-                    BundledCheatPatchService.ManagedFileName,
+                    ChtBndl.ManName,
                     StringComparison.OrdinalIgnoreCase))
                 .OrderBy(
                     path => path,
@@ -79,7 +79,7 @@ public sealed class PatCat(
                 catalogs.Add(importedCatalog);
                 AddWarn(errors, read.Error, isImported: true);
                 sources.Add(new PatSrcSt(
-                    CanaryPatchImportService.ImportedPatchFileName,
+                    Svc.ImpSvc.ImpName,
                     PatSrc.Imported,
                     importedPath,
                     Exists: true,
@@ -93,7 +93,7 @@ public sealed class PatCat(
                     read.Error,
                     isImported: true));
                 sources.Add(new PatSrcSt(
-                    CanaryPatchImportService.ImportedPatchFileName,
+                    Svc.ImpSvc.ImpName,
                     PatSrc.Imported,
                     importedPath,
                     Exists: true,
@@ -105,7 +105,7 @@ public sealed class PatCat(
         else
         {
             sources.Add(new PatSrcSt(
-                CanaryPatchImportService.ImportedPatchFileName,
+                Svc.ImpSvc.ImpName,
                 PatSrc.Imported,
                 importedPath,
                 Exists: false,
@@ -115,7 +115,7 @@ public sealed class PatCat(
 
         foreach (var titleSpecificPath in titleSpecificPaths)
         {
-            var source = BundledCheatPatchService.IsManagedFile(
+            var source = ChtBndl.IsMan(
                 titleSpecificPath)
                 ? PatSrc.ManCht
                 : PatSrc.TitlePat;
@@ -134,13 +134,13 @@ public sealed class PatCat(
         {
             try
             {
-                var normalized = canaryImport.Normalize(
+                var normalized = canaryImport.Norm(
                     File.ReadAllText(bundledPath));
 
-                if (normalized.Succeeded)
+                if (normalized.IsOk)
                 {
                     var read = catalogReader.ReadText(
-                        normalized.NormalizedText,
+                        normalized.NormText,
                         PatSrc.Can,
                         bundledPath);
                     if (read.IsOk)

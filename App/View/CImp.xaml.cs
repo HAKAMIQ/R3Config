@@ -13,7 +13,7 @@ public partial class CanaryPatchImportDialog : Window
         InitializeComponent();
 
         SourceInitialized += (_, _) =>
-            WindowThemeService.ApplyDwmSetWindowAttributeDarkMode(this);
+            WinTheme.Apply(this);
 
         Owner = owner;
         DataContext = viewModel;

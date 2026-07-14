@@ -7,8 +7,8 @@ namespace R3Config.Case;
 public sealed class PatMut(
     Svc.PatPlnr planner,
     PatApply applyService,
-    BundledCanaryPatchService bundledCanary,
-    BundledCheatPatchService bundledCheats,
+    CanBndl bundledCanary,
+    ChtBndl bundledCheats,
     IMutGd mutationGuard)
 {
     public Mdl.PatPlan BuildOn(
@@ -57,7 +57,7 @@ public sealed class PatMut(
         }
 
         declaredTargets.AddRange(
-            BundledCheatPatchService.GetManagedPaths(
+            ChtBndl.GetPaths(
                 install.PatPath,
                 selectedMatches));
         mutationGuard.CheckCan(
@@ -152,14 +152,14 @@ public sealed class PatMut(
             return;
         }
 
-        var result = bundledCanary.PrepareImportedPatchFile(
+        var result = bundledCanary.Prep(
             install.PatPath,
             AppContext.BaseDirectory,
             matches);
 
         AddPrep(
-            result.Succeeded,
-            result.PreparedFile,
+            result.IsOk,
+            result.PrepFile,
             result.Message,
             result.Error,
             preparedFiles,
@@ -183,14 +183,14 @@ public sealed class PatMut(
             return;
         }
 
-        var result = bundledCheats.PrepareManagedPatchFile(
+        var result = bundledCheats.Prep(
             install.PatPath,
             AppContext.BaseDirectory,
             matches);
 
         AddPrep(
-            result.Succeeded,
-            result.PreparedFile,
+            result.IsOk,
+            result.PrepFile,
             result.Message,
             result.Error,
             preparedFiles,

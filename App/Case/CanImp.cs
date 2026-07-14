@@ -6,16 +6,16 @@ using R3Config.Svc;
 namespace R3Config.Case;
 
 public sealed class CanImp(
-    CanaryPatchImportService importService,
+    Svc.ImpSvc importService,
     IMutGd mutationGuard,
     PatTxn transaction,
     BkpSvc backupService,
     Svc.ReadSvc catalogReader)
 {
-    public CanaryPatchNormalizeResult Norm(
+    public CanNorm Norm(
         string? sourceText)
     {
-        return importService.Normalize(sourceText);
+        return importService.Norm(sourceText);
     }
 
     public bool HasPat(
@@ -23,11 +23,11 @@ public sealed class CanImp(
     {
         ArgumentNullException.ThrowIfNull(install);
 
-        return importService.HasManagedImportedPatch(
+        return importService.HasPat(
             install.PatPath);
     }
 
-    public CanaryPatchWriteResult Import(
+    public CanWrite Import(
         R3Inst install,
         string sourceText)
     {
@@ -36,27 +36,27 @@ public sealed class CanImp(
             install,
             [targetPath]);
 
-        var normalized = importService.Normalize(sourceText);
-        if (!normalized.Succeeded)
+        var normalized = importService.Norm(sourceText);
+        if (!normalized.IsOk)
         {
             return Failure(
                 targetPath,
                 normalized.Error ?? normalized.Message);
         }
 
-        var prepared = importService.PrepareManagedImportedPatchFile(
+        var prepared = importService.PrepFile(
             install.PatPath,
-            normalized.NormalizedText);
-        if (!prepared.Succeeded)
+            normalized.NormText);
+        if (!prepared.IsOk)
         {
             return Failure(
                 targetPath,
                 prepared.Error ?? prepared.Message);
         }
 
-        if (prepared.PreparedFile is null)
+        if (prepared.PrepFile is null)
         {
-            return new CanaryPatchWriteResult(
+            return new CanWrite(
                 true,
                 targetPath,
                 null,
@@ -69,17 +69,17 @@ public sealed class CanImp(
         {
             committedBackup = transaction.Commit(
                 R3Paths.BkpRoot(install),
-                [prepared.PreparedFile],
+                [prepared.PrepFile],
                 (_, backupRoot, targets) => mutationGuard.CheckCan(
                     install,
                     targets,
                     [backupRoot]));
 
-            var readBack = importService.ReadImportedPatchText(
+            var readBack = importService.ReadText(
                 targetPath);
             if (!string.Equals(
                     readBack,
-                    prepared.PreparedFile.Content,
+                    prepared.PrepFile.Content,
                     StringComparison.Ordinal))
             {
                 throw new InvalidDataException(
@@ -97,7 +97,7 @@ public sealed class CanImp(
                     "The committed imported patch file is invalid.");
             }
 
-            if (prepared.PreparedFile.EntNum is int expected &&
+            if (prepared.PrepFile.EntNum is int expected &&
                 catalog.Catalog.Entries.Count != expected)
             {
                 throw new InvalidDataException(
@@ -105,7 +105,7 @@ public sealed class CanImp(
                     $"Expected {expected}, actual {catalog.Catalog.Entries.Count}.");
             }
 
-            return new CanaryPatchWriteResult(
+            return new CanWrite(
                 true,
                 targetPath,
                 SnapPath(committedBackup),
@@ -141,7 +141,7 @@ public sealed class CanImp(
         }
     }
 
-    public CanaryPatchRemoveResult Remove(
+    public CanDel Remove(
         R3Inst install)
     {
         ArgumentNullException.ThrowIfNull(install);
@@ -152,18 +152,18 @@ public sealed class CanImp(
             [targetPath]);
 
         var prepared = importService
-            .PrepareManagedImportedPatchRemoval(
+            .PrepDel(
                 install.PatPath);
-        if (!prepared.Succeeded)
+        if (!prepared.IsOk)
         {
             return DelFail(
                 targetPath,
                 prepared.Error ?? prepared.Message);
         }
 
-        if (prepared.PreparedFile is null)
+        if (prepared.PrepFile is null)
         {
-            return new CanaryPatchRemoveResult(
+            return new CanDel(
                 true,
                 targetPath,
                 null,
@@ -176,13 +176,13 @@ public sealed class CanImp(
         {
             committedBackup = transaction.Commit(
                 R3Paths.BkpRoot(install),
-                [prepared.PreparedFile],
+                [prepared.PrepFile],
                 (_, backupRoot, targets) => mutationGuard.CheckCan(
                     install,
                     targets,
                     [backupRoot]));
 
-            if (prepared.PreparedFile.DelTgt)
+            if (prepared.PrepFile.DelTgt)
             {
                 if (File.Exists(targetPath))
                 {
@@ -192,11 +192,11 @@ public sealed class CanImp(
             }
             else
             {
-                var readBack = importService.ReadImportedPatchText(
+                var readBack = importService.ReadText(
                     targetPath);
                 if (!string.Equals(
                         readBack,
-                        prepared.PreparedFile.Content,
+                        prepared.PrepFile.Content,
                         StringComparison.Ordinal))
                 {
                     throw new InvalidDataException(
@@ -208,7 +208,7 @@ public sealed class CanImp(
                     PatSrc.Imported,
                     targetPath);
                 if (!catalog.IsOk ||
-                    prepared.PreparedFile.EntNum is int expected &&
+                    prepared.PrepFile.EntNum is int expected &&
                     catalog.Catalog.Entries.Count != expected)
                 {
                     throw new InvalidDataException(
@@ -217,7 +217,7 @@ public sealed class CanImp(
                 }
             }
 
-            return new CanaryPatchRemoveResult(
+            return new CanDel(
                 true,
                 targetPath,
                 SnapPath(committedBackup),
@@ -253,12 +253,12 @@ public sealed class CanImp(
         }
     }
 
-    private static CanaryPatchWriteResult Failure(
+    private static CanWrite Failure(
         string targetPath,
         string error,
         string? backupPath = null)
     {
-        return new CanaryPatchWriteResult(
+        return new CanWrite(
             false,
             targetPath,
             backupPath,
@@ -266,12 +266,12 @@ public sealed class CanImp(
             error);
     }
 
-    private static CanaryPatchRemoveResult DelFail(
+    private static CanDel DelFail(
         string targetPath,
         string error,
         string? backupPath = null)
     {
-        return new CanaryPatchRemoveResult(
+        return new CanDel(
             false,
             targetPath,
             backupPath,

@@ -7,7 +7,7 @@ using R3Config.View.Dlg;
 
 namespace R3Config.Svc;
 
-public enum UiDialogKind
+public enum DlgKind
 {
     Info,
     Warning,
@@ -17,7 +17,7 @@ public enum UiDialogKind
 
 public static class UiDlg
 {
-    public static string? PickRpcs3Exe(string currentPath)
+    public static string? PickExe(string currentPath)
     {
         var dialog = new OpenFileDialog
         {
@@ -30,14 +30,14 @@ public static class UiDlg
             FileName = "rpcs3.exe"
         };
 
-        ApplyInitialDirectory(dialog, currentPath);
+        SetDir(dialog, currentPath);
 
-        return dialog.ShowDialog(ActiveOwner()) == true
+        return dialog.ShowDialog(Owner()) == true
             ? dialog.FileName
             : null;
     }
 
-    public static string? PickWikiXml()
+    public static string? PickWiki()
     {
         var dialog = new OpenFileDialog
         {
@@ -49,12 +49,12 @@ public static class UiDlg
             DefaultExt = ".xml"
         };
 
-        return dialog.ShowDialog(ActiveOwner()) == true
+        return dialog.ShowDialog(Owner()) == true
             ? dialog.FileName
             : null;
     }
 
-    public static string? PickCatExportPath()
+    public static string? PickExp()
     {
         var dialog = new SaveFileDialog
         {
@@ -67,7 +67,7 @@ public static class UiDlg
             DefaultExt = ".json"
         };
 
-        return dialog.ShowDialog(ActiveOwner()) == true
+        return dialog.ShowDialog(Owner()) == true
             ? dialog.FileName
             : null;
     }
@@ -77,7 +77,7 @@ public static class UiDlg
         Show(
             message,
             title,
-            UiDialogKind.Info,
+            DlgKind.Info,
             isConfirm: false);
     }
 
@@ -86,7 +86,7 @@ public static class UiDlg
         Show(
             message,
             title,
-            UiDialogKind.Warning,
+            DlgKind.Warning,
             isConfirm: false);
     }
 
@@ -95,7 +95,7 @@ public static class UiDlg
         Show(
             message,
             title,
-            UiDialogKind.Error,
+            DlgKind.Error,
             isConfirm: false);
     }
 
@@ -104,7 +104,7 @@ public static class UiDlg
         return Show(
             message,
             title,
-            UiDialogKind.Confirm,
+            DlgKind.Confirm,
             isConfirm: true);
     }
 
@@ -116,11 +116,11 @@ public static class UiDlg
     private static bool Show(
         string message,
         string title,
-        UiDialogKind kind,
+        DlgKind kind,
         bool isConfirm)
     {
         var dialog = new AppDialog(
-            ActiveOwner(),
+            Owner(),
             title,
             message,
             kind,
@@ -129,7 +129,7 @@ public static class UiDlg
         return dialog.ShowDialog() == true;
     }
 
-    private static void ApplyInitialDirectory(
+    private static void SetDir(
         FileDialog dialog,
         string path)
     {
@@ -155,7 +155,7 @@ public static class UiDlg
         }
     }
 
-    private static Window? ActiveOwner()
+    private static Window? Owner()
     {
         var current = Application.Current;
         if (current is null)

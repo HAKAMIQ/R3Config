@@ -19,7 +19,7 @@ public static class R3Paths
     {
         return Path.Combine(
             install.PatPath,
-            CanaryPatchImportService.ImportedPatchFileName);
+            Svc.ImpSvc.ImpName);
     }
 
     public static string HCanMeta(

@@ -4,7 +4,7 @@ using R3Config.Lang;
 
 namespace R3Config.Svc;
 
-public enum PatchNoteTranslationQuality
+public enum NoteQual
 {
     Original,
     Exact,
@@ -12,15 +12,15 @@ public enum PatchNoteTranslationQuality
     Fallback
 }
 
-public sealed record PatchNoteTranslationResult(
+public sealed record NoteRes(
     string Body,
-    string OriginalBody,
-    bool HasOriginalBody,
-    PatchNoteTranslationQuality Quality);
+    string OrigBody,
+    bool HasOrig,
+    NoteQual Quality);
 
-public static class PatchNoteTranslationService
+public static class NoteSvc
 {
-    private static readonly Dictionary<string, string> ExactArabicByEnglish =
+    private static readonly Dictionary<string, string> ArByEn =
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["Prevents random freezing/crashing while playing the game"] =
@@ -61,65 +61,65 @@ public static class PatchNoteTranslationService
                 "إخفاء أو إظهار واجهة HUD بزر Select داخل اللعبة."
         };
 
-    public static PatchNoteTranslationResult Translate(string? raw)
+    public static NoteRes Trans(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
         {
-            return new PatchNoteTranslationResult(
+            return new NoteRes(
                 UiText.T("Ui.EmptyValue"),
                 string.Empty,
                 false,
-                PatchNoteTranslationQuality.Original);
+                NoteQual.Original);
         }
 
         var original = raw.Trim();
 
-        if (!UiText.IsRtl || ContainsArabic(original))
+        if (!UiText.IsRtl || HasArab(original))
         {
-            return new PatchNoteTranslationResult(
+            return new NoteRes(
                 original,
                 string.Empty,
                 false,
-                PatchNoteTranslationQuality.Original);
+                NoteQual.Original);
         }
 
-        var normalized = Normalize(original);
-        var lookupText = NormalizeForLookup(normalized);
+        var normalized = Norm(original);
+        var lookupText = NormKey(normalized);
 
-        if (ExactArabicByEnglish.TryGetValue(
+        if (ArByEn.TryGetValue(
                 lookupText,
                 out var exact))
         {
-            return new PatchNoteTranslationResult(
+            return new NoteRes(
                 exact,
                 string.Empty,
                 false,
-                PatchNoteTranslationQuality.Exact);
+                NoteQual.Exact);
         }
 
-        var fragment = TryBuildArabicFragment(lookupText);
+        var fragment = TryArab(lookupText);
         if (!string.IsNullOrWhiteSpace(fragment))
         {
-            return new PatchNoteTranslationResult(
+            return new NoteRes(
                 fragment,
                 original,
                 true,
-                PatchNoteTranslationQuality.Fragment);
+                NoteQual.Fragment);
         }
 
-        return new PatchNoteTranslationResult(
+        return new NoteRes(
             UiText.T("Patch.Note.NoLocalTranslation"),
             original,
             true,
-            PatchNoteTranslationQuality.Fallback);
+            NoteQual.Fallback);
     }
 
-    private static string? TryBuildArabicFragment(
+    private static string? TryArab(
         string normalized)
     {
         List<string> topics = [];
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "crash",
                 "crashes",
@@ -128,7 +128,7 @@ public static class PatchNoteTranslationService
             topics.Add("انهيار اللعبة");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "freeze",
                 "freezes",
@@ -137,21 +137,21 @@ public static class PatchNoteTranslationService
             topics.Add("تجمّد اللعبة أثناء اللعب");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "performance"))
         {
             topics.Add("الأداء");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "stability"))
         {
             topics.Add("الاستقرار");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "visual bug",
                 "visual bugs",
@@ -164,7 +164,7 @@ public static class PatchNoteTranslationService
             topics.Add("مشاكل رسومية أو وميض في الخامات");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "fps",
                 "frame rate",
@@ -173,7 +173,7 @@ public static class PatchNoteTranslationService
             topics.Add("حد الإطارات");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "hud",
                 "heads-up display"))
@@ -181,7 +181,7 @@ public static class PatchNoteTranslationService
             topics.Add("إظهار أو إخفاء واجهة HUD داخل اللعبة");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "select in-game",
                 "select button"))
@@ -189,35 +189,35 @@ public static class PatchNoteTranslationService
             topics.Add("زر Select داخل اللعبة");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "vblank"))
         {
             topics.Add("تردد VBlank");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "resolution"))
         {
             topics.Add("الدقة");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "shadows"))
         {
             topics.Add("الظلال");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "fog"))
         {
             topics.Add("الضباب");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "cutscene",
                 "cutscenes"))
@@ -225,7 +225,7 @@ public static class PatchNoteTranslationService
             topics.Add("المقاطع السينمائية");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "audio crackling",
                 "crackling",
@@ -235,7 +235,7 @@ public static class PatchNoteTranslationService
             topics.Add("الصوت");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "shader",
                 "shaders"))
@@ -243,14 +243,14 @@ public static class PatchNoteTranslationService
             topics.Add("الشيدرز");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "workaround"))
         {
             topics.Add("حل مؤقت");
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "experimental"))
         {
@@ -267,7 +267,7 @@ public static class PatchNoteTranslationService
                ".";
     }
 
-    private static string Normalize(string value)
+    private static string Norm(string value)
     {
         return value
             .Trim()
@@ -281,7 +281,7 @@ public static class PatchNoteTranslationService
                 StringComparison.Ordinal);
     }
 
-    private static string NormalizeForLookup(string value)
+    private static string NormKey(string value)
     {
         var compact = string.Join(
             " ",
@@ -294,7 +294,7 @@ public static class PatchNoteTranslationService
             .TrimEnd('.', '。');
     }
 
-    private static bool ContainsAny(
+    private static bool HasAny(
         string value,
         params string[] needles)
     {
@@ -311,7 +311,7 @@ public static class PatchNoteTranslationService
         return false;
     }
 
-    private static bool ContainsArabic(string value)
+    private static bool HasArab(string value)
     {
         foreach (var character in value)
         {

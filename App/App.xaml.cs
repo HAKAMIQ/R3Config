@@ -9,7 +9,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         UiText.SetLang(UiPrefs.LoadLang());
-        UiLayoutService.ApplyApplicationResources();
+        UiLaySvc.Apply();
         base.OnStartup(e);
 
         var window = new MainWindow();

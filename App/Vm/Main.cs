@@ -19,7 +19,7 @@ public sealed partial class MainVm : VmBase
     private const string PatchCatalogSourceDisplay = "RPCS3 patch catalog";
 
     private readonly AppFlow _flow;
-    private readonly AppSettingsService _settingsService;
+    private readonly SetSvc _settingsService;
     private readonly Func<bool> _isRpcs3Running;
     private readonly Func<string, string, bool> _confirm;
     private R3Inst? _install;
@@ -29,7 +29,7 @@ public sealed partial class MainVm : VmBase
     private string? _patchCatalogError;
     private IReadOnlyList<PatSrcSt> _patchCatalogSources = [];
     private CfgPlan? _currentPlan;
-    private UiLayoutState _layout = UiLayoutService.Current;
+    private UiLaySt _layout = UiLaySvc.Current;
     private HwInfo? _hwInfo;
     private string _rpcs3ExePath = string.Empty;
     private string _rpcs3Status = UiText.T("Status.Rpcs3Missing");
@@ -143,9 +143,9 @@ public sealed partial class MainVm : VmBase
         };
 
         var settings = _settingsService.Load();
-        if (!string.IsNullOrWhiteSpace(settings.LastRpcs3ExePath) && File.Exists(settings.LastRpcs3ExePath))
+        if (!string.IsNullOrWhiteSpace(settings.LastExe) && File.Exists(settings.LastExe))
         {
-            Rpcs3ExePath = settings.LastRpcs3ExePath;
+            Rpcs3ExePath = settings.LastExe;
             Rpcs3Status = UiText.T("Status.Rpcs3Ready");
         }
 
@@ -240,33 +240,33 @@ public sealed partial class MainVm : VmBase
         !IsBusy &&
         !IsRpcs3RunningPresentation;
 
-    public FlowDirection WindowFlow => _layout.WindowFlow;
+    public FlowDirection WindowFlow => _layout.WinFlow;
 
-    public FlowDirection ShellFlow => _layout.ShellFlow;
+    public FlowDirection ShellFlow => _layout.ShFlow;
 
-    public FlowDirection TechnicalFlow => _layout.TechnicalFlow;
+    public FlowDirection TechnicalFlow => _layout.TechFlow;
 
-    public XmlLanguage XmlLanguage => _layout.XmlLanguage;
+    public XmlLanguage XmlLanguage => _layout.XmlLang;
 
-    public int GamesPanelColumn => _layout.GamesPanelColumn;
+    public int GamesPanelColumn => _layout.GameCol;
 
-    public int DetailsPanelColumn => _layout.DetailsPanelColumn;
+    public int DetailsPanelColumn => _layout.DetCol;
 
-    public GridLength GamesPanelWidth => _layout.GamesPanelWidth;
+    public GridLength GamesPanelWidth => _layout.GameWide;
 
-    public GridLength DetailsPanelWidth => _layout.DetailsPanelWidth;
+    public GridLength DetailsPanelWidth => _layout.DetWide;
 
-    public GridLength LeftShellColumnWidth => _layout.LeftShellColumnWidth;
+    public GridLength LeftShellColumnWidth => _layout.LeftWide;
 
-    public GridLength RightShellColumnWidth => _layout.RightShellColumnWidth;
+    public GridLength RightShellColumnWidth => _layout.RghtWide;
 
     public FlowDirection TextFlow => _layout.TextFlow;
 
     public bool IsRtlLanguage => _layout.IsRtl;
 
-    public TextAlignment UiTextAlignment => _layout.TextAlignment;
+    public TextAlignment UiTextAlignment => _layout.TxtAlign;
 
-    public HorizontalAlignment UiHorizontalAlignment => _layout.HorizontalAlignment;
+    public HorizontalAlignment UiHorizontalAlignment => _layout.HorAlign;
 
     public string SelectedGameTitle => GameList.SelectedGame is null
         ? UiText.T("Shell.NoGameTitle")
@@ -274,9 +274,9 @@ public sealed partial class MainVm : VmBase
             ? $"{GameList.SelectedGame.Title} | {GameList.SelectedGame.Serial}"
             : $"{GameList.SelectedGame.Title} | {GameList.SelectedGame.Serial} | v{PatVer.Norm(GameList.SelectedGame.Game.Version)}";
 
-    public FlowDirection SelectedGameTitleFlow => _layout.SelectedGameTitleFlow(GameList.SelectedGame is not null);
+    public FlowDirection SelectedGameTitleFlow => _layout.GameFlow(GameList.SelectedGame is not null);
 
-    public TextAlignment SelectedGameTitleAlignment => _layout.SelectedGameTitleAlignment(GameList.SelectedGame is not null);
+    public TextAlignment SelectedGameTitleAlignment => _layout.GameAlgn(GameList.SelectedGame is not null);
 
     public string SelectedGameSerial => GameList.SelectedGame?.Serial ?? UiText.T("Shell.NoGameSerial");
 

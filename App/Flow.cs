@@ -79,13 +79,13 @@ public sealed class AppFlow
         return _useCases.PatchCatalog.Load(install);
     }
 
-    public CanaryPatchRemoveResult RemovePreparedCanaryPatch(
+    public CanDel RemovePreparedCanaryPatch(
         R3Inst install)
     {
         return _useCases.CanaryImport.Remove(install);
     }
 
-    public CanaryPatchNormalizeResult NormalizeCanaryPatch(
+    public CanNorm NormalizeCanaryPatch(
         string? sourceText)
     {
         return _useCases.CanaryImport.Norm(sourceText);
@@ -98,7 +98,7 @@ public sealed class AppFlow
             install);
     }
 
-    public CanaryPatchWriteResult ImportCanaryPatch(
+    public CanWrite ImportCanaryPatch(
         R3Inst install,
         string sourceText)
     {

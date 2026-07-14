@@ -9,7 +9,7 @@ public static class AppComp
     {
         return new AppRun(
             new AppFlow(Build()),
-            new AppSettingsService());
+            new SetSvc());
     }
 
     public static AppCases Build()
@@ -19,7 +19,7 @@ public static class AppComp
         var plan = new PlanSvc();
         var patchReader = new ReadSvc();
         var patchConfigReader = new CfgRead();
-        var canaryImport = new CanaryPatchImportService(
+        var canaryImport = new Svc.ImpSvc(
             patchReader);
         var patchTransaction = new PatTxn(
             backup,
@@ -37,7 +37,7 @@ public static class AppComp
             patchConfigReader,
             hCanary,
             canaryImport,
-            new LocalizedPatchCatalogMessageFormatter());
+            new PatMsgFm());
         var backupUseCase = new BkpCase(
             backup,
             mutationGuard);
@@ -61,10 +61,10 @@ public static class AppComp
                     backup,
                     new CfgWrite(patchConfigReader),
                     transaction: patchTransaction),
-                new BundledCanaryPatchService(),
-                new BundledCheatPatchService(),
+                new CanBndl(),
+                new ChtBndl(),
                 mutationGuard),
-            new CanImp(
+            new Case.CanImp(
                 canaryImport,
                 mutationGuard,
                 patchTransaction,
@@ -81,4 +81,4 @@ public static class AppComp
 
 public sealed record AppRun(
     AppFlow Flow,
-    AppSettingsService Settings);
+    SetSvc Settings);

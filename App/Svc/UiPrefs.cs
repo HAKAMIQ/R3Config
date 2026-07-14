@@ -11,7 +11,7 @@ public static class UiPrefs
 {
     private const string FileName = "ui.json";
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    private static readonly JsonSerializerOptions JsonOpt = new()
     {
         WriteIndented = true
     };
@@ -20,16 +20,16 @@ public static class UiPrefs
     {
         try
         {
-            var path = ResolvePath();
+            var path = GetPath();
             if (!File.Exists(path))
             {
                 return UiText.ArabicLang;
             }
 
             using var stream = File.OpenRead(path);
-            var prefs = JsonSerializer.Deserialize<UiPrefsData>(
+            var prefs = JsonSerializer.Deserialize<PrefData>(
                 stream,
-                JsonOptions);
+                JsonOpt);
 
             return UiText.NormalizeLang(prefs?.Lang);
         }
@@ -52,7 +52,7 @@ public static class UiPrefs
 
         try
         {
-            var path = ResolvePath();
+            var path = GetPath();
             var directory = Path.GetDirectoryName(path);
 
             if (string.IsNullOrWhiteSpace(directory))
@@ -62,14 +62,14 @@ public static class UiPrefs
 
             Directory.CreateDirectory(directory);
 
-            var prefs = new UiPrefsData
+            var prefs = new PrefData
             {
                 Lang = UiText.NormalizeLang(lang)
             };
 
             var json = JsonSerializer.Serialize(
                 prefs,
-                JsonOptions);
+                JsonOpt);
 
             tempPath = path + ".tmp";
 
@@ -92,7 +92,7 @@ public static class UiPrefs
         {
             if (!string.IsNullOrWhiteSpace(tempPath))
             {
-                TryDeleteFile(tempPath);
+                TryDel(tempPath);
             }
 
             Trace.TraceWarning(
@@ -100,7 +100,7 @@ public static class UiPrefs
         }
     }
 
-    private static string ResolvePath()
+    private static string GetPath()
     {
         var root = Environment.GetFolderPath(
             Environment.SpecialFolder.LocalApplicationData);
@@ -111,7 +111,7 @@ public static class UiPrefs
             FileName);
     }
 
-    private static void TryDeleteFile(string path)
+    private static void TryDel(string path)
     {
         try
         {
@@ -125,7 +125,7 @@ public static class UiPrefs
         }
     }
 
-    private sealed class UiPrefsData
+    private sealed class PrefData
     {
         [JsonPropertyName("lang")]
         public string? Lang { get; init; }

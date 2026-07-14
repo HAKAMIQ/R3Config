@@ -122,9 +122,9 @@ public sealed class PatchPreviewVm : VmBase
         set => SetProperty(ref _summary, value);
     }
 
-    public FlowDirection TextFlow => UiLayoutService.Current.TextFlow;
+    public FlowDirection TextFlow => UiLaySvc.Current.TextFlow;
 
-    public TextAlignment TextAlignment => UiLayoutService.Current.TextAlignment;
+    public TextAlignment TextAlignment => UiLaySvc.Current.TxtAlign;
 
     public bool ShowExpertPatches
     {
@@ -556,9 +556,9 @@ public sealed class PatchPreviewVm : VmBase
 
     private static string FormatPatchSurfaceMessage(string? raw)
     {
-        var localized = PatchTextLocalizer.LocalizePatchSurfaceMessage(raw);
-        return localized.HasOriginalBody
-            ? $"{localized.Body}{Environment.NewLine}{UiText.T("Note.OriginalTextLabel")}{Environment.NewLine}{localized.OriginalBody}"
+        var localized = PatText.SurfMsg(raw);
+        return localized.HasOrig
+            ? $"{localized.Body}{Environment.NewLine}{UiText.T("Note.OriginalTextLabel")}{Environment.NewLine}{localized.OrigBody}"
             : localized.Body;
     }
 
@@ -687,9 +687,9 @@ public sealed class PatchTargetGroupVm : VmBase
                 _ => "Muted"
             };
 
-    public FlowDirection TextFlow => UiLayoutService.Current.TextFlow;
+    public FlowDirection TextFlow => UiLaySvc.Current.TextFlow;
 
-    public TextAlignment TextAlignment => UiLayoutService.Current.TextAlignment;
+    public TextAlignment TextAlignment => UiLaySvc.Current.TxtAlign;
 
     public bool IsExpanded
     {

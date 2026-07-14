@@ -49,19 +49,19 @@ public sealed class PlanItemVm : VmBase
 
     public string NoteBody => LocalizedNoteBody;
 
-    public string LocalizedNoteTitle => PatchTextLocalizer.LocalizeRecommendationNote(Entry.Notes, Entry.Risk).Title;
+    public string LocalizedNoteTitle => PatText.RecNote(Entry.Notes, Entry.Risk).Title;
 
-    public string LocalizedNoteType => PatchTextLocalizer.LocalizeRecommendationNote(Entry.Notes, Entry.Risk).Type;
+    public string LocalizedNoteType => PatText.RecNote(Entry.Notes, Entry.Risk).Type;
 
-    public string LocalizedNoteBody => PatchTextLocalizer.LocalizeRecommendationNote(Entry.Notes, Entry.Risk).Body;
+    public string LocalizedNoteBody => PatText.RecNote(Entry.Notes, Entry.Risk).Body;
 
-    public string LocalizedOriginalBody => PatchTextLocalizer.LocalizeRecommendationNote(Entry.Notes, Entry.Risk).OriginalBody;
+    public string LocalizedOriginalBody => PatText.RecNote(Entry.Notes, Entry.Risk).OrigBody;
 
-    public bool HasOriginalBody => PatchTextLocalizer.LocalizeRecommendationNote(Entry.Notes, Entry.Risk).HasOriginalBody;
+    public bool HasOriginalBody => PatText.RecNote(Entry.Notes, Entry.Risk).HasOrig;
 
-    public FlowDirection NoteFlow => UiLayoutService.Current.TextFlow;
+    public FlowDirection NoteFlow => UiLaySvc.Current.TextFlow;
 
-    public TextAlignment NoteTextAlignment => UiLayoutService.Current.TextAlignment;
+    public TextAlignment NoteTextAlignment => UiLaySvc.Current.TxtAlign;
 
     public RecRisk Risk => Entry.Risk;
 

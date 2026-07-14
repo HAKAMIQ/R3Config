@@ -9,59 +9,59 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed record CanaryPatchNormalizeResult(
-    bool Succeeded,
-    string NormalizedText,
-    bool DuplicatePpuMerged,
+public sealed record CanNorm(
+    bool IsOk,
+    string NormText,
+    bool PpuMerge,
     string Message,
     string? Error);
 
-public sealed record CanaryPatchWriteResult(
-    bool Succeeded,
-    string TargetPath,
-    string? BackupPath,
+public sealed record CanWrite(
+    bool IsOk,
+    string TgtPath,
+    string? BkpPath,
     string Message,
     string? Error);
 
-public sealed record CanaryPatchRemoveResult(
-    bool Succeeded,
-    string TargetPath,
-    string? BackupPath,
+public sealed record CanDel(
+    bool IsOk,
+    string TgtPath,
+    string? BkpPath,
     string Message,
     string? Error);
 
-public sealed record CanaryPatchStageResult(
-    bool Succeeded,
-    string TargetPath,
-    PrepFile? PreparedFile,
+public sealed record CanStage(
+    bool IsOk,
+    string TgtPath,
+    PrepFile? PrepFile,
     string Message,
     string? Error);
 
-public sealed class CanaryPatchImportService
+public sealed class ImpSvc
 {
-    public const string ImportedPatchFileName = "imported_patch.yml";
-    public const string RequiredVersionHeader = "Version: 1.2";
+    public const string ImpName = "imported_patch.yml";
+    public const string VerHead = "Version: 1.2";
 
-    private const long MaxImportedPatchBytes = 128L * 1024L * 1024L;
+    private const long MaxBytes = 128L * 1024L * 1024L;
 
-    private const string ManagedBlockBegin = "# R3Config managed Canary patches v1 - begin";
-    private const string ManagedBlockEnd = "# R3Config managed Canary patches v1 - end";
+    private const string BlkBegin = "# R3Config managed Canary patches v1 - begin";
+    private const string BlkEnd = "# R3Config managed Canary patches v1 - end";
 
-    private static readonly Regex TopLevelKeyRegex = new(@"^(?<key>[^\s:#][^:#]*):(?:\s.*)?$", RegexOptions.Compiled);
+    private static readonly Regex TopKeyRx = new(@"^(?<key>[^\s:#][^:#]*):(?:\s.*)?$", RegexOptions.Compiled);
 
-    private static readonly Regex ManagedMarkerRegex = new(
+    private static readonly Regex MarkRx = new(
         @"^  # R3Config managed Canary patches(?<version> v[0-9]+)? - (?<edge>begin|end)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private readonly ReadSvc _catalogReader;
+    private readonly ReadSvc _reader;
 
-    public CanaryPatchImportService(
+    public ImpSvc(
         ReadSvc? catalogReader = null)
     {
-        _catalogReader = catalogReader ?? new ReadSvc();
+        _reader = catalogReader ?? new ReadSvc();
     }
 
-    public CanaryPatchNormalizeResult Normalize(string? sourceText)
+    public CanNorm Norm(string? sourceText)
     {
         if (string.IsNullOrWhiteSpace(sourceText))
         {
@@ -82,7 +82,7 @@ public sealed class CanaryPatchImportService
         for (var index = 0; index < lines.Length;)
         {
             var line = lines[index];
-            var topKey = TryReadTopLevelKey(line);
+            var topKey = TryTop(line);
 
             if (string.Equals(topKey, "Version", StringComparison.OrdinalIgnoreCase))
             {
@@ -90,12 +90,12 @@ public sealed class CanaryPatchImportService
                 continue;
             }
 
-            if (topKey is not null && IsPatchRuntimeKey(topKey))
+            if (topKey is not null && IsRunKey(topKey))
             {
                 var blockLines = new List<string>();
                 index++;
 
-                while (index < lines.Length && !IsTopLevelKey(lines[index]))
+                while (index < lines.Length && !IsTopKey(lines[index]))
                 {
                     blockLines.Add(lines[index]);
                     index++;
@@ -113,7 +113,7 @@ public sealed class CanaryPatchImportService
                     duplicatePpuMerged = true;
                 }
 
-                var filteredBlockLines = FilterDuplicatePatchBlocks(
+                var filteredBlockLines = FiltDup(
                     blockLines,
                     ppuPatchNames[topKey],
                     out var duplicatePatchSkipped);
@@ -136,8 +136,8 @@ public sealed class CanaryPatchImportService
             return Failure(UiText.T("Patch.ImportCanaryInvalidYaml"));
         }
 
-        var output = new List<string> { RequiredVersionHeader };
-        var cleanedPrefix = TrimEmptyEdges(prefixLines);
+        var output = new List<string> { VerHead };
+        var cleanedPrefix = Trim(prefixLines);
 
         if (cleanedPrefix.Count > 0)
         {
@@ -149,16 +149,16 @@ public sealed class CanaryPatchImportService
         {
             output.Add(string.Empty);
             output.Add(ppu + ":");
-            output.AddRange(TrimEmptyEdges(ppuBlocks[ppu]));
+            output.AddRange(Trim(ppuBlocks[ppu]));
         }
 
         var normalized = string.Join("\r\n", output).TrimEnd() + "\r\n";
-        if (HasDuplicateTopLevelPatchHash(normalized))
+        if (HasDup(normalized))
         {
             return Failure(UiText.T("Patch.ImportCanaryDuplicateKeyUnmerged"));
         }
 
-        return new CanaryPatchNormalizeResult(
+        return new CanNorm(
             true,
             normalized,
             duplicatePpuMerged,
@@ -168,7 +168,7 @@ public sealed class CanaryPatchImportService
             null);
     }
 
-    public CanaryPatchStageResult PrepareManagedImportedPatchFile(
+    public CanStage PrepFile(
         string patchesPath,
         string sourceText)
     {
@@ -176,14 +176,14 @@ public sealed class CanaryPatchImportService
 
         try
         {
-            var validation = ValidateTargetPath(
+            var validation = VldPath(
                 patchesPath,
                 out _,
                 out targetPath,
                 out var validationError);
             if (!validation)
             {
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     false,
                     targetPath,
                     null,
@@ -191,11 +191,11 @@ public sealed class CanaryPatchImportService
                     validationError);
             }
 
-            var normalize = Normalize(sourceText);
-            if (!normalize.Succeeded)
+            var normalize = Norm(sourceText);
+            if (!normalize.IsOk)
             {
                 var error = normalize.Error ?? normalize.Message;
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     false,
                     targetPath,
                     null,
@@ -203,15 +203,15 @@ public sealed class CanaryPatchImportService
                     error);
             }
 
-            var incomingCatalog = _catalogReader.ReadText(
-                normalize.NormalizedText,
+            var incomingCatalog = _reader.ReadText(
+                normalize.NormText,
                 PatSrc.Imported,
                 targetPath);
             if (!incomingCatalog.IsOk)
             {
                 var error = incomingCatalog.Error ??
                             UiText.T("Patch.ImportCanaryInvalidYaml");
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     false,
                     targetPath,
                     null,
@@ -220,12 +220,12 @@ public sealed class CanaryPatchImportService
             }
 
             var existingText = File.Exists(targetPath)
-                ? ReadImportedPatchText(targetPath)
+                ? ReadText(targetPath)
                 : string.Empty;
 
             if (!string.IsNullOrWhiteSpace(existingText))
             {
-                var existingCatalog = _catalogReader.ReadText(
+                var existingCatalog = _reader.ReadText(
                     existingText,
                     PatSrc.Imported,
                     targetPath);
@@ -233,7 +233,7 @@ public sealed class CanaryPatchImportService
                 {
                     var error = existingCatalog.Error ??
                                 UiText.T("Patch.ImportCanaryInvalidYaml");
-                    return new CanaryPatchStageResult(
+                    return new CanStage(
                         false,
                         targetPath,
                         null,
@@ -241,14 +241,14 @@ public sealed class CanaryPatchImportService
                         error);
                 }
 
-                var existingNormalized = Normalize(existingText);
-                if (existingNormalized.Succeeded &&
+                var existingNormalized = Norm(existingText);
+                if (existingNormalized.IsOk &&
                     string.Equals(
-                        existingNormalized.NormalizedText,
-                        normalize.NormalizedText,
+                        existingNormalized.NormText,
+                        normalize.NormText,
                         StringComparison.Ordinal))
                 {
-                    return new CanaryPatchStageResult(
+                    return new CanStage(
                         true,
                         targetPath,
                         null,
@@ -259,16 +259,16 @@ public sealed class CanaryPatchImportService
 
             var preservedText = string.IsNullOrWhiteSpace(existingText)
                 ? string.Empty
-                : RemoveManagedBlock(existingText);
+                : DelBlock(existingText);
 
-            var finalText = ComposeManagedImportedPatch(
+            var finalText = Compose(
                 preservedText,
-                normalize.NormalizedText);
+                normalize.NormText);
 
             if (File.Exists(targetPath) &&
                 string.Equals(existingText, finalText, StringComparison.Ordinal))
             {
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     true,
                     targetPath,
                     null,
@@ -276,18 +276,18 @@ public sealed class CanaryPatchImportService
                     null);
             }
 
-            var finalCatalog = _catalogReader.ReadText(
+            var finalCatalog = _reader.ReadText(
                 finalText,
                 PatSrc.Imported,
                 targetPath);
             if (!finalText.StartsWith(
-                    RequiredVersionHeader,
+                    VerHead,
                     StringComparison.Ordinal) ||
                 !finalCatalog.IsOk)
             {
                 var error = finalCatalog.Error ??
                             UiText.T("Patch.ImportCanaryInvalidYaml");
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     false,
                     targetPath,
                     null,
@@ -295,7 +295,7 @@ public sealed class CanaryPatchImportService
                     error);
             }
 
-            return new CanaryPatchStageResult(
+            return new CanStage(
                 true,
                 targetPath,
                 new PrepFile(
@@ -309,8 +309,8 @@ public sealed class CanaryPatchImportService
         }
         catch (Exception ex)
         {
-            var error = SafeErrorMessage(ex);
-            return new CanaryPatchStageResult(
+            var error = SafeMsg(ex);
+            return new CanStage(
                 false,
                 targetPath,
                 null,
@@ -319,21 +319,21 @@ public sealed class CanaryPatchImportService
         }
     }
 
-    public CanaryPatchStageResult PrepareManagedImportedPatchRemoval(
+    public CanStage PrepDel(
         string patchesPath)
     {
         string targetPath = string.Empty;
 
         try
         {
-            var validation = ValidateTargetPath(
+            var validation = VldPath(
                 patchesPath,
                 out _,
                 out targetPath,
                 out var validationError);
             if (!validation)
             {
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     false,
                     targetPath,
                     null,
@@ -343,7 +343,7 @@ public sealed class CanaryPatchImportService
 
             if (!File.Exists(targetPath))
             {
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     true,
                     targetPath,
                     null,
@@ -351,8 +351,8 @@ public sealed class CanaryPatchImportService
                     null);
             }
 
-            var existingText = ReadImportedPatchText(targetPath);
-            var existingCatalog = _catalogReader.ReadText(
+            var existingText = ReadText(targetPath);
+            var existingCatalog = _reader.ReadText(
                 existingText,
                 PatSrc.Imported,
                 targetPath);
@@ -360,7 +360,7 @@ public sealed class CanaryPatchImportService
             {
                 var error = existingCatalog.Error ??
                             UiText.T("Patch.ImportCanaryInvalidYaml");
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     false,
                     targetPath,
                     null,
@@ -368,10 +368,10 @@ public sealed class CanaryPatchImportService
                     error);
             }
 
-            var scan = ScanManagedBlocks(existingText);
-            if (!scan.HasManagedBlock)
+            var scan = ScanBlk(existingText);
+            if (!scan.HasBlock)
             {
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     true,
                     targetPath,
                     null,
@@ -379,13 +379,13 @@ public sealed class CanaryPatchImportService
                     null);
             }
 
-            var finalText = ComposeManagedImportedPatch(
-                scan.RemovedText,
+            var finalText = Compose(
+                scan.Text,
                 string.Empty);
 
-            if (string.IsNullOrWhiteSpace(BodyWithoutVersion(finalText)))
+            if (string.IsNullOrWhiteSpace(Body(finalText)))
             {
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     true,
                     targetPath,
                     new PrepFile(
@@ -398,7 +398,7 @@ public sealed class CanaryPatchImportService
                     null);
             }
 
-            var finalCatalog = _catalogReader.ReadText(
+            var finalCatalog = _reader.ReadText(
                 finalText,
                 PatSrc.Imported,
                 targetPath);
@@ -406,7 +406,7 @@ public sealed class CanaryPatchImportService
             {
                 var error = finalCatalog.Error ??
                             UiText.T("Patch.ImportCanaryInvalidYaml");
-                return new CanaryPatchStageResult(
+                return new CanStage(
                     false,
                     targetPath,
                     null,
@@ -414,7 +414,7 @@ public sealed class CanaryPatchImportService
                     error);
             }
 
-            return new CanaryPatchStageResult(
+            return new CanStage(
                 true,
                 targetPath,
                 new PrepFile(
@@ -428,8 +428,8 @@ public sealed class CanaryPatchImportService
         }
         catch (Exception ex)
         {
-            var error = SafeErrorMessage(ex);
-            return new CanaryPatchStageResult(
+            var error = SafeMsg(ex);
+            return new CanStage(
                 false,
                 targetPath,
                 null,
@@ -438,11 +438,11 @@ public sealed class CanaryPatchImportService
         }
     }
 
-    public bool HasManagedImportedPatch(string patchesPath)
+    public bool HasPat(string patchesPath)
     {
         try
         {
-            var validation = ValidateTargetPath(patchesPath, out _, out var targetPath, out _);
+            var validation = VldPath(patchesPath, out _, out var targetPath, out _);
             if (!validation || !File.Exists(targetPath))
             {
                 return false;
@@ -452,7 +452,7 @@ public sealed class CanaryPatchImportService
                 targetPath,
                 R3Limits.PatCatBy,
                 "imported_patch.yml");
-            return ScanManagedBlocks(text).HasManagedBlock;
+            return ScanBlk(text).HasBlock;
         }
         catch
         {
@@ -460,28 +460,28 @@ public sealed class CanaryPatchImportService
         }
     }
 
-    private static CanaryPatchNormalizeResult Failure(string error)
+    private static CanNorm Failure(string error)
     {
-        return new CanaryPatchNormalizeResult(false, string.Empty, false, error, error);
+        return new CanNorm(false, string.Empty, false, error, error);
     }
 
-    private static bool IsTopLevelKey(string line)
+    private static bool IsTopKey(string line)
     {
-        return TryReadTopLevelKey(line) is not null;
+        return TryTop(line) is not null;
     }
 
-    private static string? TryReadTopLevelKey(string line)
+    private static string? TryTop(string line)
     {
         if (string.IsNullOrWhiteSpace(line) || char.IsWhiteSpace(line[0]) || line.TrimStart().StartsWith("#", StringComparison.Ordinal))
         {
             return null;
         }
 
-        var match = TopLevelKeyRegex.Match(line);
+        var match = TopKeyRx.Match(line);
         return match.Success ? match.Groups["key"].Value.Trim() : null;
     }
 
-    public string ReadImportedPatchText(string targetPath)
+    public string ReadText(string targetPath)
     {
         using var stream = new FileStream(
             targetPath,
@@ -489,10 +489,10 @@ public sealed class CanaryPatchImportService
             FileAccess.Read,
             FileShare.Read);
 
-        if (stream.Length > MaxImportedPatchBytes)
+        if (stream.Length > MaxBytes)
         {
             throw new InvalidDataException(
-                $"The imported patch file exceeds the {MaxImportedPatchBytes}-byte read limit.");
+                $"The imported patch file exceeds the {MaxBytes}-byte read limit.");
         }
 
         using var reader = new StreamReader(
@@ -504,12 +504,12 @@ public sealed class CanaryPatchImportService
         return reader.ReadToEnd();
     }
 
-    private static bool IsPatchRuntimeKey(string value)
+    private static bool IsRunKey(string value)
     {
         return RunKey.TryParse(value, out _);
     }
 
-    private static List<string> FilterDuplicatePatchBlocks(
+    private static List<string> FiltDup(
         IReadOnlyList<string> blockLines,
         HashSet<string> knownPatchNames,
         out bool duplicatePatchSkipped)
@@ -520,7 +520,7 @@ public sealed class CanaryPatchImportService
         for (var index = 0; index < blockLines.Count;)
         {
             var line = blockLines[index];
-            if (!TryReadPatchEntryName(line, out var patchName))
+            if (!TryName(line, out var patchName))
             {
                 output.Add(line);
                 index++;
@@ -530,7 +530,7 @@ public sealed class CanaryPatchImportService
             var patchBlock = new List<string> { line };
             index++;
 
-            while (index < blockLines.Count && !TryReadPatchEntryName(blockLines[index], out _))
+            while (index < blockLines.Count && !TryName(blockLines[index], out _))
             {
                 patchBlock.Add(blockLines[index]);
                 index++;
@@ -548,7 +548,7 @@ public sealed class CanaryPatchImportService
         return output;
     }
 
-    private static bool TryReadPatchEntryName(string line, out string patchName)
+    private static bool TryName(string line, out string patchName)
     {
         patchName = string.Empty;
 
@@ -558,7 +558,7 @@ public sealed class CanaryPatchImportService
         }
 
         var trimmed = line.Trim();
-        var colonIndex = FindPatchNameColon(trimmed);
+        var colonIndex = FindName(trimmed);
         if (colonIndex <= 0)
         {
             return false;
@@ -574,7 +574,7 @@ public sealed class CanaryPatchImportService
         return true;
     }
 
-    private static int FindPatchNameColon(string value)
+    private static int FindName(string value)
     {
         if (value.Length == 0)
         {
@@ -598,7 +598,7 @@ public sealed class CanaryPatchImportService
         return value.IndexOf(':', StringComparison.Ordinal);
     }
 
-    private static List<string> TrimEmptyEdges(IEnumerable<string> lines)
+    private static List<string> Trim(IEnumerable<string> lines)
     {
         var list = lines.ToList();
 
@@ -615,13 +615,13 @@ public sealed class CanaryPatchImportService
         return list;
     }
 
-    private static bool HasDuplicateTopLevelPatchHash(string text)
+    private static bool HasDup(string text)
     {
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var line in text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace("\r", "\n", StringComparison.Ordinal).Split('\n'))
         {
-            var key = TryReadTopLevelKey(line);
-            if (key is not null && IsPatchRuntimeKey(key) && !seen.Add(key))
+            var key = TryTop(line);
+            if (key is not null && IsRunKey(key) && !seen.Add(key))
             {
                 return true;
             }
@@ -630,7 +630,7 @@ public sealed class CanaryPatchImportService
         return false;
     }
 
-    private static bool ValidateTargetPath(string patchesPath, out string patchesDir, out string targetPath, out string error)
+    private static bool VldPath(string patchesPath, out string patchesDir, out string targetPath, out string error)
     {
         patchesDir = string.Empty;
         targetPath = string.Empty;
@@ -644,7 +644,7 @@ public sealed class CanaryPatchImportService
 
         patchesDir = Path.GetFullPath(patchesPath);
         var parentPath = Directory.GetParent(patchesDir)?.FullName;
-        targetPath = Path.GetFullPath(Path.Combine(patchesDir, ImportedPatchFileName));
+        targetPath = Path.GetFullPath(Path.Combine(patchesDir, ImpName));
 
         if (string.IsNullOrWhiteSpace(parentPath) || !Directory.Exists(parentPath))
         {
@@ -652,7 +652,7 @@ public sealed class CanaryPatchImportService
             return false;
         }
 
-        if (!IsPathInsideDirectory(targetPath, patchesDir) || !IsPathInsideDirectory(patchesDir, parentPath))
+        if (!InDir(targetPath, patchesDir) || !InDir(patchesDir, parentPath))
         {
             error = UiText.T("Patch.ImportCanaryUnsafePath");
             return false;
@@ -661,14 +661,14 @@ public sealed class CanaryPatchImportService
         return true;
     }
 
-    private string ComposeManagedImportedPatch(string preservedText, string managedText)
+    private string Compose(string preservedText, string managedText)
     {
-        var cleanPreservedText = RemoveManagedBlock(preservedText);
-        var preservedPrefix = ExtractNormalizedPrefixLines(
+        var cleanPreservedText = DelBlock(preservedText);
+        var preservedPrefix = ExtLines(
             cleanPreservedText);
-        var preservedSections = ExtractNormalizedHashSections(
+        var preservedSections = ExtHash(
             cleanPreservedText);
-        var managedSections = ExtractNormalizedHashSections(managedText);
+        var managedSections = ExtHash(managedText);
 
         var order = new List<string>();
         var manualByHash = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
@@ -682,7 +682,7 @@ public sealed class CanaryPatchImportService
                 manualByHash[section.HashKey] = [];
             }
 
-            manualByHash[section.HashKey].AddRange(section.BodyLines);
+            manualByHash[section.HashKey].AddRange(section.Lines);
         }
 
         foreach (var section in managedSections)
@@ -692,7 +692,7 @@ public sealed class CanaryPatchImportService
                 managedByHash[section.HashKey] = [];
             }
 
-            managedByHash[section.HashKey].AddRange(section.BodyLines);
+            managedByHash[section.HashKey].AddRange(section.Lines);
 
             if (!order.Contains(section.HashKey, StringComparer.OrdinalIgnoreCase))
             {
@@ -700,7 +700,7 @@ public sealed class CanaryPatchImportService
             }
         }
 
-        var output = new List<string> { RequiredVersionHeader };
+        var output = new List<string> { VerHead };
         if (preservedPrefix.Count > 0)
         {
             output.Add(string.Empty);
@@ -710,14 +710,14 @@ public sealed class CanaryPatchImportService
         foreach (var hashKey in order)
         {
             var manualLines = manualByHash.TryGetValue(hashKey, out var manual)
-                ? TrimEmptyEdges(manual)
+                ? Trim(manual)
                 : new List<string>();
             var managedLines = managedByHash.TryGetValue(hashKey, out var managed)
-                ? RemoveEquivalentPatchBlocksOrThrow(managed, manualLines)
+                ? DelEquiv(managed, manualLines)
                 : new List<string>();
 
-            manualLines = TrimEmptyEdges(manualLines);
-            managedLines = TrimEmptyEdges(managedLines);
+            manualLines = Trim(manualLines);
+            managedLines = Trim(managedLines);
 
             if (manualLines.Count == 0 && managedLines.Count == 0)
             {
@@ -730,28 +730,28 @@ public sealed class CanaryPatchImportService
 
             if (managedLines.Count > 0)
             {
-                output.Add("  " + ManagedBlockBegin);
+                output.Add("  " + BlkBegin);
                 output.AddRange(managedLines);
-                output.Add("  " + ManagedBlockEnd);
+                output.Add("  " + BlkEnd);
             }
         }
 
         return string.Join("\r\n", output).TrimEnd() + "\r\n";
     }
 
-    private static string RemoveManagedBlock(string text)
+    private static string DelBlock(string text)
     {
-        return ScanManagedBlocks(text).RemovedText;
+        return ScanBlk(text).Text;
     }
 
-    private static ManagedBlockScan ScanManagedBlocks(string text)
+    private static BlkScan ScanBlk(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
-            return new ManagedBlockScan(false, string.Empty);
+            return new BlkScan(false, string.Empty);
         }
 
-        var lines = SplitLines(text);
+        var lines = Lines(text);
         var output = new List<string>();
         var inside = false;
         var found = false;
@@ -761,15 +761,15 @@ public sealed class CanaryPatchImportService
 
         foreach (var line in lines)
         {
-            var topKey = TryReadTopLevelKey(line);
+            var topKey = TryTop(line);
             if (topKey is not null)
             {
-                currentHash = IsPatchRuntimeKey(topKey)
+                currentHash = IsRunKey(topKey)
                     ? topKey
                     : null;
             }
 
-            if (!TryReadManagedMarker(
+            if (!TryMark(
                     line,
                     out var version,
                     out var isBegin))
@@ -834,12 +834,12 @@ public sealed class CanaryPatchImportService
                 "A managed Canary marker block is missing its end marker.");
         }
 
-        return new ManagedBlockScan(
+        return new BlkScan(
             found,
             string.Join("\r\n", output).TrimEnd() + "\r\n");
     }
 
-    private static bool TryReadManagedMarker(
+    private static bool TryMark(
         string line,
         out string version,
         out bool isBegin)
@@ -847,7 +847,7 @@ public sealed class CanaryPatchImportService
         version = string.Empty;
         isBegin = false;
 
-        var match = ManagedMarkerRegex.Match(line);
+        var match = MarkRx.Match(line);
         if (!match.Success)
         {
             return false;
@@ -864,7 +864,7 @@ public sealed class CanaryPatchImportService
         return true;
     }
 
-    private static string BodyWithoutVersion(string text)
+    private static string Body(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -872,9 +872,9 @@ public sealed class CanaryPatchImportService
         }
 
         var output = new List<string>();
-        foreach (var line in SplitLines(text))
+        foreach (var line in Lines(text))
         {
-            var key = TryReadTopLevelKey(line);
+            var key = TryTop(line);
             if (string.Equals(key, "Version", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
@@ -883,29 +883,29 @@ public sealed class CanaryPatchImportService
             output.Add(line);
         }
 
-        return string.Join("\r\n", TrimEmptyEdges(output));
+        return string.Join("\r\n", Trim(output));
     }
 
-    private List<PatchHashTextSection> ExtractNormalizedHashSections(string text)
+    private List<HashSect> ExtHash(string text)
     {
-        if (string.IsNullOrWhiteSpace(BodyWithoutVersion(text)))
+        if (string.IsNullOrWhiteSpace(Body(text)))
         {
             return [];
         }
 
-        var normalized = Normalize(text);
-        if (!normalized.Succeeded)
+        var normalized = Norm(text);
+        if (!normalized.IsOk)
         {
             return [];
         }
 
-        var lines = SplitLines(normalized.NormalizedText);
-        var sections = new List<PatchHashTextSection>();
+        var lines = Lines(normalized.NormText);
+        var sections = new List<HashSect>();
 
         for (var index = 0; index < lines.Count;)
         {
-            var key = TryReadTopLevelKey(lines[index]);
-            if (key is null || !IsPatchRuntimeKey(key))
+            var key = TryTop(lines[index]);
+            if (key is null || !IsRunKey(key))
             {
                 index++;
                 continue;
@@ -917,13 +917,13 @@ public sealed class CanaryPatchImportService
 
             while (index < lines.Count)
             {
-                var nextKey = TryReadTopLevelKey(lines[index]);
-                if (nextKey is not null && IsPatchRuntimeKey(nextKey))
+                var nextKey = TryTop(lines[index]);
+                if (nextKey is not null && IsRunKey(nextKey))
                 {
                     break;
                 }
 
-                if (!string.Equals(TryReadTopLevelKey(lines[index]), "Version", StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(TryTop(lines[index]), "Version", StringComparison.OrdinalIgnoreCase))
                 {
                     body.Add(lines[index]);
                 }
@@ -931,29 +931,29 @@ public sealed class CanaryPatchImportService
                 index++;
             }
 
-            sections.Add(new PatchHashTextSection(hashKey, TrimEmptyEdges(body)));
+            sections.Add(new HashSect(hashKey, Trim(body)));
         }
 
         return sections;
     }
 
-    private List<string> ExtractNormalizedPrefixLines(string text)
+    private List<string> ExtLines(string text)
     {
-        if (string.IsNullOrWhiteSpace(BodyWithoutVersion(text)))
+        if (string.IsNullOrWhiteSpace(Body(text)))
         {
             return [];
         }
 
-        var normalized = Normalize(text);
-        if (!normalized.Succeeded)
+        var normalized = Norm(text);
+        if (!normalized.IsOk)
         {
             return [];
         }
 
         var output = new List<string>();
-        foreach (var line in SplitLines(normalized.NormalizedText))
+        foreach (var line in Lines(normalized.NormText))
         {
-            var key = TryReadTopLevelKey(line);
+            var key = TryTop(line);
             if (string.Equals(
                     key,
                     "Version",
@@ -962,7 +962,7 @@ public sealed class CanaryPatchImportService
                 continue;
             }
 
-            if (key is not null && IsPatchRuntimeKey(key))
+            if (key is not null && IsRunKey(key))
             {
                 break;
             }
@@ -970,20 +970,20 @@ public sealed class CanaryPatchImportService
             output.Add(line);
         }
 
-        return TrimEmptyEdges(output);
+        return Trim(output);
     }
 
-    private static List<string> RemoveEquivalentPatchBlocksOrThrow(
+    private static List<string> DelEquiv(
         IReadOnlyList<string> candidateLines,
         IReadOnlyList<string> existingLines)
     {
-        var existingBlocks = ReadPatchBlocks(existingLines);
+        var existingBlocks = ReadBlk(existingLines);
         var output = new List<string>();
 
         for (var index = 0; index < candidateLines.Count;)
         {
             var line = candidateLines[index];
-            if (!TryReadPatchEntryName(line, out var patchName))
+            if (!TryName(line, out var patchName))
             {
                 output.Add(line);
                 index++;
@@ -993,7 +993,7 @@ public sealed class CanaryPatchImportService
             var patchBlock = new List<string> { line };
             index++;
             while (index < candidateLines.Count &&
-                   !TryReadPatchEntryName(candidateLines[index], out _))
+                   !TryName(candidateLines[index], out _))
             {
                 patchBlock.Add(candidateLines[index]);
                 index++;
@@ -1008,8 +1008,8 @@ public sealed class CanaryPatchImportService
             }
 
             if (!string.Equals(
-                    NormalizePatchBlock(existingBlock),
-                    NormalizePatchBlock(patchBlock),
+                    NormBlk(existingBlock),
+                    NormBlk(patchBlock),
                     StringComparison.Ordinal))
             {
                 throw new InvalidDataException(
@@ -1020,7 +1020,7 @@ public sealed class CanaryPatchImportService
         return output;
     }
 
-    private static Dictionary<string, IReadOnlyList<string>> ReadPatchBlocks(
+    private static Dictionary<string, IReadOnlyList<string>> ReadBlk(
         IReadOnlyList<string> lines)
     {
         var output = new Dictionary<string, IReadOnlyList<string>>(
@@ -1028,7 +1028,7 @@ public sealed class CanaryPatchImportService
 
         for (var index = 0; index < lines.Count;)
         {
-            if (!TryReadPatchEntryName(lines[index], out var patchName))
+            if (!TryName(lines[index], out var patchName))
             {
                 index++;
                 continue;
@@ -1037,7 +1037,7 @@ public sealed class CanaryPatchImportService
             var patchBlock = new List<string> { lines[index] };
             index++;
             while (index < lines.Count &&
-                   !TryReadPatchEntryName(lines[index], out _))
+                   !TryName(lines[index], out _))
             {
                 patchBlock.Add(lines[index]);
                 index++;
@@ -1049,16 +1049,16 @@ public sealed class CanaryPatchImportService
         return output;
     }
 
-    private static string NormalizePatchBlock(
+    private static string NormBlk(
         IReadOnlyList<string> lines)
     {
         return string.Join(
             "\n",
-            TrimEmptyEdges(lines)
+            Trim(lines)
                 .Select(line => line.TrimEnd()));
     }
 
-    private static List<string> SplitLines(string text)
+    private static List<string> Lines(string text)
     {
         return text
             .Replace("\r\n", "\n", StringComparison.Ordinal)
@@ -1067,16 +1067,16 @@ public sealed class CanaryPatchImportService
             .ToList();
     }
 
-    private sealed record PatchHashTextSection(string HashKey, IReadOnlyList<string> BodyLines);
+    private sealed record HashSect(string HashKey, IReadOnlyList<string> Lines);
 
-    private static string SafeErrorMessage(Exception exception)
+    private static string SafeMsg(Exception exception)
     {
         return string.IsNullOrWhiteSpace(exception.Message)
             ? UiText.T("Patch.ImportCanaryInvalidYaml")
             : exception.Message;
     }
 
-    public static bool IsPathInsideDirectory(string path, string directory)
+    public static bool InDir(string path, string directory)
     {
         var normalizedPath = Path.GetFullPath(path);
         var normalizedDirectory = Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
@@ -1088,7 +1088,7 @@ public sealed class CanaryPatchImportService
                    StringComparison.OrdinalIgnoreCase);
     }
 
-    private sealed record ManagedBlockScan(
-        bool HasManagedBlock,
-        string RemovedText);
+    private sealed record BlkScan(
+        bool HasBlock,
+        string Text);
 }

@@ -306,8 +306,8 @@ static void RunMutationGuardTests(string tempRoot)
 
     var blockedImportReader = new R3Config.Svc.ReadSvc();
     var blockedImportBackup = new BkpSvc();
-    var blockedImport = new CanImp(
-        new CanaryPatchImportService(blockedImportReader),
+    var blockedImport = new R3Config.Case.CanImp(
+        new R3Config.Svc.ImpSvc(blockedImportReader),
         new MutGuard(() => true),
         new PatTxn(
             blockedImportBackup,
@@ -816,7 +816,7 @@ static void RunGameScanDiagnosticTests(string tempRoot)
     var diagnosticToFormat = tooLargeResult.Diags.Single(
         diagnostic => diagnostic.Code ==
             ScanCode.Large);
-    var formatter = new LocalizedGameScanDiagnosticFormatter();
+    var formatter = new GmDiag();
     var originalLanguage = UiText.CurrentLang;
     try
     {
@@ -992,7 +992,7 @@ static void RunMutationCommandStateTests(string tempRoot)
     };
     var importedPath = Path.Combine(
         importPatches,
-        CanaryPatchImportService.ImportedPatchFileName);
+        R3Config.Svc.ImpSvc.ImpName);
 
     Assert(importViewModel.CreateFileCommand.CanExecute(null),
         "Expected a validated import preview to enable its confirmed mutation command.");
@@ -1639,10 +1639,10 @@ static void RunArchitectureBoundaryTests()
                 SearchOption.TopDirectoryOnly)
             .Select(File.ReadAllText));
     Assert(!mainViewModelSource.Contains(
-               "CanaryPatchImportService",
+               "ImpSvc",
                StringComparison.Ordinal) &&
            !mainViewModelSource.Contains(
-               "_canaryPatchImportService",
+               "_impSvc",
                StringComparison.Ordinal),
         "MainVm must query Canary state through AppFlow instead of owning a domain writer service.");
 
@@ -1669,10 +1669,10 @@ static void RunCanaryCompositionTests(string tempRoot)
     var compositionSource = File.ReadAllText(compositionPath);
     Assert(CountOccurrences(
                compositionSource,
-               "new CanaryPatchImportService(") == 1,
+               "new Svc.ImpSvc(") == 1,
         "Expected composition to construct exactly one CanaryPatchImportService instance.");
     Assert(!compositionSource.Contains(
-               "CanaryPatchImportService CanaryImport",
+               "ImpSvc CanImp",
                StringComparison.Ordinal),
         "Expected AppRuntimeServices not to expose a domain writer service to ViewModels.");
 
@@ -1700,7 +1700,7 @@ static void RunCanaryCompositionTests(string tempRoot)
     File.WriteAllText(
         Path.Combine(
             patchesPath,
-            CanaryPatchImportService.ImportedPatchFileName),
+            R3Config.Svc.ImpSvc.ImpName),
         "Version: 1.2\r\n" +
         "PPU-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:\r\n" +
         "  # R3Config managed Canary patches - begin\r\n" +
@@ -2249,21 +2249,21 @@ static void RunAppPatchPresentationSourceTests()
         "Expected imported_patch.yml normalization to force Windows CRLF line endings.");
     Assert(importService.Contains("DuplicatePpuMerged", StringComparison.Ordinal),
         "Expected duplicate PPU merge presentation result source.");
-    Assert(importService.Contains("FilterDuplicatePatchBlocks", StringComparison.Ordinal),
+    Assert(importService.Contains("FiltDup", StringComparison.Ordinal),
         "Expected duplicate Canary patch names to be handled by a deterministic skip path.");
     Assert(!importService.Contains("WriteManagedImportedPatch", StringComparison.Ordinal),
         "Expected the obsolete direct managed Canary writer to be removed.");
-    Assert(importService.Contains("PrepareManagedImportedPatchFile", StringComparison.Ordinal),
+    Assert(importService.Contains("CanStage PrepFile", StringComparison.Ordinal),
         "Expected managed Canary output to support write-free transaction staging.");
-    Assert(importService.Contains("PrepareManagedImportedPatchRemoval", StringComparison.Ordinal) &&
+    Assert(importService.Contains("CanStage PrepDel", StringComparison.Ordinal) &&
            !importService.Contains("File.Move", StringComparison.Ordinal) &&
            !importService.Contains("File.Delete", StringComparison.Ordinal),
         "Expected managed Canary removal to prepare a transaction without direct filesystem mutation.");
-    Assert(importService.Contains("ExtractNormalizedHashSections", StringComparison.Ordinal),
+    Assert(importService.Contains("ExtHash", StringComparison.Ordinal),
         "Expected managed Canary compose to merge inside existing PPU/SPU/PRX/OVL hash blocks.");
-    Assert(importService.Contains("RemoveEquivalentPatchBlocksOrThrow", StringComparison.Ordinal),
+    Assert(importService.Contains("DelEquiv", StringComparison.Ordinal),
         "Expected managed Canary writes to keep equivalent definitions but reject conflicting identities explicitly.");
-    Assert(importService.Contains("IsPathInsideDirectory", StringComparison.Ordinal),
+    Assert(importService.Contains("InDir", StringComparison.Ordinal),
         "Expected safe path write guard source.");
 
     var bundledService = File.ReadAllText(bundledCanaryServicePath);
@@ -2271,13 +2271,13 @@ static void RunAppPatchPresentationSourceTests()
         "Expected bundled Canary service to reference the bundled data file.");
     Assert(!bundledService.Contains("CanaryPatchWriteResult PrepareImportedPatch", StringComparison.Ordinal),
         "Expected the obsolete bundled Canary direct writer to be removed.");
-    Assert(bundledService.Contains("PrepareImportedPatchFile", StringComparison.Ordinal),
+    Assert(bundledService.Contains("public CanStage Prep(", StringComparison.Ordinal),
         "Expected bundled Canary selection to support transaction staging.");
-    Assert(bundledService.Contains("BuildSelectedCanaryText", StringComparison.Ordinal),
+    Assert(bundledService.Contains("private static string Build(", StringComparison.Ordinal),
         "Expected bundled Canary service to write only selected Canary patches.");
 
     var bundledCheatService = File.ReadAllText(bundledCheatServicePath);
-    Assert(bundledCheatService.Contains("PrepareManagedPatchFile", StringComparison.Ordinal),
+    Assert(bundledCheatService.Contains("public LibStRes Prep(", StringComparison.Ordinal),
         "Expected bundled cheat output to support write-free transaction staging.");
 
     var transactionService = File.ReadAllText(transactionServicePath);
@@ -2295,8 +2295,8 @@ static void RunAppPatchPresentationSourceTests()
            !appFlow.Contains("PrepareManagedPatchFile", StringComparison.Ordinal) &&
            !appFlow.Contains("PrepareBundledCanaryPatch", StringComparison.Ordinal),
         "Expected AppFlow to remain a thin compatibility facade.");
-    Assert(patchMutationUseCase.Contains("PrepareImportedPatchFile", StringComparison.Ordinal) &&
-           patchMutationUseCase.Contains("PrepareManagedPatchFile", StringComparison.Ordinal) &&
+    Assert(patchMutationUseCase.Contains("bundledCanary.Prep(", StringComparison.Ordinal) &&
+           patchMutationUseCase.Contains("bundledCheats.Prep(", StringComparison.Ordinal) &&
            patchMutationUseCase.Contains("applyService.ApplyTxn", StringComparison.Ordinal),
         "Expected the patch mutation use case to stage Canary/Cheat outputs before one transaction.");
     Assert(composition.Contains("new PatTxn", StringComparison.Ordinal) &&
@@ -2314,10 +2314,10 @@ static void RunAppPatchPresentationSourceTests()
     Assert(bundledCanaryText.Contains("PPU-", StringComparison.Ordinal),
         "Expected bundled Canary data to include PPU patch entries.");
 
-    var normalizedCanary = new CanaryPatchImportService().Normalize(bundledCanaryText);
-    Assert(normalizedCanary.Succeeded, "Expected bundled Canary data to normalize without duplicate-name failures: " + normalizedCanary.Error);
+    var normalizedCanary = new R3Config.Svc.ImpSvc().Norm(bundledCanaryText);
+    Assert(normalizedCanary.IsOk, "Expected bundled Canary data to normalize without duplicate-name failures: " + normalizedCanary.Error);
 
-    var canaryRead = new R3Config.Svc.ReadSvc().ReadText(normalizedCanary.NormalizedText, isCanarySource: true);
+    var canaryRead = new R3Config.Svc.ReadSvc().ReadText(normalizedCanary.NormText, isCanarySource: true);
     Assert(canaryRead.IsOk, "Expected bundled Canary data to be parseable after normalization: " + canaryRead.Error);
     Assert(canaryRead.Catalog.Entries.Count > 0, "Expected bundled Canary data to include patch catalog entries.");
     Assert(canaryRead.Catalog.Entries
@@ -2328,7 +2328,7 @@ static void RunAppPatchPresentationSourceTests()
     Assert(canaryRead.Catalog.Entries.All(entry => entry.Risk == PatRisk.Canary),
         "Expected bundled Canary entries to be classified as Canary.");
 
-    var normalizedSpuCanary = new CanaryPatchImportService().Normalize(
+    var normalizedSpuCanary = new R3Config.Svc.ImpSvc().Norm(
         "Version: 1.2\n" +
         "SPU-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:\n" +
         "  \"SPU Canary\":\n" +
@@ -2338,10 +2338,10 @@ static void RunAppPatchPresentationSourceTests()
         "    Patch Version: 1.0\n" +
         "    Patch:\n" +
         "      - [ be32, 0x00000004, 0x60000000 ]\n");
-    Assert(normalizedSpuCanary.Succeeded,
+    Assert(normalizedSpuCanary.IsOk,
         "Expected the custom import path to support SPU executable hashes.");
     var spuCanaryRead = new R3Config.Svc.ReadSvc().ReadText(
-        normalizedSpuCanary.NormalizedText,
+        normalizedSpuCanary.NormText,
         isCanarySource: true);
     Assert(spuCanaryRead.IsOk &&
            spuCanaryRead.Catalog.Entries.Single().HashKind == HashKind.Spu,
@@ -3137,25 +3137,25 @@ static void RunBundledCheatCompilerTests(string tempRoot)
     var patchesPath = Path.Combine(libraryRoot, "rpcs3", "patches");
     Directory.CreateDirectory(dataPath);
     Directory.CreateDirectory(patchesPath);
-    File.WriteAllText(Path.Combine(dataPath, BundledCheatPatchService.BundledFileName), sourceText);
+    File.WriteAllText(Path.Combine(dataPath, ChtBndl.BndlName), sourceText);
 
-    var service = new BundledCheatPatchService();
+    var service = new ChtBndl();
     var managedPath = Path.Combine(
         patchesPath,
         "BLUS00001_patch.yml");
     Assert(
         managedPath.Equals(
-            BundledCheatPatchService.GetManagedPath(
+            ChtBndl.GetPath(
                 patchesPath,
                 "BLUS00001"),
             StringComparison.OrdinalIgnoreCase),
         "Expected managed cheats to use RPCS3's runtime-loaded <TITLE_ID>_patch.yml filename.");
-    var stagedFirst = service.PrepareManagedPatchFile(
+    var stagedFirst = service.Prep(
         patchesPath,
         libraryRoot,
         [matches.Single(match => match.Patch.Title == "Infinite Health")]);
-    Assert(stagedFirst.Succeeded &&
-           stagedFirst.PreparedFile is not null &&
+    Assert(stagedFirst.IsOk &&
+           stagedFirst.PrepFile is not null &&
            !File.Exists(managedPath),
         "Expected Cheat preparation to produce validated staged content without touching the target.");
 
@@ -3167,25 +3167,25 @@ static void RunBundledCheatCompilerTests(string tempRoot)
         "R3ConfigBackups");
     var firstBackup = cheatTxn.Commit(
         cheatBackupRoot,
-        [stagedFirst.PreparedFile!]);
+        [stagedFirst.PrepFile!]);
     Assert(File.Exists(managedPath) &&
            firstBackup.Files.Single().Existed == false,
         "Expected first exact cheat preparation to commit through the transaction with Existed=false backup state.");
     Assert(!File.Exists(Path.Combine(
             patchesPath,
-            BundledCheatPatchService.ManagedFileName)),
+            ChtBndl.ManName)),
         "Expected Cheat preparation not to create the legacy filename that RPCS3 ignores at boot.");
 
-    var stagedSecond = service.PrepareManagedPatchFile(
+    var stagedSecond = service.Prep(
         patchesPath,
         libraryRoot,
         [matches.Single(match => match.Patch.Title == "Max Orbs")]);
-    Assert(stagedSecond.Succeeded &&
-           stagedSecond.PreparedFile is not null,
+    Assert(stagedSecond.IsOk &&
+           stagedSecond.PrepFile is not null,
         "Expected second exact cheat preparation to produce transaction content: " + stagedSecond.Error);
     var secondBackup = cheatTxn.Commit(
         cheatBackupRoot,
-        [stagedSecond.PreparedFile!]);
+        [stagedSecond.PrepFile!]);
     Assert(secondBackup.Files.Single() is
            { Existed: true, BkpPath: not null } &&
            File.Exists(secondBackup.Files.Single().BkpPath),
@@ -3211,10 +3211,10 @@ static void RunPatchTransactionTests(string tempRoot)
 
     var importedPath = Path.Combine(
         patchesPath,
-        CanaryPatchImportService.ImportedPatchFileName);
+        R3Config.Svc.ImpSvc.ImpName);
     var cheatPath = Path.Combine(
         patchesPath,
-        BundledCheatPatchService.ManagedFileName);
+        ChtBndl.ManName);
     var patchConfigPath = Path.Combine(
         configPath,
         "patch_config.yml");
@@ -3460,8 +3460,8 @@ static void RunCanaryImportTransactionTests(string tempRoot)
         "0x00000300");
 
     var normalizeOnlyRoot = Path.Combine(root, "normalize-read-only");
-    var normalize = new CanaryPatchImportService().Normalize(newManaged);
-    Assert(normalize.Succeeded && !Directory.Exists(normalizeOnlyRoot),
+    var normalize = new R3Config.Svc.ImpSvc().Norm(newManaged);
+    Assert(normalize.IsOk && !Directory.Exists(normalizeOnlyRoot),
         "Expected Canary normalization to remain deterministic and free of filesystem side effects.");
 
     var reader = new R3Config.Svc.ReadSvc();
@@ -3470,19 +3470,19 @@ static void RunCanaryImportTransactionTests(string tempRoot)
         backup,
         reader,
         new CfgRead());
-    var useCase = new CanImp(
-        new CanaryPatchImportService(reader),
+    var useCase = new R3Config.Case.CanImp(
+        new R3Config.Svc.ImpSvc(reader),
         new MutGuard(() => false),
         transaction,
         backup,
         reader);
 
     var missingResult = useCase.Import(install, oldManaged);
-    Assert(missingResult.Succeeded && File.Exists(importedPath),
+    Assert(missingResult.IsOk && File.Exists(importedPath),
         "Expected a missing imported_patch.yml to be created transactionally: " + missingResult.Error);
     var missingText = File.ReadAllText(importedPath, Encoding.UTF8);
     Assert(missingText.StartsWith(
-               CanaryPatchImportService.RequiredVersionHeader,
+               ImpSvc.VerHead,
                StringComparison.Ordinal),
         "Expected a newly imported Canary catalog to start with Version: 1.2.");
     var missingSnapshots = backup.ListBkp(
@@ -3491,7 +3491,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
            missingSnapshots[0].Files.Count == 1 &&
            !missingSnapshots[0].Files[0].Existed &&
            string.Equals(
-               missingResult.BackupPath,
+               missingResult.BkpPath,
                missingSnapshots[0].DirPath,
                StringComparison.OrdinalIgnoreCase),
         "Expected the first import to create a central snapshot recording Existed=false.");
@@ -3500,7 +3500,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
 
     File.WriteAllText(importedPath, manual, Encoding.UTF8);
     var preservingResult = useCase.Import(install, oldManaged);
-    Assert(preservingResult.Succeeded,
+    Assert(preservingResult.IsOk,
         "Expected a valid manual imported patch to be preserved: " + preservingResult.Error);
     var preservingText = File.ReadAllText(importedPath, Encoding.UTF8);
     Assert(preservingText.Contains("Manual Existing Patch", StringComparison.Ordinal) &&
@@ -3511,7 +3511,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
         "Expected manual and managed definitions to coexist in one readable imported_patch.yml.");
 
     var replacingResult = useCase.Import(install, newManaged);
-    Assert(replacingResult.Succeeded,
+    Assert(replacingResult.IsOk,
         "Expected a previous R3Config-managed block to be replaced: " + replacingResult.Error);
     var replacingText = File.ReadAllText(importedPath, Encoding.UTF8);
     Assert(replacingText.Contains("Manual Existing Patch", StringComparison.Ordinal) &&
@@ -3526,8 +3526,8 @@ static void RunCanaryImportTransactionTests(string tempRoot)
         R3Paths.BkpRoot(install)).Count;
     var bytesBeforeReplay = File.ReadAllBytes(importedPath);
     var replayResult = useCase.Import(install, newManaged);
-    Assert(replayResult.Succeeded &&
-           replayResult.BackupPath is null &&
+    Assert(replayResult.IsOk &&
+           replayResult.BkpPath is null &&
            File.ReadAllBytes(importedPath).SequenceEqual(bytesBeforeReplay) &&
            backup.ListBkp(R3Paths.BkpRoot(install)).Count == snapshotsBeforeReplay,
         "Expected identical Canary import replay to be byte-idempotent without a new backup.");
@@ -3537,7 +3537,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     var snapshotsBeforeInvalid = backup.ListBkp(
         R3Paths.BkpRoot(install)).Count;
     var invalidResult = useCase.Import(install, newManaged);
-    Assert(!invalidResult.Succeeded &&
+    Assert(!invalidResult.IsOk &&
            File.ReadAllBytes(importedPath).SequenceEqual(invalidBefore) &&
            backup.ListBkp(R3Paths.BkpRoot(install)).Count == snapshotsBeforeInvalid &&
            File.ReadAllBytes(officialPath).SequenceEqual(officialBytes),
@@ -3550,7 +3550,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     File.WriteAllText(importedPath, conflictingManual, Encoding.UTF8);
     var conflictBefore = File.ReadAllBytes(importedPath);
     var conflictResult = useCase.Import(install, newManaged);
-    Assert(!conflictResult.Succeeded &&
+    Assert(!conflictResult.IsOk &&
            File.ReadAllBytes(importedPath).SequenceEqual(conflictBefore),
         "Expected a manual/managed patch identity conflict to fail without silently choosing a definition.");
 
@@ -3590,8 +3590,8 @@ static void RunCanaryImportTransactionTests(string tempRoot)
             File.Copy(stagedPath, targetPath, overwrite: true);
             throw new IOException("Simulated Canary commit failure.");
         });
-    var commitFailureUseCase = new CanImp(
-        new CanaryPatchImportService(commitFailureReader),
+    var commitFailureUseCase = new R3Config.Case.CanImp(
+        new R3Config.Svc.ImpSvc(commitFailureReader),
         new MutGuard(() => false),
         commitFailureTransaction,
         commitFailureBackup,
@@ -3600,7 +3600,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     var commitFailureResult = commitFailureUseCase.Import(
         install,
         newManaged);
-    Assert(!commitFailureResult.Succeeded &&
+    Assert(!commitFailureResult.IsOk &&
            File.ReadAllBytes(importedPath).SequenceEqual(commitBefore),
         "Expected a commit failure after backup to roll imported_patch.yml back byte-for-byte.");
 
@@ -3615,8 +3615,8 @@ static void RunCanaryImportTransactionTests(string tempRoot)
             File.Move(stagedPath, targetPath, overwrite: true);
             File.WriteAllText(targetPath, "Version: [broken", Encoding.UTF8);
         });
-    var readBackFailureUseCase = new CanImp(
-        new CanaryPatchImportService(readBackFailureReader),
+    var readBackFailureUseCase = new R3Config.Case.CanImp(
+        new R3Config.Svc.ImpSvc(readBackFailureReader),
         new MutGuard(() => false),
         readBackFailureTransaction,
         readBackFailureBackup,
@@ -3625,7 +3625,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     var readBackFailureResult = readBackFailureUseCase.Import(
         install,
         newManaged);
-    Assert(!readBackFailureResult.Succeeded &&
+    Assert(!readBackFailureResult.IsOk &&
            File.ReadAllBytes(importedPath).SequenceEqual(readBackBefore),
         "Expected post-commit read-back failure to trigger central-backup rollback.");
 
@@ -3644,15 +3644,15 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     var userMarkerBackups = backup.ListBkp(
         R3Paths.BkpRoot(install)).Count;
     var userMarkerResult = useCase.Remove(install);
-    Assert(userMarkerResult.Succeeded &&
-           userMarkerResult.BackupPath is null &&
+    Assert(userMarkerResult.IsOk &&
+           userMarkerResult.BkpPath is null &&
            File.ReadAllBytes(importedPath).SequenceEqual(userMarkerBefore) &&
            backup.ListBkp(R3Paths.BkpRoot(install)).Count ==
            userMarkerBackups,
         "Expected marker text in a patch title, Notes value, or ordinary comment not to grant managed ownership.");
 
     File.WriteAllText(importedPath, manual, Encoding.UTF8);
-    Assert(useCase.Import(install, newManaged).Succeeded,
+    Assert(useCase.Import(install, newManaged).IsOk,
         "Expected a valid managed block fixture before malformed-marker tests.");
     var managedFixture = File.ReadAllText(importedPath, Encoding.UTF8);
     const string managedEnd =
@@ -3664,7 +3664,7 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     File.WriteAllText(importedPath, incompleteMarker, Encoding.UTF8);
     var incompleteBefore = File.ReadAllBytes(importedPath);
     var incompleteResult = useCase.Remove(install);
-    Assert(!incompleteResult.Succeeded &&
+    Assert(!incompleteResult.IsOk &&
            File.ReadAllBytes(importedPath).SequenceEqual(incompleteBefore),
         "Expected an incomplete managed marker pair to be rejected without modifying the user file.");
 
@@ -3675,19 +3675,19 @@ static void RunCanaryImportTransactionTests(string tempRoot)
     File.WriteAllText(importedPath, unknownMarker, Encoding.UTF8);
     var unknownBefore = File.ReadAllBytes(importedPath);
     var unknownResult = useCase.Remove(install);
-    Assert(!unknownResult.Succeeded &&
+    Assert(!unknownResult.IsOk &&
            File.ReadAllBytes(importedPath).SequenceEqual(unknownBefore),
         "Expected an unknown managed marker version to be rejected without mutation.");
 
     File.WriteAllText(importedPath, manual, Encoding.UTF8);
-    Assert(useCase.Import(install, newManaged).Succeeded,
+    Assert(useCase.Import(install, newManaged).IsOk,
         "Expected a manual plus managed fixture before preserving removal.");
     var preservingRemove = useCase.Remove(install);
     var preservedAfterRemove = File.ReadAllText(
         importedPath,
         Encoding.UTF8);
-    Assert(preservingRemove.Succeeded &&
-           preservingRemove.BackupPath is not null &&
+    Assert(preservingRemove.IsOk &&
+           preservingRemove.BkpPath is not null &&
            File.Exists(importedPath) &&
            preservedAfterRemove.Contains(
                "Manual Existing Patch",
@@ -3699,15 +3699,15 @@ static void RunCanaryImportTransactionTests(string tempRoot)
         "Expected transactional Canary removal to preserve manual definitions and patch.yml.");
 
     File.Delete(importedPath);
-    Assert(useCase.Import(install, oldManaged).Succeeded,
+    Assert(useCase.Import(install, oldManaged).IsOk,
         "Expected a fully managed fixture before transactional deletion.");
     var deleteResult = useCase.Remove(install);
-    Assert(deleteResult.Succeeded &&
-           deleteResult.BackupPath is not null &&
+    Assert(deleteResult.IsOk &&
+           deleteResult.BkpPath is not null &&
            !File.Exists(importedPath),
         "Expected a fully and structurally owned imported_patch.yml to be deleted through the central transaction.");
 
-    Assert(useCase.Import(install, oldManaged).Succeeded,
+    Assert(useCase.Import(install, oldManaged).IsOk,
         "Expected a fully managed fixture before delete rollback.");
     var deleteRollbackBefore = File.ReadAllBytes(importedPath);
     var deleteFailureBackup = new BkpSvc();
@@ -3722,14 +3722,14 @@ static void RunCanaryImportTransactionTests(string tempRoot)
             throw new IOException(
                 "Simulated managed Canary delete commit failure.");
         });
-    var deleteFailureCase = new CanImp(
-        new CanaryPatchImportService(deleteFailureReader),
+    var deleteFailureCase = new R3Config.Case.CanImp(
+        new R3Config.Svc.ImpSvc(deleteFailureReader),
         new MutGuard(() => false),
         deleteFailureTxn,
         deleteFailureBackup,
         deleteFailureReader);
     var deleteFailureResult = deleteFailureCase.Remove(install);
-    Assert(!deleteFailureResult.Succeeded &&
+    Assert(!deleteFailureResult.IsOk &&
            File.Exists(importedPath) &&
            File.ReadAllBytes(importedPath).SequenceEqual(
                deleteRollbackBefore),
@@ -3745,8 +3745,8 @@ static void RunCanaryImportTransactionTests(string tempRoot)
         R3Paths.BkpRoot(install)).Count;
     var blockedReader = new R3Config.Svc.ReadSvc();
     var blockedBackup = new BkpSvc();
-    var blockedUseCase = new CanImp(
-        new CanaryPatchImportService(blockedReader),
+    var blockedUseCase = new R3Config.Case.CanImp(
+        new R3Config.Svc.ImpSvc(blockedReader),
         new MutGuard(() => true),
         new PatTxn(
             blockedBackup,
@@ -4289,7 +4289,7 @@ static void RunAdvancedDialogXamlSmokeTest()
             var app = new App();
             app.InitializeComponent();
             UiText.SetLang(UiText.ArabicLang);
-            UiLayoutService.ApplyApplicationResources();
+            UiLaySvc.Apply();
 
             var dialog = new AdvancedDialog();
             dialog.Close();
@@ -4982,10 +4982,10 @@ static void RunCfgApplyTests(
 
 static void RunCanaryImportFileContractTests(SmokeEnv env, string officialPatchYmlPath)
 {
-    var importService = new CanaryPatchImportService();
+    var importService = new R3Config.Svc.ImpSvc();
     var flow = new AppFlow();
     var officialBefore = File.ReadAllText(officialPatchYmlPath);
-    var importedPath = Path.Combine(env.Install.PatPath, CanaryPatchImportService.ImportedPatchFileName);
+    var importedPath = Path.Combine(env.Install.PatPath, R3Config.Svc.ImpSvc.ImpName);
 
     var canaryPatchText =
         "PPU-1234567890abcdef1234567890abcdef12345678:\n" +
@@ -5001,10 +5001,10 @@ static void RunCanaryImportFileContractTests(SmokeEnv env, string officialPatchY
 
     var result = flow.ImportCanaryPatch(env.Install, canaryPatchText);
 
-    Assert(result.Succeeded, "Expected Canary import to write imported_patch.yml: " + result.Error);
-    Assert(result.TargetPath == importedPath, "Expected Canary import target to be imported_patch.yml in <RPCS3 folder>\\patches.");
+    Assert(result.IsOk, "Expected Canary import to write imported_patch.yml: " + result.Error);
+    Assert(result.TgtPath == importedPath, "Expected Canary import target to be imported_patch.yml in <RPCS3 folder>\\patches.");
     Assert(File.Exists(importedPath), "Expected imported_patch.yml to exist after Canary import.");
-    Assert(File.ReadAllText(importedPath).StartsWith(CanaryPatchImportService.RequiredVersionHeader, StringComparison.Ordinal),
+    Assert(File.ReadAllText(importedPath).StartsWith(ImpSvc.VerHead, StringComparison.Ordinal),
         "Expected imported_patch.yml to start with Version: 1.2.");
     Assert(File.ReadAllText(officialPatchYmlPath) == officialBefore,
         "Expected Canary import not to modify official patch.yml.");
@@ -5017,11 +5017,11 @@ static void RunCanaryImportFileContractTests(SmokeEnv env, string officialPatchY
         "Expected imported Canary patch to be classified as Canary.");
 
     var secondWrite = flow.ImportCanaryPatch(env.Install, canaryPatchText);
-    Assert(secondWrite.Succeeded, "Expected repeated Canary import to remain idempotent: " + secondWrite.Error);
-    Assert(secondWrite.BackupPath is null, "Expected repeated identical imported_patch.yml write not to create a needless backup.");
+    Assert(secondWrite.IsOk, "Expected repeated Canary import to remain idempotent: " + secondWrite.Error);
+    Assert(secondWrite.BkpPath is null, "Expected repeated identical imported_patch.yml write not to create a needless backup.");
 
     var manualAndManagedText =
-        CanaryPatchImportService.RequiredVersionHeader + "\r\n\r\n" +
+        R3Config.Svc.ImpSvc.VerHead + "\r\n\r\n" +
         "PPU-1234567890abcdef1234567890abcdef12345678:\r\n" +
         "  \"Manual Existing Patch\":\r\n" +
         "    Games:\r\n" +
@@ -5034,16 +5034,16 @@ static void RunCanaryImportFileContractTests(SmokeEnv env, string officialPatchY
         "      - [ be32, 0x00000004, 0x60000000 ]\r\n";
     File.WriteAllText(importedPath, manualAndManagedText);
     var beforeManagedStage = File.ReadAllText(importedPath, Encoding.UTF8);
-    var managedStage = importService.PrepareManagedImportedPatchFile(
+    var managedStage = importService.PrepFile(
         env.Install.PatPath,
         canaryPatchText);
-    Assert(managedStage.Succeeded &&
-           managedStage.PreparedFile is not null &&
+    Assert(managedStage.IsOk &&
+           managedStage.PrepFile is not null &&
            File.ReadAllText(importedPath, Encoding.UTF8) == beforeManagedStage,
         "Expected Canary preparation to produce validated staged content without touching imported_patch.yml.");
 
     var managedWrite = flow.ImportCanaryPatch(env.Install, canaryPatchText);
-    Assert(managedWrite.Succeeded, "Expected managed Canary write to merge into existing imported_patch.yml: " + managedWrite.Error);
+    Assert(managedWrite.IsOk, "Expected managed Canary write to merge into existing imported_patch.yml: " + managedWrite.Error);
     var managedText = File.ReadAllText(importedPath);
     Assert(managedText.Contains("Manual Existing Patch", StringComparison.Ordinal),
         "Expected existing manual imported_patch.yml entries to be preserved.");
@@ -6137,8 +6137,8 @@ static void RunAppFlowPatchCatalogLoadSmokeTests(SmokeEnv env, string patchYmlPa
 
     var importedBeforeReplay = File.ReadAllBytes(importedPatchPath);
     var importResult = flow.ImportCanaryPatch(env.Install, BuildImportedPatchYml());
-    Assert(importResult.Succeeded &&
-           importResult.BackupPath is null &&
+    Assert(importResult.IsOk &&
+           importResult.BkpPath is null &&
            File.ReadAllBytes(importedPatchPath).SequenceEqual(importedBeforeReplay),
         "Expected an already-present Canary import to remain byte-idempotent without a backup: " + importResult.Error);
 

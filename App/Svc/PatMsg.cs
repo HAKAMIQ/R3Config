@@ -3,7 +3,7 @@ using R3Config.Case;
 
 namespace R3Config.Svc;
 
-public sealed class LocalizedPatchCatalogMessageFormatter :
+public sealed class PatMsgFm :
     IPatMsg
 {
     public string MissCat =>
@@ -16,12 +16,12 @@ public sealed class LocalizedPatchCatalogMessageFormatter :
         string? rawError,
         bool isImported)
     {
-        if (isImported && IsDuplicateKeyError(rawError))
+        if (isImported && IsDupKey(rawError))
         {
             return UiText.T("Patch.ImportedDuplicateKey");
         }
 
-        if (!isImported && IsDuplicateKeyError(rawError))
+        if (!isImported && IsDupKey(rawError))
         {
             return UiText.T("Patch.Localized.DuplicateKey");
         }
@@ -40,7 +40,7 @@ public sealed class LocalizedPatchCatalogMessageFormatter :
             detail);
     }
 
-    private static bool IsDuplicateKeyError(
+    private static bool IsDupKey(
         string? error)
     {
         var value = error ?? string.Empty;

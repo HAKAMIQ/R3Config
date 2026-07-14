@@ -4,7 +4,7 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class LocalizedGameScanDiagnosticFormatter
+public sealed class GmDiag
 {
     public string Format(ScanDiag diagnostic)
     {
@@ -12,10 +12,10 @@ public sealed class LocalizedGameScanDiagnosticFormatter
 
         return UiText.F(
             $"ScanDiag.{diagnostic.Code}",
-            SafeSourceName(diagnostic));
+            SrcName(diagnostic));
     }
 
-    private static string SafeSourceName(
+    private static string SrcName(
         ScanDiag diagnostic)
     {
         if (string.IsNullOrWhiteSpace(diagnostic.SrcPath))

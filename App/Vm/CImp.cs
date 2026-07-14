@@ -98,19 +98,19 @@ public sealed class CanaryPatchImportVm : VmBase
         private set => SetProperty(ref _duplicatePpuMerged, value);
     }
 
-    public FlowDirection WindowFlow => UiLayoutService.Current.WindowFlow;
+    public FlowDirection WindowFlow => UiLaySvc.Current.WinFlow;
 
-    public FlowDirection ShellFlow => UiLayoutService.Current.ShellFlow;
+    public FlowDirection ShellFlow => UiLaySvc.Current.ShFlow;
 
-    public XmlLanguage XmlLanguage => UiLayoutService.Current.XmlLanguage;
+    public XmlLanguage XmlLanguage => UiLaySvc.Current.XmlLang;
 
-    public FlowDirection TextFlow => UiLayoutService.Current.TextFlow;
+    public FlowDirection TextFlow => UiLaySvc.Current.TextFlow;
 
-    public TextAlignment UiTextAlignment => UiLayoutService.Current.TextAlignment;
+    public TextAlignment UiTextAlignment => UiLaySvc.Current.TxtAlign;
 
     public TextAlignment TextAlignment => UiTextAlignment;
 
-    public HorizontalAlignment HorizontalAlignment => UiLayoutService.Current.HorizontalAlignment;
+    public HorizontalAlignment HorizontalAlignment => UiLaySvc.Current.HorAlign;
 
     public void RefreshMutationState()
     {
@@ -170,8 +170,8 @@ public sealed class CanaryPatchImportVm : VmBase
 
         var result = _flow.NormalizeCanaryPatch(ImportText);
 
-        IsValid = result.Succeeded;
-        DuplicatePpuMerged = result.DuplicatePpuMerged;
+        IsValid = result.IsOk;
+        DuplicatePpuMerged = result.PpuMerge;
         ValidationMessage = result.Message;
     }
 
@@ -207,7 +207,7 @@ public sealed class CanaryPatchImportVm : VmBase
         var result = _flow.ImportCanaryPatch(_install, ImportText);
         ResultMessage = result.Message;
 
-        if (result.Succeeded)
+        if (result.IsOk)
         {
             RequestClose?.Invoke(this, true);
         }

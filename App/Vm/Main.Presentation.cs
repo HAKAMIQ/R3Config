@@ -119,9 +119,9 @@ public sealed partial class MainVm : VmBase
 
     private void RefreshLanguageText()
     {
-        _layout = UiLayoutService.Current;
+        _layout = UiLaySvc.Current;
 
-        UiLayoutService.ApplyApplicationResources();
+        UiLaySvc.Apply();
 
         OnPropertyChanged(nameof(WindowFlow));
         OnPropertyChanged(nameof(ShellFlow));
@@ -265,7 +265,7 @@ public sealed partial class MainVm : VmBase
 
     public string CanaryPatchSourcePath =>
         FindPatchSource(PatSrc.Can, "can.yml")?.Path
-        ?? BundledCanaryPatchService.GetBundledPath(AppContext.BaseDirectory);
+        ?? CanBndl.GetPath(AppContext.BaseDirectory);
 
     public string CanaryPatchSourceTone =>
         SourceTone(FindPatchSource(PatSrc.Can, "can.yml"));
@@ -322,7 +322,7 @@ public sealed partial class MainVm : VmBase
 
     private void SaveSettings()
     {
-        _settingsService.Save(new AppSettings(string.IsNullOrWhiteSpace(Rpcs3ExePath) ? null : Rpcs3ExePath));
+        _settingsService.Save(new AppSet(string.IsNullOrWhiteSpace(Rpcs3ExePath) ? null : Rpcs3ExePath));
     }
 
     private void RefreshCanaryState()

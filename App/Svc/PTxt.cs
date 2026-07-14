@@ -5,16 +5,16 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed record LocalizedNoteText(
+public sealed record NoteText(
     string Title,
     string Type,
     string Body,
-    string OriginalBody,
-    bool HasOriginalBody);
+    string OrigBody,
+    bool HasOrig);
 
-public static class PatchTextLocalizer
+public static class PatText
 {
-    private static readonly Dictionary<string, string> ExactBodyKeyByRaw =
+    private static readonly Dictionary<string, string> BodyKeys =
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["patch.yml file is missing"] =
@@ -35,7 +35,7 @@ public static class PatchTextLocalizer
                 "Patch.Localized.NoPatchesForGame"
         };
 
-    private static readonly Dictionary<string, string> ExactTypeKeyByRaw =
+    private static readonly Dictionary<string, string> TypeKeys =
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["Compatibility warning"] =
@@ -54,35 +54,35 @@ public static class PatchTextLocalizer
                 "NoteType.PatchRequired"
         };
 
-    public static LocalizedNoteText LocalizeRecommendationNote(
+    public static NoteText RecNote(
         string? raw,
         RecRisk risk)
     {
         return Localize(
             raw,
             UiText.T("Plan.NoteTooltipTitle"),
-            TypeKeyFor(risk));
+            TypeKey(risk));
     }
 
-    public static LocalizedNoteText LocalizePatchMessage(
+    public static NoteText PatMsg(
         string? raw)
     {
         return Localize(
             raw,
             UiText.T("Patch.NoteTooltipTitle"),
-            TypeKeyForPatchRaw(raw));
+            RawKey(raw));
     }
 
-    public static LocalizedNoteText LocalizePatchSurfaceMessage(
+    public static NoteText SurfMsg(
         string? raw)
     {
         return Localize(
             raw,
             UiText.T("Patch.Title"),
-            TypeKeyForPatchRaw(raw));
+            RawKey(raw));
     }
 
-    private static LocalizedNoteText Localize(
+    private static NoteText Localize(
         string? raw,
         string title,
         string typeKey)
@@ -91,7 +91,7 @@ public static class PatchTextLocalizer
 
         if (string.IsNullOrWhiteSpace(raw))
         {
-            return new LocalizedNoteText(
+            return new NoteText(
                 title,
                 type,
                 UiText.T("Ui.EmptyValue"),
@@ -100,14 +100,14 @@ public static class PatchTextLocalizer
         }
 
         var trimmedRaw = raw.Trim();
-        var normalized = Normalize(trimmedRaw);
-        var lookupText = NormalizeForLookup(normalized);
+        var normalized = Norm(trimmedRaw);
+        var lookupText = NormKey(normalized);
 
-        if (ExactBodyKeyByRaw.TryGetValue(
+        if (BodyKeys.TryGetValue(
                 lookupText,
                 out var bodyKey))
         {
-            return new LocalizedNoteText(
+            return new NoteText(
                 title,
                 type,
                 UiText.T(bodyKey),
@@ -115,13 +115,13 @@ public static class PatchTextLocalizer
                 false);
         }
 
-        if (ExactTypeKeyByRaw.TryGetValue(
+        if (TypeKeys.TryGetValue(
                 lookupText,
                 out var exactTypeKey))
         {
             var exactType = UiText.T(exactTypeKey);
 
-            return new LocalizedNoteText(
+            return new NoteText(
                 title,
                 exactType,
                 exactType,
@@ -129,9 +129,9 @@ public static class PatchTextLocalizer
                 false);
         }
 
-        if (IsImportedPatchDuplicateMessage(normalized))
+        if (IsImpDup(normalized))
         {
-            return new LocalizedNoteText(
+            return new NoteText(
                 title,
                 type,
                 UiText.T("Patch.ImportedDuplicateKeyReadable") +
@@ -141,9 +141,9 @@ public static class PatchTextLocalizer
                 false);
         }
 
-        if (IsImportedPatchParseMessage(normalized))
+        if (IsImpBad(normalized))
         {
-            return new LocalizedNoteText(
+            return new NoteText(
                 title,
                 type,
                 UiText.T("Patch.ImportedFileInvalid"),
@@ -151,9 +151,9 @@ public static class PatchTextLocalizer
                 true);
         }
 
-        if (IsDuplicateKeyMessage(normalized))
+        if (IsDupKey(normalized))
         {
-            return new LocalizedNoteText(
+            return new NoteText(
                 title,
                 type,
                 UiText.T("Patch.DuplicateKeyReadable") +
@@ -163,9 +163,9 @@ public static class PatchTextLocalizer
                 true);
         }
 
-        if (IsParseMessage(normalized))
+        if (IsParse(normalized))
         {
-            return new LocalizedNoteText(
+            return new NoteText(
                 title,
                 type,
                 UiText.T("Patch.Localized.ParseError"),
@@ -173,13 +173,13 @@ public static class PatchTextLocalizer
                 true);
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "unsupported",
                 "not supported",
                 "unknown patch"))
         {
-            return new LocalizedNoteText(
+            return new NoteText(
                 title,
                 type,
                 UiText.T("Patch.Localized.UnsupportedPatchNote"),
@@ -188,17 +188,17 @@ public static class PatchTextLocalizer
         }
 
         var translated =
-            PatchNoteTranslationService.Translate(trimmedRaw);
+            NoteSvc.Trans(trimmedRaw);
 
-        return new LocalizedNoteText(
+        return new NoteText(
             title,
             type,
             translated.Body,
-            translated.OriginalBody,
-            translated.HasOriginalBody);
+            translated.OrigBody,
+            translated.HasOrig);
     }
 
-    private static string TypeKeyFor(
+    private static string TypeKey(
         RecRisk risk)
     {
         return risk switch
@@ -222,7 +222,7 @@ public static class PatchTextLocalizer
         };
     }
 
-    private static string TypeKeyForPatchRaw(
+    private static string RawKey(
         string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
@@ -230,19 +230,19 @@ public static class PatchTextLocalizer
             return "NoteType.NotAutoSelected";
         }
 
-        var normalized = Normalize(raw);
-        var lookupText = NormalizeForLookup(normalized);
+        var normalized = Norm(raw);
+        var lookupText = NormKey(normalized);
 
-        if (ExactTypeKeyByRaw.TryGetValue(
+        if (TypeKeys.TryGetValue(
                 lookupText,
                 out var key))
         {
             return key;
         }
 
-        if (IsDuplicateKeyMessage(normalized) ||
-            IsParseMessage(normalized) ||
-            ContainsAny(
+        if (IsDupKey(normalized) ||
+            IsParse(normalized) ||
+            HasAny(
                 normalized,
                 "unsupported",
                 "not supported",
@@ -251,7 +251,7 @@ public static class PatchTextLocalizer
             return "NoteType.CompatibilityWarning";
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "patch required",
                 "requires patch",
@@ -260,7 +260,7 @@ public static class PatchTextLocalizer
             return "NoteType.PatchRequired";
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "fps",
                 "frame rate",
@@ -269,7 +269,7 @@ public static class PatchTextLocalizer
             return "NoteType.ManualTiming";
         }
 
-        if (ContainsAny(
+        if (HasAny(
                 normalized,
                 "optional",
                 "performance"))
@@ -280,22 +280,22 @@ public static class PatchTextLocalizer
         return "NoteType.CompatibilityWarning";
     }
 
-    private static bool IsImportedPatchDuplicateMessage(
+    private static bool IsImpDup(
         string normalized)
     {
-        return ContainsAny(
+        return HasAny(
                    normalized,
                    "imported_patch.yml") &&
-               IsDuplicateKeyMessage(normalized);
+               IsDupKey(normalized);
     }
 
-    private static bool IsImportedPatchParseMessage(
+    private static bool IsImpBad(
         string normalized)
     {
-        return ContainsAny(
+        return HasAny(
                    normalized,
                    "imported_patch.yml") &&
-               ContainsAny(
+               HasAny(
                    normalized,
                    "parse",
                    "parsing",
@@ -305,20 +305,20 @@ public static class PatchTextLocalizer
                    "could not be read");
     }
 
-    private static bool IsDuplicateKeyMessage(
+    private static bool IsDupKey(
         string normalized)
     {
-        return ContainsAny(
+        return HasAny(
             normalized,
             "duplicate key",
             "duplicated key",
             "already contains an entry");
     }
 
-    private static bool IsParseMessage(
+    private static bool IsParse(
         string normalized)
     {
-        return ContainsAny(
+        return HasAny(
             normalized,
             "parse",
             "parsing",
@@ -327,7 +327,7 @@ public static class PatchTextLocalizer
             "invalid");
     }
 
-    private static string Normalize(string value)
+    private static string Norm(string value)
     {
         return value
             .Trim()
@@ -341,7 +341,7 @@ public static class PatchTextLocalizer
                 StringComparison.Ordinal);
     }
 
-    private static string NormalizeForLookup(
+    private static string NormKey(
         string value)
     {
         var compact = string.Join(
@@ -355,7 +355,7 @@ public static class PatchTextLocalizer
             .TrimEnd('.', '。', '،', '؛');
     }
 
-    private static bool ContainsAny(
+    private static bool HasAny(
         string value,
         params string[] needles)
     {

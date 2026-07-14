@@ -83,7 +83,7 @@ public sealed partial class MainVm : VmBase
     {
         var nextLang = UiText.IsRtl ? UiText.EnglishLang : UiText.ArabicLang;
         UiText.SetLang(nextLang);
-        UiLayoutService.ApplyApplicationResources();
+        UiLaySvc.Apply();
         UiPrefs.SaveLang(UiText.CurrentLang);
         RefreshLanguageText();
     }
@@ -119,7 +119,7 @@ public sealed partial class MainVm : VmBase
             }
 
             var result = _flow.RemovePreparedCanaryPatch(_install);
-            if (!result.Succeeded)
+            if (!result.IsOk)
             {
                 UiDlg.Error(result.Error ?? result.Message, UiText.T("Patch.RemoveCanary"));
                 Log(result.Error ?? result.Message);
@@ -196,7 +196,7 @@ public sealed partial class MainVm : VmBase
 
     private void BrowseRpcs3()
     {
-        var fileName = UiDlg.PickRpcs3Exe(Rpcs3ExePath);
+        var fileName = UiDlg.PickExe(Rpcs3ExePath);
         if (fileName is null)
         {
             return;

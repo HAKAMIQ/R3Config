@@ -6,12 +6,12 @@ using System.Windows.Interop;
 
 namespace R3Config.Svc;
 
-public static class WindowThemeService
+public static class WinTheme
 {
-    private const int UseImmersiveDarkMode = 20;
-    private const int UseImmersiveDarkModeLegacy = 19;
+    private const int DarkMode = 20;
+    private const int DarkOld = 19;
 
-    public static void ApplyDwmSetWindowAttributeDarkMode(Window? window)
+    public static void Apply(Window? window)
     {
         if (window is null)
         {
@@ -21,15 +21,15 @@ public static class WindowThemeService
         var handle = new WindowInteropHelper(window).Handle;
         if (handle == IntPtr.Zero)
         {
-            window.SourceInitialized -= Window_SourceInitialized;
-            window.SourceInitialized += Window_SourceInitialized;
+            window.SourceInitialized -= WinInit;
+            window.SourceInitialized += WinInit;
             return;
         }
 
-        TryApplyDarkMode(handle);
+        TryApply(handle);
     }
 
-    private static void Window_SourceInitialized(
+    private static void WinInit(
         object? sender,
         EventArgs e)
     {
@@ -38,26 +38,26 @@ public static class WindowThemeService
             return;
         }
 
-        window.SourceInitialized -= Window_SourceInitialized;
-        ApplyDwmSetWindowAttributeDarkMode(window);
+        window.SourceInitialized -= WinInit;
+        Apply(window);
     }
 
-    private static void TryApplyDarkMode(IntPtr handle)
+    private static void TryApply(IntPtr handle)
     {
         try
         {
             var enabled = 1;
-            var result = DwmSetWindowAttribute(
+            var result = DwmSet(
                 handle,
-                UseImmersiveDarkMode,
+                DarkMode,
                 ref enabled,
                 sizeof(int));
 
             if (result != 0)
             {
-                _ = DwmSetWindowAttribute(
+                _ = DwmSet(
                     handle,
-                    UseImmersiveDarkModeLegacy,
+                    DarkOld,
                     ref enabled,
                     sizeof(int));
             }
@@ -72,9 +72,10 @@ public static class WindowThemeService
 
     [DllImport(
         "dwmapi.dll",
+        EntryPoint = "DwmSetWindowAttribute",
         ExactSpelling = true,
         PreserveSig = true)]
-    private static extern int DwmSetWindowAttribute(
+    private static extern int DwmSet(
         IntPtr hwnd,
         int dwAttribute,
         ref int pvAttribute,

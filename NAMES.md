@@ -231,3 +231,26 @@ Additional registered Core abbreviations: `Calc` (calculate), `Cand`
 (change), `Raw` (source values), `Auth` (authoritative), `Diff`
 (different), `Tech` (technical), `Cust` (custom), `Time` (timestamp),
 `Utc` (UTC), `Idx` (index), and `Det` (detected).
+
+## App service symbols
+
+| Old type | New type | Old type | New type |
+|---|---|---|---|
+| `AppSettings` | `AppSet` | `AppSettingsService` | `SetSvc` |
+| `BundledCanaryPatchService` | `CanBndl` | `BundledCheatPatchService` | `ChtBndl` |
+| `PatchLibraryStageResult` | `LibStRes` | `CanaryPatchNormalizeResult` | `CanNorm` |
+| `CanaryPatchWriteResult` | `CanWrite` | `CanaryPatchRemoveResult` | `CanDel` |
+| `CanaryPatchStageResult` | `CanStage` | `CanaryPatchImportService` | `ImpSvc` |
+| `PatchHashTextSection` | `HashSect` | `ManagedBlockScan` | `BlkScan` |
+| `LocalizedGameScanDiagnosticFormatter` | `GmDiag` | `UiDialogKind` | `DlgKind` |
+| `UiLayoutState` | `UiLaySt` | `UiLayoutService` | `UiLaySvc` |
+| `PatchNoteTranslationQuality` | `NoteQual` | `PatchNoteTranslationResult` | `NoteRes` |
+| `PatchNoteTranslationService` | `NoteSvc` | `LocalizedNoteText` | `NoteText` |
+| `PatchTextLocalizer` | `PatText` | `LocalizedPatchCatalogMessageFormatter` | `PatMsgFm` |
+| `UiPrefsData` | `PrefData` | `WindowThemeService` | `WinTheme` |
+
+Additional registered App service abbreviations: `Bndl` (bundled), `Blk`
+(block), `Ppu` (PPU), `Merge` (merged), `Rx` (regular expression), `Top`
+(top-level), `Head` (header), `Arab` (Arabic), `Trans` (translation), `Wide`
+(width), `Algn` (alignment), `Hor` (horizontal), `Rght` (right), `Dwm`
+(Desktop Window Manager), and `Dark` (dark mode).

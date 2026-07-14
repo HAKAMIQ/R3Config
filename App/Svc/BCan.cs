@@ -8,25 +8,25 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class BundledCanaryPatchService
+public sealed class CanBndl
 {
-    public const string BundledFileName = "can.yml";
+    public const string BndlName = "can.yml";
 
-    private readonly CanaryPatchImportService _importService = new();
+    private readonly ImpSvc _impSvc = new();
 
-    public static string GetBundledPath(string baseDirectory)
+    public static string GetPath(string baseDirectory)
     {
-        return Path.Combine(baseDirectory, "Data", BundledFileName);
+        return Path.Combine(baseDirectory, "Data", BndlName);
     }
 
     public bool Exists(string baseDirectory)
     {
-        return File.Exists(GetBundledPath(baseDirectory));
+        return File.Exists(GetPath(baseDirectory));
     }
 
     public string ReadText(string baseDirectory)
     {
-        var path = GetBundledPath(baseDirectory);
+        var path = GetPath(baseDirectory);
         if (!File.Exists(path))
         {
             throw new FileNotFoundException(
@@ -37,7 +37,7 @@ public sealed class BundledCanaryPatchService
         return File.ReadAllText(path, Encoding.UTF8);
     }
 
-    public CanaryPatchStageResult PrepareImportedPatchFile(
+    public CanStage Prep(
         string patchesPath,
         string baseDirectory,
         IReadOnlyList<PatMatch> selectedMatches)
@@ -48,7 +48,7 @@ public sealed class BundledCanaryPatchService
 
         if (selectedCanary.Length == 0)
         {
-            return new CanaryPatchStageResult(
+            return new CanStage(
                 true,
                 string.Empty,
                 null,
@@ -57,13 +57,13 @@ public sealed class BundledCanaryPatchService
         }
 
         var bundledText = ReadText(baseDirectory);
-        var selectedText = BuildSelectedCanaryText(
+        var selectedText = Build(
             bundledText,
             selectedCanary);
 
         if (string.IsNullOrWhiteSpace(selectedText))
         {
-            return new CanaryPatchStageResult(
+            return new CanStage(
                 true,
                 string.Empty,
                 null,
@@ -71,12 +71,12 @@ public sealed class BundledCanaryPatchService
                 null);
         }
 
-        return _importService.PrepareManagedImportedPatchFile(
+        return _impSvc.PrepFile(
             patchesPath,
             selectedText);
     }
 
-    private static string BuildSelectedCanaryText(
+    private static string Build(
         string bundledText,
         IReadOnlyList<PatMatch> selectedMatches)
     {

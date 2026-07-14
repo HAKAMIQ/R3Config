@@ -12,13 +12,13 @@ public partial class AppDialog : Window
         Window? owner,
         string title,
         string message,
-        UiDialogKind kind,
+        DlgKind kind,
         bool isConfirm)
     {
         InitializeComponent();
 
         SourceInitialized += (_, _) =>
-            WindowThemeService.ApplyDwmSetWindowAttributeDarkMode(this);
+            WinTheme.Apply(this);
 
         Owner = owner;
         Title = title;
@@ -55,21 +55,21 @@ public partial class AppDialog : Window
 
     private void ApplyTextDirection()
     {
-        var layout = UiLayoutService.Current;
+        var layout = UiLaySvc.Current;
 
         ContentGrid.FlowDirection = layout.TextFlow;
         ButtonPanel.FlowDirection = layout.TextFlow;
 
         TitleText.FlowDirection = layout.TextFlow;
-        TitleText.TextAlignment = layout.TextAlignment;
+        TitleText.TextAlignment = layout.TxtAlign;
         TitleText.HorizontalAlignment = HorizontalAlignment.Stretch;
 
         MessageText.FlowDirection = layout.TextFlow;
-        MessageText.TextAlignment = layout.TextAlignment;
+        MessageText.TextAlignment = layout.TxtAlign;
         MessageText.HorizontalAlignment = HorizontalAlignment.Stretch;
     }
 
-    private void ApplyKind(UiDialogKind kind)
+    private void ApplyKind(DlgKind kind)
     {
         var accent = (Brush)FindResource("AccentBrush");
         var warning = (Brush)FindResource("WarningBrush");
@@ -81,21 +81,21 @@ public partial class AppDialog : Window
 
         switch (kind)
         {
-            case UiDialogKind.Warning:
+            case DlgKind.Warning:
                 IconText.Text = "!";
                 IconText.Foreground = warning;
                 IconBadge.Background = warningSurface;
                 IconBadge.BorderBrush = warning;
                 break;
 
-            case UiDialogKind.Error:
+            case DlgKind.Error:
                 IconText.Text = "×";
                 IconText.Foreground = danger;
                 IconBadge.Background = dangerSurface;
                 IconBadge.BorderBrush = danger;
                 break;
 
-            case UiDialogKind.Confirm:
+            case DlgKind.Confirm:
                 IconText.Text = "?";
                 IconText.Foreground = accent;
                 IconBadge.Background = infoSurface;

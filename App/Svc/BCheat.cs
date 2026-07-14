@@ -8,47 +8,47 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed record PatchLibraryStageResult(
-    bool Succeeded,
-    string TargetPath,
-    PrepFile? PreparedFile,
-    int PatchCount,
+public sealed record LibStRes(
+    bool IsOk,
+    string TgtPath,
+    PrepFile? PrepFile,
+    int PatNum,
     string Message,
     string? Error);
 
-public sealed class BundledCheatPatchService
+public sealed class ChtBndl
 {
-    public const string BundledFileName = "cheats.yml";
+    public const string BndlName = "cheats.yml";
     // Kept only so older R3Config-owned libraries can be migrated. RPCS3 does
     // not load this arbitrary filename while booting a game.
-    public const string ManagedFileName = "r3config_cheats_patch.yml";
+    public const string ManName = "r3config_cheats_patch.yml";
 
-    public const string ManagedMarker =
+    public const string ManMark =
         "# R3Config managed RPCS3 cheat patches - do not edit while R3Config is running";
 
-    private readonly SelComp _compiler = new();
+    private readonly SelComp _comp = new();
     private readonly ReadSvc _reader = new();
 
-    public static string GetBundledPath(string baseDirectory)
+    public static string GetBndl(string baseDirectory)
     {
         return Path.Combine(
             baseDirectory,
             "Data",
-            BundledFileName);
+            BndlName);
     }
 
-    public static string GetManagedPath(string patchesPath)
+    public static string GetPath(string patchesPath)
     {
         return Path.Combine(
             patchesPath,
-            ManagedFileName);
+            ManName);
     }
 
-    public static string GetManagedPath(
+    public static string GetPath(
         string patchesPath,
         string serial)
     {
-        var normalizedSerial = NormalizeSerial(serial)
+        var normalizedSerial = NormSer(serial)
             ?? throw new ArgumentException(
                 "A managed RPCS3 cheat file requires a valid 9-character title ID.",
                 nameof(serial));
@@ -58,19 +58,19 @@ public sealed class BundledCheatPatchService
             normalizedSerial + "_patch.yml");
     }
 
-    public static IReadOnlyList<string> GetManagedPaths(
+    public static IReadOnlyList<string> GetPaths(
         string patchesPath,
         IEnumerable<PatMatch> matches)
     {
         return matches
-            .Select(MatchedSerial)
+            .Select(GetSer)
             .Where(serial => serial is not null)
-            .Select(serial => GetManagedPath(patchesPath, serial!))
+            .Select(serial => GetPath(patchesPath, serial!))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
 
-    public static bool IsManagedFile(string path)
+    public static bool IsMan(string path)
     {
         try
         {
@@ -86,7 +86,7 @@ public sealed class BundledCheatPatchService
 
             return string.Equals(
                 reader.ReadLine(),
-                ManagedMarker,
+                ManMark,
                 StringComparison.Ordinal);
         }
         catch (Exception ex) when (
@@ -98,7 +98,7 @@ public sealed class BundledCheatPatchService
         }
     }
 
-    public PatchLibraryStageResult PrepareManagedPatchFile(
+    public LibStRes Prep(
         string patchesPath,
         string baseDirectory,
         IReadOnlyList<PatMatch> selectedMatches)
@@ -115,28 +115,28 @@ public sealed class BundledCheatPatchService
 
             if (bundledSelections.Length == 0)
             {
-                return StageSuccess(
+                return Success(
                     string.Empty,
                     null,
                     0,
                     UiText.T("Patch.CheatLibrary.NoPrepare"));
             }
 
-            if (!TryResolveTarget(
+            if (!TryTgt(
                     patchesPath,
                     bundledSelections,
                     out targetPath,
                     out var pathError))
             {
-                return StageFailure(
+                return Failure(
                     targetPath,
                     pathError);
             }
 
-            var sourcePath = GetBundledPath(baseDirectory);
+            var sourcePath = GetBndl(baseDirectory);
             if (!File.Exists(sourcePath))
             {
-                return StageFailure(
+                return Failure(
                     targetPath,
                     UiText.T("Patch.CheatLibrary.Missing"));
             }
@@ -154,10 +154,10 @@ public sealed class BundledCheatPatchService
                     Encoding.UTF8);
 
                 if (!existingText.StartsWith(
-                        ManagedMarker,
+                        ManMark,
                         StringComparison.Ordinal))
                 {
-                    return StageFailure(
+                    return Failure(
                         targetPath,
                         UiText.T(
                             "Patch.CheatLibrary.UnmanagedConflict"));
@@ -170,7 +170,7 @@ public sealed class BundledCheatPatchService
 
                 if (!existingRead.IsOk)
                 {
-                    return StageFailure(
+                    return Failure(
                         targetPath,
                         existingRead.Error ??
                         UiText.T(
@@ -179,7 +179,7 @@ public sealed class BundledCheatPatchService
 
                 selections.AddRange(
                     existingRead.Catalog.Entries.Select(
-                        ToExactMatch));
+                        Exact));
             }
 
             // R3Config versions before the title-specific runtime fix wrote an
@@ -187,13 +187,13 @@ public sealed class BundledCheatPatchService
             // imported_patch.yml and <TITLE_ID>_patch.yml at game boot. Reuse
             // compatible entries from the owned legacy file when the user next
             // enables a cheat, but never treat an unmarked file as ours.
-            var targetSerial = MatchedSerial(bundledSelections[0])!;
-            var legacyPath = GetManagedPath(patchesPath);
+            var targetSerial = GetSer(bundledSelections[0])!;
+            var legacyPath = GetPath(patchesPath);
             if (!legacyPath.Equals(
                     targetPath,
                     StringComparison.OrdinalIgnoreCase) &&
                 File.Exists(legacyPath) &&
-                IsManagedFile(legacyPath))
+                IsMan(legacyPath))
             {
                 var legacyRead = _reader.Read(
                     legacyPath,
@@ -208,7 +208,7 @@ public sealed class BundledCheatPatchService
                                     target.Serial,
                                     targetSerial,
                                     StringComparison.OrdinalIgnoreCase)))
-                            .Select(ToExactMatch));
+                            .Select(Exact));
                 }
             }
 
@@ -216,7 +216,7 @@ public sealed class BundledCheatPatchService
             [
                 .. selections
                     .GroupBy(
-                        PatchIdentity,
+                        GetId,
                         StringComparer.OrdinalIgnoreCase)
                     .Select(group => group.First())
             ];
@@ -225,14 +225,14 @@ public sealed class BundledCheatPatchService
                 sourcePath,
                 Encoding.UTF8);
 
-            var compiled = _compiler.Compile(
+            var compiled = _comp.Compile(
                 sourceText,
                 selections,
                 bundledSelections);
 
             if (!compiled.IsOk)
             {
-                return StageFailure(
+                return Failure(
                     targetPath,
                     compiled.Error ??
                     UiText.T(
@@ -240,7 +240,7 @@ public sealed class BundledCheatPatchService
             }
 
             var finalText =
-                ManagedMarker +
+                ManMark +
                 "\r\n" +
                 compiled.PatText;
 
@@ -250,7 +250,7 @@ public sealed class BundledCheatPatchService
                     finalText,
                     StringComparison.Ordinal))
             {
-                return StageSuccess(
+                return Success(
                     targetPath,
                     null,
                     compiled.SelNum,
@@ -268,13 +268,13 @@ public sealed class BundledCheatPatchService
                 validation.Catalog.Entries.Count !=
                 compiled.SelNum)
             {
-                return StageFailure(
+                return Failure(
                     targetPath,
                     validation.Error ??
                     "The managed cheat patch failed validation.");
             }
 
-            return StageSuccess(
+            return Success(
                 targetPath,
                 new PrepFile(
                     targetPath,
@@ -294,13 +294,13 @@ public sealed class BundledCheatPatchService
             ArgumentException or
             InvalidDataException)
         {
-            return StageFailure(
+            return Failure(
                 targetPath,
                 ex.Message);
         }
     }
 
-    private static PatMatch ToExactMatch(
+    private static PatMatch Exact(
         PatEntry entry)
     {
         if (entry.GameTgt.Count == 0)
@@ -343,7 +343,7 @@ public sealed class BundledCheatPatchService
             TgtVer: version);
     }
 
-    private static string PatchIdentity(
+    private static string GetId(
         PatMatch match)
     {
         return
@@ -351,7 +351,7 @@ public sealed class BundledCheatPatchService
             $"{match.Patch.Title}";
     }
 
-    private static bool TryResolveTarget(
+    private static bool TryTgt(
         string patchesPath,
         IReadOnlyList<PatMatch> selections,
         out string targetPath,
@@ -375,7 +375,7 @@ public sealed class BundledCheatPatchService
             Directory.GetParent(patchesDirectory)?.FullName;
 
         var serials = selections
-            .Select(MatchedSerial)
+            .Select(GetSer)
             .Where(serial => serial is not null)
             .Select(serial => serial!)
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -390,7 +390,7 @@ public sealed class BundledCheatPatchService
         }
 
         targetPath = Path.GetFullPath(
-            GetManagedPath(
+            GetPath(
                 patchesDirectory,
                 serials[0]));
 
@@ -403,7 +403,7 @@ public sealed class BundledCheatPatchService
             return false;
         }
 
-        if (!CanaryPatchImportService.IsPathInsideDirectory(
+        if (!ImpSvc.InDir(
                 targetPath,
                 patchesDirectory))
         {
@@ -416,15 +416,15 @@ public sealed class BundledCheatPatchService
         return true;
     }
 
-    private static string? MatchedSerial(
+    private static string? GetSer(
         PatMatch match)
     {
-        return NormalizeSerial(
+        return NormSer(
             match.TgtSer ??
             match.MatSer);
     }
 
-    private static string? NormalizeSerial(string? serial)
+    private static string? NormSer(string? serial)
     {
         if (string.IsNullOrWhiteSpace(serial))
         {
@@ -439,13 +439,13 @@ public sealed class BundledCheatPatchService
             : null;
     }
 
-    private static PatchLibraryStageResult StageSuccess(
+    private static LibStRes Success(
         string targetPath,
         PrepFile? preparedFile,
         int patchCount,
         string message)
     {
-        return new PatchLibraryStageResult(
+        return new LibStRes(
             true,
             targetPath,
             preparedFile,
@@ -454,11 +454,11 @@ public sealed class BundledCheatPatchService
             null);
     }
 
-    private static PatchLibraryStageResult StageFailure(
+    private static LibStRes Failure(
         string targetPath,
         string error)
     {
-        return new PatchLibraryStageResult(
+        return new LibStRes(
             false,
             targetPath,
             null,

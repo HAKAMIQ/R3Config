@@ -15,7 +15,7 @@ namespace R3Config.Vm;
 
 public sealed partial class MainVm : VmBase
 {
-    private static readonly LocalizedGameScanDiagnosticFormatter
+    private static readonly GmDiag
         GameScanDiagnosticFormatter = new();
 
     private void LogGameScanDiagnostics(
@@ -95,7 +95,7 @@ public sealed partial class MainVm : VmBase
 
     private void ImportWikiXml()
     {
-        var fileName = UiDlg.PickWikiXml();
+        var fileName = UiDlg.PickWiki();
         if (fileName is null)
         {
             return;
@@ -153,7 +153,7 @@ public sealed partial class MainVm : VmBase
                 return;
             }
 
-            var fileName = UiDlg.PickCatExportPath();
+            var fileName = UiDlg.PickExp();
             if (fileName is null)
             {
                 return;

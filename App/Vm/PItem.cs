@@ -420,19 +420,19 @@ public sealed class PatchItemVm : VmBase
 
     public string NoteBody => LocalizedMessage;
 
-    public string LocalizedNoteTitle => PatchTextLocalizer.LocalizePatchMessage(Match.Patch.Notes).Title;
+    public string LocalizedNoteTitle => PatText.PatMsg(Match.Patch.Notes).Title;
 
-    public string LocalizedMessageType => PatchTextLocalizer.LocalizePatchMessage(Match.Patch.Notes).Type;
+    public string LocalizedMessageType => PatText.PatMsg(Match.Patch.Notes).Type;
 
-    public string LocalizedMessage => PatchTextLocalizer.LocalizePatchMessage(Match.Patch.Notes).Body;
+    public string LocalizedMessage => PatText.PatMsg(Match.Patch.Notes).Body;
 
-    public string LocalizedOriginalMessage => PatchTextLocalizer.LocalizePatchMessage(Match.Patch.Notes).OriginalBody;
+    public string LocalizedOriginalMessage => PatText.PatMsg(Match.Patch.Notes).OrigBody;
 
-    public bool HasOriginalMessage => PatchTextLocalizer.LocalizePatchMessage(Match.Patch.Notes).HasOriginalBody;
+    public bool HasOriginalMessage => PatText.PatMsg(Match.Patch.Notes).HasOrig;
 
-    public FlowDirection NoteFlow => UiLayoutService.Current.TextFlow;
+    public FlowDirection NoteFlow => UiLaySvc.Current.TextFlow;
 
-    public TextAlignment NoteTextAlignment => UiLayoutService.Current.TextAlignment;
+    public TextAlignment NoteTextAlignment => UiLaySvc.Current.TxtAlign;
 
     public bool IsSelectable { get; }
 
