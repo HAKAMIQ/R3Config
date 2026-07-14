@@ -44,6 +44,12 @@ public sealed partial class MainVm : VmBase
                 return;
             }
 
+            RefreshRpcs3PresentationState();
+            if (IsBusy)
+            {
+                return;
+            }
+
             var backup = Advanced.SelectedBackup;
             if (backup is null)
             {
@@ -51,15 +57,18 @@ public sealed partial class MainVm : VmBase
                 return;
             }
 
-            if (Rpcs3InstallService.IsRpcs3Running())
+            if (IsRpcs3RunningPresentation)
             {
                 UiDlg.Warn(UiText.T("Msg.BlockedRestoreRunning"), UiText.T("Dialog.Rpcs3Running"));
                 Log(UiText.T("Msg.BlockedRestoreLog"));
                 return;
             }
 
-            var confirmed = UiDlg.Confirm(
-                UiText.F("Msg.RestoreConfirm", backup.CreatedAt.LocalDateTime),
+            var confirmed = _confirm(
+                UiText.F(
+                    "Msg.RestoreConfirm",
+                    backup.CreatedAt.LocalDateTime,
+                    backup.Files.Count),
                 UiText.T("Dialog.RestoreTitle"));
 
             if (!confirmed)
@@ -77,6 +86,10 @@ public sealed partial class MainVm : VmBase
         {
             UiDlg.Error(ex.Message, UiText.T("Dialog.FailRestore"));
             Log(UiText.F("Msg.RestoreFailed", ex.Message));
+        }
+        finally
+        {
+            RefreshRpcs3PresentationState();
         }
     }
 

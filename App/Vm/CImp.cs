@@ -3,32 +3,48 @@ using System.IO;
 using System.Windows;
 using System.Windows.Markup;
 using Microsoft.Win32;
-using AppSvc;
-using R3Config.Lang;
 using R3Config.Svc;
+using R3Config.Lang;
+using R3Config.Mdl;
 
 namespace R3Config.Vm;
 
 public sealed class CanaryPatchImportVm : VmBase
 {
-    private readonly string? _patchesPath;
-    private readonly CanaryPatchImportService _service = new();
+    private readonly Rpcs3InstallDescriptor? _install;
+    private readonly AppFlow _flow;
+    private readonly Func<bool> _isRpcs3Running;
+    private readonly Func<string, string, bool> _confirm;
 
     private string _importText = string.Empty;
     private string _validationMessage = UiText.T("Patch.ImportCanaryPasteLabel");
     private string _resultMessage = string.Empty;
     private bool _isValid;
     private bool _duplicatePpuMerged;
+    private bool _isRpcs3RunningPresentation;
 
-    public CanaryPatchImportVm(string? patchesPath)
+    public CanaryPatchImportVm(
+        Rpcs3InstallDescriptor? install,
+        AppFlow flow,
+        Func<bool>? isRpcs3Running = null,
+        Func<string, string, bool>? confirm = null)
     {
-        _patchesPath = patchesPath;
+        _install = install;
+        _flow = flow ?? throw new ArgumentNullException(nameof(flow));
+        _isRpcs3Running = isRpcs3Running ??
+            Rpcs3InstallService.IsRpcs3Running;
+        _confirm = confirm ?? UiDlg.Confirm;
 
         ChooseFileCommand = new RelayCommand(ChooseFile);
-        CreateFileCommand = new RelayCommand(CreateImportedPatchFile, () => IsValid);
+        CreateFileCommand = new RelayCommand(
+            CreateImportedPatchFile,
+            () => _install is not null &&
+                  IsValid &&
+                  !_isRpcs3RunningPresentation);
         CancelCommand = new RelayCommand(() => RequestClose?.Invoke(this, false));
 
         Validate();
+        RefreshMutationState();
     }
 
     public event EventHandler<bool>? RequestClose;
@@ -96,6 +112,21 @@ public sealed class CanaryPatchImportVm : VmBase
 
     public HorizontalAlignment HorizontalAlignment => UiLayoutService.Current.HorizontalAlignment;
 
+    public void RefreshMutationState()
+    {
+        try
+        {
+            _isRpcs3RunningPresentation =
+                _install is not null && _isRpcs3Running();
+        }
+        catch
+        {
+            _isRpcs3RunningPresentation = true;
+        }
+
+        CreateFileCommand.RaiseCanExecuteChanged();
+    }
+
     private void ChooseFile()
     {
         var dialog = new OpenFileDialog
@@ -112,9 +143,15 @@ public sealed class CanaryPatchImportVm : VmBase
 
         try
         {
-            ImportText = File.ReadAllText(dialog.FileName);
+            ImportText = Rpcs3BoundedInput.ReadUtf8TextFile(
+                dialog.FileName,
+                Rpcs3InputLimits.PatchCatalogYamlBytes,
+                "Canary import patch catalog");
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (
+            ex is InvalidDataException or
+                IOException or
+                UnauthorizedAccessException)
         {
             IsValid = false;
             ResultMessage = ex.Message;
@@ -131,7 +168,7 @@ public sealed class CanaryPatchImportVm : VmBase
             return;
         }
 
-        var result = _service.Normalize(ImportText);
+        var result = _flow.NormalizeCanaryPatch(ImportText);
 
         IsValid = result.Succeeded;
         DuplicatePpuMerged = result.DuplicatePpuMerged;
@@ -146,13 +183,28 @@ public sealed class CanaryPatchImportVm : VmBase
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_patchesPath))
+        if (_install is null)
         {
             ResultMessage = UiText.T("Patch.ImportCanaryNoRpcs3Path");
             return;
         }
 
-        var result = _service.WriteImportedPatch(_patchesPath, ImportText);
+        RefreshMutationState();
+        if (_isRpcs3RunningPresentation)
+        {
+            ResultMessage = UiText.T("Msg.BlockedRpcs3");
+            return;
+        }
+
+        if (!_confirm(
+                UiText.T("Patch.ImportCanaryConfirm"),
+                UiText.T("Patch.ImportCanaryTitle")))
+        {
+            ResultMessage = UiText.T("Msg.UserCancelPatch");
+            return;
+        }
+
+        var result = _flow.ImportCanaryPatch(_install, ImportText);
         ResultMessage = result.Message;
 
         if (result.Succeeded)

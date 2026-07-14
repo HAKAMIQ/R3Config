@@ -1,7 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
-using AppSvc;
+using R3Config.Svc;
 using R3Config.Vm;
 
 namespace R3Config.View;
@@ -17,6 +17,7 @@ public partial class CanaryPatchImportDialog : Window
 
         Owner = owner;
         DataContext = viewModel;
+        Activated += (_, _) => viewModel.RefreshMutationState();
 
         viewModel.RequestClose += (_, result) =>
         {

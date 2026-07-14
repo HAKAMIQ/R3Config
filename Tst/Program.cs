@@ -14,6 +14,7 @@ using R3Config.Mdl;
 using R3Config.Vm;
 using R3Config.View;
 using R3Config.UseCases;
+using R3Config.Composition;
 
 var tempRoot = Path.Combine(Path.GetTempPath(), "R3ConfigSmoke", Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(tempRoot);
@@ -34,6 +35,7 @@ try
     RunMutationGuardTests(tempRoot);
     RunInputLimitTests(tempRoot);
     RunGameScanDiagnosticTests(tempRoot);
+    RunMutationCommandStateTests(tempRoot);
     RunGameListSearchTests();
     RunAdvancedDialogXamlSmokeTest();
     var env = CreateEnv(tempRoot);
@@ -686,6 +688,240 @@ static string DiagnosticIdentity(GameScanDiagnostic diagnostic)
         diagnostic.SourcePath,
         diagnostic.Code,
         diagnostic.TechnicalMessage);
+}
+
+static void RunMutationCommandStateTests(string tempRoot)
+{
+    var suiteRoot = Path.Combine(
+        tempRoot,
+        "mutation-command-state");
+    var installRoot = Path.Combine(suiteRoot, "rpcs3");
+    var configPath = Path.Combine(installRoot, "config");
+    var patchesPath = Path.Combine(installRoot, "patches");
+    Directory.CreateDirectory(configPath);
+    Directory.CreateDirectory(patchesPath);
+    File.WriteAllBytes(Path.Combine(installRoot, "rpcs3.exe"), []);
+    var install = Rpcs3InstallService.FromExePath(
+        Path.Combine(installRoot, "rpcs3.exe"));
+
+    var running = false;
+    var main = new MainVm(
+        AppComposition.CreateRuntimeServices(),
+        () => running,
+        (_, _) => true);
+    var change = new ConfigChange(
+        "Video",
+        "Write Color Buffers",
+        "true",
+        "write color buffers",
+        null,
+        RecommendationRisk.Recommended);
+    var state = new RecStateItem(
+        "BLUS43000",
+        change.DisplayPath,
+        "false",
+        "true",
+        RecommendationRisk.Recommended,
+        RecState.Pending,
+        true,
+        true,
+        true,
+        string.Empty);
+    var plan = new ConfigPlan(
+        "BLUS43000",
+        "Mutation Command Game",
+        Path.Combine(
+            install.CustomConfigsPath,
+            "config_BLUS43000.yml"),
+        [new ConfigPlanEntry(change, "false", state)],
+        new RecStateSummary(
+            "BLUS43000",
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            [state]),
+        true);
+    main.Plan.Load(plan);
+    SetPrivateField(main, "_currentPlan", plan);
+    SetPrivateField(main, "_hasPreparedCanaryPatches", true);
+    main.Advanced.RefreshBackups(
+    [
+        new BackupSnapshot(
+            Path.Combine(configPath, "R3ConfigBackups", "snapshot"),
+            DateTimeOffset.UtcNow,
+            [new BackupFileEntry(plan.TargetConfigPath, "backup.yml", true)])
+    ]);
+
+    Assert(!main.ApplyCheckedCommand.CanExecute(null) &&
+           !main.RemoveWikiSettingsCommand.CanExecute(null) &&
+           !main.RestoreBackupCommand.CanExecute(null) &&
+           !main.RemoveCanaryPatchesCommand.CanExecute(null) &&
+           !main.ImportCanaryPatchCommand.CanExecute(null),
+        "Expected every Main mutation command to be disabled without an analyzed install.");
+
+    SetPrivateField(main, "_install", install);
+    main.RefreshRpcs3PresentationState();
+    Assert(!main.ApplyCheckedCommand.CanExecute(null),
+        "Expected config apply to remain disabled without an explicit selection.");
+
+    main.Plan.Items.Single().IsSelected = true;
+    Assert(main.ApplyCheckedCommand.CanExecute(null) &&
+           main.RemoveWikiSettingsCommand.CanExecute(null) &&
+           main.RestoreBackupCommand.CanExecute(null) &&
+           main.RemoveCanaryPatchesCommand.CanExecute(null) &&
+           main.ImportCanaryPatchCommand.CanExecute(null),
+        "Expected valid Main mutation operations to be enabled while RPCS3 is closed.");
+
+    SetPrivateField(main, "_isBusy", true);
+    Assert(!main.ApplyCheckedCommand.CanExecute(null) &&
+           !main.RemoveWikiSettingsCommand.CanExecute(null) &&
+           !main.RestoreBackupCommand.CanExecute(null) &&
+           !main.RemoveCanaryPatchesCommand.CanExecute(null) &&
+           !main.ImportCanaryPatchCommand.CanExecute(null),
+        "Expected every Main mutation command to be disabled while analysis is busy.");
+
+    SetPrivateField(main, "_isBusy", false);
+    running = true;
+    main.RefreshRpcs3PresentationState();
+    Assert(main.IsRpcs3RunningPresentation &&
+           !main.ApplyCheckedCommand.CanExecute(null) &&
+           !main.RemoveWikiSettingsCommand.CanExecute(null) &&
+           !main.RestoreBackupCommand.CanExecute(null) &&
+           !main.RemoveCanaryPatchesCommand.CanExecute(null) &&
+           !main.ImportCanaryPatchCommand.CanExecute(null),
+        "Expected refreshed running state to disable every Main mutation command.");
+
+    running = false;
+    main.RefreshRpcs3PresentationState();
+    main.Plan.ClearSelection();
+    Assert(!main.ApplyCheckedCommand.CanExecute(null) &&
+           main.RemoveWikiSettingsCommand.CanExecute(null),
+        "Expected only the operation lacking selection to remain disabled.");
+
+    var importRoot = Path.Combine(suiteRoot, "import-confirmation");
+    var importConfig = Path.Combine(importRoot, "config");
+    var importPatches = Path.Combine(importRoot, "patches");
+    Directory.CreateDirectory(importConfig);
+    Directory.CreateDirectory(importPatches);
+    File.WriteAllBytes(Path.Combine(importRoot, "rpcs3.exe"), []);
+    var importInstall = Rpcs3InstallService.FromExePath(
+        Path.Combine(importRoot, "rpcs3.exe"));
+    var importFlow = AppComposition.CreateRuntimeServices().Flow;
+    var allowConfirmation = false;
+    var confirmationCalls = 0;
+    var importViewModel = new CanaryPatchImportVm(
+        importInstall,
+        importFlow,
+        () => false,
+        (_, _) =>
+        {
+            confirmationCalls++;
+            return allowConfirmation;
+        })
+    {
+        ImportText = BuildCanaryImportPatch(
+            new string('f', 40),
+            "Confirmed Canary Import",
+            "0x00003000")
+    };
+    var importedPath = Path.Combine(
+        importPatches,
+        CanaryPatchImportService.ImportedPatchFileName);
+
+    Assert(importViewModel.CreateFileCommand.CanExecute(null),
+        "Expected a validated import preview to enable its confirmed mutation command.");
+    importViewModel.CreateFileCommand.Execute(null);
+    Assert(confirmationCalls == 1 &&
+           !File.Exists(importedPath),
+        "Expected rejected Canary import confirmation to produce zero writes.");
+
+    allowConfirmation = true;
+    importViewModel.CreateFileCommand.Execute(null);
+    Assert(confirmationCalls == 2 &&
+           File.Exists(importedPath),
+        "Expected accepted Canary import confirmation to reach the guarded use case.");
+
+    var hCanaryRoot = Path.Combine(suiteRoot, "hcanary-confirmation");
+    Directory.CreateDirectory(Path.Combine(hCanaryRoot, "config"));
+    Directory.CreateDirectory(Path.Combine(hCanaryRoot, "patches"));
+    File.WriteAllBytes(Path.Combine(hCanaryRoot, "rpcs3.exe"), []);
+    var hCanaryInstall = Rpcs3InstallService.FromExePath(
+        Path.Combine(hCanaryRoot, "rpcs3.exe"));
+    var hCanaryGame = new Rpcs3GameDescriptor(
+        "BLUS43001",
+        "Confirmed H-Canary Game",
+        "game",
+        "01.00",
+        new string('a', 40),
+        null,
+        [new string('a', 40)],
+        []);
+    var hCanaryConfirm = false;
+    var hCanary = new HCanaryVm(
+        AppComposition.CreateRuntimeServices().Flow,
+        () => running,
+        (_, _) => hCanaryConfirm);
+    hCanary.SetContext(hCanaryInstall, hCanaryGame);
+    hCanary.SelectedHash = hCanary.Hashes.Single();
+    hCanary.PatchName = "Confirmed H-Canary Patch";
+    hCanary.Author = "R3Config Tests";
+    hCanary.Instructions[0].Address = "0x00004000";
+    hCanary.Instructions[0].Value = "0x60000000";
+    Assert(hCanary.IsValid && hCanary.SaveCommand.CanExecute(null),
+        "Expected a valid H-Canary draft to enable Save while RPCS3 is closed.");
+    hCanary.SaveCommand.Execute(null);
+    var hCanaryImportedPath = Path.Combine(
+        hCanaryInstall.PatchesPath,
+        "imported_patch.yml");
+    Assert(!File.Exists(hCanaryImportedPath),
+        "Expected rejected H-Canary save confirmation to produce zero writes.");
+
+    hCanaryConfirm = true;
+    hCanary.SaveCommand.Execute(null);
+    Assert(File.Exists(hCanaryImportedPath) &&
+           hCanary.DeleteStoredCommand.CanExecute(null),
+        "Expected accepted H-Canary save confirmation to reach the guarded use case.");
+    var savedBytes = File.ReadAllBytes(hCanaryImportedPath);
+    hCanaryConfirm = false;
+    hCanary.DeleteStoredCommand.Execute(null);
+    Assert(File.ReadAllBytes(hCanaryImportedPath)
+            .SequenceEqual(savedBytes),
+        "Expected rejected H-Canary delete confirmation to preserve the stored definition byte-for-byte.");
+
+    running = true;
+    hCanary.RefreshMutationState();
+    Assert(!hCanary.SaveCommand.CanExecute(null) &&
+           !hCanary.SaveAsCommand.CanExecute(null) &&
+           !hCanary.DeleteStoredCommand.CanExecute(null),
+        "Expected refreshed RPCS3 running state to disable H-Canary mutation commands.");
+    running = false;
+    hCanary.UpdateMutationAvailability(
+        isBusy: true,
+        isRpcs3Running: false);
+    Assert(!hCanary.SaveCommand.CanExecute(null) &&
+           !hCanary.SaveAsCommand.CanExecute(null) &&
+           !hCanary.DeleteStoredCommand.CanExecute(null),
+        "Expected busy state to disable H-Canary mutation commands.");
+
+    Console.WriteLine(
+        "Mutation command state and confirmation contract tests PASS.");
+}
+
+static void SetPrivateField<T>(
+    object target,
+    string fieldName,
+    T value)
+{
+    var field = target.GetType().GetField(
+        fieldName,
+        System.Reflection.BindingFlags.Instance |
+        System.Reflection.BindingFlags.NonPublic)
+        ?? throw new InvalidOperationException(
+            $"Expected private test field was not found: {fieldName}");
+    field.SetValue(target, value);
 }
 
 static Rpcs3InstallDescriptor CreateInputLimitInstall(string root)

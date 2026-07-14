@@ -98,10 +98,23 @@ public sealed partial class MainVm : VmBase
                 return;
             }
 
-            if (Rpcs3InstallService.IsRpcs3Running())
+            RefreshRpcs3PresentationState();
+            if (IsBusy)
+            {
+                return;
+            }
+
+            if (IsRpcs3RunningPresentation)
             {
                 UiDlg.Warn(UiText.T("Msg.BlockedRpcs3"), UiText.T("Dialog.Rpcs3Running"));
                 Log(UiText.T("Msg.BlockedApplyRunning"));
+                return;
+            }
+
+            if (!_confirm(
+                    UiText.T("Patch.RemoveCanaryConfirm"),
+                    UiText.T("Patch.RemoveCanary")))
+            {
                 return;
             }
 
@@ -126,7 +139,7 @@ public sealed partial class MainVm : VmBase
         }
         finally
         {
-            RaiseCommandStates();
+            RefreshRpcs3PresentationState();
         }
     }
 
@@ -138,7 +151,13 @@ public sealed partial class MainVm : VmBase
             return;
         }
 
-        if (Rpcs3InstallService.IsRpcs3Running())
+        RefreshRpcs3PresentationState();
+        if (IsBusy)
+        {
+            return;
+        }
+
+        if (IsRpcs3RunningPresentation)
         {
             UiDlg.Warn(
                 UiText.T("Msg.BlockedRpcs3"),
@@ -150,17 +169,28 @@ public sealed partial class MainVm : VmBase
         var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(window => window.IsActive)
             ?? Application.Current?.MainWindow;
 
-        var viewModel = new CanaryPatchImportVm(_install, _flow);
+        var viewModel = new CanaryPatchImportVm(
+            _install,
+            _flow,
+            _isRpcs3Running,
+            _confirm);
         var dialog = new CanaryPatchImportDialog(owner, viewModel);
 
-        if (dialog.ShowDialog() == true)
+        try
         {
-            Log(viewModel.ResultMessage);
-            UiDlg.Info(viewModel.ResultMessage, UiText.T("Patch.ImportCanaryTitle"));
-            PatchPreview.ShowExpertPatches = true;
-            RefreshCanaryState();
-            LoadPatchCatalog();
-            BuildCurrentPatchPreview();
+            if (dialog.ShowDialog() == true)
+            {
+                Log(viewModel.ResultMessage);
+                UiDlg.Info(viewModel.ResultMessage, UiText.T("Patch.ImportCanaryTitle"));
+                PatchPreview.ShowExpertPatches = true;
+                RefreshCanaryState();
+                LoadPatchCatalog();
+                BuildCurrentPatchPreview();
+            }
+        }
+        finally
+        {
+            RefreshRpcs3PresentationState();
         }
     }
 
@@ -173,6 +203,11 @@ public sealed partial class MainVm : VmBase
         }
 
         Rpcs3ExePath = fileName;
+        _install = null;
+        HCanary.SetContext(
+            install: null,
+            game: null);
+        RefreshRpcs3PresentationState();
         Rpcs3Status = UiText.T("Status.Rpcs3Ready");
         SaveSettings();
         Log(UiText.F("Msg.SelectRpcs3", fileName));
@@ -192,6 +227,7 @@ public sealed partial class MainVm : VmBase
 
             var result = await _flow.AnalyzeAsync(Rpcs3ExePath, _catalog);
             _install = result.Install;
+            RefreshRpcs3PresentationState();
             RefreshCanaryState();
             _hwInfo = result.Hw;
             _patchCatalog = result.PatchCat.Cat;
@@ -244,6 +280,7 @@ public sealed partial class MainVm : VmBase
         finally
         {
             IsBusy = false;
+            RefreshRpcs3PresentationState();
             RaiseCommandStates();
         }
     }

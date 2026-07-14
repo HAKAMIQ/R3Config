@@ -19,6 +19,9 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
 
         _viewModel.RequestAdvancedDialog += (_, _) => ShowAdvancedDialog();
+        _viewModel.LanguageChanged += (_, _) => RebuildPatchViews();
+        Activated += (_, _) =>
+            _viewModel.RefreshRpcs3PresentationState();
         StateChanged += (_, _) => UpdateCaptionButtons();
         UpdateCaptionButtons();
     }
@@ -32,6 +35,23 @@ public partial class MainWindow : Window
         };
 
         dialog.ShowDialog();
+    }
+
+    private void RebuildPatchViews()
+    {
+        PatchesTab.Content = CreatePatchView(Ctrl.PatchViewMode.Patches);
+        CanaryPatchTab.Content = CreatePatchView(Ctrl.PatchViewMode.Canary);
+        CheatPatchTab.Content = CreatePatchView(Ctrl.PatchViewMode.Cheat);
+    }
+
+    private static Ctrl.PatchView CreatePatchView(Ctrl.PatchViewMode mode)
+    {
+        return new Ctrl.PatchView
+        {
+            Mode = mode,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
     }
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

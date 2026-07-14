@@ -2,7 +2,7 @@ using System.Text;
 
 namespace R3Config.Svc;
 
-internal static class Rpcs3BoundedInput
+public static class Rpcs3BoundedInput
 {
     private const int CopyBufferBytes = 80 * 1024;
 
