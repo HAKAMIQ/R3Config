@@ -8,6 +8,6 @@ R3Config only uses this catalog after the user selects a compatible cheat. It ch
 
 Removing `Data/cheats.yml` only disables the built-in cheat library. The rest of R3Config will continue to work normally.
 
-Catalog-SHA256: 0051fa333a38e89a1f626555d3acfae96ae785d66f3ea27c4f6dd53a2a2cb5b0
+Catalog-SHA256: 09c6cf3b738e9c719c81d35d36cfdf05397c9be84fbedc0dfd9124adc136063c
 License-Status: upstream-license-not-provided
 Provenance-Status: aggregate-source-not-recorded
