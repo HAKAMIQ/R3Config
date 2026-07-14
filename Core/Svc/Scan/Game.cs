@@ -14,9 +14,13 @@ namespace R3Config.Svc;
 public sealed partial class GameScanner
 {
     private readonly int _directoryEntryLimit;
+    private readonly Func<string, IEnumerable<string>> _enumerateDirectories;
+    private readonly Func<string, IEnumerable<string>> _enumerateCustomConfigFiles;
 
     public GameScanner(
-        int directoryEntryLimit = Rpcs3InputLimits.DirectoryEntries)
+        int directoryEntryLimit = Rpcs3InputLimits.DirectoryEntries,
+        Func<string, IEnumerable<string>>? enumerateDirectories = null,
+        Func<string, IEnumerable<string>>? enumerateCustomConfigFiles = null)
     {
         if (directoryEntryLimit <= 0 ||
             directoryEntryLimit > Rpcs3InputLimits.DirectoryEntries)
@@ -26,27 +30,64 @@ public sealed partial class GameScanner
         }
 
         _directoryEntryLimit = directoryEntryLimit;
+        _enumerateDirectories = enumerateDirectories ??
+            Directory.EnumerateDirectories;
+        _enumerateCustomConfigFiles = enumerateCustomConfigFiles ??
+            (path => Directory.EnumerateFiles(
+                path,
+                "config_*.yml",
+                SearchOption.TopDirectoryOnly));
     }
 
     public IReadOnlyList<Rpcs3GameDescriptor> Scan(
         Rpcs3InstallDescriptor install)
     {
+        return ScanDetailed(install).Games;
+    }
+
+    public GameScanResult ScanDetailed(
+        Rpcs3InstallDescriptor install)
+    {
         var games = new Dictionary<string, Rpcs3GameDescriptor>(
             StringComparer.OrdinalIgnoreCase);
+        var diagnostics = new List<GameScanDiagnostic>();
 
-        ScanGamesYml(install, games);
-        ScanHddGameFolders(install, games);
+        ScanGamesYml(install, games, diagnostics);
+        ScanHddGameFolders(install, games, diagnostics);
+        var customConfigSerials = ScanCustomConfigSerials(
+            install,
+            diagnostics);
 
-        return
-        [
-            .. games.Values.OrderBy(
-                game => game.Serial,
-                StringComparer.OrdinalIgnoreCase)
-        ];
+        return new GameScanResult(
+            [
+                .. games.Values.OrderBy(
+                    game => game.Serial,
+                    StringComparer.OrdinalIgnoreCase)
+            ],
+            [
+                .. diagnostics
+                    .OrderBy(
+                        diagnostic => diagnostic.SourcePath,
+                        StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(diagnostic => diagnostic.Code)
+                    .ThenBy(
+                        diagnostic => diagnostic.TechnicalMessage,
+                        StringComparer.Ordinal)
+            ],
+            customConfigSerials);
     }
 
     public IReadOnlyList<string> ScanCustomConfigSerials(
         Rpcs3InstallDescriptor install)
+    {
+        return ScanCustomConfigSerials(
+            install,
+            diagnostics: null);
+    }
+
+    private IReadOnlyList<string> ScanCustomConfigSerials(
+        Rpcs3InstallDescriptor install,
+        ICollection<GameScanDiagnostic>? diagnostics)
     {
         if (!Directory.Exists(install.CustomConfigsPath))
         {
@@ -55,13 +96,23 @@ public sealed partial class GameScanner
 
         try
         {
+            var entries = _enumerateCustomConfigFiles(
+                    install.CustomConfigsPath)
+                .Take(_directoryEntryLimit + 1)
+                .ToArray();
+            if (entries.Length > _directoryEntryLimit)
+            {
+                diagnostics?.Add(new GameScanDiagnostic(
+                    GameScanDiagnosticCode.DirectoryEntryLimitReached,
+                    GameScanDiagnosticSeverity.Warning,
+                    GameScanSourceKind.CustomConfigDirectory,
+                    install.CustomConfigsPath,
+                    $"Custom-config enumeration stopped at {_directoryEntryLimit} entries."));
+            }
+
             return
             [
-                .. Directory
-                    .EnumerateFiles(
-                        install.CustomConfigsPath,
-                        "config_*.yml",
-                        SearchOption.TopDirectoryOnly)
+                .. entries
                     .Take(_directoryEntryLimit)
                     .Select(Path.GetFileNameWithoutExtension)
                     .Where(name => name is not null &&
@@ -81,25 +132,47 @@ public sealed partial class GameScanner
             ex is IOException or
                 UnauthorizedAccessException)
         {
+            diagnostics?.Add(new GameScanDiagnostic(
+                GameScanDiagnosticCode.CustomConfigUnreadable,
+                GameScanDiagnosticSeverity.Warning,
+                GameScanSourceKind.CustomConfigDirectory,
+                install.CustomConfigsPath,
+                ex.Message));
             return [];
         }
     }
 
     private static void ScanGamesYml(
         Rpcs3InstallDescriptor install,
-        Dictionary<string, Rpcs3GameDescriptor> games)
+        Dictionary<string, Rpcs3GameDescriptor> games,
+        ICollection<GameScanDiagnostic> diagnostics)
     {
-        foreach (var gamesYmlPath in EnumerateGamesYmlPaths(install))
+        var gamesYmlPaths = EnumerateGamesYmlPaths(install)
+            .ToArray();
+        if (gamesYmlPaths.Length == 0)
+        {
+            diagnostics.Add(new GameScanDiagnostic(
+                GameScanDiagnosticCode.GamesYmlMissing,
+                GameScanDiagnosticSeverity.Info,
+                GameScanSourceKind.GamesYaml,
+                Path.Combine(install.ConfigPath, "games.yml"),
+                "No supported games.yml source was found."));
+            return;
+        }
+
+        foreach (var gamesYmlPath in gamesYmlPaths)
         {
             ScanGamesYmlFile(
                 gamesYmlPath,
-                games);
+                games,
+                diagnostics);
         }
     }
 
     private static void ScanGamesYmlFile(
         string gamesYmlPath,
-        Dictionary<string, Rpcs3GameDescriptor> games)
+        Dictionary<string, Rpcs3GameDescriptor> games,
+        ICollection<GameScanDiagnostic> diagnostics)
     {
         YamlMappingNode root;
 
@@ -116,6 +189,12 @@ public sealed partial class GameScanner
                 yaml.Documents.Count > Rpcs3InputLimits.YamlDocuments ||
                 yaml.Documents[0].RootNode is not YamlMappingNode mapping)
             {
+                diagnostics.Add(new GameScanDiagnostic(
+                    GameScanDiagnosticCode.GamesYmlMalformed,
+                    GameScanDiagnosticSeverity.Warning,
+                    GameScanSourceKind.GamesYaml,
+                    gamesYmlPath,
+                    "games.yml must contain one YAML mapping document."));
                 return;
             }
 
@@ -127,6 +206,16 @@ public sealed partial class GameScanner
                 IOException or
                 UnauthorizedAccessException)
         {
+            diagnostics.Add(new GameScanDiagnostic(
+                IsFileOverLimit(
+                    gamesYmlPath,
+                    Rpcs3InputLimits.GamesYamlBytes)
+                    ? GameScanDiagnosticCode.GamesYmlTooLarge
+                    : GameScanDiagnosticCode.GamesYmlMalformed,
+                GameScanDiagnosticSeverity.Warning,
+                GameScanSourceKind.GamesYaml,
+                gamesYmlPath,
+                ex.Message));
             return;
         }
 
@@ -147,7 +236,13 @@ public sealed partial class GameScanner
             }
 
             var installPath = valueNode.Value ?? string.Empty;
-            var sfo = ParamSfoReader.TryReadForGamePath(installPath);
+            var sfoProbe = ParamSfoReader.ReadForGamePathDetailed(
+                installPath);
+            if (sfoProbe.Diagnostic is not null)
+            {
+                diagnostics.Add(sfoProbe.Diagnostic);
+            }
+            var sfo = sfoProbe.Info;
 
             games[serial] = new Rpcs3GameDescriptor(
                 Serial: sfo?.TitleId ?? serial,
@@ -205,7 +300,8 @@ public sealed partial class GameScanner
 
     private void ScanHddGameFolders(
         Rpcs3InstallDescriptor install,
-        Dictionary<string, Rpcs3GameDescriptor> games)
+        Dictionary<string, Rpcs3GameDescriptor> games,
+        ICollection<GameScanDiagnostic> diagnostics)
     {
         var configBasePath =
             Path.GetDirectoryName(install.ConfigPath);
@@ -252,19 +348,35 @@ public sealed partial class GameScanner
             {
                 directories =
                 [
-                    .. Directory.EnumerateDirectories(
-                        hddGamePath)
-                        .Take(_directoryEntryLimit)
+                    .. _enumerateDirectories(hddGamePath)
+                        .Take(_directoryEntryLimit + 1)
                 ];
             }
             catch (Exception ex) when (
                 ex is IOException or
                     UnauthorizedAccessException)
             {
+                diagnostics.Add(new GameScanDiagnostic(
+                    GameScanDiagnosticCode.GameDirectoryAccessDenied,
+                    GameScanDiagnosticSeverity.Warning,
+                    GameScanSourceKind.GameDirectory,
+                    hddGamePath,
+                    ex.Message));
                 continue;
             }
 
-            foreach (var directory in directories)
+            if (directories.Length > _directoryEntryLimit)
+            {
+                diagnostics.Add(new GameScanDiagnostic(
+                    GameScanDiagnosticCode.DirectoryEntryLimitReached,
+                    GameScanDiagnosticSeverity.Warning,
+                    GameScanSourceKind.GameDirectory,
+                    hddGamePath,
+                    $"Game-directory enumeration stopped at {_directoryEntryLimit} entries."));
+            }
+
+            foreach (var directory in directories.Take(
+                         _directoryEntryLimit))
             {
                 var folderName =
                     Path.GetFileName(directory);
@@ -275,9 +387,14 @@ public sealed partial class GameScanner
                     continue;
                 }
 
-                var sfo =
-                    ParamSfoReader.TryReadForGamePath(
+                var sfoProbe =
+                    ParamSfoReader.ReadForGamePathDetailed(
                         directory);
+                if (sfoProbe.Diagnostic is not null)
+                {
+                    diagnostics.Add(sfoProbe.Diagnostic);
+                }
+                var sfo = sfoProbe.Info;
 
                 var serial =
                     sfo?.TitleId ?? folderName;
@@ -377,6 +494,22 @@ public sealed partial class GameScanner
         return string.IsNullOrWhiteSpace(title)
             ? serial
             : title;
+    }
+
+    private static bool IsFileOverLimit(
+        string path,
+        long maxBytes)
+    {
+        try
+        {
+            return File.Exists(path) &&
+                   new FileInfo(path).Length > maxBytes;
+        }
+        catch (Exception ex) when (
+            ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     [GeneratedRegex(

@@ -16,6 +16,46 @@ public static class Rpcs3InputLimits
     public const int YamlDocuments = 1;
 }
 
+public enum GameScanDiagnosticCode
+{
+    GamesYmlMissing,
+    GamesYmlMalformed,
+    GamesYmlTooLarge,
+    GameDirectoryAccessDenied,
+    ParamSfoMissing,
+    ParamSfoMalformed,
+    ParamSfoTooLarge,
+    DirectoryEntryLimitReached,
+    CustomConfigUnreadable
+}
+
+public enum GameScanDiagnosticSeverity
+{
+    Info,
+    Warning,
+    Error
+}
+
+public enum GameScanSourceKind
+{
+    GamesYaml,
+    GameDirectory,
+    ParamSfo,
+    CustomConfigDirectory
+}
+
+public sealed record GameScanDiagnostic(
+    GameScanDiagnosticCode Code,
+    GameScanDiagnosticSeverity Severity,
+    GameScanSourceKind SourceKind,
+    string SourcePath,
+    string TechnicalMessage);
+
+public sealed record GameScanResult(
+    IReadOnlyList<Rpcs3GameDescriptor> Games,
+    IReadOnlyList<GameScanDiagnostic> Diagnostics,
+    IReadOnlyList<string> CustomConfigSerials);
+
 public sealed record Rpcs3InstallDescriptor(
     string RootPath,
     string ExePath,

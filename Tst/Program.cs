@@ -33,6 +33,7 @@ try
     RunMutationGuardReparseTests(tempRoot);
     RunMutationGuardTests(tempRoot);
     RunInputLimitTests(tempRoot);
+    RunGameScanDiagnosticTests(tempRoot);
     RunGameListSearchTests();
     RunAdvancedDialogXamlSmokeTest();
     var env = CreateEnv(tempRoot);
@@ -534,12 +535,157 @@ static void RunInputLimitTests(string tempRoot)
             hddGameRoot,
             $"BLUS{41000 + index:00000}"));
     }
-    Assert(new GameScanner(directoryEntryLimit: 3)
-            .Scan(directoryLimitInstall).Count == 3,
-        "Expected game directory enumeration to stop at its configured bounded entry limit.");
+    var directoryLimitResult = new GameScanner(
+            directoryEntryLimit: 3)
+        .ScanDetailed(directoryLimitInstall);
+    Assert(directoryLimitResult.Games.Count == 3 &&
+           directoryLimitResult.Diagnostics.Any(diagnostic =>
+               diagnostic.Code ==
+               GameScanDiagnosticCode.DirectoryEntryLimitReached),
+        "Expected game directory enumeration to stop at its limit and emit a diagnostic.");
 
     Console.WriteLine(
         "Bounded untrusted RPCS3 input reader tests PASS.");
+}
+
+static void RunGameScanDiagnosticTests(string tempRoot)
+{
+    var suiteRoot = Path.Combine(
+        tempRoot,
+        "game-scan-diagnostics");
+    var install = CreateInputLimitInstall(
+        Path.Combine(suiteRoot, "rpcs3"));
+    var hddGameRoot = Path.Combine(
+        install.RootPath,
+        "dev_hdd0",
+        "game");
+    var validFolder = Path.Combine(hddGameRoot, "BLUS42000");
+    var malformedFolder = Path.Combine(hddGameRoot, "BLUS42001");
+    Directory.CreateDirectory(validFolder);
+    Directory.CreateDirectory(malformedFolder);
+    WriteParamSfo(
+        Path.Combine(validFolder, "PARAM.SFO"),
+        new Dictionary<string, string>
+        {
+            ["TITLE"] = "Diagnostic Healthy Game",
+            ["TITLE_ID"] = "BLUS42000",
+            ["APP_VER"] = "01.00"
+        });
+    File.WriteAllBytes(
+        Path.Combine(malformedFolder, "PARAM.SFO"),
+        [0x00, 0x50, 0x53, 0x46]);
+
+    var sfoResult = new GameScanner().ScanDetailed(install);
+    Assert(sfoResult.Games.Any(game =>
+               game.Serial == "BLUS42000") &&
+           sfoResult.Diagnostics.Any(diagnostic =>
+               diagnostic.Code == GameScanDiagnosticCode.ParamSfoMalformed &&
+               diagnostic.SourcePath.EndsWith(
+                   "PARAM.SFO",
+                   StringComparison.OrdinalIgnoreCase)),
+        "Expected a healthy game to remain visible while a malformed independent SFO emits a diagnostic.");
+
+    var gamesYmlPath = Path.Combine(
+        install.ConfigPath,
+        "games.yml");
+    File.WriteAllText(gamesYmlPath, "BLUS42000: [broken");
+    var malformedGamesYmlResult = new GameScanner()
+        .ScanDetailed(install);
+    Assert(malformedGamesYmlResult.Games.Any(game =>
+               game.Serial == "BLUS42000") &&
+           malformedGamesYmlResult.Diagnostics.Any(diagnostic =>
+               diagnostic.Code ==
+               GameScanDiagnosticCode.GamesYmlMalformed),
+        "Expected malformed games.yml not to block dev_hdd0 scanning and to emit a diagnostic.");
+
+    File.WriteAllText(
+        gamesYmlPath,
+        $"BLUS42000: \"{EscapeYamlPath(validFolder)}\"{Environment.NewLine}");
+    var accessDeniedScanner = new GameScanner(
+        enumerateDirectories: _ =>
+            throw new UnauthorizedAccessException(
+                "Simulated bounded game-directory access denial."));
+    var accessDeniedResult = accessDeniedScanner.ScanDetailed(
+        install);
+    Assert(accessDeniedResult.Games.Any(game =>
+               game.Serial == "BLUS42000") &&
+           accessDeniedResult.Diagnostics.Any(diagnostic =>
+               diagnostic.Code ==
+               GameScanDiagnosticCode.GameDirectoryAccessDenied),
+        "Expected directory access denial not to stop valid games.yml discovery.");
+
+    using (var stream = File.Create(gamesYmlPath))
+    {
+        stream.SetLength(Rpcs3InputLimits.GamesYamlBytes + 1);
+    }
+    var tooLargeResult = new GameScanner().ScanDetailed(install);
+    Assert(tooLargeResult.Games.Any(game =>
+               game.Serial == "BLUS42000") &&
+           tooLargeResult.Diagnostics.Any(diagnostic =>
+               diagnostic.Code ==
+               GameScanDiagnosticCode.GamesYmlTooLarge),
+        "Expected oversized games.yml to emit a clear diagnostic without blocking folder discovery.");
+
+    Directory.CreateDirectory(install.CustomConfigsPath);
+    var customConfigDenied = new GameScanner(
+        enumerateCustomConfigFiles: _ =>
+            throw new UnauthorizedAccessException(
+                "Simulated custom-config access denial."))
+        .ScanDetailed(install);
+    Assert(customConfigDenied.Diagnostics.Any(diagnostic =>
+            diagnostic.Code ==
+            GameScanDiagnosticCode.CustomConfigUnreadable),
+        "Expected unreadable custom configs to emit a diagnostic without stopping game discovery.");
+
+    var firstOrder = tooLargeResult.Diagnostics
+        .Select(DiagnosticIdentity)
+        .ToArray();
+    var secondOrder = new GameScanner()
+        .ScanDetailed(install)
+        .Diagnostics
+        .Select(DiagnosticIdentity)
+        .ToArray();
+    Assert(firstOrder.SequenceEqual(secondOrder),
+        "Expected game scan diagnostics to have stable deterministic ordering.");
+
+    var diagnosticToFormat = tooLargeResult.Diagnostics.Single(
+        diagnostic => diagnostic.Code ==
+            GameScanDiagnosticCode.GamesYmlTooLarge);
+    var formatter = new LocalizedGameScanDiagnosticFormatter();
+    var originalLanguage = UiText.CurrentLang;
+    try
+    {
+        UiText.SetLang(UiText.EnglishLang);
+        var english = formatter.Format(diagnosticToFormat);
+        UiText.SetLang(UiText.ArabicLang);
+        var arabic = formatter.Format(diagnosticToFormat);
+        Assert(!string.IsNullOrWhiteSpace(english) &&
+               !string.IsNullOrWhiteSpace(arabic) &&
+               !string.Equals(
+                   english,
+                   arabic,
+                   StringComparison.Ordinal) &&
+               !english.Contains(suiteRoot, StringComparison.OrdinalIgnoreCase) &&
+               !arabic.Contains(suiteRoot, StringComparison.OrdinalIgnoreCase) &&
+               !english.Contains(" at ", StringComparison.OrdinalIgnoreCase),
+            "Expected localized diagnostics without full local paths or stack traces.");
+    }
+    finally
+    {
+        UiText.SetLang(originalLanguage);
+    }
+
+    Console.WriteLine(
+        "Per-source game discovery diagnostics tests PASS.");
+}
+
+static string DiagnosticIdentity(GameScanDiagnostic diagnostic)
+{
+    return string.Join(
+        "|",
+        diagnostic.SourcePath,
+        diagnostic.Code,
+        diagnostic.TechnicalMessage);
 }
 
 static Rpcs3InstallDescriptor CreateInputLimitInstall(string root)

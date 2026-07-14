@@ -12,27 +12,76 @@ public static class ParamSfoReader
 {
     public static ParamSfoInfo? TryReadForGamePath(string gamePath)
     {
-        var sfoPath = FindParamSfo(gamePath);
-        return sfoPath is null ? null : TryRead(sfoPath);
+        return ReadForGamePathDetailed(gamePath).Info;
     }
 
     public static ParamSfoInfo? TryRead(string sfoPath)
     {
+        return ReadDetailed(sfoPath).Info;
+    }
+
+    internal static ParamSfoProbeResult ReadForGamePathDetailed(
+        string gamePath)
+    {
+        var sfoPath = FindParamSfo(gamePath);
+        if (sfoPath is null)
+        {
+            return ParamSfoProbeResult.Failure(
+                GameScanDiagnosticCode.ParamSfoMissing,
+                gamePath ?? string.Empty,
+                "No PARAM.SFO was found at the bounded game-path locations.");
+        }
+
+        return ReadDetailed(sfoPath);
+    }
+
+    internal static ParamSfoProbeResult ReadDetailed(string sfoPath)
+    {
+        if (string.IsNullOrWhiteSpace(sfoPath) ||
+            !File.Exists(sfoPath))
+        {
+            return ParamSfoProbeResult.Failure(
+                GameScanDiagnosticCode.ParamSfoMissing,
+                sfoPath ?? string.Empty,
+                "PARAM.SFO was not found.");
+        }
+
         try
         {
+            if (new FileInfo(sfoPath).Length >
+                Rpcs3InputLimits.ParamSfoFileBytes)
+            {
+                return ParamSfoProbeResult.Failure(
+                    GameScanDiagnosticCode.ParamSfoTooLarge,
+                    sfoPath,
+                    $"PARAM.SFO exceeds the {Rpcs3InputLimits.ParamSfoFileBytes}-byte input limit.");
+            }
+
             var values = ReadValues(sfoPath);
             values.TryGetValue("TITLE", out var title);
             values.TryGetValue("TITLE_ID", out var titleId);
             values.TryGetValue("APP_VER", out var appVersion);
 
-            return new ParamSfoInfo(
-                string.IsNullOrWhiteSpace(title) ? null : title,
-                string.IsNullOrWhiteSpace(titleId) ? null : titleId,
-                string.IsNullOrWhiteSpace(appVersion) ? null : appVersion);
+            return ParamSfoProbeResult.Success(
+                new ParamSfoInfo(
+                    string.IsNullOrWhiteSpace(title) ? null : title,
+                    string.IsNullOrWhiteSpace(titleId) ? null : titleId,
+                    string.IsNullOrWhiteSpace(appVersion) ? null : appVersion));
         }
-        catch
+        catch (Exception ex) when (
+            ex is ArgumentException or
+                InvalidDataException or
+                IOException or
+                UnauthorizedAccessException or
+                OverflowException or
+                DecoderFallbackException)
         {
-            return null;
+            return ParamSfoProbeResult.Failure(
+                IsTooLarge(sfoPath)
+                    ? GameScanDiagnosticCode.ParamSfoTooLarge
+                    : GameScanDiagnosticCode.ParamSfoMalformed,
+                sfoPath,
+                ex.Message);
         }
     }
 
@@ -233,6 +282,46 @@ public static class ParamSfoReader
         return Encoding.UTF8
             .GetString(bytes, 0, end)
             .Trim();
+    }
+
+    private static bool IsTooLarge(string path)
+    {
+        try
+        {
+            return File.Exists(path) &&
+                   new FileInfo(path).Length >
+                   Rpcs3InputLimits.ParamSfoFileBytes;
+        }
+        catch (Exception ex) when (
+            ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+}
+
+internal sealed record ParamSfoProbeResult(
+    ParamSfoInfo? Info,
+    GameScanDiagnostic? Diagnostic)
+{
+    public static ParamSfoProbeResult Success(ParamSfoInfo info)
+    {
+        return new ParamSfoProbeResult(info, null);
+    }
+
+    public static ParamSfoProbeResult Failure(
+        GameScanDiagnosticCode code,
+        string sourcePath,
+        string technicalMessage)
+    {
+        return new ParamSfoProbeResult(
+            null,
+            new GameScanDiagnostic(
+                code,
+                GameScanDiagnosticSeverity.Warning,
+                GameScanSourceKind.ParamSfo,
+                sourcePath,
+                technicalMessage));
     }
 }
 
