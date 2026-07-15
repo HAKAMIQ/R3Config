@@ -17,11 +17,18 @@ public sealed partial class HCanVm : VmBase
         Hashes.Clear();
         foreach (var hash in result.Hashes) Hashes.Add(new HashVm(hash));
         OnChange(nameof(HasHash));
-        LogStat = !result.IsOk
-            ? UiText.Fmt("HCanary.Log.Error", result.Error)
-            : result.Hashes.Count == 0
-                ? UiText.GetText("HCanary.Log.None")
-                : UiText.Fmt("HCanary.Log.Found", result.Hashes.Count, result.SrcPath);
+        if (!result.IsOk)
+        {
+            SetLogStat("HCanary.Log.Error", result.Error);
+        }
+        else if (result.Hashes.Count == 0)
+        {
+            SetLogStat("HCanary.Log.None");
+        }
+        else
+        {
+            SetLogStat("HCanary.Log.Found", result.Hashes.Count, result.SrcPath);
+        }
     }
 
     private void LoadHash()
@@ -34,7 +41,14 @@ public sealed partial class HCanVm : VmBase
             foreach (var hash in _game.SpuList) Hashes.Add(new HashVm(new HCanHash(HashKind.Spu, hash, source, 0)));
         }
         OnChange(nameof(HasHash));
-        LogStat = Hashes.Count == 0 ? UiText.GetText("HCanary.Log.None") : UiText.Fmt("HCanary.Log.Found", Hashes.Count, _game?.HashSrc ?? LogPath);
+        if (Hashes.Count == 0)
+        {
+            SetLogStat("HCanary.Log.None");
+        }
+        else
+        {
+            SetLogStat("HCanary.Log.Found", Hashes.Count, _game?.HashSrc ?? LogPath);
+        }
     }
 
     private void LoadStor()
@@ -42,7 +56,7 @@ public sealed partial class HCanVm : VmBase
         Patches.Clear();
         if (_install is null || !File.Exists(PatPath)) return;
         try { foreach (var patch in _flow.LoadHCan(_install)) Patches.Add(patch); }
-        catch (Exception ex) { Msg = UiText.Fmt("HCanary.Error.ImportedInvalid", ex.Message); }
+        catch (Exception ex) { SetMsg("HCanary.Error.ImportedInvalid", ex.Message); }
     }
 
     private void OpenSave()
@@ -51,7 +65,7 @@ public sealed partial class HCanVm : VmBase
         GetDrft(SelPat.Draft);
         _curId = SelPat.Identity;
         _dirty = false;
-        Msg = UiText.GetText("HCanary.Message.Opened");
+        SetMsg("HCanary.Message.Opened");
     }
 
     private void GetDrft(HCanDrft draft)

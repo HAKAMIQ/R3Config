@@ -38,7 +38,7 @@ try
     Scan_Src(tempRoot);
     Mut_Cmd(tempRoot);
     ListFind();
-    Adv_Xaml();
+    UiGate.Run();
     var env = MakeEnv(tempRoot);
     var hw = Hw_All();
     var game = GameScan(env);
@@ -4287,44 +4287,6 @@ static GameVm MakeGame(string serial, string title, bool isDetectedInRpcs3)
     var descriptor = new Rpcs3GameDescriptor(serial, title, @"C:\Games\" + serial, "01.00", null, null);
     var summary = new RecSum(serial, 0, 0, 0, 0, 0, 0, []);
     return new GameVm(descriptor, null, summary, serial, title, isDetectedInRpcs3);
-}
-
-static void Adv_Xaml()
-{
-    Exception? threadException = null;
-
-    var thread = new Thread(() =>
-    {
-        try
-        {
-            var app = new App();
-            app.InitializeComponent();
-            UiText.SetLang(UiText.ArabLang);
-            UiLaySvc.Apply();
-
-            var dialog = new AdvDlg();
-            dialog.Close();
-
-            Console.WriteLine("Advanced dialog XAML smoke PASS.");
-        }
-        catch (Exception ex)
-        {
-            threadException = ex;
-        }
-        finally
-        {
-            Application.Current?.Shutdown();
-        }
-    });
-
-    thread.SetApartmentState(ApartmentState.STA);
-    thread.Start();
-    thread.Join();
-
-    if (threadException is not null)
-    {
-        throw new InvalidOperationException("AdvancedDialog XAML smoke failed.", threadException);
-    }
 }
 
 static SmokeEnv MakeEnv(string tempRoot)

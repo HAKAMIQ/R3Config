@@ -5,84 +5,6 @@
              FlowDirection="{DynamicResource App.FlowDirection}"
              Language="{DynamicResource App.XmlLanguage}">
 
-    <UserControl.Resources>
-        <Style x:Key="HCanBox"
-               TargetType="{x:Type ComboBox}"
-               BasedOn="{StaticResource {x:Type ComboBox}}">
-            <Setter Property="MinHeight"
-                    Value="32" />
-            <Setter Property="Padding"
-                    Value="8,3" />
-            <Setter Property="Background"
-                    Value="{StaticResource InputBackgroundBrush}" />
-            <Setter Property="Foreground"
-                    Value="{StaticResource TextPrimaryBrush}" />
-            <Setter Property="BorderBrush"
-                    Value="{StaticResource BorderSubtleBrush}" />
-            <Setter Property="BorderThickness"
-                    Value="1" />
-        </Style>
-
-        <Style x:Key="HCanList"
-               TargetType="{x:Type ListBox}"
-               BasedOn="{StaticResource {x:Type ListBox}}">
-            <Setter Property="Background"
-                    Value="{StaticResource InputBackgroundBrush}" />
-            <Setter Property="Foreground"
-                    Value="{StaticResource TextPrimaryBrush}" />
-            <Setter Property="BorderBrush"
-                    Value="{StaticResource BorderSubtleBrush}" />
-            <Setter Property="BorderThickness"
-                    Value="1" />
-            <Setter Property="Padding"
-                    Value="4" />
-        </Style>
-
-        <Style x:Key="HCanLbl"
-               TargetType="{x:Type TextBlock}"
-               BasedOn="{StaticResource RecommendationInlineLabelText}">
-            <Setter Property="Margin"
-                    Value="0,0,0,5" />
-            <Setter Property="VerticalAlignment"
-                    Value="Center" />
-            <Setter Property="FlowDirection"
-                    Value="{DynamicResource App.FlowDirection}" />
-            <Setter Property="TextAlignment"
-                    Value="Justify" />
-            <Setter Property="TextWrapping"
-                    Value="Wrap" />
-        </Style>
-
-        <Style x:Key="HCanErr"
-               TargetType="{x:Type TextBlock}">
-            <Setter Property="Foreground"
-                    Value="{StaticResource DangerBrush}" />
-            <Setter Property="FontSize"
-                    Value="11" />
-            <Setter Property="Margin"
-                    Value="0,4,0,0" />
-            <Setter Property="TextWrapping"
-                    Value="Wrap" />
-            <Setter Property="FlowDirection"
-                    Value="{DynamicResource App.FlowDirection}" />
-            <Setter Property="TextAlignment"
-                    Value="Justify" />
-        </Style>
-
-        <Style x:Key="HCanBtn"
-               TargetType="{x:Type Button}"
-               BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="MinWidth"
-                    Value="104" />
-            <Setter Property="MinHeight"
-                    Value="32" />
-            <Setter Property="Margin"
-                    Value="4" />
-            <Setter Property="Padding"
-                    Value="12,6" />
-        </Style>
-    </UserControl.Resources>
-
     <Grid Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -105,19 +27,19 @@
                             FlowDirection="{DynamicResource App.FlowDirection}">
                     <TextBlock Text="{lang:TextExt Key=HCanary.Title}"
                                Style="{StaticResource SectionTitleText}"
-                               TextAlignment="Justify"
+                               TextAlignment="Left"
                                TextWrapping="Wrap" />
 
                     <TextBlock Text="{lang:TextExt Key=HCanary.Description}"
                                Style="{StaticResource SectionCaptionText}"
                                Margin="0,4,0,0"
-                               TextAlignment="Justify"
+                               TextAlignment="Left"
                                TextWrapping="Wrap" />
 
                     <TextBlock Text="{Binding HCanary.Msg}"
                                Style="{StaticResource SectionCaptionText}"
                                Margin="0,4,0,0"
-                               TextAlignment="Justify"
+                               TextAlignment="Left"
                                TextWrapping="Wrap" />
                 </StackPanel>
 
@@ -161,15 +83,26 @@
                     VerticalAlignment="Stretch">
 
             <TabItem Header="{lang:TextExt Key=HCanary.Tab.Information}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="3*"
+                                       MinHeight="150" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="2*"
+                                       MinHeight="190"
+                                       MaxHeight="270" />
+                    </Grid.RowDefinitions>
+
+                    <ScrollViewer Grid.Row="0"
+                                  VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Margin="8">
+                    <StackPanel>
 
                         <Border Style="{StaticResource SectionCard}">
                             <StackPanel>
                                 <TextBlock Text="{lang:TextExt Key=HCanary.Section.GameHash}"
                                            Style="{StaticResource SectionTitleText}"
-                                           TextAlignment="Justify" />
+                                           TextAlignment="Left" />
 
                                 <Grid Margin="0,10,0,0">
                                     <Grid.ColumnDefinitions>
@@ -255,7 +188,7 @@
                                                Grid.ColumnSpan="5"
                                                Text="{Binding HCanary.LogStat}"
                                                Style="{StaticResource SectionCaptionText}"
-                                               TextAlignment="Justify"
+                                               TextAlignment="Left"
                                                TextWrapping="Wrap" />
                                 </Grid>
 
@@ -324,7 +257,7 @@
                             <StackPanel>
                                 <TextBlock Text="{lang:TextExt Key=HCanary.Section.PatchData}"
                                            Style="{StaticResource SectionTitleText}"
-                                           TextAlignment="Justify" />
+                                           TextAlignment="Left" />
 
                                 <Grid Margin="0,10,0,0">
                                     <Grid.ColumnDefinitions>
@@ -456,13 +389,16 @@
                             </StackPanel>
                         </Border>
 
-                        <Border Style="{StaticResource SectionCard}"
-                                Margin="0,12,0,0">
+                    </StackPanel>
+                </ScrollViewer>
+
+                    <Border Grid.Row="2"
+                            Style="{StaticResource SectionCard}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="10" />
-                                    <RowDefinition Height="150" />
+                                    <RowDefinition Height="*" />
                                     <RowDefinition Height="8" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
@@ -470,7 +406,7 @@
                                 <TextBlock Grid.Row="0"
                                            Text="{lang:TextExt Key=HCanary.Section.Games}"
                                            Style="{StaticResource SectionTitleText}"
-                                           TextAlignment="Justify" />
+                                           TextAlignment="Left" />
 
                                 <DataGrid Grid.Row="2"
                                           ItemsSource="{Binding HCanary.Games}"
@@ -481,24 +417,32 @@
                                           CanUserReorderColumns="False"
                                           FlowDirection="LeftToRight"
                                           HorizontalAlignment="Stretch"
-                                          VerticalAlignment="Stretch">
+                                          VerticalAlignment="Stretch"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                          ScrollViewer.VerticalScrollBarVisibility="Auto">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Field.GameName}"
                                                             Binding="{Binding GameName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                            Width="*" />
+                                                            Width="2*"
+                                                            MinWidth="180" />
 
                                         <DataGridTextColumn Header="Game ID"
                                                             Binding="{Binding GameId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                            Width="150" />
+                                                            Width="Auto"
+                                                            MinWidth="110"
+                                                            MaxWidth="150" />
 
                                         <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Field.GameVersion}"
                                                             Binding="{Binding GameVer, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                            Width="130" />
+                                                            Width="Auto"
+                                                            MinWidth="100"
+                                                            MaxWidth="130" />
 
                                         <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Validation.Label}"
                                                             Binding="{Binding Error}"
                                                             IsReadOnly="True"
-                                                            Width="220" />
+                                                            Width="2*"
+                                                            MinWidth="160" />
                                     </DataGrid.Columns>
                                 </DataGrid>
 
@@ -522,8 +466,7 @@
                                 </Grid>
                             </Grid>
                         </Border>
-                    </StackPanel>
-                </ScrollViewer>
+                </Grid>
             </TabItem>
 
             <TabItem Header="{lang:TextExt Key=HCanary.Tab.Instructions}">
@@ -542,7 +485,7 @@
                                Text="{lang:TextExt Key=HCanary.Instructions.Help}"
                                Style="{StaticResource SectionCaptionText}"
                                FlowDirection="{DynamicResource App.FlowDirection}"
-                               TextAlignment="Justify"
+                               TextAlignment="Left"
                                TextWrapping="Wrap" />
 
                     <DataGrid Grid.Row="2"
@@ -554,10 +497,14 @@
                               CanUserReorderColumns="False"
                               FlowDirection="LeftToRight"
                               HorizontalAlignment="Stretch"
-                              VerticalAlignment="Stretch">
+                              VerticalAlignment="Stretch"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Header="Operation"
-                                                    Width="160">
+                                                    Width="Auto"
+                                                    MinWidth="130"
+                                                    MaxWidth="170">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <ComboBox ItemsSource="{Binding DataContext.HCanary.Op, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
@@ -570,23 +517,24 @@
 
                             <DataGridTextColumn Header="Address / Anchor"
                                                 Binding="{Binding Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                Width="*" />
+                                                Width="2*"
+                                                MinWidth="160" />
 
                             <DataGridTextColumn Header="Value"
                                                 Binding="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                Width="*" />
+                                                Width="2*"
+                                                MinWidth="140" />
 
                             <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Validation.Label}"
                                                 Binding="{Binding Error}"
                                                 IsReadOnly="True"
-                                                Width="240" />
+                                                Width="2*"
+                                                MinWidth="180" />
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <UniformGrid Grid.Row="4"
-                                 Rows="1"
-                                 Columns="5"
-                                 HorizontalAlignment="Stretch">
+                    <WrapPanel Grid.Row="4"
+                               HorizontalAlignment="Left">
                         <Button Content="{lang:TextExt Key=HCanary.Add}"
                                 Command="{Binding HCanary.AddICmd}"
                                 Style="{StaticResource HCanBtn}" />
@@ -606,7 +554,7 @@
                         <Button Content="{lang:TextExt Key=HCanary.MoveDown}"
                                 Command="{Binding HCanary.InsDown}"
                                 Style="{StaticResource HCanBtn}" />
-                    </UniformGrid>
+                    </WrapPanel>
 
                     <TextBlock Grid.Row="6"
                                Text="{lang:TextExt Key=HCanary.Instructions.Example}"
@@ -620,7 +568,9 @@
             <TabItem Header="{lang:TextExt Key=HCanary.Tab.Anchors}">
                 <Grid Margin="8">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="250" />
+                        <ColumnDefinition Width="0.34*"
+                                          MinWidth="220"
+                                          MaxWidth="320" />
                         <ColumnDefinition Width="12" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
@@ -639,22 +589,19 @@
                              FlowDirection="LeftToRight"
                              Style="{StaticResource HCanList}" />
 
-                    <Grid Grid.Row="2"
-                          Grid.Column="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="8" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <Button Grid.Column="0"
+                    <WrapPanel Grid.Row="2"
+                               Grid.Column="0"
+                               HorizontalAlignment="Left">
+                        <Button
                                 Content="{lang:TextExt Key=HCanary.AddAnchor}"
-                                Command="{Binding HCanary.AddACmd}" />
+                                Command="{Binding HCanary.AddACmd}"
+                                Style="{StaticResource HCanBtn}" />
 
-                        <Button Grid.Column="2"
+                        <Button
                                 Content="{lang:TextExt Key=HCanary.Delete}"
-                                Command="{Binding HCanary.DelACmd}" />
-                    </Grid>
+                                Command="{Binding HCanary.DelACmd}"
+                                Style="{StaticResource HCanBtn}" />
+                    </WrapPanel>
 
                     <Grid Grid.Row="0"
                           Grid.RowSpan="3"
@@ -682,10 +629,14 @@
                                   CanUserReorderColumns="False"
                                   FlowDirection="LeftToRight"
                                   HorizontalAlignment="Stretch"
-                                  VerticalAlignment="Stretch">
+                                  VerticalAlignment="Stretch"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn Header="Operation"
-                                                        Width="150">
+                                                        Width="Auto"
+                                                        MinWidth="130"
+                                                        MaxWidth="170">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <ComboBox ItemsSource="{Binding DataContext.HCanary.Op, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
@@ -698,23 +649,24 @@
 
                                 <DataGridTextColumn Header="Address"
                                                     Binding="{Binding Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                    Width="*" />
+                                                    Width="2*"
+                                                    MinWidth="160" />
 
                                 <DataGridTextColumn Header="Value"
                                                     Binding="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                    Width="*" />
+                                                    Width="2*"
+                                                    MinWidth="140" />
 
                                 <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Validation.Label}"
                                                     Binding="{Binding Error}"
                                                     IsReadOnly="True"
-                                                    Width="210" />
+                                                    Width="2*"
+                                                    MinWidth="180" />
                             </DataGrid.Columns>
                         </DataGrid>
 
-                        <UniformGrid Grid.Row="4"
-                                     Rows="1"
-                                     Columns="3"
-                                     HorizontalAlignment="Stretch">
+                        <WrapPanel Grid.Row="4"
+                                   HorizontalAlignment="Left">
                             <Button Content="{lang:TextExt Key=HCanary.AddInstruction}"
                                     Command="{Binding HCanary.AncAdd}"
                                     Style="{StaticResource HCanBtn}" />
@@ -726,7 +678,7 @@
                             <Button Content="{lang:TextExt Key=HCanary.LoadAnchor}"
                                     Command="{Binding HCanary.AncLoad}"
                                     Style="{StaticResource HCanBtn}" />
-                        </UniformGrid>
+                        </WrapPanel>
                     </Grid>
                 </Grid>
             </TabItem>
@@ -762,7 +714,7 @@
                              TextWrapping="Wrap"
                              VerticalScrollBarVisibility="Auto"
                              FlowDirection="{DynamicResource App.FlowDirection}"
-                             TextAlignment="Justify"
+                             TextAlignment="Left"
                              VerticalContentAlignment="Top" />
                 </Grid>
             </TabItem>
@@ -777,11 +729,8 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <UniformGrid Grid.Row="0"
-                             Rows="1"
-                             Columns="3"
-                             MaxWidth="520"
-                             HorizontalAlignment="Center">
+                <WrapPanel Grid.Row="0"
+                           HorizontalAlignment="Center">
                     <Button Content="{lang:TextExt Key=HCanary.OpenFolder}"
                             Command="{Binding HCanary.PatDir}"
                             Style="{StaticResource HCanBtn}" />
@@ -795,13 +744,10 @@
                             Command="{Binding HCanary.R3Cmd}"
                             FlowDirection="LeftToRight"
                             Style="{StaticResource HCanBtn}" />
-                </UniformGrid>
+                </WrapPanel>
 
-                <UniformGrid Grid.Row="2"
-                             Rows="1"
-                             Columns="4"
-                             MaxWidth="650"
-                             HorizontalAlignment="Center">
+                <WrapPanel Grid.Row="2"
+                           HorizontalAlignment="Center">
                     <Button Content="{lang:TextExt Key=HCanary.CopyYaml}"
                             Command="{Binding HCanary.CopyCmd}"
                             Style="{StaticResource HCanBtn}" />
@@ -821,7 +767,7 @@
                             MinHeight="32"
                             Margin="4"
                             Padding="12,6" />
-                </UniformGrid>
+                </WrapPanel>
             </Grid>
         </Border>
     </Grid>

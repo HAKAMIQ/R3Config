@@ -27,7 +27,7 @@ public sealed partial class HCanVm : VmBase
         OnChange(nameof(GameVer));
         if (gameChanged && _dirty)
         {
-            Msg = UiText.GetText("HCanary.Message.DraftPreserved");
+            SetMsg("HCanary.Message.DraftPreserved");
         }
         else if (game is not null && !_dirty && _curId is null)
         {
@@ -76,6 +76,46 @@ public sealed partial class HCanVm : VmBase
         OnChange(nameof(GameVer));
         OnChange(nameof(DraftTxt));
         OnChange(nameof(Category));
-        LoadDrft(markDirty: false);
+        OnChange(nameof(Msg));
+        OnChange(nameof(LogStat));
+        RefreshValidationText();
+    }
+
+    private void SetMsg(string key, params object?[] args)
+    {
+        _msgKey = key;
+        _msgArgs = args;
+        _msgRaw = string.Empty;
+        OnChange(nameof(Msg));
+    }
+
+    private void SetRawMsg(string value)
+    {
+        _msgKey = null;
+        _msgArgs = [];
+        _msgRaw = value;
+        OnChange(nameof(Msg));
+    }
+
+    private void SetLogStat(string key, params object?[] args)
+    {
+        _logStatKey = key;
+        _logStatArgs = args;
+        OnChange(nameof(LogStat));
+    }
+
+    private static string ResolveLocalizedText(
+        string? key,
+        object?[] args,
+        string rawValue)
+    {
+        if (key is null)
+        {
+            return rawValue;
+        }
+
+        return args.Length == 0
+            ? UiText.GetText(key)
+            : UiText.Fmt(key, args);
     }
 }

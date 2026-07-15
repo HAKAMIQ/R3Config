@@ -40,7 +40,7 @@ public sealed partial class HCanVm : VmBase
         SelPat = null;
         _dirty = false;
         _noRfsh = false;
-        Msg = UiText.GetText("HCanary.Message.NewDraft");
+        SetMsg("HCanary.Message.NewDraft");
         LoadDrft(markDirty: false);
     }
 
@@ -142,8 +142,21 @@ public sealed partial class HCanVm : VmBase
         if (_noRfsh) return;
         if (markDirty) { _dirty = true; OnChange(nameof(IsDirty)); if (Status == DraftSt.Saved) Status = DraftSt.Draft; }
         var result = _auth.Validate(Build());
+        _lastValidation = result;
         Preview = string.IsNullOrEmpty(result.Yaml) ? TryPrev() : result.Yaml;
         IsValid = result.IsValid;
+        RefreshValidationText();
+        CopyCmd.RaiseCan();
+        OnChange(nameof(DraftTxt));
+    }
+
+    private void RefreshValidationText()
+    {
+        if (_lastValidation is not { } result)
+        {
+            return;
+        }
+
         HashErr = FieldErr(result, "ExecutableHash");
         NameErr = FieldErr(result, "PatchName");
         VerErr = FieldErr(result, "PatchVersion");
@@ -154,8 +167,6 @@ public sealed partial class HCanVm : VmBase
             ? UiText.GetText("HCanary.Validation.Valid")
             : UiText.Fmt("HCanary.Validation.Summary", result.Issues.Count) + Environment.NewLine +
               string.Join(Environment.NewLine, result.Issues.Select(issue => "• " + FmtIssue(issue)));
-        CopyCmd.RaiseCan();
-        OnChange(nameof(DraftTxt));
     }
 
     private string TryPrev()

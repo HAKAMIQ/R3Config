@@ -99,6 +99,11 @@ try {
         'Architecture-Index: docs/Arch/README.md'
         'Contract-Gate: Script/NameChk.ps1'
     )
+    $handoffText = ($manifest -join "`n") + "`n"
+    [IO.File]::WriteAllText(
+        $handoffPath,
+        $handoffText,
+        [Text.UTF8Encoding]::new($false))
 
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $stagingRoot 'Script\SrcChk.ps1') -Path $stagingRoot -StrictTree
     if ($LASTEXITCODE -ne 0) {

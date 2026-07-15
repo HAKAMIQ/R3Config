@@ -353,8 +353,8 @@
                                 <TextBlock Text="{lang:TextExt Key=Patch.OfficialEmpty}"
                                            Style="{StaticResource ArabicEmptyStateText}"
                                            FlowDirection="{Binding Preview.TextFlow}"
-                                           TextAlignment="Center"
-                                           HorizontalAlignment="Center"
+                                           TextAlignment="Left"
+                                           HorizontalAlignment="Left"
                                            VerticalAlignment="Center"
                                            MaxWidth="460" />
                             </Border>
@@ -434,8 +434,8 @@
                                 <TextBlock Text="{lang:TextExt Key=Patch.CanaryEmpty}"
                                            Style="{StaticResource ArabicEmptyStateText}"
                                            FlowDirection="{Binding Preview.TextFlow}"
-                                           TextAlignment="Center"
-                                           HorizontalAlignment="Center"
+                                           TextAlignment="Left"
+                                           HorizontalAlignment="Left"
                                            VerticalAlignment="Center"
                                            MaxWidth="460" />
                             </Border>
@@ -519,8 +519,8 @@
                         <TextBlock Text="{lang:TextExt Key=Patch.CheatEmpty}"
                                    Style="{StaticResource ArabicEmptyStateText}"
                                    FlowDirection="{Binding Preview.TextFlow}"
-                                   TextAlignment="Center"
-                                   HorizontalAlignment="Center"
+                                   TextAlignment="Left"
+                                   HorizontalAlignment="Left"
                                    VerticalAlignment="Center"
                                    MaxWidth="460" />
                     </Border>
