@@ -23,6 +23,51 @@ function Get-Sha256Hex {
     }
 }
 
+
+function Test-TextEncodingContracts {
+    param([Parameter(Mandatory = $true)][object[]]$Files)
+
+    $crlfExtensions = @('.cs', '.xaml', '.csproj', '.slnx', '.ps1', '.cmd')
+    $lfExtensions = @('.json', '.yml', '.yaml', '.md')
+    $utf8 = [Text.UTF8Encoding]::new($false, $true)
+
+    foreach ($file in $Files) {
+        $extension = $file.Extension.ToLowerInvariant()
+        if ($crlfExtensions -notcontains $extension -and $lfExtensions -notcontains $extension) {
+            continue
+        }
+
+        $bytes = [IO.File]::ReadAllBytes($file.FullName)
+        if ($bytes.Length -ge 3 -and
+            $bytes[0] -eq 0xEF -and
+            $bytes[1] -eq 0xBB -and
+            $bytes[2] -eq 0xBF) {
+            throw "UTF-8 BOM is not allowed: $($file.FullName)"
+        }
+
+        try {
+            $text = $utf8.GetString($bytes)
+        }
+        catch {
+            throw "Source text is not valid UTF-8: $($file.FullName)"
+        }
+
+        $withoutCrlf = $text.Replace("`r`n", '')
+        $hasLoneLf = $withoutCrlf.IndexOf("`n", [StringComparison]::Ordinal) -ge 0
+        $hasLoneCr = $withoutCrlf.IndexOf("`r", [StringComparison]::Ordinal) -ge 0
+        $hasCrlf = $text.IndexOf("`r`n", [StringComparison]::Ordinal) -ge 0
+
+        if ($crlfExtensions -contains $extension) {
+            if ($hasLoneLf -or $hasLoneCr) {
+                throw "Source text must use CRLF only: $($file.FullName)"
+            }
+        }
+        elseif ($hasCrlf -or $hasLoneCr) {
+            throw "Source text must use LF only: $($file.FullName)"
+        }
+    }
+}
+
 function Test-SourceTree {
     param(
         [Parameter(Mandatory = $true)][string]$RootPath,
@@ -103,6 +148,7 @@ function Test-SourceTree {
     }
 
     $sourceExtensions = @('.cs', '.xaml', '.csproj', '.slnx', '.ps1', '.cmd', '.md', '.json', '.yml', '.yaml')
+    Test-TextEncodingContracts -Files @($allFiles)
     foreach ($file in $allFiles | Where-Object { $sourceExtensions -contains $_.Extension.ToLowerInvariant() }) {
         $text = Get-Content -LiteralPath $file.FullName -Raw -ErrorAction SilentlyContinue
         if ($text -match '[A-Za-z]:\\Users\\' -or $text -match '[A-Za-z]:\\source\\') {
