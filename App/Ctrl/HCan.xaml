@@ -48,7 +48,7 @@
             <Setter Property="FlowDirection"
                     Value="{DynamicResource App.FlowDirection}" />
             <Setter Property="TextAlignment"
-                    Value="Justify" />
+                    Value="Left" />
             <Setter Property="TextWrapping"
                     Value="Wrap" />
         </Style>
@@ -66,7 +66,7 @@
             <Setter Property="FlowDirection"
                     Value="{DynamicResource App.FlowDirection}" />
             <Setter Property="TextAlignment"
-                    Value="Justify" />
+                    Value="Left" />
         </Style>
 
         <Style x:Key="HCanBtn"
@@ -105,19 +105,19 @@
                             FlowDirection="{DynamicResource App.FlowDirection}">
                     <TextBlock Text="{lang:TextExt Key=HCanary.Title}"
                                Style="{StaticResource SectionTitleText}"
-                               TextAlignment="Justify"
+                               TextAlignment="Left"
                                TextWrapping="Wrap" />
 
                     <TextBlock Text="{lang:TextExt Key=HCanary.Description}"
                                Style="{StaticResource SectionCaptionText}"
                                Margin="0,4,0,0"
-                               TextAlignment="Justify"
+                               TextAlignment="Left"
                                TextWrapping="Wrap" />
 
                     <TextBlock Text="{Binding HCanary.Msg}"
                                Style="{StaticResource SectionCaptionText}"
                                Margin="0,4,0,0"
-                               TextAlignment="Justify"
+                               TextAlignment="Left"
                                TextWrapping="Wrap" />
                 </StackPanel>
 
@@ -169,7 +169,7 @@
                             <StackPanel>
                                 <TextBlock Text="{lang:TextExt Key=HCanary.Section.GameHash}"
                                            Style="{StaticResource SectionTitleText}"
-                                           TextAlignment="Justify" />
+                                           TextAlignment="Left" />
 
                                 <Grid Margin="0,10,0,0">
                                     <Grid.ColumnDefinitions>
@@ -255,7 +255,7 @@
                                                Grid.ColumnSpan="5"
                                                Text="{Binding HCanary.LogStat}"
                                                Style="{StaticResource SectionCaptionText}"
-                                               TextAlignment="Justify"
+                                               TextAlignment="Left"
                                                TextWrapping="Wrap" />
                                 </Grid>
 
@@ -324,7 +324,7 @@
                             <StackPanel>
                                 <TextBlock Text="{lang:TextExt Key=HCanary.Section.PatchData}"
                                            Style="{StaticResource SectionTitleText}"
-                                           TextAlignment="Justify" />
+                                           TextAlignment="Left" />
 
                                 <Grid Margin="0,10,0,0">
                                     <Grid.ColumnDefinitions>
@@ -470,7 +470,7 @@
                                 <TextBlock Grid.Row="0"
                                            Text="{lang:TextExt Key=HCanary.Section.Games}"
                                            Style="{StaticResource SectionTitleText}"
-                                           TextAlignment="Justify" />
+                                           TextAlignment="Left" />
 
                                 <DataGrid Grid.Row="2"
                                           ItemsSource="{Binding HCanary.Games}"
@@ -542,7 +542,7 @@
                                Text="{lang:TextExt Key=HCanary.Instructions.Help}"
                                Style="{StaticResource SectionCaptionText}"
                                FlowDirection="{DynamicResource App.FlowDirection}"
-                               TextAlignment="Justify"
+                               TextAlignment="Left"
                                TextWrapping="Wrap" />
 
                     <DataGrid Grid.Row="2"
@@ -762,7 +762,7 @@
                              TextWrapping="Wrap"
                              VerticalScrollBarVisibility="Auto"
                              FlowDirection="{DynamicResource App.FlowDirection}"
-                             TextAlignment="Justify"
+                             TextAlignment="Left"
                              VerticalContentAlignment="Top" />
                 </Grid>
             </TabItem>

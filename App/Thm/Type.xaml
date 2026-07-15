@@ -2,9 +2,9 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 	<Style x:Key="ArabicBlockText" TargetType="TextBlock">
 		<Setter Property="FontFamily" Value="{DynamicResource AppFont}" />
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="LeftToRight" />
 		<Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
-		<Setter Property="TextAlignment" Value="{DynamicResource App.DefaultTextAlignment}" />
+		<Setter Property="TextAlignment" Value="Left" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="TextWrapping" Value="Wrap" />
 		<Setter Property="SnapsToDevicePixels" Value="True" />

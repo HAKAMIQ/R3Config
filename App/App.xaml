@@ -11,11 +11,16 @@
             </ResourceDictionary.MergedDictionaries>
 
             <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-            <FlowDirection x:Key="App.FlowDirection">RightToLeft</FlowDirection>
-            <FlowDirection x:Key="App.CaptionButtonsFlowDirection">RightToLeft</FlowDirection>
-            <TextAlignment x:Key="App.DefaultTextAlignment">Right</TextAlignment>
+            <FlowDirection x:Key="App.FlowDirection">LeftToRight</FlowDirection>
+            <FlowDirection x:Key="App.CaptionButtonsFlowDirection">LeftToRight</FlowDirection>
+            <FlowDirection x:Key="App.ShellFlowDirection">LeftToRight</FlowDirection>
+            <FlowDirection x:Key="App.TextFlowDirection">LeftToRight</FlowDirection>
+            <FlowDirection x:Key="App.TechnicalFlowDirection">LeftToRight</FlowDirection>
+            <TextAlignment x:Key="App.DefaultTextAlignment">Left</TextAlignment>
+            <TextAlignment x:Key="App.TextAlignment">Left</TextAlignment>
+            <TextAlignment x:Key="App.TechnicalTextAlignment">Left</TextAlignment>
             <TextAlignment x:Key="Options.SettingsTextAlignment">Left</TextAlignment>
-            <HorizontalAlignment x:Key="App.HorizontalAlignment">Right</HorizontalAlignment>
+            <HorizontalAlignment x:Key="App.HorizontalAlignment">Left</HorizontalAlignment>
             <markup:XmlLanguage x:Key="App.XmlLanguage">ar-SA</markup:XmlLanguage>
 
             <FlowDirection x:Key="TechnicalText.FlowDirection">LeftToRight</FlowDirection>

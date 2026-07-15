@@ -71,11 +71,6 @@
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="Margin" Value="0,4,10,0" />
 		<Setter Property="VerticalAlignment" Value="Top" />
-		<Style.Triggers>
-			<DataTrigger Binding="{Binding DataContext.RtlLang, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="True">
-				<Setter Property="Margin" Value="10,4,0,0" />
-			</DataTrigger>
-		</Style.Triggers>
 	</Style>
 
 	<Style x:Key="StatusMetricPill" TargetType="Border">
@@ -238,7 +233,7 @@
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="Cursor" Value="Hand" />
 		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
-		<Setter Property="HorizontalContentAlignment" Value="Center" />
+		<Setter Property="HorizontalContentAlignment" Value="Left" />
 		<Setter Property="VerticalContentAlignment" Value="Center" />
 		<Setter Property="FocusVisualStyle" Value="{x:Null}" />
 		<Setter Property="Template">
@@ -277,11 +272,6 @@
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
-		<Style.Triggers>
-			<Trigger Property="FlowDirection" Value="RightToLeft">
-				<Setter Property="Margin" Value="8,0,0,0" />
-			</Trigger>
-		</Style.Triggers>
 	</Style>
 
 	<Style x:Key="MainBtn" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -765,20 +755,13 @@
 
 						<ContentPresenter x:Name="ChkBody"
                                           Grid.Column="2"
-                                          Margin="0"
+                                          Margin="8,0,0,0"
                                           VerticalAlignment="Center"
                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           RecognizesAccessKey="True" />
 					</Grid>
 
 					<ControlTemplate.Triggers>
-						<Trigger Property="FlowDirection" Value="RightToLeft">
-							<Setter TargetName="ChkBody" Property="Margin" Value="0,0,8,0" />
-						</Trigger>
-						<Trigger Property="FlowDirection" Value="LeftToRight">
-							<Setter TargetName="ChkBody" Property="Margin" Value="8,0,0,0" />
-						</Trigger>
-
 						<Trigger Property="IsChecked" Value="True">
 							<Setter TargetName="Box" Property="Background" Value="{StaticResource AccentBrush}" />
 							<Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
@@ -1045,7 +1028,7 @@
                             Padding="{TemplateBinding Padding}"
                             SnapsToDevicePixels="True">
 						<ContentPresenter ContentSource="Header"
-                                          HorizontalAlignment="Center"
+                                          HorizontalAlignment="Left"
                                           VerticalAlignment="Center"
                                           RecognizesAccessKey="True" />
 					</Border>
@@ -1177,7 +1160,7 @@
 
 	<Style x:Key="DataGridCellTextCenter" TargetType="TextBlock">
 		<Setter Property="VerticalAlignment" Value="Center" />
-		<Setter Property="TextAlignment" Value="Center" />
+		<Setter Property="TextAlignment" Value="Left" />
 		<Setter Property="FlowDirection" Value="LeftToRight" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
 		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
@@ -1237,7 +1220,7 @@
 
 	<Style x:Key="SemanticChipText" TargetType="TextBlock">
 		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
-		<Setter Property="TextAlignment" Value="Center" />
+		<Setter Property="TextAlignment" Value="Left" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="VerticalAlignment" Value="Center" />
 		<Setter Property="FontSize" Value="12" />

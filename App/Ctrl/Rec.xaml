@@ -178,8 +178,8 @@
                             <TextBlock Text="{Binding Plan.EmptyTxt}"
                                        Style="{StaticResource ArabicEmptyStateText}"
                                        FlowDirection="{DynamicResource App.FlowDirection}"
-                                       TextAlignment="Center"
-                                       HorizontalAlignment="Center"
+                                       TextAlignment="Left"
+                                       HorizontalAlignment="Left"
                                        MaxWidth="460"
                                        VerticalAlignment="Center"
                                        Margin="0" />

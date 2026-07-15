@@ -31,18 +31,14 @@ public sealed class UiLaySt
 
     public FlowDirection ShFlow => TextFlow;
 
-    public FlowDirection TextFlow =>
-        IsRtl
-            ? FlowDirection.RightToLeft
-            : FlowDirection.LeftToRight;
+    public FlowDirection TextFlow { get; } =
+        FlowDirection.LeftToRight;
 
     public FlowDirection TechFlow { get; } =
         FlowDirection.LeftToRight;
 
-    public TextAlignment TxtAlign =>
-        IsRtl
-            ? TextAlignment.Right
-            : TextAlignment.Left;
+    public TextAlignment TxtAlign { get; } =
+        TextAlignment.Left;
 
     public TextAlignment SetAlign { get; } =
         TextAlignment.Left;
@@ -50,10 +46,8 @@ public sealed class UiLaySt
     public TextAlignment TechAlgn { get; } =
         TextAlignment.Left;
 
-    public HorizontalAlignment HorAlign =>
-        IsRtl
-            ? HorizontalAlignment.Right
-            : HorizontalAlignment.Left;
+    public HorizontalAlignment HorAlign { get; } =
+        HorizontalAlignment.Left;
 
     public GridLength GameWide { get; }
 
@@ -118,9 +112,7 @@ public static class UiLaySvc
             layout.TextFlow;
 
         app.Resources["App.CaptionButtonsFlowDirection"] =
-            layout.IsRtl
-                ? FlowDirection.RightToLeft
-                : FlowDirection.LeftToRight;
+            FlowDirection.LeftToRight;
 
         app.Resources["App.DefaultTextAlignment"] =
             layout.TxtAlign;
