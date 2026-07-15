@@ -12,7 +12,8 @@ unambiguous local name.
 - Dependency composition: `App/Composition/AppComposition.cs` in
   `R3Config.Composition`.
 - Core models: `Core/Mdl/` in `R3Config.Mdl`.
-- Core services: `Core/Svc/` in `R3Config.Svc`.
+- Core services: `Core/Svc/` in `R3Config.Svc`, with the clear domain folders
+  `Core/Svc/Patch/`, `Core/Svc/Mutation/`, and `Core/Svc/Input/`.
 - WPF state and presentation: `App/Vm/`, `App/View/`, and `App/Ctrl/`.
 - Executable regression runner: `Tst/`.
 - Source and release tooling: `Script/`.

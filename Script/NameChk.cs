@@ -250,35 +250,27 @@ foreach (var (path, text) in docTexts)
     var isNameRegistry = relative.Equals("NAMES.md", StringComparison.OrdinalIgnoreCase);
     foreach (Match match in Regex.Matches(text, "`(?<value>[^`\\r\\n]+)`"))
     {
-        var value = match.Groups["value"].Value.Trim().Replace('\\', '/');
-        if (value.StartsWith("./", StringComparison.Ordinal))
-        {
-            value = value[2..];
-        }
+        CheckDocValue(match.Groups["value"].Value, relative, checkType: true);
+    }
 
-        if (Regex.IsMatch(value, "^(?:App|Core|Tst|Script|docs)/", RegexOptions.CultureInvariant))
+    foreach (Match block in Regex.Matches(
+                 text,
+                 "```[^\\r\\n]*\\r?\\n(?<body>.*?)```",
+                 RegexOptions.Singleline | RegexOptions.CultureInvariant))
+    {
+        foreach (var line in block.Groups["body"].Value.Split(['\r', '\n']))
         {
-            var wildcard = value.IndexOfAny(['*', '<', '>', '{', '}']);
-            if (wildcard >= 0)
+            var pathMatch = Regex.Match(
+                line,
+                "^\\s*(?<value>(?:App|Core|Tst|Script|docs)[/\\\\][^\\s]+)",
+                RegexOptions.CultureInvariant);
+            if (pathMatch.Success)
             {
-                value = value[..wildcard].TrimEnd('/');
+                CheckDocValue(
+                    pathMatch.Groups["value"].Value.TrimEnd(',', ';', ':', '،', '؛'),
+                    relative,
+                    checkType: false);
             }
-
-            value = value.TrimEnd('/');
-            if (value.Length > 0 && !value.Contains(' ') &&
-                !File.Exists(Path.Combine(root, value.Replace('/', Path.DirectorySeparatorChar))) &&
-                !Directory.Exists(Path.Combine(root, value.Replace('/', Path.DirectorySeparatorChar))))
-            {
-                errors.Add($"Documented path '{value}' does not exist ({relative}).");
-            }
-        }
-
-        if (Regex.IsMatch(
-                value,
-                "^[A-Z][A-Za-z0-9]*(?:UseCase|Service|Guard|Descriptor|Decision|Verdict|Result|Manifest|Snapshot|Formatter)$") &&
-            !publicTypeNames.Contains(value))
-        {
-            errors.Add($"Documented type '{value}' does not exist ({relative}).");
         }
     }
 
@@ -295,6 +287,17 @@ foreach (var (path, text) in docTexts)
     if (!isNameRegistry && HasRetiredArchitectureName(text))
     {
         errors.Add($"Documentation still references a retired architecture path or namespace ({relative}).");
+    }
+}
+
+foreach (var requiredPath in new[]
+         {
+             "Core/Svc/Patch", "Core/Svc/Mutation", "Core/Svc/Input"
+         })
+{
+    if (!Directory.Exists(Path.Combine(root, requiredPath.Replace('/', Path.DirectorySeparatorChar))))
+    {
+        errors.Add($"Required architecture path '{requiredPath}' is missing.");
     }
 }
 
@@ -363,5 +366,40 @@ bool IsBuild(string path)
 bool HasRetiredArchitectureName(string text)
 {
     return Regex.IsMatch(text, @"App/(?:Case|Comp)(?:/|\b)") ||
-           Regex.IsMatch(text, @"R3Config\.(?:Case|Comp)\b");
+           Regex.IsMatch(text, @"R3Config\.(?:Case|Comp)\b") ||
+           Regex.IsMatch(text, @"Core[/\\]Svc[/\\](?:Pat|Mut|Inp)(?:[/\\]|\b)");
+}
+
+void CheckDocValue(string rawValue, string relative, bool checkType)
+{
+    var value = rawValue.Trim().Replace('\\', '/');
+    if (value.StartsWith("./", StringComparison.Ordinal))
+    {
+        value = value[2..];
+    }
+
+    if (Regex.IsMatch(value, "^(?:App|Core|Tst|Script|docs)/", RegexOptions.CultureInvariant))
+    {
+        var wildcard = value.IndexOfAny(['*', '<', '>', '{', '}']);
+        if (wildcard >= 0)
+        {
+            value = value[..wildcard].TrimEnd('/');
+        }
+
+        value = value.TrimEnd('/');
+        if (value.Length > 0 && !value.Contains(' ') &&
+            !File.Exists(Path.Combine(root, value.Replace('/', Path.DirectorySeparatorChar))) &&
+            !Directory.Exists(Path.Combine(root, value.Replace('/', Path.DirectorySeparatorChar))))
+        {
+            errors.Add($"Documented path '{value}' does not exist ({relative}).");
+        }
+    }
+
+    if (checkType && Regex.IsMatch(
+            value,
+            "^[A-Z][A-Za-z0-9]*(?:UseCase|Service|Guard|Descriptor|Decision|Verdict|Result|Manifest|Snapshot|Formatter)$") &&
+        !publicTypeNames.Contains(value))
+    {
+        errors.Add($"Documented type '{value}' does not exist ({relative}).");
+    }
 }

@@ -1772,7 +1772,7 @@ static void App_Pat()
         repoRoot,
         "Core",
         "Svc",
-        "Pat",
+        "Patch",
         "PatchFileTransactionService.cs");
     var appFlowPath = Path.Combine(appRoot, "Flow.cs");
     var patchMutationUseCasePath = Path.Combine(
@@ -1787,7 +1787,7 @@ static void App_Pat()
         repoRoot,
         "Core",
         "Svc",
-        "Mut",
+        "Mutation",
         "Rpcs3MutationGuard.cs");
     var planVmPath = Path.Combine(appRoot, "Vm", "Plan.cs");
     var mainVmPath = Path.Combine(appRoot, "Vm", "Main.cs");

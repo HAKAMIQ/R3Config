@@ -262,7 +262,7 @@ RPCS3 ينشئ اسم PPU/SPU/PRX/OVL من hash الفعلي وقت التشغي
 
 ## 11. Mutation Guard
 
-`Core/Svc/Mut/Rpcs3MutationGuard.cs` هو الحاجز المركزي. يفحص:
+`Core/Svc/Mutation/Rpcs3MutationGuard.cs` هو الحاجز المركزي. يفحص:
 
 - descriptor: exe اسمه `rpcs3.exe` وبقية المسارات داخل root الصحيح؛
 - كل target مصرح به وتحت `config/` أو `patches/`؛
