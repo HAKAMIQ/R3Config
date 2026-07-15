@@ -111,6 +111,27 @@ function Test-SourceTree {
     }
 }
 
+function Test-ZipEntryNames {
+    param([Parameter(Mandatory = $true)][string]$LiteralPath)
+
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [IO.Compression.ZipFile]::OpenRead($LiteralPath)
+    try {
+        $invalidEntry = $archive.Entries |
+            Where-Object { $_.FullName.IndexOf('\', [StringComparison]::Ordinal) -ge 0 } |
+            Select-Object -First 1
+        if ($invalidEntry) {
+            throw "Source ZIP entry uses a backslash separator: $($invalidEntry.FullName)"
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
+
+    Write-Host 'Source ZIP entry separator verification passed.'
+}
+
 function Test-ProjectContracts {
     param([Parameter(Mandatory = $true)][string]$RootPath)
 
@@ -127,6 +148,7 @@ function Test-ProjectContracts {
 
 $resolvedPath = (Resolve-Path -LiteralPath $Path).Path
 if ((Test-Path -LiteralPath $resolvedPath -PathType Leaf) -and [IO.Path]::GetExtension($resolvedPath) -ieq '.zip') {
+    Test-ZipEntryNames -LiteralPath $resolvedPath
     $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ('R3ConfigSourceVerify_' + [Guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
     try {

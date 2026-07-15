@@ -110,12 +110,28 @@ try {
         Remove-Item -LiteralPath $archivePath -Force
     }
 
+    Add-Type -AssemblyName System.IO.Compression
     Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [IO.Compression.ZipFile]::CreateFromDirectory(
-        $stagingRoot,
+    $archive = [IO.Compression.ZipFile]::Open(
         $archivePath,
-        [IO.Compression.CompressionLevel]::Optimal,
-        $false)
+        [IO.Compression.ZipArchiveMode]::Create)
+    try {
+        $stagingPrefixLength = $stagingRoot.TrimEnd([IO.Path]::DirectorySeparatorChar).Length + 1
+        $stagedFiles = Get-ChildItem -LiteralPath $stagingRoot -Recurse -File -Force |
+            Sort-Object FullName
+        foreach ($file in $stagedFiles) {
+            $relativePath = $file.FullName.Substring($stagingPrefixLength)
+            $entryName = $relativePath.Replace('\', '/')
+            [IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                $archive,
+                $file.FullName,
+                $entryName,
+                [IO.Compression.CompressionLevel]::Optimal) | Out-Null
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
 
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'Script\SrcChk.ps1') -Path $archivePath
     if ($LASTEXITCODE -ne 0) {
