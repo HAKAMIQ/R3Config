@@ -11,13 +11,13 @@ namespace R3Config.Svc;
 public sealed record LibStRes(
     bool IsOk,
     string TgtPath,
-    PrepFile? PrepFile,
+    PatchPreparedFile? PreparedFile,
     int PatNum,
     string Message,
     string? Error,
-    IReadOnlyList<PrepFile> Extra);
+    IReadOnlyList<PatchPreparedFile> Extra);
 
-public sealed class ChtBndl
+public sealed class BundledCheatPatchService
 {
     public const string BndlName = "cheats.yml";
     // RPCS3 does not load either managed library name at game boot. The
@@ -28,7 +28,7 @@ public sealed class ChtBndl
     public const string ManMark =
         "# R3Config managed RPCS3 cheat patches - do not edit while R3Config is running";
 
-    private readonly SelComp _comp = new();
+    private readonly PatchSelectionCompiler _comp = new();
     private readonly ReadSvc _reader = new();
 
     public static string GetBndl(string baseDirectory)
@@ -154,7 +154,7 @@ public sealed class ChtBndl
             [
                 .. bundledSelections
             ];
-            var extra = new List<PrepFile>();
+            var extra = new List<PatchPreparedFile>();
 
             var existingText = string.Empty;
             if (File.Exists(targetPath))
@@ -249,7 +249,7 @@ public sealed class ChtBndl
                         legacyPath,
                         StringComparison.OrdinalIgnoreCase))
                 {
-                    extra.Add(new PrepFile(
+                    extra.Add(new PatchPreparedFile(
                         libraryPath,
                         libraryText,
                         PrepKind.PatCat,
@@ -323,7 +323,7 @@ public sealed class ChtBndl
 
             return Success(
                 targetPath,
-                new PrepFile(
+                new PatchPreparedFile(
                     targetPath,
                     finalText,
                     PrepKind.PatCat,
@@ -349,7 +349,7 @@ public sealed class ChtBndl
     }
 
     private static PatMatch Exact(
-        PatEntry entry)
+        Rpcs3PatchEntry entry)
     {
         if (entry.GameTgt.Count == 0)
         {
@@ -451,7 +451,7 @@ public sealed class ChtBndl
             return false;
         }
 
-        if (!ImpSvc.InDir(
+        if (!CanaryPatchImportService.InDir(
                 targetPath,
                 patchesDirectory))
         {
@@ -489,10 +489,10 @@ public sealed class ChtBndl
 
     private static LibStRes Success(
         string targetPath,
-        PrepFile? preparedFile,
+        PatchPreparedFile? preparedFile,
         int patchCount,
         string message,
-        IReadOnlyList<PrepFile>? extra = null)
+        IReadOnlyList<PatchPreparedFile>? extra = null)
     {
         return new LibStRes(
             true,

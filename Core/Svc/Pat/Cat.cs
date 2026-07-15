@@ -171,7 +171,7 @@ public sealed class ReadSvc
                     $"Patch YAML version '{version}' does not match RPCS3 patch engine version '{ValidVer}'.");
             }
 
-            var entries = new List<PatEntry>();
+            var entries = new List<Rpcs3PatchEntry>();
             var diagnostics = new DiagList<string>(
                 R3Limits.Diag);
 
@@ -245,7 +245,7 @@ public sealed class ReadSvc
         }
     }
 
-    private static IEnumerable<PatEntry> Parse(
+    private static IEnumerable<Rpcs3PatchEntry> Parse(
         YamlMappingNode patchMap,
         HashKind hashKind,
         string hash,
@@ -308,7 +308,7 @@ public sealed class ReadSvc
                     source == PatSrc.Can);
             var patchType = PatPol.InferPat(title, group, risk);
 
-            yield return new PatEntry(
+            yield return new Rpcs3PatchEntry(
                 Title: title,
                 HashKind: hashKind,
                 Hash: hash,

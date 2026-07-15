@@ -13,11 +13,11 @@ namespace R3Config.Svc;
 /// enabled state.  Callers must consume the attached decision rather than
 /// inventing source-specific compatibility rules.
 /// </summary>
-public sealed class PatCmp
+public sealed class PatchCompatibilityService
 {
     public IReadOnlyList<Mdl.PatMatch> Evaluate(
         PatCat catalog,
-        IEnumerable<R3Game> games)
+        IEnumerable<Rpcs3GameDescriptor> games)
     {
         var gameList = games.ToArray();
         return catalog.Entries
@@ -26,8 +26,8 @@ public sealed class PatCmp
     }
 
     public Mdl.PatMatch Evaluate(
-        PatEntry patch,
-        IEnumerable<R3Game> games)
+        Rpcs3PatchEntry patch,
+        IEnumerable<Rpcs3GameDescriptor> games)
     {
         var gameList = games.ToArray();
         var runtimeKeyValid = Mdl.RunKey.TryParse(
@@ -106,7 +106,7 @@ public sealed class PatCmp
             Cmp: compatibility);
     }
 
-    public CmpDec Decide(
+    public PatchCompatibilityDecision Decide(
         Mdl.PatMatch match)
     {
         // Re-evaluate from immutable match facts instead of trusting a copied
@@ -128,9 +128,9 @@ public sealed class PatCmp
     }
 
     private static Cand Check(
-        PatEntry patch,
+        Rpcs3PatchEntry patch,
         R3PatTgt target,
-        R3Game game,
+        Rpcs3GameDescriptor game,
         int targetIndex,
         bool runtimeKeyValid)
     {
@@ -198,8 +198,8 @@ public sealed class PatCmp
     }
 
     private static MatStat GetHash(
-        PatEntry patch,
-        R3Game game,
+        Rpcs3PatchEntry patch,
+        Rpcs3GameDescriptor game,
         bool runtimeKeyValid)
     {
         if (!runtimeKeyValid ||
@@ -230,7 +230,7 @@ public sealed class PatCmp
 
     private static bool IsFinal(
         HashKind kind,
-        R3Game game)
+        Rpcs3GameDescriptor game)
     {
         // The current main PPU executable identifies the installed build.
         // SPU, PRX, and overlay evidence is partial because those modules may
@@ -239,8 +239,8 @@ public sealed class PatCmp
                game.PpuList.Count > 0;
     }
 
-    private static CmpDec Build(
-        PatEntry patch,
+    private static PatchCompatibilityDecision Build(
+        Rpcs3PatchEntry patch,
         MatStat status,
         string? matchedSerial,
         string? matchedTargetSerial,
@@ -261,7 +261,7 @@ public sealed class PatCmp
         if (!runtimeKeyValid)
         {
             return Blocked(
-                CmpCode.Key,
+                PatchCompatibilityReasonCode.Key,
                 runtimeKey,
                 canDisable: false);
         }
@@ -269,16 +269,16 @@ public sealed class PatCmp
         if (runtimeKeySerialMismatch)
         {
             return Blocked(
-                CmpCode.KeySerBd,
+                PatchCompatibilityReasonCode.KeySerBd,
                 runtimeKey,
                 canDisable: false);
         }
 
         if (status == MatStat.Match)
         {
-            return new CmpDec(
-                CmpVerd.Compat,
-                CmpCode.ExactId,
+            return new PatchCompatibilityDecision(
+                PatchCompatibilityVerdict.Compat,
+                PatchCompatibilityReasonCode.ExactId,
                 CanOn: true,
                 CanOff: true,
                 UseGuard: false,
@@ -290,7 +290,7 @@ public sealed class PatCmp
             if (!IsKnown(patch.Source))
             {
                 return Blocked(
-                    CmpCode.Guard,
+                    PatchCompatibilityReasonCode.Guard,
                     runtimeKey,
                     canDisable);
             }
@@ -301,7 +301,7 @@ public sealed class PatCmp
                 PatVer.IsAll(matchedTargetSerial))
             {
                 return Blocked(
-                    CmpCode.Hash,
+                    PatchCompatibilityReasonCode.Hash,
                     runtimeKey,
                     canDisable);
             }
@@ -311,14 +311,14 @@ public sealed class PatCmp
                     StringComparison.OrdinalIgnoreCase))
             {
                 return Blocked(
-                    CmpCode.SerBad,
+                    PatchCompatibilityReasonCode.SerBad,
                     runtimeKey,
                     canDisable);
             }
 
-            return new CmpDec(
-                CmpVerd.Guarded,
-                CmpCode.R3Guard,
+            return new PatchCompatibilityDecision(
+                PatchCompatibilityVerdict.Guarded,
+                PatchCompatibilityReasonCode.R3Guard,
                 CanOn: true,
                 CanOff: true,
                 UseGuard: true,
@@ -331,13 +331,13 @@ public sealed class PatCmp
             canDisable);
     }
 
-    private static CmpDec Blocked(
-        CmpCode reason,
+    private static PatchCompatibilityDecision Blocked(
+        PatchCompatibilityReasonCode reason,
         string runtimeKey,
         bool canDisable)
     {
-        return new CmpDec(
-            CmpVerd.Blocked,
+        return new PatchCompatibilityDecision(
+            PatchCompatibilityVerdict.Blocked,
             reason,
             CanOn: false,
             CanOff: canDisable,
@@ -345,27 +345,27 @@ public sealed class PatCmp
             RunKey: runtimeKey);
     }
 
-    private static CmpCode Reason(
+    private static PatchCompatibilityReasonCode Reason(
         MatStat status)
     {
         return status switch
         {
             MatStat.NoMeta =>
-                CmpCode.Meta,
+                PatchCompatibilityReasonCode.Meta,
             MatStat.SerBad =>
-                CmpCode.SerBad,
+                PatchCompatibilityReasonCode.SerBad,
             MatStat.VerUnk =>
-                CmpCode.Unknown,
+                PatchCompatibilityReasonCode.Unknown,
             MatStat.VerBad =>
-                CmpCode.VerBad,
+                PatchCompatibilityReasonCode.VerBad,
             MatStat.HashBad =>
-                CmpCode.ExeBad,
-            _ => CmpCode.Meta
+                PatchCompatibilityReasonCode.ExeBad,
+            _ => PatchCompatibilityReasonCode.Meta
         };
     }
 
     private static bool RunKey(
-        PatEntry patch,
+        Rpcs3PatchEntry patch,
         string? gameSerial)
     {
         return !string.IsNullOrWhiteSpace(patch.KeySer) &&
@@ -411,7 +411,7 @@ public sealed class PatCmp
 
     private static string Build2(
         Cand candidate,
-        CmpDec compatibility)
+        PatchCompatibilityDecision compatibility)
     {
         var installedVersion =
             PatVer.Norm(candidate.Game.Version) ??
@@ -422,28 +422,28 @@ public sealed class PatCmp
 
         return compatibility.Code switch
         {
-            CmpCode.ExactId =>
+            PatchCompatibilityReasonCode.ExactId =>
                 $"Serial {candidate.Game.Serial}, installed version {installedVersion}, target version {requiredVersion}, and {candidate.Patch.HashKind} runtime key match.",
-            CmpCode.R3Guard =>
+            PatchCompatibilityReasonCode.R3Guard =>
                 $"Serial {candidate.Game.Serial} and version {installedVersion} match; RPCS3 will require runtime key {compatibility.RunKey} at boot.",
-            CmpCode.KeySerBd =>
+            PatchCompatibilityReasonCode.KeySerBd =>
                 $"Runtime key scope does not match installed serial {candidate.Game.Serial}.",
-            CmpCode.Unknown =>
+            PatchCompatibilityReasonCode.Unknown =>
                 $"Serial {candidate.Game.Serial} matches, but the installed game version is unknown; target version is {requiredVersion}.",
-            CmpCode.VerBad =>
+            PatchCompatibilityReasonCode.VerBad =>
                 $"Serial {candidate.Game.Serial} matches, but installed version {installedVersion} does not match target version {requiredVersion}.",
-            CmpCode.ExeBad =>
+            PatchCompatibilityReasonCode.ExeBad =>
                 $"Serial {candidate.Game.Serial} and version match, but the authoritative PPU executable hash differs.",
-            CmpCode.Key =>
+            PatchCompatibilityReasonCode.Key =>
                 "Patch key is not a runtime key generated by RPCS3.",
             _ => "Patch metadata did not match this game."
         };
     }
 
     private sealed record Cand(
-        PatEntry Patch,
+        Rpcs3PatchEntry Patch,
         R3PatTgt Target,
-        R3Game Game,
+        Rpcs3GameDescriptor Game,
         MatStat Status,
         string? TgtVer,
         bool HasMeta,

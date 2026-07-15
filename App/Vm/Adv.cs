@@ -22,10 +22,10 @@ public sealed class AdvVm : VmBase
     private string _recNum = "0";
     private string _devWiki = "-";
     private bool _isLocal;
-    private BkpSnap? _selBkp;
+    private BackupSnapshot? _selBkp;
     private readonly StringBuilder _log = new();
 
-    public ObservableCollection<BkpSnap> Backups { get; } = [];
+    public ObservableCollection<BackupSnapshot> Backups { get; } = [];
 
     public bool BkpEmpty => Backups.Count == 0;
 
@@ -91,7 +91,7 @@ public sealed class AdvVm : VmBase
         set => Set(ref _devWiki, value);
     }
 
-    public BkpSnap? SelBkp
+    public BackupSnapshot? SelBkp
     {
         get => _selBkp;
         set => Set(ref _selBkp, value);
@@ -147,7 +147,7 @@ public sealed class AdvVm : VmBase
         LogText = _log.ToString();
     }
 
-    public void LoadBkp(IEnumerable<BkpSnap> backups)
+    public void LoadBkp(IEnumerable<BackupSnapshot> backups)
     {
         Backups.Clear();
 

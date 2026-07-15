@@ -8,8 +8,8 @@ namespace R3Config.Svc;
 
 public sealed class PatPlnr
 {
-    public Mdl.PatPlan Build(
-        R3Inst install,
+    public Mdl.PatchApplyPlan Build(
+        Rpcs3InstallDescriptor install,
         IEnumerable<Mdl.PatMatch> checkedMatches,
         bool expertMode)
     {
@@ -26,13 +26,13 @@ public sealed class PatPlnr
             .Select(group => group.First())
             .ToArray();
 
-        return new Mdl.PatPlan(
+        return new Mdl.PatchApplyPlan(
             install.PatCfg,
             changes);
     }
 
-    public Mdl.PatPlan Build2(
-        R3Inst install,
+    public Mdl.PatchApplyPlan Build2(
+        Rpcs3InstallDescriptor install,
         IEnumerable<Mdl.PatMatch> checkedMatches)
     {
         var changes = checkedMatches
@@ -46,7 +46,7 @@ public sealed class PatPlnr
             .Select(group => group.First())
             .ToArray();
 
-        return new Mdl.PatPlan(
+        return new Mdl.PatchApplyPlan(
             install.PatCfg,
             changes);
     }
@@ -114,7 +114,7 @@ public sealed class PatPlnr
             PatVer.IsAll(candidate.Serial));
     }
 
-    private static string ToHash(PatEntry patch)
+    private static string ToHash(Rpcs3PatchEntry patch)
     {
         return patch.RunKey;
     }

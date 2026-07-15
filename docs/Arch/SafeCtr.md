@@ -85,7 +85,7 @@ AND PreparedDefinitionValid
   SPU/PRX/OVL جزئية: التطابق منها إثبات إيجابي، لكن الغياب أو مشاهدة وحدة أخرى
   ليسا `HashMismatch`.
 - كل المصادر تستخدم `PatchCompatibilityService`. راجع
-  [PatCmp.md](PatCmp.md).
+  [عقد توافق الباتشات](PatCmp.md).
 
 ## Catalog merge contract
 

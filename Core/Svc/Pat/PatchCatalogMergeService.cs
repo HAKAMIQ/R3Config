@@ -5,7 +5,7 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class PatMerge
+public sealed class PatchCatalogMergeService
 {
     public PatCat Merge(params PatCat?[] catalogs)
     {
@@ -16,7 +16,7 @@ public sealed class PatMerge
         var version = availableCatalogs
             .FirstOrDefault(catalog => !string.IsNullOrWhiteSpace(catalog.Version))?
             .Version;
-        var selected = new Dictionary<string, PatEntry>(StringComparer.OrdinalIgnoreCase);
+        var selected = new Dictionary<string, Rpcs3PatchEntry>(StringComparer.OrdinalIgnoreCase);
         var rejected = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var order = new List<string>();
         var diagnostics =
@@ -77,8 +77,8 @@ public sealed class PatMerge
     }
 
     private static bool HasSame(
-        PatEntry existing,
-        PatEntry candidate)
+        Rpcs3PatchEntry existing,
+        Rpcs3PatchEntry candidate)
     {
         return AreEqual(existing.PatVer, candidate.PatVer) &&
                !string.Equals(
@@ -100,7 +100,7 @@ public sealed class PatMerge
         return leftValue.Equals(rightValue, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool Should(PatEntry existing, PatEntry candidate)
+    private static bool Should(Rpcs3PatchEntry existing, Rpcs3PatchEntry candidate)
     {
         // Bundled catalogs are preview sources. An entry already present in an
         // RPCS3 file is authoritative because that is what RPCS3 will load.
@@ -192,12 +192,12 @@ public sealed class PatMerge
             : value[firstNonZero..];
     }
 
-    private static string EntryKey(PatEntry entry)
+    private static string EntryKey(Rpcs3PatchEntry entry)
     {
         return $"{entry.RunKey}|{entry.Title}|{Def(entry)}";
     }
 
-    private static string Def(PatEntry entry)
+    private static string Def(Rpcs3PatchEntry entry)
     {
         // RPCS3 loads normal/Canary definitions and title-specific cheat
         // definitions from separate files. They may legitimately share the
@@ -212,15 +212,15 @@ public sealed class PatMerge
             : "Patch";
     }
 
-    private static string BuildMsg(PatEntry kept, PatEntry dropped)
+    private static string BuildMsg(Rpcs3PatchEntry kept, Rpcs3PatchEntry dropped)
     {
         return $"Patch '{kept.Title}' for {kept.HashKind}-{kept.Hash} from {dropped.Source} " +
                $"was superseded by {kept.Source}.";
     }
 
     private static string BuildMs2(
-        PatEntry existing,
-        PatEntry candidate)
+        Rpcs3PatchEntry existing,
+        Rpcs3PatchEntry candidate)
     {
         var version = string.IsNullOrWhiteSpace(existing.PatVer)
             ? "<missing>"
@@ -230,13 +230,13 @@ public sealed class PatMerge
                $"{Describe(candidate)}. Every conflicting variant was rejected.";
     }
 
-    private static string BuildMs3(PatEntry entry)
+    private static string BuildMs3(Rpcs3PatchEntry entry)
     {
         return $"Patch '{entry.Title}' for {entry.HashKind}-{entry.Hash} from {Describe(entry)} " +
                "was rejected because that identity already has an unresolved same-version definition conflict.";
     }
 
-    private static string Describe(PatEntry entry)
+    private static string Describe(Rpcs3PatchEntry entry)
     {
         return string.IsNullOrWhiteSpace(entry.SrcPath)
             ? entry.Source.ToString()

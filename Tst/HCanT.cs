@@ -49,7 +49,7 @@ internal static class HCanTst
 
     private static void Vld_All()
     {
-        var service = new PatAuth();
+        var service = new HCanaryPatchAuthoringService();
         var valid = GoodDrft();
         Assert(service.Validate(valid).IsValid, "A complete PPU draft should validate.");
 
@@ -81,7 +81,7 @@ internal static class HCanTst
 
     private static void Yaml_All()
     {
-        var service = new PatAuth();
+        var service = new HCanaryPatchAuthoringService();
         var draft = GoodDrft();
         draft.PatName = "Reduce \"input\" lag";
         draft.Author = "WAZAAAAA";
@@ -123,7 +123,7 @@ internal static class HCanTst
 
     private static void Imp_Edit()
     {
-        var service = new PatAuth();
+        var service = new HCanaryPatchAuthoringService();
         var temp = NewTemp();
         try
         {
@@ -140,8 +140,8 @@ internal static class HCanTst
             first.Ins.Add(new HCanInst { Op = "load", Address = "SharedCode", Value = string.Empty });
             var saved = service.Save(path, backup, first);
             Assert(saved.PatNum == 1 && File.Exists(path), "Saving should create imported_patch.yml.");
-            Assert(File.Exists(Path.Combine(patches, PatAuth.MetaName)) &&
-                   !File.Exists(Path.Combine(patches, PatAuth.OldName)),
+            Assert(File.Exists(Path.Combine(patches, HCanaryPatchAuthoringService.MetaName)) &&
+                   !File.Exists(Path.Combine(patches, HCanaryPatchAuthoringService.OldName)),
                 "A new H-Canary save must write only r3hcan.json.");
 
             var bytes = File.ReadAllBytes(path);
@@ -188,8 +188,8 @@ internal static class HCanTst
             var oldPat = Path.Combine(oldDir, "imported_patch.yml");
             var oldBkp = Path.Combine(temp, "old-bkp");
             service.Save(oldPat, oldBkp, GoodDrft());
-            var newMeta = Path.Combine(oldDir, PatAuth.MetaName);
-            var oldMeta = Path.Combine(oldDir, PatAuth.OldName);
+            var newMeta = Path.Combine(oldDir, HCanaryPatchAuthoringService.MetaName);
+            var oldMeta = Path.Combine(oldDir, HCanaryPatchAuthoringService.OldName);
             File.Move(newMeta, oldMeta);
             var oldLoad = service.Load(oldPat).Single();
             Assert(oldLoad.Draft.PatName == GoodDrft().PatName,
@@ -211,17 +211,17 @@ internal static class HCanTst
         {
             var path = Path.Combine(temp, "imported_patch.yml");
             var backupRoot = Path.Combine(temp, "backups");
-            var baseline = new PatAuth();
+            var baseline = new HCanaryPatchAuthoringService();
             baseline.Save(path, backupRoot, GoodDrft());
             var original = File.ReadAllText(path);
-            var newMeta = Path.Combine(temp, PatAuth.MetaName);
-            var oldMeta = Path.Combine(temp, PatAuth.OldName);
+            var newMeta = Path.Combine(temp, HCanaryPatchAuthoringService.MetaName);
+            var oldMeta = Path.Combine(temp, HCanaryPatchAuthoringService.OldName);
             File.Move(newMeta, oldMeta);
             var oldBytes = File.ReadAllBytes(oldMeta);
             Assert(Directory.EnumerateFiles(backupRoot, "manifest.json", SearchOption.AllDirectories).Any(), "Save should create a Backup manifest.");
 
-            var failingTransaction = new PatTxn(commitFile: (_, _) => throw new IOException("simulated atomic replace failure"));
-            var failing = new PatAuth(transaction: failingTransaction);
+            var failingTransaction = new PatchFileTransactionService(commitFile: (_, _) => throw new IOException("simulated atomic replace failure"));
+            var failing = new HCanaryPatchAuthoringService(transaction: failingTransaction);
             var changed = GoodDrft(); changed.PatName = "Rollback Patch"; changed.ExeHash = "PPU-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
             MustFail<IOException>(() => failing.Save(path, backupRoot, changed), "A failed atomic commit should surface the original failure.");
             Assert(File.ReadAllText(path) == original, "Transaction failure must roll back imported_patch.yml exactly.");
@@ -242,9 +242,9 @@ internal static class HCanTst
             Directory.CreateDirectory(Path.Combine(root, "patches"));
             Directory.CreateDirectory(Path.Combine(root, "config"));
             File.WriteAllText(Path.Combine(root, "rpcs3.exe"), string.Empty);
-            var install = new R3Inst(root, Path.Combine(root, "rpcs3.exe"), Path.Combine(root, "config"),
+            var install = new Rpcs3InstallDescriptor(root, Path.Combine(root, "rpcs3.exe"), Path.Combine(root, "config"),
                 Path.Combine(root, "config", "custom_configs"), Path.Combine(root, "patches"), Path.Combine(root, "config", "patch_config.yml"));
-            var game = new R3Game("NPUB30899", "TEKKEN TAG TOURNAMENT 2", "game", "01.01",
+            var game = new Rpcs3GameDescriptor("NPUB30899", "TEKKEN TAG TOURNAMENT 2", "game", "01.01",
                 "8645cfa235c9980ff74b5e06388b29e97fdbbed9", null,
                 ["8645cfa235c9980ff74b5e06388b29e97fdbbed9"], [], Path.Combine(root, "RPCS3.log"));
             var vm = new HCanVm();
@@ -313,7 +313,7 @@ internal static class HCanTst
         Ins = [new HCanInst { Op = "be32", Address = "0x0001c310", Value = "0x39200000" }]
     };
 
-    private static void HasIssue(PatAuth service, HCanDrft valid, Action<HCanDrft> mutate, string code)
+    private static void HasIssue(HCanaryPatchAuthoringService service, HCanDrft valid, Action<HCanDrft> mutate, string code)
     {
         var draft = valid.Clone(); mutate(draft);
         Assert(service.Validate(draft).Issues.Any(issue => issue.Code == code), "Expected validation issue " + code);

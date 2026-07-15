@@ -182,12 +182,12 @@ public sealed partial class MainVm : VmBase
         return UiText.Fmt("Status.HwTip", _hwInfo.CpuNum, _hwInfo.Display);
     }
 
-    private static bool HasHash(R3Game game)
+    private static bool HasHash(Rpcs3GameDescriptor game)
     {
         return game.Hashes.Count > 0 || game.SpuList.Count > 0;
     }
 
-    private static string PatHash(R3Game game)
+    private static string PatHash(Rpcs3GameDescriptor game)
     {
         return game.HashEvi switch
         {
@@ -265,7 +265,7 @@ public sealed partial class MainVm : VmBase
 
     public string CanPath =>
         FindPat(Mdl.PatSrc.Can, "can.yml")?.Path
-        ?? CanBndl.GetPath(AppContext.BaseDirectory);
+        ?? BundledCanaryPatchService.GetPath(AppContext.BaseDirectory);
 
     public string CanTone =>
         GetTone(FindPat(Mdl.PatSrc.Can, "can.yml"));
@@ -273,7 +273,7 @@ public sealed partial class MainVm : VmBase
     public string CanBadge =>
         GetBadge(FindPat(Mdl.PatSrc.Can, "can.yml"));
 
-    private PatSrcSt? FindPat(
+    private PatchCatalogSourceStatus? FindPat(
         PatSrc source,
         string name)
     {
@@ -282,7 +282,7 @@ public sealed partial class MainVm : VmBase
             item.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static string GetTone(PatSrcSt? source)
+    private static string GetTone(PatchCatalogSourceStatus? source)
     {
         return source?.Loaded == true
             ? HasSrc(source) ? "Warning" : "Auto"
@@ -291,7 +291,7 @@ public sealed partial class MainVm : VmBase
                 : "Warning";
     }
 
-    private static string GetBadge(PatSrcSt? source)
+    private static string GetBadge(PatchCatalogSourceStatus? source)
     {
         return source?.Loaded == true
             ? UiText.GetText(HasSrc(source)
@@ -302,7 +302,7 @@ public sealed partial class MainVm : VmBase
                 : UiText.GetText("Patch.SourceStatus.MissingBadge");
     }
 
-    private static bool HasSrc(PatSrcSt? source)
+    private static bool HasSrc(PatchCatalogSourceStatus? source)
     {
         return source?.Loaded == true &&
                !string.IsNullOrWhiteSpace(source.Diag);

@@ -206,7 +206,7 @@ public sealed record R3PatTgt(
             : string.Join(", ", Versions);
 }
 
-public sealed record PatEntry(
+public sealed record Rpcs3PatchEntry(
     string Title,
     HashKind HashKind,
     string Hash,
@@ -260,7 +260,7 @@ public sealed record PatEntry(
 
 public sealed record PatCat(
     string? Version,
-    IReadOnlyList<PatEntry> Entries,
+    IReadOnlyList<Rpcs3PatchEntry> Entries,
     IReadOnlyList<PatDiag>? Diags = null)
 {
     public IReadOnlyList<PatDiag> Diag =>
@@ -295,7 +295,7 @@ public sealed record PatRead(
 }
 
 public sealed record PatMatch(
-    PatEntry Patch,
+    Rpcs3PatchEntry Patch,
     MatStat Status,
     string? MatSer,
     string? MatVer,
@@ -309,7 +309,7 @@ public sealed record PatMatch(
     string? HashMsg = null,
     HashEvi HashEvi = HashEvi.None,
     DateTime? HashTime = null,
-    CmpDec? Cmp = null)
+    PatchCompatibilityDecision? Cmp = null)
 {
     public bool IsMatch =>
         Status == MatStat.Match;
@@ -326,7 +326,7 @@ public sealed record PatChg(
     string Version,
     PatRisk Risk);
 
-public sealed record PatPlan(
+public sealed record PatchApplyPlan(
     string PatCfg,
     IReadOnlyList<PatChg> Changes)
 {
@@ -340,7 +340,7 @@ public enum PrepKind
     JsonMeta
 }
 
-public sealed record PrepFile(
+public sealed record PatchPreparedFile(
     string TgtPath,
     string Content,
     PrepKind Kind,
@@ -349,7 +349,7 @@ public sealed record PrepFile(
     bool DelTgt = false);
 
 public sealed record PatRes(
-    BkpMan Backup,
+    BackupManifest Backup,
     IReadOnlyList<PatChg> ChgList,
     IReadOnlyList<string>? PrepMsgs = null)
 {

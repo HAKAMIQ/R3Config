@@ -1,6 +1,6 @@
-namespace R3Config.Case;
+namespace R3Config.Application;
 
-public interface IPatMsg
+public interface IPatchCatalogMessageFormatter
 {
     string MissCat { get; }
 

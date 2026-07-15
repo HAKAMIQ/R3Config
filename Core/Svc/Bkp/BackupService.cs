@@ -12,7 +12,7 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class BkpSvc(
+public sealed class BackupService(
     Action<string?, string, bool>? commitRestoreOperation = null,
     Action<string?, string, bool>? rollbackRestoreOperation = null)
 {
@@ -31,7 +31,7 @@ public sealed class BkpSvc(
     private readonly Action<string?, string, bool> _Op =
         rollbackRestoreOperation ?? Rollback;
 
-    public IReadOnlyList<BkpSnap> ListBkp(string backupRootPath)
+    public IReadOnlyList<BackupSnapshot> ListBkp(string backupRootPath)
     {
         if (!Directory.Exists(backupRootPath))
         {
@@ -43,12 +43,12 @@ public sealed class BkpSvc(
             .. Directory.EnumerateDirectories(backupRootPath)
                 .Select(TryLoad)
                 .Where(snapshot => snapshot is not null)
-                .Cast<BkpSnap>()
+                .Cast<BackupSnapshot>()
                 .OrderByDescending(snapshot => snapshot.MadeAt)
         ];
     }
 
-    public BkpMan BuildBkp(
+    public BackupManifest BuildBkp(
         string backupRootPath,
         IReadOnlyList<string> targetPaths)
     {
@@ -72,7 +72,7 @@ public sealed class BkpSvc(
 
         try
         {
-            List<BkpEntry> entries = [];
+            List<BackupFileEntry> entries = [];
 
             foreach (var normalizedTargetPath in normalizedTargets)
             {
@@ -94,7 +94,7 @@ public sealed class BkpSvc(
                     sha256 = Calc(backupFilePath);
                 }
 
-                entries.Add(new BkpEntry(
+                entries.Add(new BackupFileEntry(
                     normalizedTargetPath,
                     backupFilePath,
                     existed,
@@ -102,7 +102,7 @@ public sealed class BkpSvc(
                     sha256));
             }
 
-            var manifest = new BkpMan(
+            var manifest = new BackupManifest(
                 DateTimeOffset.Now,
                 entries);
 
@@ -145,18 +145,18 @@ public sealed class BkpSvc(
         }
     }
 
-    public void Restore(BkpMan manifest)
+    public void Restore(BackupManifest manifest)
     {
         ArgumentNullException.ThrowIfNull(manifest);
 
         var snapshotPath = GetMan(manifest);
-        Restore(new BkpSnap(
+        Restore(new BackupSnapshot(
             snapshotPath,
             manifest.MadeAt,
             manifest.Files));
     }
 
-    public void Restore(BkpSnap snapshot)
+    public void Restore(BackupSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
@@ -273,7 +273,7 @@ public sealed class BkpSvc(
     }
 
     private IReadOnlyList<VldBkp> VldSnap(
-        BkpSnap snapshot)
+        BackupSnapshot snapshot)
     {
         if (string.IsNullOrWhiteSpace(snapshot.DirPath))
         {
@@ -319,7 +319,7 @@ public sealed class BkpSvc(
         }
 
         var persisted = ReadMan(manifestPath);
-        var requested = new BkpMan(
+        var requested = new BackupManifest(
             snapshot.MadeAt,
             snapshot.Files);
         if (!ManEqual(requested, persisted))
@@ -454,7 +454,7 @@ public sealed class BkpSvc(
     }
 
     private static void VldMeta(
-        BkpEntry entry,
+        BackupFileEntry entry,
         string backupPath)
     {
         if (entry.Length is long expectedLength)
@@ -507,7 +507,7 @@ public sealed class BkpSvc(
             "Committed restore validation failed.");
     }
 
-    private BkpSnap? TryLoad(string backupDirectory)
+    private BackupSnapshot? TryLoad(string backupDirectory)
     {
         var manifestPath = Path.Combine(
             backupDirectory,
@@ -523,7 +523,7 @@ public sealed class BkpSvc(
             var manifest = ReadMan(manifestPath);
             return manifest.Files is null
                 ? null
-                : new BkpSnap(
+                : new BackupSnapshot(
                     backupDirectory,
                     manifest.MadeAt,
                     manifest.Files);
@@ -534,13 +534,13 @@ public sealed class BkpSvc(
         }
     }
 
-    private BkpMan ReadMan(string manifestPath)
+    private BackupManifest ReadMan(string manifestPath)
     {
         var text = R3Bound.ReadUtf8(
             manifestPath,
             R3Limits.BkpByte,
             "R3Config backup manifest");
-        var manifest = JsonSerializer.Deserialize<BkpMan>(
+        var manifest = JsonSerializer.Deserialize<BackupManifest>(
             text,
             _Options);
 
@@ -549,7 +549,7 @@ public sealed class BkpSvc(
     }
 
     private static string GetMan(
-        BkpMan manifest)
+        BackupManifest manifest)
     {
         if (manifest.Files is null || manifest.Files.Count == 0)
         {
@@ -582,8 +582,8 @@ public sealed class BkpSvc(
     }
 
     private static bool ManEqual(
-        BkpMan left,
-        BkpMan right)
+        BackupManifest left,
+        BackupManifest right)
     {
         if (left.Files is null ||
             right.Files is null ||
@@ -798,7 +798,7 @@ public sealed class BkpSvc(
     }
 
     private sealed record VldBkp(
-        BkpEntry Entry,
+        BackupFileEntry Entry,
         string TgtPath,
         string BkpPath);
 

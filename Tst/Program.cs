@@ -13,8 +13,8 @@ using R3Config.Lang;
 using R3Config.Mdl;
 using R3Config.Vm;
 using R3Config.View;
-using R3Config.Case;
-using R3Config.Comp;
+using R3Config.Application;
+using R3Config.Composition;
 
 var tempRoot = Path.Combine(Path.GetTempPath(), "R3ConfigSmoke", Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(tempRoot);
@@ -33,7 +33,7 @@ try
     Can_Txn(tempRoot);
     Bkp_Rst(tempRoot);
     Mut_Link(tempRoot);
-    MutGuard(tempRoot);
+    Rpcs3MutationGuard(tempRoot);
     Inp_Lim(tempRoot);
     Scan_Src(tempRoot);
     Mut_Cmd(tempRoot);
@@ -260,7 +260,7 @@ static void Lang_Key()
     Console.WriteLine($"Lang keys: ar-SA/en-US parity PASS ({ar.Count}).");
 }
 
-static void MutGuard(string tempRoot)
+static void Rpcs3MutationGuard(string tempRoot)
 {
     var root = Path.Combine(tempRoot, "mutation-guard", "rpcs3");
     var config = Path.Combine(root, "config");
@@ -268,7 +268,7 @@ static void MutGuard(string tempRoot)
     Directory.CreateDirectory(config);
     Directory.CreateDirectory(patches);
 
-    var install = new R3Inst(
+    var install = new Rpcs3InstallDescriptor(
         root,
         Path.Combine(root, "rpcs3.exe"),
         config,
@@ -276,7 +276,7 @@ static void MutGuard(string tempRoot)
         patches,
         Path.Combine(config, "patch_config.yml"));
     File.WriteAllBytes(install.ExePath, []);
-    var safeGuard = new MutGuard(() => false);
+    var safeGuard = new Rpcs3MutationGuard(() => false);
 
     safeGuard.CheckCan(
         install,
@@ -298,18 +298,18 @@ static void MutGuard(string tempRoot)
         MutBlock.Tgt,
         "Expected duplicate transaction targets to be rejected before writing.");
     MutFails(
-        () => new MutGuard(() => true).CheckCan(
+        () => new Rpcs3MutationGuard(() => true).CheckCan(
             install,
             [install.PatCfg]),
         MutBlock.Running,
         "Expected every mutation boundary to block while RPCS3 is running.");
 
     var blockedImportReader = new R3Config.Svc.ReadSvc();
-    var blockedImportBackup = new BkpSvc();
-    var blockedImport = new R3Config.Case.CanImp(
-        new R3Config.Svc.ImpSvc(blockedImportReader),
-        new MutGuard(() => true),
-        new PatTxn(
+    var blockedImportBackup = new BackupService();
+    var blockedImport = new R3Config.Application.CanaryImportUseCase(
+        new R3Config.Svc.CanaryPatchImportService(blockedImportReader),
+        new Rpcs3MutationGuard(() => true),
+        new PatchFileTransactionService(
             blockedImportBackup,
             blockedImportReader,
             new CfgRead()),
@@ -458,7 +458,7 @@ static void Inp_Lim(string tempRoot)
         R3Limits.GameByte);
     Assert(new FileInfo(atLimitGamesYml).Length ==
            R3Limits.GameByte &&
-           new GmScan().Scan(atLimitInstall)
+           new GameScanner().Scan(atLimitInstall)
                .Any(game => game.Serial == "BLUS40001"),
         "Expected games.yml at the exact byte limit to remain readable.");
 
@@ -471,7 +471,7 @@ static void Inp_Lim(string tempRoot)
     {
         stream.SetLength(R3Limits.GameByte + 1);
     }
-    Assert(new GmScan().Scan(overLimitInstall).Count == 0,
+    Assert(new GameScanner().Scan(overLimitInstall).Count == 0,
         "Expected games.yml above the byte limit to be rejected without blocking the scan.");
 
     var fallbackGamePath = Path.Combine(suiteRoot, "BLUS40002");
@@ -479,7 +479,7 @@ static void Inp_Lim(string tempRoot)
     File.WriteAllText(
         Path.Combine(overLimitRoot, "games.yml"),
         $"BLUS40002: \"{EscPath(fallbackGamePath)}\"{Environment.NewLine}");
-    Assert(new GmScan().Scan(overLimitInstall)
+    Assert(new GameScanner().Scan(overLimitInstall)
             .Any(game => game.Serial == "BLUS40002"),
         "Expected one oversized games.yml source not to block a valid independent source.");
 
@@ -614,7 +614,7 @@ static void Inp_Lim(string tempRoot)
         stream.SetLength(
             R3Limits.BkpByte + 1);
     }
-    Assert(new BkpSvc().ListBkp(
+    Assert(new BackupService().ListBkp(
                oversizedBackupRoot).Count == 0,
         "Expected an oversized backup manifest to be rejected without full-file allocation.");
 
@@ -633,13 +633,13 @@ static void Inp_Lim(string tempRoot)
             "0x00000300"));
     using (var stream = File.Create(Path.Combine(
                hCanaryLimitRoot,
-               PatAuth.MetaName)))
+               HCanaryPatchAuthoringService.MetaName)))
     {
         stream.SetLength(
             R3Limits.HBytes + 1);
     }
     MustFail<InvalidDataException>(
-        () => new PatAuth().Load(
+        () => new HCanaryPatchAuthoringService().Load(
             hCanaryPatch),
         "Expected oversized H-Canary metadata to be rejected before JSON text allocation.");
 
@@ -658,7 +658,7 @@ static void Inp_Lim(string tempRoot)
             hddGameRoot,
             $"BLUS{41000 + index:00000}"));
     }
-    var directoryLimitResult = new GmScan(
+    var directoryLimitResult = new GameScanner(
             directoryEntryLimit: 3)
         .ScanInfo(directoryLimitInstall);
     Assert(directoryLimitResult.Games.Count == 3 &&
@@ -684,7 +684,7 @@ static void Inp_Lim(string tempRoot)
             diagnosticGameRoot,
             $"BLUS{50000 + index:00000}"))
         .ToArray();
-    var diagnosticResult = new GmScan(
+    var diagnosticResult = new GameScanner(
             directoryEntryLimit: diagnosticFolders.Length,
             enumerateDirectories: _ => diagnosticFolders)
         .ScanInfo(diagnosticInstall);
@@ -740,7 +740,7 @@ static void Scan_Src(string tempRoot)
         Path.Combine(malformedFolder, "PARAM.SFO"),
         [0x00, 0x50, 0x53, 0x46]);
 
-    var sfoResult = new GmScan().ScanInfo(install);
+    var sfoResult = new GameScanner().ScanInfo(install);
     Assert(sfoResult.Games.Any(game =>
                game.Serial == "BLUS42000") &&
            sfoResult.Diags.Any(diagnostic =>
@@ -754,7 +754,7 @@ static void Scan_Src(string tempRoot)
         install.CfgPath,
         "games.yml");
     File.WriteAllText(gamesYmlPath, "BLUS42000: [broken");
-    var malformedGamesYmlResult = new GmScan()
+    var malformedGamesYmlResult = new GameScanner()
         .ScanInfo(install);
     Assert(malformedGamesYmlResult.Games.Any(game =>
                game.Serial == "BLUS42000") &&
@@ -766,7 +766,7 @@ static void Scan_Src(string tempRoot)
     File.WriteAllText(
         gamesYmlPath,
         $"BLUS42000: \"{EscPath(validFolder)}\"{Environment.NewLine}");
-    var accessDeniedScanner = new GmScan(
+    var accessDeniedScanner = new GameScanner(
         enumerateDirectories: _ =>
             throw new UnauthorizedAccessException(
                 "Simulated bounded game-directory access denial."));
@@ -783,7 +783,7 @@ static void Scan_Src(string tempRoot)
     {
         stream.SetLength(R3Limits.GameByte + 1);
     }
-    var tooLargeResult = new GmScan().ScanInfo(install);
+    var tooLargeResult = new GameScanner().ScanInfo(install);
     Assert(tooLargeResult.Games.Any(game =>
                game.Serial == "BLUS42000") &&
            tooLargeResult.Diags.Any(diagnostic =>
@@ -792,7 +792,7 @@ static void Scan_Src(string tempRoot)
         "Expected oversized games.yml to emit a clear diagnostic without blocking folder discovery.");
 
     Directory.CreateDirectory(install.CustPath);
-    var customConfigDenied = new GmScan(
+    var customConfigDenied = new GameScanner(
         enumerateCustomConfigFiles: _ =>
             throw new UnauthorizedAccessException(
                 "Simulated custom-config access denial."))
@@ -805,7 +805,7 @@ static void Scan_Src(string tempRoot)
     var firstOrder = tooLargeResult.Diags
         .Select(DiagId)
         .ToArray();
-    var secondOrder = new GmScan()
+    var secondOrder = new GameScanner()
         .ScanInfo(install)
         .Diags
         .Select(DiagId)
@@ -844,7 +844,7 @@ static void Scan_Src(string tempRoot)
         "Per-source game discovery diagnostics tests PASS.");
 }
 
-static string DiagId(ScanDiag diagnostic)
+static string DiagId(GameScanDiagnostic diagnostic)
 {
     return string.Join(
         "|",
@@ -864,12 +864,12 @@ static void Mut_Cmd(string tempRoot)
     Directory.CreateDirectory(configPath);
     Directory.CreateDirectory(patchesPath);
     File.WriteAllBytes(Path.Combine(installRoot, "rpcs3.exe"), []);
-    var install = InstSvc.FromExe(
+    var install = Rpcs3InstallService.FromExe(
         Path.Combine(installRoot, "rpcs3.exe"));
 
     var running = false;
     var main = new MainVm(
-        AppComp.BuildRun(),
+        AppComposition.BuildRun(),
         () => running,
         (_, _) => true);
     var change = new CfgChg(
@@ -912,10 +912,10 @@ static void Mut_Cmd(string tempRoot)
     SetField(main, "_prepCan", true);
     main.Advanced.LoadBkp(
     [
-        new BkpSnap(
+        new BackupSnapshot(
             Path.Combine(configPath, "R3Bkp", "snapshot"),
             DateTimeOffset.UtcNow,
-            [new BkpEntry(plan.CfgPath, "backup.yml", true)])
+            [new BackupFileEntry(plan.CfgPath, "backup.yml", true)])
     ]);
 
     Assert(!main.ApplyCmd.CanRun(null) &&
@@ -970,9 +970,9 @@ static void Mut_Cmd(string tempRoot)
     Directory.CreateDirectory(importConfig);
     Directory.CreateDirectory(importPatches);
     File.WriteAllBytes(Path.Combine(importRoot, "rpcs3.exe"), []);
-    var importInstall = InstSvc.FromExe(
+    var importInstall = Rpcs3InstallService.FromExe(
         Path.Combine(importRoot, "rpcs3.exe"));
-    var importFlow = AppComp.BuildRun().Flow;
+    var importFlow = AppComposition.BuildRun().Flow;
     var allowConfirmation = false;
     var confirmationCalls = 0;
     var importViewModel = new CanImpVm(
@@ -992,7 +992,7 @@ static void Mut_Cmd(string tempRoot)
     };
     var importedPath = Path.Combine(
         importPatches,
-        R3Config.Svc.ImpSvc.ImpName);
+        R3Config.Svc.CanaryPatchImportService.ImpName);
 
     Assert(importViewModel.MakeCmd.CanRun(null),
         "Expected a validated import preview to enable its confirmed mutation command.");
@@ -1011,9 +1011,9 @@ static void Mut_Cmd(string tempRoot)
     Directory.CreateDirectory(Path.Combine(hCanaryRoot, "config"));
     Directory.CreateDirectory(Path.Combine(hCanaryRoot, "patches"));
     File.WriteAllBytes(Path.Combine(hCanaryRoot, "rpcs3.exe"), []);
-    var hCanaryInstall = InstSvc.FromExe(
+    var hCanaryInstall = Rpcs3InstallService.FromExe(
         Path.Combine(hCanaryRoot, "rpcs3.exe"));
-    var hCanaryGame = new R3Game(
+    var hCanaryGame = new Rpcs3GameDescriptor(
         "BLUS43001",
         "Confirmed H-Canary Game",
         "game",
@@ -1024,7 +1024,7 @@ static void Mut_Cmd(string tempRoot)
         []);
     var hCanaryConfirm = false;
     var hCanary = new HCanVm(
-        AppComp.BuildRun().Flow,
+        AppComposition.BuildRun().Flow,
         () => running,
         (_, _) => hCanaryConfirm);
     hCanary.SetCtx(hCanaryInstall, hCanaryGame);
@@ -1087,11 +1087,11 @@ static void SetField<T>(
     field.SetValue(target, value);
 }
 
-static R3Inst LimInst(string root)
+static Rpcs3InstallDescriptor LimInst(string root)
 {
     Directory.CreateDirectory(Path.Combine(root, "config"));
     File.WriteAllBytes(Path.Combine(root, "rpcs3.exe"), []);
-    return InstSvc.FromExe(
+    return Rpcs3InstallService.FromExe(
         Path.Combine(root, "rpcs3.exe"));
 }
 
@@ -1156,7 +1156,7 @@ static void Mut_Link(string tempRoot)
     Directory.CreateDirectory(config);
     Directory.CreateDirectory(patches);
 
-    var install = new R3Inst(
+    var install = new Rpcs3InstallDescriptor(
         root,
         Path.Combine(root, "rpcs3.exe"),
         config,
@@ -1166,7 +1166,7 @@ static void Mut_Link(string tempRoot)
         root);
     File.WriteAllBytes(install.ExePath, []);
 
-    var guard = new MutGuard(() => false);
+    var guard = new Rpcs3MutationGuard(() => false);
     guard.CheckCan(
         install,
         [Path.Combine(config, "custom_configs", "config_TEST00001.yml")]);
@@ -1178,7 +1178,7 @@ static void Mut_Link(string tempRoot)
     File.WriteAllBytes(
         Path.Combine(configOnlyRoot, "rpcs3.exe"),
         []);
-    var configOnly = InstSvc.FromExe(
+    var configOnly = Rpcs3InstallService.FromExe(
         Path.Combine(configOnlyRoot, "rpcs3.exe"));
     guard.CheckCan(
         configOnly,
@@ -1210,9 +1210,9 @@ static void Mut_Link(string tempRoot)
             0,
             []),
         NeedBkp: true);
-    new CfgCase(
-            new PlanSvc(),
-            new CfgApply(),
+    new ConfigUseCase(
+            new PlanService(),
+            new ConfigApplyService(),
             guard)
         .Apply(
             configOnlyPlan,
@@ -1230,7 +1230,7 @@ static void Mut_Link(string tempRoot)
     File.WriteAllBytes(
         Path.Combine(patchOnlyRoot, "rpcs3.exe"),
         []);
-    var patchOnly = InstSvc.FromExe(
+    var patchOnly = Rpcs3InstallService.FromExe(
         Path.Combine(patchOnlyRoot, "rpcs3.exe"));
     guard.CheckCan(
         patchOnly,
@@ -1240,7 +1240,7 @@ static void Mut_Link(string tempRoot)
     var patchOnlyTarget = Path.Combine(
         patchOnly.PatPath,
         "imported_patch.yml");
-    var patchOnlyPrepared = new PrepFile(
+    var patchOnlyPrepared = new PatchPreparedFile(
         patchOnlyTarget,
         TxnCat(
             new string('f', 40),
@@ -1252,8 +1252,8 @@ static void Mut_Link(string tempRoot)
         PrepKind.PatCat,
         PatSrc.Imported,
         EntNum: 1);
-    new PatTxn().Commit(
-        R3Paths.BkpRoot(patchOnly),
+    new PatchFileTransactionService().Commit(
+        Rpcs3AppPaths.BkpRoot(patchOnly),
         [patchOnlyPrepared],
         (_, backupRoot, targets) =>
             guard.CheckCan(
@@ -1300,7 +1300,7 @@ static void Mut_Link(string tempRoot)
     Directory.CreateDirectory(directoryExeConfig);
     Directory.CreateDirectory(directoryExePatches);
     Directory.CreateDirectory(Path.Combine(directoryExeRoot, "rpcs3.exe"));
-    var directoryExeInstall = new R3Inst(
+    var directoryExeInstall = new Rpcs3InstallDescriptor(
         directoryExeRoot,
         Path.Combine(directoryExeRoot, "rpcs3.exe"),
         directoryExeConfig,
@@ -1383,7 +1383,7 @@ static void Mut_Link(string tempRoot)
     var stageParent = Path.Combine(patches, "before-stage");
     MakeLink(stageParent, stageEscapeTarget);
     var stageTarget = Path.Combine(stageParent, "stage_patch.yml");
-    var stagePrepared = new PrepFile(
+    var stagePrepared = new PatchPreparedFile(
         stageTarget,
         TxnCat(
             new string('d', 40),
@@ -1396,7 +1396,7 @@ static void Mut_Link(string tempRoot)
         PatSrc.Imported,
         EntNum: 1);
     MutFails(
-        () => new PatTxn().Commit(
+        () => new PatchFileTransactionService().Commit(
             Path.Combine(config, "R3Bkp"),
             [stagePrepared],
             (_, backupRoot, targets) =>
@@ -1428,7 +1428,7 @@ static void Mut_Link(string tempRoot)
             "BLUS30002",
             "01.00",
             "0x00002020"));
-    var backupPrepared = new PrepFile(
+    var backupPrepared = new PatchPreparedFile(
         backupPhaseTarget,
         TxnCat(
             new string('c', 40),
@@ -1449,7 +1449,7 @@ static void Mut_Link(string tempRoot)
     Directory.CreateDirectory(externalBackupRoot);
     var backupBefore = File.ReadAllBytes(backupPhaseTarget);
     MutFails(
-        () => new PatTxn().Commit(
+        () => new PatchFileTransactionService().Commit(
             unsafeBackupRoot,
             [backupPrepared],
             (phase, backupRoot, targets) =>
@@ -1483,7 +1483,7 @@ static void Mut_Link(string tempRoot)
     Directory.CreateDirectory(swapParent);
     Directory.CreateDirectory(swapEscapeTarget);
     var swapTarget = Path.Combine(swapParent, "prepared_patch.yml");
-    var prepared = new PrepFile(
+    var prepared = new PatchPreparedFile(
         swapTarget,
         TxnCat(
             new string('e', 40),
@@ -1495,7 +1495,7 @@ static void Mut_Link(string tempRoot)
         PrepKind.PatCat,
         PatSrc.Imported,
         EntNum: 1);
-    var transaction = new PatTxn();
+    var transaction = new PatchFileTransactionService();
 
     MutFails(
         () => transaction.Commit(
@@ -1594,11 +1594,11 @@ static void Arch_Svc()
 {
     var repoRoot = RepoRoot();
     var coreRoot = Path.Combine(repoRoot, "Core");
-    var applicationRoot = Path.Combine(repoRoot, "App", "Case");
+    var applicationRoot = Path.Combine(repoRoot, "App", "Application");
     var viewModelRoot = Path.Combine(repoRoot, "App", "Vm");
 
     Assert(Directory.Exists(applicationRoot),
-        "Expected an explicit App/Case use-case layer.");
+        "Expected an explicit App/Application use-case layer.");
 
     var coreSource = string.Join(
         Environment.NewLine,
@@ -1639,7 +1639,7 @@ static void Arch_Svc()
                 SearchOption.TopDirectoryOnly)
             .Select(File.ReadAllText));
     Assert(!mainViewModelSource.Contains(
-               "ImpSvc",
+               "CanaryPatchImportService",
                StringComparison.Ordinal) &&
            !mainViewModelSource.Contains(
                "_impSvc",
@@ -1664,15 +1664,15 @@ static void Can_Comp(string tempRoot)
     var compositionPath = Path.Combine(
         repoRoot,
         "App",
-        "Comp",
-        "AppComp.cs");
+        "Composition",
+        "AppComposition.cs");
     var compositionSource = File.ReadAllText(compositionPath);
     Assert(CountOf(
                compositionSource,
-               "new Svc.ImpSvc(") == 1,
+               "new Svc.CanaryPatchImportService(") == 1,
         "Expected composition to construct exactly one CanaryPatchImportService instance.");
     Assert(!compositionSource.Contains(
-               "ImpSvc CanImp",
+               "CanaryPatchImportService CanaryImport",
                StringComparison.Ordinal),
         "Expected AppRuntimeServices not to expose a domain writer service to ViewModels.");
 
@@ -1682,7 +1682,7 @@ static void Can_Comp(string tempRoot)
     Directory.CreateDirectory(readOnlyRoot);
     var patchesPath = Path.Combine(readOnlyRoot, "patches");
     var configPath = Path.Combine(readOnlyRoot, "config");
-    var install = new R3Inst(
+    var install = new Rpcs3InstallDescriptor(
         readOnlyRoot,
         Path.Combine(readOnlyRoot, "rpcs3.exe"),
         configPath,
@@ -1690,7 +1690,7 @@ static void Can_Comp(string tempRoot)
         patchesPath,
         Path.Combine(configPath, "patch_config.yml"),
         readOnlyRoot);
-    var runtime = AppComp.BuildRun();
+    var runtime = AppComposition.BuildRun();
 
     Assert(!runtime.Flow.HasImp(install) &&
            !Directory.Exists(patchesPath),
@@ -1700,7 +1700,7 @@ static void Can_Comp(string tempRoot)
     File.WriteAllText(
         Path.Combine(
             patchesPath,
-            R3Config.Svc.ImpSvc.ImpName),
+            R3Config.Svc.CanaryPatchImportService.ImpName),
         "Version: 1.2\r\n" +
         "PPU-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:\r\n" +
         "  # R3Config managed Canary patches - begin\r\n" +
@@ -1763,32 +1763,32 @@ static void App_Pat()
     var repoRoot = RepoRoot();
     var appRoot = Path.Combine(repoRoot, "App");
     var noteServicePath = Path.Combine(appRoot, "Svc", "PNote.cs");
-    var importServicePath = Path.Combine(appRoot, "Svc", "CImp.cs");
-    var bundledCanaryServicePath = Path.Combine(appRoot, "Svc", "BCan.cs");
+    var importServicePath = Path.Combine(appRoot, "Svc", "CanaryPatchImportService.cs");
+    var bundledCanaryServicePath = Path.Combine(appRoot, "Svc", "BundledCanaryPatchService.cs");
     var bundledCanaryDataPath = Path.Combine(appRoot, "Data", "can.yml");
-    var bundledCheatServicePath = Path.Combine(appRoot, "Svc", "BCheat.cs");
+    var bundledCheatServicePath = Path.Combine(appRoot, "Svc", "BundledCheatPatchService.cs");
     var bundledCheatDataPath = Path.Combine(appRoot, "Data", "cheats.yml");
     var transactionServicePath = Path.Combine(
         repoRoot,
         "Core",
         "Svc",
         "Pat",
-        "Txn.cs");
+        "PatchFileTransactionService.cs");
     var appFlowPath = Path.Combine(appRoot, "Flow.cs");
     var patchMutationUseCasePath = Path.Combine(
         appRoot,
-        "Case",
-        "PatMut.cs");
+        "Application",
+        "PatchMutationUseCase.cs");
     var compositionPath = Path.Combine(
         appRoot,
-        "Comp",
-        "AppComp.cs");
+        "Composition",
+        "AppComposition.cs");
     var mutationGuardPath = Path.Combine(
         repoRoot,
         "Core",
         "Svc",
         "Mut",
-        "Guard.cs");
+        "Rpcs3MutationGuard.cs");
     var planVmPath = Path.Combine(appRoot, "Vm", "Plan.cs");
     var mainVmPath = Path.Combine(appRoot, "Vm", "Main.cs");
     var mainWindowPath = Path.Combine(appRoot, "Main.xaml.cs");
@@ -1845,14 +1845,14 @@ static void App_Pat()
         entry.Title == "Unlock FPS");
     Assert(gowAscensionCanary.GameTgt.Count == 7,
         "Expected the God of War Ascension Canary definition to retain all seven declared regional editions.");
-    var gowAscensionGame = new R3Game(
+    var gowAscensionGame = new Rpcs3GameDescriptor(
         "BCUS98232",
         "God of War: Ascension",
         @"C:\Games\BCUS98232",
         "01.12",
         null,
         null);
-    var gowAscensionCanaryMatch = new R3Config.Svc.MatchSvc().Match(
+    var gowAscensionCanaryMatch = new R3Config.Svc.PatchMatchService().Match(
         gowAscensionCanary,
         [gowAscensionGame]);
     Assert(
@@ -1863,9 +1863,9 @@ static void App_Pat()
     {
         foreach (var version in target.Versions)
         {
-            var regionalMatch = new R3Config.Svc.MatchSvc().Match(
+            var regionalMatch = new R3Config.Svc.PatchMatchService().Match(
                 gowAscensionCanary,
-                [new R3Game(
+                [new Rpcs3GameDescriptor(
                     target.Serial,
                     target.Title,
                     @"C:\Games\" + target.Serial,
@@ -1879,7 +1879,7 @@ static void App_Pat()
                 $"Expected Canary region/version coverage to match {target.Serial} v{version} using the declared runtime hash.");
         }
     }
-    var gowWrongVersionMatch = new R3Config.Svc.MatchSvc().Match(
+    var gowWrongVersionMatch = new R3Config.Svc.PatchMatchService().Match(
         gowAscensionCanary,
         [gowAscensionGame with
         {
@@ -1897,7 +1897,7 @@ static void App_Pat()
             "01.11",
             "01.12"),
         "Expected an unsupported Canary game version to stay visible with the installed and required versions explained.");
-    var gowAscensionCompiled = new SelComp().Compile(
+    var gowAscensionCompiled = new PatchSelectionCompiler().Compile(
         File.ReadAllText(bundledCanaryDataPath),
         [gowAscensionCanaryMatch],
         [gowAscensionCanaryMatch]);
@@ -1917,7 +1917,7 @@ static void App_Pat()
         bundledCanaryItem.StateDsp == UiText.GetText("Patch.State.Ready") &&
         !bundledCanaryItem.IsSel,
         "Expected a bundled Canary option to remain explicitly not merged and never preselected.");
-    var importedCanaryMatch = new R3Config.Svc.MatchSvc().Match(
+    var importedCanaryMatch = new R3Config.Svc.PatchMatchService().Match(
         gowAscensionCanary with { Source = PatSrc.Imported },
         [gowAscensionGame]);
     var importedCanaryItem = new PatItVm(
@@ -1949,7 +1949,7 @@ static void App_Pat()
             gowAscensionCanary.Hash,
             StringComparison.OrdinalIgnoreCase) &&
         entry.Title == "Unlock FPS");
-    var crossChannelMerge = new PatMerge().Merge(
+    var crossChannelMerge = new PatchCatalogMergeService().Merge(
         new R3Config.Mdl.PatCat("1.2", [gowAscensionCanary]),
         new R3Config.Mdl.PatCat("1.2", [gowAscensionFpsCheat]));
     Assert(
@@ -1960,14 +1960,14 @@ static void App_Pat()
     var crossChannelPreview = new PatPrev();
     crossChannelPreview.Load(
         crossChannelMerge.Entries
-            .Select(entry => new MatchSvc().Match(entry, [gowAscensionGame]))
+            .Select(entry => new PatchMatchService().Match(entry, [gowAscensionGame]))
             .ToArray(),
         "Canary and Artemis catalogs");
     Assert(
         crossChannelPreview.CanItems.Any(item => item.Title == "Unlock FPS") &&
         crossChannelPreview.ChtItems.Any(item => item.Title == "Unlock FPS"),
         "Expected the God of War Ascension Unlock FPS Canary option to remain visible beside the distinct Artemis cheat.");
-    var gowAscensionCheatMatch = new R3Config.Svc.MatchSvc().Match(
+    var gowAscensionCheatMatch = new R3Config.Svc.PatchMatchService().Match(
         gowAscensionCheat,
         [gowAscensionGame]);
     var bundledCheatItem = new PatItVm(
@@ -1977,7 +1977,7 @@ static void App_Pat()
         bundledCheatItem.DefState == UiText.GetText("Patch.Definition.NotPrepared") &&
         !bundledCheatItem.IsDef,
         "Expected a bundled Artemis cheat to say that its game patch definition is not prepared yet.");
-    var managedCheatMatch = new R3Config.Svc.MatchSvc().Match(
+    var managedCheatMatch = new R3Config.Svc.PatchMatchService().Match(
         gowAscensionCheat with { Source = PatSrc.ManCht },
         [gowAscensionGame]);
     var managedCheatItem = new PatItVm(
@@ -1993,9 +1993,9 @@ static void App_Pat()
             "d0c3e2a107c47d20d3316325ce6f75464a8f4f1d",
             StringComparison.OrdinalIgnoreCase) &&
         entry.Title == "(Experimental) Disable visual effects");
-    var infamousEuropeanMatch = new R3Config.Svc.MatchSvc().Match(
+    var infamousEuropeanMatch = new R3Config.Svc.PatchMatchService().Match(
         infamousCanary,
-        [new R3Game(
+        [new Rpcs3GameDescriptor(
             "BCES00220",
             "inFamous",
             @"C:\Games\BCES00220",
@@ -2005,9 +2005,9 @@ static void App_Pat()
     Assert(
         infamousEuropeanMatch.Status == MatStat.Match,
         "Expected the d0c3 inFamous Canary definition to retain its declared European serial scope.");
-    var infamousCrossRegionMatch = new R3Config.Svc.MatchSvc().Match(
+    var infamousCrossRegionMatch = new R3Config.Svc.PatchMatchService().Match(
         infamousCanary,
-        [new R3Game(
+        [new Rpcs3GameDescriptor(
             "BCUS98119",
             "inFamous",
             @"C:\Games\BCUS98119",
@@ -2022,9 +2022,9 @@ static void App_Pat()
             "412a9bf323b4743de21658a286f71dbe82cad807",
             StringComparison.OrdinalIgnoreCase) &&
         entry.Title == "(Experimental) Disable visual effects");
-    var infamousAmericanMatch = new R3Config.Svc.MatchSvc().Match(
+    var infamousAmericanMatch = new R3Config.Svc.PatchMatchService().Match(
         infamousAmericanCanary,
-        [new R3Game(
+        [new Rpcs3GameDescriptor(
             "BCUS98119",
             "inFamous",
             @"C:\Games\BCUS98119",
@@ -2034,7 +2034,7 @@ static void App_Pat()
     Assert(
         infamousAmericanMatch.Status == MatStat.Match,
         "Expected BCUS98119 to use the separate 412a Canary runtime identity declared by the source.");
-    var infamousCanaryCompiled = new SelComp().Compile(
+    var infamousCanaryCompiled = new PatchSelectionCompiler().Compile(
         File.ReadAllText(bundledCanaryDataPath),
         [infamousEuropeanMatch],
         [infamousEuropeanMatch]);
@@ -2222,7 +2222,7 @@ static void App_Pat()
         var exePath = Path.Combine(installRoot, "rpcs3.exe");
         File.WriteAllBytes(exePath, []);
 
-        var install = InstSvc.FromExe(exePath);
+        var install = Rpcs3InstallService.FromExe(exePath);
         var expectedConfigPath = Path.Combine(installRoot, "config");
         var expectedCustomConfigsPath = Path.Combine(expectedConfigPath, "custom_configs");
 
@@ -2253,7 +2253,7 @@ static void App_Pat()
         "Expected duplicate Canary patch names to be handled by a deterministic skip path.");
     Assert(!importService.Contains("WriteManagedImportedPatch", StringComparison.Ordinal),
         "Expected the obsolete direct managed Canary writer to be removed.");
-    Assert(importService.Contains("CanStage PrepFile", StringComparison.Ordinal),
+    Assert(importService.Contains("CanStage PrepareManagedImportedPatchFile", StringComparison.Ordinal),
         "Expected managed Canary output to support write-free transaction staging.");
     Assert(importService.Contains("CanStage PrepDel", StringComparison.Ordinal) &&
            !importService.Contains("File.Move", StringComparison.Ordinal) &&
@@ -2290,7 +2290,7 @@ static void App_Pat()
     var patchMutationUseCase = File.ReadAllText(patchMutationUseCasePath);
     var composition = File.ReadAllText(compositionPath);
     var mutationGuard = File.ReadAllText(mutationGuardPath);
-    Assert(appFlow.Contains("_cases.PatMut.ApplyTxn", StringComparison.Ordinal) &&
+    Assert(appFlow.Contains("_cases.PatchMutation.ApplyTxn", StringComparison.Ordinal) &&
            !appFlow.Contains("PrepareImportedPatchFile", StringComparison.Ordinal) &&
            !appFlow.Contains("PrepareManagedPatchFile", StringComparison.Ordinal) &&
            !appFlow.Contains("PrepareBundledCanaryPatch", StringComparison.Ordinal),
@@ -2299,8 +2299,8 @@ static void App_Pat()
            patchMutationUseCase.Contains("bundledCheats.Prep(", StringComparison.Ordinal) &&
            patchMutationUseCase.Contains("applyService.ApplyTxn", StringComparison.Ordinal),
         "Expected the patch mutation use case to stage Canary/Cheat outputs before one transaction.");
-    Assert(composition.Contains("new PatTxn", StringComparison.Ordinal) &&
-           composition.Contains("new MutGuard", StringComparison.Ordinal),
+    Assert(composition.Contains("new PatchFileTransactionService", StringComparison.Ordinal) &&
+           composition.Contains("new Rpcs3MutationGuard", StringComparison.Ordinal),
         "Expected the composition root to share transaction and mutation-guard dependencies.");
     Assert(mutationGuard.Contains("IsR3", StringComparison.Ordinal) &&
            mutationGuard.Contains("IsChild", StringComparison.Ordinal),
@@ -2314,7 +2314,7 @@ static void App_Pat()
     Assert(bundledCanaryText.Contains("PPU-", StringComparison.Ordinal),
         "Expected bundled Canary data to include PPU patch entries.");
 
-    var normalizedCanary = new R3Config.Svc.ImpSvc().Norm(bundledCanaryText);
+    var normalizedCanary = new R3Config.Svc.CanaryPatchImportService().Norm(bundledCanaryText);
     Assert(normalizedCanary.IsOk, "Expected bundled Canary data to normalize without duplicate-name failures: " + normalizedCanary.Error);
 
     var canaryRead = new R3Config.Svc.ReadSvc().ReadText(normalizedCanary.NormText, isCanarySource: true);
@@ -2328,7 +2328,7 @@ static void App_Pat()
     Assert(canaryRead.Catalog.Entries.All(entry => entry.Risk == PatRisk.Canary),
         "Expected bundled Canary entries to be classified as Canary.");
 
-    var normalizedSpuCanary = new R3Config.Svc.ImpSvc().Norm(
+    var normalizedSpuCanary = new R3Config.Svc.CanaryPatchImportService().Norm(
         "Version: 1.2\n" +
         "SPU-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:\n" +
         "  \"SPU Canary\":\n" +
@@ -2462,7 +2462,7 @@ static void Cat_Dup()
 
     var base57Patch = strictHashRead.Catalog.Entries.Single(entry =>
         entry.Title == "RPCS3 PRX Base57 Hash");
-    var base57Game = new R3Game(
+    var base57Game = new Rpcs3GameDescriptor(
         Serial: "BLUS00001",
         Title: "Hash Game",
         InstPath: @"C:\Games\HashGame",
@@ -2472,7 +2472,7 @@ static void Cat_Dup()
         HashSrc: "RPCS3.log",
         HashMsg: "Base57 normalization regression.",
         PrxRaw: ["728fc4496a4c347a654ab54d3e3f0e44ed3c9af5-0"]);
-    var base57Match = new R3Config.Svc.MatchSvc().Match(base57Patch, [base57Game]);
+    var base57Match = new R3Config.Svc.PatchMatchService().Match(base57Patch, [base57Game]);
     Assert(base57Match.Status == MatStat.Match,
         "Expected RPCS3 PRX Base57 runtime keys to match canonical module evidence.");
 
@@ -2516,12 +2516,12 @@ static void Pat_Cmp(string tempRoot)
            ovlKey.Kind == HashKind.Ovl,
         "Expected hexadecimal OVL runtime keys to be recognized.");
 
-    var compatibility = new PatCmp();
+    var compatibility = new PatchCompatibilityService();
     var target = new R3PatTgt(
         "Compatibility Game",
         serial,
         [version]);
-    var exactGame = new R3Game(
+    var exactGame = new Rpcs3GameDescriptor(
         Serial: serial,
         Title: "Compatibility Game",
         InstPath: tempRoot,
@@ -2549,8 +2549,8 @@ static void Pat_Cmp(string tempRoot)
         var exact = compatibility.Evaluate(patch, [exactGame]);
         Assert(exact.Cmp is
                {
-                   Verdict: CmpVerd.Compat,
-                   Code: CmpCode.ExactId,
+                   Verdict: PatchCompatibilityVerdict.Compat,
+                   Code: PatchCompatibilityReasonCode.ExactId,
                    CanOn: true
                },
             $"Expected {source} to use the same exact compatibility decision.");
@@ -2564,8 +2564,8 @@ static void Pat_Cmp(string tempRoot)
             }]);
         Assert(runtimeGuarded.Cmp is
                {
-                   Verdict: CmpVerd.Guarded,
-                   Code: CmpCode.R3Guard,
+                   Verdict: PatchCompatibilityVerdict.Guarded,
+                   Code: PatchCompatibilityReasonCode.R3Guard,
                    CanOn: true,
                    UseGuard: true
                },
@@ -2584,8 +2584,8 @@ static void Pat_Cmp(string tempRoot)
         [exactGame with { Version = "02.00" }]);
     Assert(wrongVersion.Cmp is
            {
-               Verdict: CmpVerd.Blocked,
-               Code: CmpCode.VerBad,
+               Verdict: PatchCompatibilityVerdict.Blocked,
+               Code: PatchCompatibilityReasonCode.VerBad,
                CanOn: false,
                CanOff: true
             },
@@ -2597,7 +2597,7 @@ static void Pat_Cmp(string tempRoot)
     Assert(authoritativeHashMismatch.Status == MatStat.HashBad &&
            authoritativeHashMismatch.Cmp is
            {
-               Code: CmpCode.ExeBad,
+               Code: PatchCompatibilityReasonCode.ExeBad,
                CanOn: false,
                CanOff: true
             },
@@ -2614,7 +2614,7 @@ static void Pat_Cmp(string tempRoot)
                MatStat.Unknown &&
            staleCacheOnly.Cmp is
            {
-               Verdict: CmpVerd.Guarded,
+               Verdict: PatchCompatibilityVerdict.Guarded,
                CanOn: true
            },
         "Expected a non-matching stale cache entry not to become false incompatibility; RPCS3 remains the runtime guard.");
@@ -2651,7 +2651,7 @@ static void Pat_Cmp(string tempRoot)
             PrxRaw = [exactHash + "-0"]
         }]);
     Assert(prxExact.Cmp?.Verdict ==
-               CmpVerd.Compat,
+               PatchCompatibilityVerdict.Compat,
         "Expected PRX runtime evidence to produce an exact compatibility decision.");
 
     var ovlPatch = NewPatch(
@@ -2668,7 +2668,7 @@ static void Pat_Cmp(string tempRoot)
             OvlRaw = [exactHash]
         }]);
     Assert(ovlExact.Cmp?.Verdict ==
-               CmpVerd.Compat,
+               PatchCompatibilityVerdict.Compat,
         "Expected OVL runtime evidence to produce an exact compatibility decision.");
 
     var scopedToAnotherGame = officialPatch with
@@ -2680,7 +2680,7 @@ static void Pat_Cmp(string tempRoot)
         [exactGame]);
     Assert(scopeMismatch.Cmp is
            {
-               Code: CmpCode.KeySerBd,
+               Code: PatchCompatibilityReasonCode.KeySerBd,
                CanOn: false
            },
         "Expected a TITLE_ID-prefixed runtime key for another game to be blocked.");
@@ -2690,7 +2690,7 @@ static void Pat_Cmp(string tempRoot)
         [exactGame with { PpuHash = null }]);
     Assert(unknownSource.Cmp is
            {
-               Code: CmpCode.Guard,
+               Code: PatchCompatibilityReasonCode.Guard,
                CanOn: false
            },
         "Expected an unknown source to require exact local hash evidence.");
@@ -2710,7 +2710,7 @@ static void Pat_Cmp(string tempRoot)
         [exactGame with { PpuHash = null }]);
     Assert(globalWithoutHash.Cmp is
            {
-               Code: CmpCode.Hash,
+               Code: PatchCompatibilityReasonCode.Hash,
                CanOn: false
            },
         "Expected All/All definitions to require an exact local hash before showing for a selected game.");
@@ -2721,7 +2721,7 @@ static void Pat_Cmp(string tempRoot)
     File.WriteAllText(portableExe, string.Empty);
     var portableData = Path.Combine(layoutRoot, "portable");
     Directory.CreateDirectory(portableData);
-    var portableInstall = InstSvc.FromExe(portableExe);
+    var portableInstall = Rpcs3InstallService.FromExe(portableExe);
     Assert(portableInstall.DataRoot == portableData &&
            portableInstall.CfgPath == Path.Combine(portableData, "config") &&
            portableInstall.PatPath == Path.Combine(portableData, "patches"),
@@ -2739,7 +2739,7 @@ static void Pat_Cmp(string tempRoot)
         Environment.SetEnvironmentVariable(
             "RPCS3_CONFIG_DIR",
             configuredData);
-        var configuredInstall = InstSvc.FromExe(envExe);
+        var configuredInstall = Rpcs3InstallService.FromExe(envExe);
         Assert(configuredInstall.DataRoot == configuredData &&
                configuredInstall.PatCfg == Path.Combine(
                    configuredData,
@@ -2793,9 +2793,9 @@ static void Pat_Cmp(string tempRoot)
     Directory.SetLastWriteTimeUtc(
         olderCacheProofEntry,
         DateTime.UtcNow.AddMinutes(-5));
-    var cacheProofInstall = InstSvc.FromExe(
+    var cacheProofInstall = Rpcs3InstallService.FromExe(
         cacheProofExe);
-    var cacheProofIdentity = new HashPrb().Enrich(
+    var cacheProofIdentity = new PatchHashProbeService().Enrich(
         cacheProofInstall,
         exactGame with
         {
@@ -2838,7 +2838,7 @@ static void Pat_Cmp(string tempRoot)
     Directory.SetLastWriteTimeUtc(
         moduleCacheProofEntry,
         DateTime.UtcNow.AddMinutes(-1));
-    var multiModuleIdentity = new HashPrb().Enrich(
+    var multiModuleIdentity = new PatchHashProbeService().Enrich(
         cacheProofInstall,
         exactGame with
         {
@@ -2858,7 +2858,7 @@ static void Pat_Cmp(string tempRoot)
     File.SetLastWriteTimeUtc(
         cacheProofEboot,
         DateTime.UtcNow.AddMinutes(-1));
-    var staleCacheIdentity = new HashPrb().Enrich(
+    var staleCacheIdentity = new PatchHashProbeService().Enrich(
         cacheProofInstall,
         exactGame with
         {
@@ -2880,8 +2880,8 @@ static void Pat_Cmp(string tempRoot)
         $"sys_spu: Loaded SPU image: SPU-{otherHash} (<- 0){Environment.NewLine}" +
         $"ppu_loader: PRX hash of module[0]: PRX-{prxBase57}-0{Environment.NewLine}" +
         $"ppu_loader: OVL hash of overlay: OVL-{otherHash}{Environment.NewLine}");
-    var probeInstall = InstSvc.FromExe(probeExe);
-    var probedIdentity = new HashPrb().Enrich(
+    var probeInstall = Rpcs3InstallService.FromExe(probeExe);
+    var probedIdentity = new PatchHashProbeService().Enrich(
         probeInstall,
         exactGame with
         {
@@ -2899,14 +2899,14 @@ static void Pat_Cmp(string tempRoot)
 
     Console.WriteLine("Unified patch compatibility architecture PASS.");
 
-    static PatEntry NewPatch(
+    static Rpcs3PatchEntry NewPatch(
         string title,
         HashKind kind,
         string hash,
         R3PatTgt target,
         PatSrc source)
     {
-        return new PatEntry(
+        return new Rpcs3PatchEntry(
             Title: title,
             HashKind: kind,
             Hash: hash,
@@ -2959,14 +2959,14 @@ static void Cht_Bndl(string tempRoot)
     var reader = new R3Config.Svc.ReadSvc();
     var read = reader.ReadText(sourceText, PatSrc.Cht, "cheats.yml");
     Assert(read.IsOk, "Expected duplicate community cheat titles to be readable: " + read.Error);
-    var merged = new PatMerge().Merge(read.Catalog);
+    var merged = new PatchCatalogMergeService().Merge(read.Catalog);
     Assert(merged.Entries.Count == 2, "Expected duplicate cheat versions to merge deterministically.");
     Assert(merged.Entries.All(entry => entry.Risk == PatRisk.Cheat),
         "Expected bundled community entries to be forced into explicit Cheat handling.");
     Assert(merged.Entries.Single(entry => entry.Title == "Infinite Health").PatVer == "1.1",
         "Expected the newer duplicate cheat patch version to win.");
 
-    var game = new R3Game(
+    var game = new Rpcs3GameDescriptor(
         "BLUS00001",
         "Compiler Game",
         @"C:\Games\BLUS00001",
@@ -2974,12 +2974,12 @@ static void Cht_Bndl(string tempRoot)
         hash,
         null);
     var matches = merged.Entries
-        .Select(entry => new MatchSvc().Match(entry, [game]))
+        .Select(entry => new PatchMatchService().Match(entry, [game]))
         .ToArray();
     Assert(matches.All(match => match.Status == MatStat.Match),
         "Expected compiler smoke selections to require exact serial/version/hash evidence.");
 
-    var compiler = new SelComp();
+    var compiler = new PatchSelectionCompiler();
     var compiled = compiler.Compile(
         sourceText,
         [matches.Single(match => match.Patch.Title == "Infinite Health")]);
@@ -2997,7 +2997,7 @@ static void Cht_Bndl(string tempRoot)
         PpuHash = null,
         PpuRaw = []
     };
-    var runtimeGuardedMatch = new R3Config.Svc.MatchSvc().Match(
+    var runtimeGuardedMatch = new R3Config.Svc.PatchMatchService().Match(
         merged.Entries.Single(entry => entry.Title == "Infinite Health"),
         [runtimeGuardedGame]);
     Assert(runtimeGuardedMatch.Status == MatStat.Unknown &&
@@ -3033,7 +3033,7 @@ static void Cht_Bndl(string tempRoot)
         "cheats.yml");
     Assert(conflictRead.IsOk,
         "Expected same-version conflict source to parse before merge validation: " + conflictRead.Error);
-    var conflictMerge = new PatMerge().Merge(conflictRead.Catalog);
+    var conflictMerge = new PatchCatalogMergeService().Merge(conflictRead.Catalog);
     Assert(conflictMerge.Entries.Count == 0,
         "Expected every same-version conflicting duplicate definition to be rejected.");
     Assert(conflictMerge.Diag.Any(diagnostic =>
@@ -3097,7 +3097,7 @@ static void Cht_Bndl(string tempRoot)
     Assert(integrityRead.IsOk,
         "Expected dependency/group integrity source to parse: " + integrityRead.Error);
     var integrityMatches = integrityRead.Catalog.Entries
-        .Select(entry => new MatchSvc().Match(entry, [game]))
+        .Select(entry => new PatchMatchService().Match(entry, [game]))
         .ToArray();
     var dependencyOnly = compiler.Compile(
         integritySourceText,
@@ -3137,18 +3137,18 @@ static void Cht_Bndl(string tempRoot)
     var patchesPath = Path.Combine(libraryRoot, "rpcs3", "patches");
     Directory.CreateDirectory(dataPath);
     Directory.CreateDirectory(patchesPath);
-    File.WriteAllText(Path.Combine(dataPath, ChtBndl.BndlName), sourceText);
-    var oldLib = Path.Combine(patchesPath, ChtBndl.OldName);
-    var oldText = ChtBndl.ManMark + "\r\n" + compiled.PatText;
+    File.WriteAllText(Path.Combine(dataPath, BundledCheatPatchService.BndlName), sourceText);
+    var oldLib = Path.Combine(patchesPath, BundledCheatPatchService.OldName);
+    var oldText = BundledCheatPatchService.ManMark + "\r\n" + compiled.PatText;
     File.WriteAllText(oldLib, oldText);
 
-    var service = new ChtBndl();
+    var service = new BundledCheatPatchService();
     var managedPath = Path.Combine(
         patchesPath,
         "BLUS00001_patch.yml");
     Assert(
         managedPath.Equals(
-            ChtBndl.GetPath(
+            BundledCheatPatchService.GetPath(
                 patchesPath,
                 "BLUS00001"),
             StringComparison.OrdinalIgnoreCase),
@@ -3158,15 +3158,15 @@ static void Cht_Bndl(string tempRoot)
         libraryRoot,
         [matches.Single(match => match.Patch.Title == "Infinite Health")]);
     Assert(stagedFirst.IsOk &&
-           stagedFirst.PrepFile is not null &&
+           stagedFirst.PreparedFile is not null &&
            stagedFirst.Extra.Count == 1 &&
            stagedFirst.Extra[0].TgtPath.Equals(
-               ChtBndl.GetPath(patchesPath),
+               BundledCheatPatchService.GetPath(patchesPath),
                StringComparison.OrdinalIgnoreCase) &&
            !File.Exists(managedPath),
         $"Expected Cheat preparation to stage both the runtime target and legacy-library migration without touching disk. Error={stagedFirst.Error}; Extra={stagedFirst.Extra.Count}");
 
-    var cheatTxn = new PatTxn();
+    var cheatTxn = new PatchFileTransactionService();
     var cheatBackupRoot = Path.Combine(
         libraryRoot,
         "rpcs3",
@@ -3174,13 +3174,13 @@ static void Cht_Bndl(string tempRoot)
         "R3Bkp");
     var firstBackup = cheatTxn.Commit(
         cheatBackupRoot,
-        [stagedFirst.PrepFile!, .. stagedFirst.Extra]);
+        [stagedFirst.PreparedFile!, .. stagedFirst.Extra]);
     Assert(File.Exists(managedPath) &&
            firstBackup.Files.Single(file => file.TgtPath.Equals(
                managedPath,
                StringComparison.OrdinalIgnoreCase)).Existed == false,
         "Expected first exact cheat preparation to commit through the transaction with Existed=false backup state.");
-    var newLib = ChtBndl.GetPath(patchesPath);
+    var newLib = BundledCheatPatchService.GetPath(patchesPath);
     Assert(File.Exists(newLib) &&
            File.Exists(oldLib) &&
            File.ReadAllBytes(newLib).SequenceEqual(File.ReadAllBytes(oldLib)),
@@ -3191,12 +3191,12 @@ static void Cht_Bndl(string tempRoot)
         libraryRoot,
         [matches.Single(match => match.Patch.Title == "Max Orbs")]);
     Assert(stagedSecond.IsOk &&
-           stagedSecond.PrepFile is not null &&
+           stagedSecond.PreparedFile is not null &&
            stagedSecond.Extra.Count == 0,
         "Expected second exact cheat preparation to produce transaction content: " + stagedSecond.Error);
     var secondBackup = cheatTxn.Commit(
         cheatBackupRoot,
-        [stagedSecond.PrepFile!]);
+        [stagedSecond.PreparedFile!]);
     Assert(secondBackup.Files.Single() is
            { Existed: true, BkpPath: not null } &&
            File.Exists(secondBackup.Files.Single().BkpPath),
@@ -3222,10 +3222,10 @@ static void Pat_Txn(string tempRoot)
 
     var importedPath = Path.Combine(
         patchesPath,
-        R3Config.Svc.ImpSvc.ImpName);
+        R3Config.Svc.CanaryPatchImportService.ImpName);
     var cheatPath = Path.Combine(
         patchesPath,
-        ChtBndl.ManName);
+        BundledCheatPatchService.ManName);
     var patchConfigPath = Path.Combine(
         configPath,
         "patch_config.yml");
@@ -3277,13 +3277,13 @@ static void Pat_Txn(string tempRoot)
         "01.00",
         "0x00001004");
 
-    var canaryPrepared = new PrepFile(
+    var canaryPrepared = new PatchPreparedFile(
         importedPath,
         canaryText,
         PrepKind.PatCat,
         PatSrc.Imported,
         EntNum: 1);
-    var cheatPrepared = new PrepFile(
+    var cheatPrepared = new PatchPreparedFile(
         cheatPath,
         cheatText,
         PrepKind.PatCat,
@@ -3296,11 +3296,11 @@ static void Pat_Txn(string tempRoot)
         "BLUS20000",
         "01.00",
         R3Config.Mdl.PatRisk.Canary);
-    var plan = new R3Config.Mdl.PatPlan(
+    var plan = new R3Config.Mdl.PatchApplyPlan(
         patchConfigPath,
         [change]);
 
-    var service = new PatApply();
+    var service = new PatchApplyService();
     var success = service.ApplyTxn(
         plan,
         backupRoot,
@@ -3329,11 +3329,11 @@ static void Pat_Txn(string tempRoot)
     Assert(File.ReadAllText(importedPath, Encoding.UTF8) == enabledImportedText &&
            File.ReadAllText(cheatPath, Encoding.UTF8) == enabledCheatText,
         "Expected disabling Canary or Artemis state not to delete or rewrite their resident definitions.");
-    new BkpSvc().Restore(disableResult.Backup);
+    new BackupService().Restore(disableResult.Backup);
     Assert(new CfgRead().IsOn(patchConfigPath, change),
         "Expected restoring the disable backup to recover the previous enabled state.");
 
-    new BkpSvc().Restore(success.Backup);
+    new BackupService().Restore(success.Backup);
     Assert(File.ReadAllText(importedPath, Encoding.UTF8) == originalImported,
         "Expected transaction backup restore to recover imported_patch.yml.");
     Assert(File.ReadAllText(cheatPath, Encoding.UTF8) == originalCheat,
@@ -3347,7 +3347,7 @@ static void Pat_Txn(string tempRoot)
     var invalidStagePath = Path.Combine(
         patchesPath,
         "invalid_stage_patch.yml");
-    var invalidPrepared = new PrepFile(
+    var invalidPrepared = new PatchPreparedFile(
         invalidStagePath,
         "Version: [broken",
         PrepKind.PatCat,
@@ -3378,7 +3378,7 @@ static void Pat_Txn(string tempRoot)
     }
 
     var commitCount = 0;
-    var failingTransaction = new PatTxn(
+    var failingTransaction = new PatchFileTransactionService(
         commitFile: (stagedPath, targetPath) =>
         {
             commitCount++;
@@ -3401,7 +3401,7 @@ static void Pat_Txn(string tempRoot)
                 File.Move(stagedPath, targetPath);
             }
         });
-    var failingService = new PatApply(
+    var failingService = new PatchApplyService(
         transaction: failingTransaction);
 
     try
@@ -3450,8 +3450,8 @@ static void Can_Txn(string tempRoot)
     Directory.CreateDirectory(patchesPath);
     File.WriteAllBytes(exePath, []);
 
-    var install = InstSvc.FromExe(exePath);
-    var importedPath = R3Paths.ImpPat(install);
+    var install = Rpcs3InstallService.FromExe(exePath);
+    var importedPath = Rpcs3AppPaths.ImpPat(install);
     var officialPath = Path.Combine(patchesPath, "patch.yml");
     var officialBytes = Encoding.UTF8.GetBytes(
         "Version: 1.2\r\n# RPCS3-owned test catalog\r\n");
@@ -3471,19 +3471,19 @@ static void Can_Txn(string tempRoot)
         "0x00000300");
 
     var normalizeOnlyRoot = Path.Combine(root, "normalize-read-only");
-    var normalize = new R3Config.Svc.ImpSvc().Norm(newManaged);
+    var normalize = new R3Config.Svc.CanaryPatchImportService().Norm(newManaged);
     Assert(normalize.IsOk && !Directory.Exists(normalizeOnlyRoot),
         "Expected Canary normalization to remain deterministic and free of filesystem side effects.");
 
     var reader = new R3Config.Svc.ReadSvc();
-    var backup = new BkpSvc();
-    var transaction = new PatTxn(
+    var backup = new BackupService();
+    var transaction = new PatchFileTransactionService(
         backup,
         reader,
         new CfgRead());
-    var useCase = new R3Config.Case.CanImp(
-        new R3Config.Svc.ImpSvc(reader),
-        new MutGuard(() => false),
+    var useCase = new R3Config.Application.CanaryImportUseCase(
+        new R3Config.Svc.CanaryPatchImportService(reader),
+        new Rpcs3MutationGuard(() => false),
         transaction,
         backup,
         reader);
@@ -3493,11 +3493,11 @@ static void Can_Txn(string tempRoot)
         "Expected a missing imported_patch.yml to be created transactionally: " + missingResult.Error);
     var missingText = File.ReadAllText(importedPath, Encoding.UTF8);
     Assert(missingText.StartsWith(
-               ImpSvc.VerHead,
+               CanaryPatchImportService.VerHead,
                StringComparison.Ordinal),
         "Expected a newly imported Canary catalog to start with Version: 1.2.");
     var missingSnapshots = backup.ListBkp(
-        R3Paths.BkpRoot(install));
+        Rpcs3AppPaths.BkpRoot(install));
     Assert(missingSnapshots.Count == 1 &&
            missingSnapshots[0].Files.Count == 1 &&
            !missingSnapshots[0].Files[0].Existed &&
@@ -3534,23 +3534,23 @@ static void Can_Txn(string tempRoot)
         "Expected replacement to keep manual content and emit exactly one managed marker.");
 
     var snapshotsBeforeReplay = backup.ListBkp(
-        R3Paths.BkpRoot(install)).Count;
+        Rpcs3AppPaths.BkpRoot(install)).Count;
     var bytesBeforeReplay = File.ReadAllBytes(importedPath);
     var replayResult = useCase.Import(install, newManaged);
     Assert(replayResult.IsOk &&
            replayResult.BkpPath is null &&
            File.ReadAllBytes(importedPath).SequenceEqual(bytesBeforeReplay) &&
-           backup.ListBkp(R3Paths.BkpRoot(install)).Count == snapshotsBeforeReplay,
+           backup.ListBkp(Rpcs3AppPaths.BkpRoot(install)).Count == snapshotsBeforeReplay,
         "Expected identical Canary import replay to be byte-idempotent without a new backup.");
 
     File.WriteAllText(importedPath, "Version: [broken", Encoding.UTF8);
     var invalidBefore = File.ReadAllBytes(importedPath);
     var snapshotsBeforeInvalid = backup.ListBkp(
-        R3Paths.BkpRoot(install)).Count;
+        Rpcs3AppPaths.BkpRoot(install)).Count;
     var invalidResult = useCase.Import(install, newManaged);
     Assert(!invalidResult.IsOk &&
            File.ReadAllBytes(importedPath).SequenceEqual(invalidBefore) &&
-           backup.ListBkp(R3Paths.BkpRoot(install)).Count == snapshotsBeforeInvalid &&
+           backup.ListBkp(Rpcs3AppPaths.BkpRoot(install)).Count == snapshotsBeforeInvalid &&
            File.ReadAllBytes(officialPath).SequenceEqual(officialBytes),
         "Expected malformed existing YAML to block import with zero target or backup changes.");
 
@@ -3568,13 +3568,13 @@ static void Can_Txn(string tempRoot)
     File.WriteAllText(importedPath, manual, Encoding.UTF8);
     var stageBefore = File.ReadAllBytes(importedPath);
     var snapshotsBeforeStageFailure = backup.ListBkp(
-        R3Paths.BkpRoot(install)).Count;
+        Rpcs3AppPaths.BkpRoot(install)).Count;
     try
     {
         transaction.Commit(
-            R3Paths.BkpRoot(install),
+            Rpcs3AppPaths.BkpRoot(install),
             [
-                new PrepFile(
+                new PatchPreparedFile(
                     importedPath,
                     "Version: [broken",
                     PrepKind.PatCat,
@@ -3586,13 +3586,13 @@ static void Can_Txn(string tempRoot)
     catch (InvalidDataException)
     {
         Assert(File.ReadAllBytes(importedPath).SequenceEqual(stageBefore) &&
-               backup.ListBkp(R3Paths.BkpRoot(install)).Count == snapshotsBeforeStageFailure,
+               backup.ListBkp(Rpcs3AppPaths.BkpRoot(install)).Count == snapshotsBeforeStageFailure,
             "Expected stage validation failure before backup or target mutation.");
     }
 
-    var commitFailureBackup = new BkpSvc();
+    var commitFailureBackup = new BackupService();
     var commitFailureReader = new R3Config.Svc.ReadSvc();
-    var commitFailureTransaction = new PatTxn(
+    var commitFailureTransaction = new PatchFileTransactionService(
         commitFailureBackup,
         commitFailureReader,
         new CfgRead(),
@@ -3601,9 +3601,9 @@ static void Can_Txn(string tempRoot)
             File.Copy(stagedPath, targetPath, overwrite: true);
             throw new IOException("Simulated Canary commit failure.");
         });
-    var commitFailureUseCase = new R3Config.Case.CanImp(
-        new R3Config.Svc.ImpSvc(commitFailureReader),
-        new MutGuard(() => false),
+    var commitFailureUseCase = new R3Config.Application.CanaryImportUseCase(
+        new R3Config.Svc.CanaryPatchImportService(commitFailureReader),
+        new Rpcs3MutationGuard(() => false),
         commitFailureTransaction,
         commitFailureBackup,
         commitFailureReader);
@@ -3615,9 +3615,9 @@ static void Can_Txn(string tempRoot)
            File.ReadAllBytes(importedPath).SequenceEqual(commitBefore),
         "Expected a commit failure after backup to roll imported_patch.yml back byte-for-byte.");
 
-    var readBackFailureBackup = new BkpSvc();
+    var readBackFailureBackup = new BackupService();
     var readBackFailureReader = new R3Config.Svc.ReadSvc();
-    var readBackFailureTransaction = new PatTxn(
+    var readBackFailureTransaction = new PatchFileTransactionService(
         readBackFailureBackup,
         readBackFailureReader,
         new CfgRead(),
@@ -3626,9 +3626,9 @@ static void Can_Txn(string tempRoot)
             File.Move(stagedPath, targetPath, overwrite: true);
             File.WriteAllText(targetPath, "Version: [broken", Encoding.UTF8);
         });
-    var readBackFailureUseCase = new R3Config.Case.CanImp(
-        new R3Config.Svc.ImpSvc(readBackFailureReader),
-        new MutGuard(() => false),
+    var readBackFailureUseCase = new R3Config.Application.CanaryImportUseCase(
+        new R3Config.Svc.CanaryPatchImportService(readBackFailureReader),
+        new Rpcs3MutationGuard(() => false),
         readBackFailureTransaction,
         readBackFailureBackup,
         readBackFailureReader);
@@ -3653,12 +3653,12 @@ static void Can_Txn(string tempRoot)
     File.WriteAllText(importedPath, userMarkerText, Encoding.UTF8);
     var userMarkerBefore = File.ReadAllBytes(importedPath);
     var userMarkerBackups = backup.ListBkp(
-        R3Paths.BkpRoot(install)).Count;
+        Rpcs3AppPaths.BkpRoot(install)).Count;
     var userMarkerResult = useCase.Remove(install);
     Assert(userMarkerResult.IsOk &&
            userMarkerResult.BkpPath is null &&
            File.ReadAllBytes(importedPath).SequenceEqual(userMarkerBefore) &&
-           backup.ListBkp(R3Paths.BkpRoot(install)).Count ==
+           backup.ListBkp(Rpcs3AppPaths.BkpRoot(install)).Count ==
            userMarkerBackups,
         "Expected marker text in a patch title, Notes value, or ordinary comment not to grant managed ownership.");
 
@@ -3721,9 +3721,9 @@ static void Can_Txn(string tempRoot)
     Assert(useCase.Import(install, oldManaged).IsOk,
         "Expected a fully managed fixture before delete rollback.");
     var deleteRollbackBefore = File.ReadAllBytes(importedPath);
-    var deleteFailureBackup = new BkpSvc();
+    var deleteFailureBackup = new BackupService();
     var deleteFailureReader = new R3Config.Svc.ReadSvc();
-    var deleteFailureTxn = new PatTxn(
+    var deleteFailureTxn = new PatchFileTransactionService(
         deleteFailureBackup,
         deleteFailureReader,
         new CfgRead(),
@@ -3733,9 +3733,9 @@ static void Can_Txn(string tempRoot)
             throw new IOException(
                 "Simulated managed Canary delete commit failure.");
         });
-    var deleteFailureCase = new R3Config.Case.CanImp(
-        new R3Config.Svc.ImpSvc(deleteFailureReader),
-        new MutGuard(() => false),
+    var deleteFailureCase = new R3Config.Application.CanaryImportUseCase(
+        new R3Config.Svc.CanaryPatchImportService(deleteFailureReader),
+        new Rpcs3MutationGuard(() => false),
         deleteFailureTxn,
         deleteFailureBackup,
         deleteFailureReader);
@@ -3753,13 +3753,13 @@ static void Can_Txn(string tempRoot)
 
     File.Delete(importedPath);
     var snapshotsBeforeBlocked = backup.ListBkp(
-        R3Paths.BkpRoot(install)).Count;
+        Rpcs3AppPaths.BkpRoot(install)).Count;
     var blockedReader = new R3Config.Svc.ReadSvc();
-    var blockedBackup = new BkpSvc();
-    var blockedUseCase = new R3Config.Case.CanImp(
-        new R3Config.Svc.ImpSvc(blockedReader),
-        new MutGuard(() => true),
-        new PatTxn(
+    var blockedBackup = new BackupService();
+    var blockedUseCase = new R3Config.Application.CanaryImportUseCase(
+        new R3Config.Svc.CanaryPatchImportService(blockedReader),
+        new Rpcs3MutationGuard(() => true),
+        new PatchFileTransactionService(
             blockedBackup,
             blockedReader,
             new CfgRead()),
@@ -3774,7 +3774,7 @@ static void Can_Txn(string tempRoot)
                patchesPath,
                "*.r3stage",
                SearchOption.TopDirectoryOnly).Any() &&
-           backup.ListBkp(R3Paths.BkpRoot(install)).Count == snapshotsBeforeBlocked &&
+           backup.ListBkp(Rpcs3AppPaths.BkpRoot(install)).Count == snapshotsBeforeBlocked &&
            File.ReadAllBytes(officialPath).SequenceEqual(officialBytes),
         "Expected blocked Canary import to create no target, stage, backup, or patch.yml change.");
 
@@ -3829,8 +3829,8 @@ static void Bkp_Rst(string tempRoot)
     Directory.CreateDirectory(patchesPath);
     File.WriteAllBytes(exePath, []);
 
-    var install = InstSvc.FromExe(exePath);
-    var backupRoot = R3Paths.BkpRoot(install);
+    var install = Rpcs3InstallService.FromExe(exePath);
+    var backupRoot = Rpcs3AppPaths.BkpRoot(install);
     var firstTarget = Path.Combine(
         customConfigsPath,
         "config_BLUS10001.yml");
@@ -3843,8 +3843,8 @@ static void Bkp_Rst(string tempRoot)
 
     File.WriteAllBytes(firstTarget, Encoding.UTF8.GetBytes("backup-first"));
     File.WriteAllBytes(secondTarget, Encoding.UTF8.GetBytes("backup-second"));
-    var backupService = new BkpSvc();
-    var snapshot = BkpSnap(
+    var backupService = new BackupService();
+    var snapshot = BackupSnapshot(
         backupService,
         backupRoot,
         [firstTarget, secondTarget, missingTarget]);
@@ -3860,9 +3860,9 @@ static void Bkp_Rst(string tempRoot)
     File.WriteAllBytes(firstTarget, Encoding.UTF8.GetBytes("current-first"));
     File.WriteAllBytes(secondTarget, Encoding.UTF8.GetBytes("current-second"));
     File.WriteAllBytes(missingTarget, Encoding.UTF8.GetBytes("created-after-backup"));
-    var restoreUseCase = new BkpCase(
+    var restoreUseCase = new BackupUseCase(
         backupService,
-        new MutGuard(() => false));
+        new Rpcs3MutationGuard(() => false));
     restoreUseCase.Restore(install, snapshot);
 
     Assert(File.ReadAllText(firstTarget, Encoding.UTF8) == "backup-first" &&
@@ -3885,14 +3885,14 @@ static void Bkp_Rst(string tempRoot)
         File.ReadAllBytes(firstTarget),
         File.ReadAllBytes(secondTarget)
     };
-    var firstCommitFailure = new BkpSvc(
+    var firstCommitFailure = new BackupService(
         commitRestoreOperation: (_, _, _) =>
             throw new IOException("Simulated first restore commit failure."));
     try
     {
-        new BkpCase(
+        new BackupUseCase(
             firstCommitFailure,
-            new MutGuard(() => false))
+            new Rpcs3MutationGuard(() => false))
             .Restore(install, snapshot);
         throw new InvalidOperationException(
             "Expected the first restore commit to fail.");
@@ -3914,7 +3914,7 @@ static void Bkp_Rst(string tempRoot)
         File.ReadAllBytes(secondTarget)
     };
     var commitIndex = 0;
-    var middleCommitFailure = new BkpSvc(
+    var middleCommitFailure = new BackupService(
         commitRestoreOperation: (stagePath, targetPath, shouldExist) =>
         {
             commitIndex++;
@@ -3931,9 +3931,9 @@ static void Bkp_Rst(string tempRoot)
         });
     try
     {
-        new BkpCase(
+        new BackupUseCase(
             middleCommitFailure,
-            new MutGuard(() => false))
+            new Rpcs3MutationGuard(() => false))
             .Restore(install, snapshot);
         throw new InvalidOperationException(
             "Expected the middle restore commit to fail.");
@@ -3948,7 +3948,7 @@ static void Bkp_Rst(string tempRoot)
     }
 
     var rollbackFailureCommitIndex = 0;
-    var rollbackFailureService = new BkpSvc(
+    var rollbackFailureService = new BackupService(
         commitRestoreOperation: (stagePath, targetPath, shouldExist) =>
         {
             rollbackFailureCommitIndex++;
@@ -3968,9 +3968,9 @@ static void Bkp_Rst(string tempRoot)
                 "Simulated restore rollback error."));
     try
     {
-        new BkpCase(
+        new BackupUseCase(
             rollbackFailureService,
-            new MutGuard(() => false))
+            new Rpcs3MutationGuard(() => false))
             .Restore(install, snapshot);
         throw new InvalidOperationException(
             "Expected restore rollback failure to be surfaced.");
@@ -3994,8 +3994,8 @@ static void Bkp_Rst(string tempRoot)
         "config_BLUS10002.yml");
     File.WriteAllText(validationTarget, "validation-backup", Encoding.UTF8);
 
-    var outsideSnapshot = BkpSnap(
-        new BkpSvc(),
+    var outsideSnapshot = BackupSnapshot(
+        new BackupService(),
         backupRoot,
         [validationTarget]);
     var outsideBackupFile = Path.Combine(root, "outside-backup.bin");
@@ -4003,26 +4003,26 @@ static void Bkp_Rst(string tempRoot)
         outsideSnapshot.Files.Single().BkpPath,
         outsideBackupFile,
         overwrite: true);
-    var outsideManifest = new BkpMan(
+    var outsideManifest = new BackupManifest(
         outsideSnapshot.MadeAt,
         [outsideSnapshot.Files.Single() with { BkpPath = outsideBackupFile }]);
-    BkpMan(outsideSnapshot.DirPath, outsideManifest);
-    var outsideRequest = new BkpSnap(
+    BackupManifest(outsideSnapshot.DirPath, outsideManifest);
+    var outsideRequest = new BackupSnapshot(
         outsideSnapshot.DirPath,
         outsideManifest.MadeAt,
         outsideManifest.Files);
     var outsideBefore = File.ReadAllBytes(validationTarget);
     MustFail<InvalidDataException>(
-        () => new BkpCase(
-                new BkpSvc(),
-                new MutGuard(() => false))
+        () => new BackupUseCase(
+                new BackupService(),
+                new Rpcs3MutationGuard(() => false))
             .Restore(install, outsideRequest),
         "Expected a BackupPath outside its snapshot to be rejected.");
     Assert(File.ReadAllBytes(validationTarget).SequenceEqual(outsideBefore),
         "Expected outside-snapshot validation failure before target mutation.");
 
-    var duplicateSnapshot = BkpSnap(
-        new BkpSvc(),
+    var duplicateSnapshot = BackupSnapshot(
+        new BackupService(),
         backupRoot,
         [firstTarget, secondTarget]);
     var duplicateEntries = duplicateSnapshot.Files.ToArray();
@@ -4030,32 +4030,32 @@ static void Bkp_Rst(string tempRoot)
     {
         BkpPath = duplicateEntries[0].BkpPath
     };
-    var duplicateManifest = new BkpMan(
+    var duplicateManifest = new BackupManifest(
         duplicateSnapshot.MadeAt,
         duplicateEntries);
-    BkpMan(
+    BackupManifest(
         duplicateSnapshot.DirPath,
         duplicateManifest);
     MustFail<InvalidDataException>(
-        () => new BkpSvc().Restore(new BkpSnap(
+        () => new BackupService().Restore(new BackupSnapshot(
             duplicateSnapshot.DirPath,
             duplicateManifest.MadeAt,
             duplicateManifest.Files)),
         "Expected a duplicate BackupPath to be rejected before restore.");
 
-    var badHashSnapshot = BkpSnap(
-        new BkpSvc(),
+    var badHashSnapshot = BackupSnapshot(
+        new BackupService(),
         backupRoot,
         [validationTarget]);
-    var badHashManifest = new BkpMan(
+    var badHashManifest = new BackupManifest(
         badHashSnapshot.MadeAt,
         [badHashSnapshot.Files.Single() with { Sha256 = new string('0', 64) }]);
-    BkpMan(
+    BackupManifest(
         badHashSnapshot.DirPath,
         badHashManifest);
     var badHashBefore = File.ReadAllBytes(validationTarget);
     MustFail<InvalidDataException>(
-        () => new BkpSvc().Restore(new BkpSnap(
+        () => new BackupService().Restore(new BackupSnapshot(
             badHashSnapshot.DirPath,
             badHashManifest.MadeAt,
             badHashManifest.Files)),
@@ -4064,46 +4064,46 @@ static void Bkp_Rst(string tempRoot)
            !HasRst(configPath, patchesPath),
         "Expected hash validation to fail before stages or target writes.");
 
-    var missingBackupSnapshot = BkpSnap(
-        new BkpSvc(),
+    var missingBackupSnapshot = BackupSnapshot(
+        new BackupService(),
         backupRoot,
         [validationTarget]);
     File.Delete(missingBackupSnapshot.Files.Single().BkpPath);
     MustFail<FileNotFoundException>(
-        () => new BkpSvc().Restore(missingBackupSnapshot),
+        () => new BackupService().Restore(missingBackupSnapshot),
         "Expected a missing backup payload to be rejected before restore.");
 
-    var legacySnapshot = BkpSnap(
-        new BkpSvc(),
+    var legacySnapshot = BackupSnapshot(
+        new BackupService(),
         backupRoot,
         [validationTarget]);
-    var legacyManifest = new BkpMan(
+    var legacyManifest = new BackupManifest(
         legacySnapshot.MadeAt,
         [legacySnapshot.Files.Single() with { Length = null, Sha256 = null }]);
-    BkpMan(
+    BackupManifest(
         legacySnapshot.DirPath,
         legacyManifest);
     File.WriteAllText(validationTarget, "changed-after-legacy-backup", Encoding.UTF8);
-    new BkpCase(
-        new BkpSvc(),
-        new MutGuard(() => false))
-        .Restore(install, new BkpSnap(
+    new BackupUseCase(
+        new BackupService(),
+        new Rpcs3MutationGuard(() => false))
+        .Restore(install, new BackupSnapshot(
             legacySnapshot.DirPath,
             legacyManifest.MadeAt,
             legacyManifest.Files));
     Assert(File.ReadAllText(validationTarget, Encoding.UTF8) == "validation-backup",
         "Expected a legacy manifest without length or SHA-256 to restore with basic validation.");
 
-    var runningSnapshot = BkpSnap(
-        new BkpSvc(),
+    var runningSnapshot = BackupSnapshot(
+        new BackupService(),
         backupRoot,
         [validationTarget]);
     File.WriteAllText(validationTarget, "running-process-current", Encoding.UTF8);
     var runningBefore = File.ReadAllBytes(validationTarget);
     MutFails(
-        () => new BkpCase(
-                new BkpSvc(),
-                new MutGuard(() => true))
+        () => new BackupUseCase(
+                new BackupService(),
+                new Rpcs3MutationGuard(() => true))
             .Restore(install, runningSnapshot),
         MutBlock.Running,
         "Expected RPCS3 running to block restore before staging.");
@@ -4113,15 +4113,15 @@ static void Bkp_Rst(string tempRoot)
 
     var outsideTarget = Path.Combine(root, "outside-target.yml");
     File.WriteAllText(outsideTarget, "outside-backup", Encoding.UTF8);
-    var outsideTargetSnapshot = BkpSnap(
-        new BkpSvc(),
+    var outsideTargetSnapshot = BackupSnapshot(
+        new BackupService(),
         backupRoot,
         [outsideTarget]);
     File.WriteAllText(outsideTarget, "outside-current", Encoding.UTF8);
     MutFails(
-        () => new BkpCase(
-                new BkpSvc(),
-                new MutGuard(() => false))
+        () => new BackupUseCase(
+                new BackupService(),
+                new Rpcs3MutationGuard(() => false))
             .Restore(install, outsideTargetSnapshot),
         MutBlock.Tgt,
         "Expected restore targets outside RPCS3 config/patches to be rejected by the central guard.");
@@ -4133,8 +4133,8 @@ static void Bkp_Rst(string tempRoot)
     Console.WriteLine("Validated transactional backup restore tests PASS.");
 }
 
-static BkpSnap BkpSnap(
-    BkpSvc service,
+static BackupSnapshot BackupSnapshot(
+    BackupService service,
     string backupRoot,
     IReadOnlyList<string> targets)
 {
@@ -4144,15 +4144,15 @@ static BkpSnap BkpSnap(
         ?? throw new InvalidOperationException(
             "Expected a snapshot directory for the backup manifest.");
 
-    return new BkpSnap(
+    return new BackupSnapshot(
         directory,
         manifest.MadeAt,
         manifest.Files);
 }
 
-static void BkpMan(
+static void BackupManifest(
     string directory,
-    BkpMan manifest)
+    BackupManifest manifest)
 {
     File.WriteAllText(
         Path.Combine(directory, "manifest.json"),
@@ -4284,7 +4284,7 @@ static void ListFind()
 
 static GameVm MakeGame(string serial, string title, bool isDetectedInRpcs3)
 {
-    var descriptor = new R3Game(serial, title, @"C:\Games\" + serial, "01.00", null, null);
+    var descriptor = new Rpcs3GameDescriptor(serial, title, @"C:\Games\" + serial, "01.00", null, null);
     var summary = new RecSum(serial, 0, 0, 0, 0, 0, 0, []);
     return new GameVm(descriptor, null, summary, serial, title, isDetectedInRpcs3);
 }
@@ -4355,7 +4355,7 @@ static SmokeEnv MakeEnv(string tempRoot)
     var wikiXmlPath = Path.Combine(tempRoot, "wiki.xml");
     File.WriteAllText(wikiXmlPath, WikiXml());
 
-    var install = InstSvc.FromExe(Path.Combine(fakeRpcs3Root, "rpcs3.exe"));
+    var install = Rpcs3InstallService.FromExe(Path.Combine(fakeRpcs3Root, "rpcs3.exe"));
     Assert(install.CfgPath == configPath, "Expected config path detection.");
     Assert(install.PatPath == Path.Combine(fakeRpcs3Root, "patches"),
         "Expected patches folder to be anchored to the RPCS3 executable folder.");
@@ -4415,7 +4415,7 @@ static HwState Hw_All()
 
 static ScanStat GameScan(SmokeEnv env)
 {
-    var scanner = new GmScan();
+    var scanner = new GameScanner();
     var games = scanner.Scan(env.Install);
     Assert(games.Count == 2, "Expected one game from games.yml and one non-portable dev_hdd0 game.");
     var rogue = games.Single(game => game.Serial == "BLUS31465");
@@ -4447,7 +4447,7 @@ static ScanStat GameScan(SmokeEnv env)
         ["TITLE_ID"] = rogue.Serial,
         ["APP_VER"] = "01.03"
     });
-    var updatedRogue = new GmScan().Scan(env.Install).Single(game => game.Serial == rogue.Serial);
+    var updatedRogue = new GameScanner().Scan(env.Install).Single(game => game.Serial == rogue.Serial);
     Assert(updatedRogue.Version == "01.03",
         "Expected the installed dev_hdd0 update version to override the older disc PARAM.SFO version.");
     Directory.Delete(updateFolder, recursive: true);
@@ -4464,14 +4464,14 @@ static ScanStat GameScan(SmokeEnv env)
         ["APP_VER"] = "02.00"
     });
 
-    var portableInstall = InstSvc.FromExe(Path.Combine(portableRpcs3Root, "rpcs3.exe"));
+    var portableInstall = Rpcs3InstallService.FromExe(Path.Combine(portableRpcs3Root, "rpcs3.exe"));
     Assert(portableInstall.CfgPath == Path.Combine(portableRpcs3Root, "portable", "config"),
         "Expected config path to follow RPCS3's <RPCS3 folder>\\portable\\config contract.");
     Assert(portableInstall.CustPath == Path.Combine(portableRpcs3Root, "portable", "config", "custom_configs"),
         "Expected custom configs to follow RPCS3's portable data root.");
     Assert(portableInstall.PatPath == Path.Combine(portableRpcs3Root, "portable", "patches"),
         "Expected imported_patch.yml to follow RPCS3's portable patches path.");
-    var portableGames = new GmScan().Scan(portableInstall);
+    var portableGames = new GameScanner().Scan(portableInstall);
     Assert(portableGames.Any(game => game.Serial == "NPEB00002"), "Expected portable dev_hdd0 game.");
 
     var legacyRpcs3Root = Path.Combine(env.TempRoot, "rpcs3-legacy-games-yml");
@@ -4487,19 +4487,19 @@ static ScanStat GameScan(SmokeEnv env)
         ["APP_VER"] = "01.00"
     });
     File.WriteAllText(Path.Combine(legacyRpcs3Root, "games.yml"), $"BLUS00003: \"{EscPath(legacyGameFolder)}\"{Environment.NewLine}");
-    var legacyInstall = InstSvc.FromExe(Path.Combine(legacyRpcs3Root, "rpcs3.exe"));
-    Assert(new GmScan().Scan(legacyInstall).Any(game => game.Serial == "BLUS00003"),
+    var legacyInstall = Rpcs3InstallService.FromExe(Path.Combine(legacyRpcs3Root, "rpcs3.exe"));
+    Assert(new GameScanner().Scan(legacyInstall).Any(game => game.Serial == "BLUS00003"),
         "Expected legacy root-level games.yml to be scanned for older RPCS3 layouts.");
 
     var missingConfigRoot = Path.Combine(env.TempRoot, "rpcs3-missing-config");
     Directory.CreateDirectory(missingConfigRoot);
     File.WriteAllText(Path.Combine(missingConfigRoot, "rpcs3.exe"), string.Empty);
-    var missingConfigInstall = InstSvc.FromExe(Path.Combine(missingConfigRoot, "rpcs3.exe"));
-    Assert(new GmScan().Scan(missingConfigInstall).Count == 0,
+    var missingConfigInstall = Rpcs3InstallService.FromExe(Path.Combine(missingConfigRoot, "rpcs3.exe"));
+    Assert(new GameScanner().Scan(missingConfigInstall).Count == 0,
         "Expected missing config folder to produce an empty game list without crashing.");
 
     File.WriteAllText(Path.Combine(env.CfgPath, "games.yml"), "BLUS31465: [broken");
-    var corruptGamesYmlScan = new GmScan().Scan(env.Install);
+    var corruptGamesYmlScan = new GameScanner().Scan(env.Install);
     Assert(corruptGamesYmlScan.Any(game => game.Serial == "NPUB00001"),
         "Expected corrupt games.yml not to block dev_hdd0 scanning.");
     File.WriteAllText(Path.Combine(env.CfgPath, "games.yml"), $"BLUS31465: \"{EscPath(env.GameDir)}\"{Environment.NewLine}");
@@ -4526,8 +4526,8 @@ static ScanStat GameScan(SmokeEnv env)
         largeGamesYml.AppendLine($"{serial}: \"{EscPath(folder)}\"");
     }
     File.WriteAllText(Path.Combine(largeConfigPath, "games.yml"), largeGamesYml.ToString());
-    var largeInstall = InstSvc.FromExe(Path.Combine(largeRpcs3Root, "rpcs3.exe"));
-    Assert(new GmScan().Scan(largeInstall).Count == largeGameCount,
+    var largeInstall = Rpcs3InstallService.FromExe(Path.Combine(largeRpcs3Root, "rpcs3.exe"));
+    Assert(new GameScanner().Scan(largeInstall).Count == largeGameCount,
         "Expected large games list to scan completely.");
 
     var truncatedSfo = Path.Combine(env.TempRoot, "truncated.sfo");
@@ -4675,7 +4675,7 @@ static void AnlzPath(
 {
     var synchronizationContext = new SyncCtx();
     var originalContext = SynchronizationContext.Current;
-    AnlzRes result;
+    AnalyzeResult result;
 
     try
     {
@@ -4710,12 +4710,12 @@ static void AnlzPath(
 }
 
 static PlanStat Rec_Stat(
-    R3Inst install,
-    R3Game rogue,
+    Rpcs3InstallDescriptor install,
+    Rpcs3GameDescriptor rogue,
     WikiRec recommendation,
     HwInfo lowEndHardware)
 {
-    var plan = new PlanSvc().BuildCfg(install, rogue, recommendation);
+    var plan = new PlanService().BuildCfg(install, rogue, recommendation);
     var vblank = plan.Items.Single(item => item.Key == "Vblank Rate");
     var resolutionScale = plan.Items.Single(item => item.Key == "Resolution Scale");
     Assert(!vblank.IsSel,
@@ -4919,16 +4919,16 @@ static void Plan_Ui()
 }
 
 static void Bkp_All(
-    R3Inst install,
+    Rpcs3InstallDescriptor install,
     CfgPlan plan,
     IReadOnlyList<CfgChg> selectedChanges)
 {
-    var backupService = new BkpSvc();
-    var oldRoot = R3Paths.OldBkp(install);
-    var newRoot = R3Paths.BkpRoot(install);
+    var backupService = new BackupService();
+    var oldRoot = Rpcs3AppPaths.OldBkp(install);
+    var newRoot = Rpcs3AppPaths.BkpRoot(install);
     var backup = backupService.BuildBkp(oldRoot, [plan.CfgPath]);
     var secondBackup = backupService.BuildBkp(newRoot, [plan.CfgPath]);
-    var backupCase = new BkpCase(backupService, new MutGuard());
+    var backupCase = new BackupUseCase(backupService, new Rpcs3MutationGuard());
     Assert(backupCase.List(install).Count == 2,
         "Expected backups from both R3Bkp and R3ConfigBackups to remain discoverable.");
     Assert(backup.Files[0].BkpPath != secondBackup.Files[0].BkpPath,
@@ -4958,19 +4958,19 @@ static void Bkp_All(
 }
 
 static void Cfg_All(
-    R3Inst install,
-    R3Game rogue,
+    Rpcs3InstallDescriptor install,
+    Rpcs3GameDescriptor rogue,
     WikiRec recommendation,
     IReadOnlyList<CfgChg> selectedChanges)
 {
-    var plan = new PlanSvc().BuildCfg(install, rogue, recommendation);
+    var plan = new PlanService().BuildCfg(install, rogue, recommendation);
     Directory.CreateDirectory(Path.GetDirectoryName(plan.CfgPath)!);
     File.WriteAllText(plan.CfgPath, $"Video:{Environment.NewLine}  Write Color Buffers: false{Environment.NewLine}");
-    var existingCustomPlan = new PlanSvc().BuildCfg(install, rogue, recommendation);
+    var existingCustomPlan = new PlanService().BuildCfg(install, rogue, recommendation);
     Assert(existingCustomPlan.Items.Single(item => item.Key == "Write Color Buffers").CurVal == "false",
         "Expected existing custom config value to be detected.");
     var originalCustomConfigText = File.ReadAllText(plan.CfgPath);
-    var failingConfigApply = new CfgApply(applyChanges: (path, changes, beforeCommit) =>
+    var failingConfigApply = new ConfigApplyService(applyChanges: (path, changes, beforeCommit) =>
     {
         beforeCommit?.Invoke();
         File.WriteAllText(path, "Video: [partial write");
@@ -4978,7 +4978,7 @@ static void Cfg_All(
     });
     try
     {
-        failingConfigApply.Apply(existingCustomPlan, selectedChanges, R3Paths.BkpRoot(install));
+        failingConfigApply.Apply(existingCustomPlan, selectedChanges, Rpcs3AppPaths.BkpRoot(install));
         throw new InvalidOperationException("Expected config apply failure to be surfaced.");
     }
     catch (UnauthorizedAccessException)
@@ -4988,7 +4988,7 @@ static void Cfg_All(
     }
 
     File.WriteAllText(plan.CfgPath, "Video: [broken");
-    var corruptCustomConfigPlan = new PlanSvc().BuildCfg(install, rogue, recommendation);
+    var corruptCustomConfigPlan = new PlanService().BuildCfg(install, rogue, recommendation);
     Assert(corruptCustomConfigPlan.Items.Any(item => item.CurVal is null),
         "Expected corrupt custom config to be tolerated during plan preview.");
     Assert(corruptCustomConfigPlan.Items.All(item => item.State == RecState.Unknown),
@@ -4998,10 +4998,10 @@ static void Cfg_All(
 
 static void Can_Imp(SmokeEnv env, string officialPatchYmlPath)
 {
-    var importService = new R3Config.Svc.ImpSvc();
+    var importService = new R3Config.Svc.CanaryPatchImportService();
     var flow = new AppFlow();
     var officialBefore = File.ReadAllText(officialPatchYmlPath);
-    var importedPath = Path.Combine(env.Install.PatPath, R3Config.Svc.ImpSvc.ImpName);
+    var importedPath = Path.Combine(env.Install.PatPath, R3Config.Svc.CanaryPatchImportService.ImpName);
 
     var canaryPatchText =
         "PPU-1234567890abcdef1234567890abcdef12345678:\n" +
@@ -5020,7 +5020,7 @@ static void Can_Imp(SmokeEnv env, string officialPatchYmlPath)
     Assert(result.IsOk, "Expected Canary import to write imported_patch.yml: " + result.Error);
     Assert(result.TgtPath == importedPath, "Expected Canary import target to be imported_patch.yml in <RPCS3 folder>\\patches.");
     Assert(File.Exists(importedPath), "Expected imported_patch.yml to exist after Canary import.");
-    Assert(File.ReadAllText(importedPath).StartsWith(ImpSvc.VerHead, StringComparison.Ordinal),
+    Assert(File.ReadAllText(importedPath).StartsWith(CanaryPatchImportService.VerHead, StringComparison.Ordinal),
         "Expected imported_patch.yml to start with Version: 1.2.");
     Assert(File.ReadAllText(officialPatchYmlPath) == officialBefore,
         "Expected Canary import not to modify official patch.yml.");
@@ -5037,7 +5037,7 @@ static void Can_Imp(SmokeEnv env, string officialPatchYmlPath)
     Assert(secondWrite.BkpPath is null, "Expected repeated identical imported_patch.yml write not to create a needless backup.");
 
     var manualAndManagedText =
-        R3Config.Svc.ImpSvc.VerHead + "\r\n\r\n" +
+        R3Config.Svc.CanaryPatchImportService.VerHead + "\r\n\r\n" +
         "PPU-1234567890abcdef1234567890abcdef12345678:\r\n" +
         "  \"Manual Existing Patch\":\r\n" +
         "    Games:\r\n" +
@@ -5050,11 +5050,11 @@ static void Can_Imp(SmokeEnv env, string officialPatchYmlPath)
         "      - [ be32, 0x00000004, 0x60000000 ]\r\n";
     File.WriteAllText(importedPath, manualAndManagedText);
     var beforeManagedStage = File.ReadAllText(importedPath, Encoding.UTF8);
-    var managedStage = importService.PrepFile(
+    var managedStage = importService.PrepareManagedImportedPatchFile(
         env.Install.PatPath,
         canaryPatchText);
     Assert(managedStage.IsOk &&
-           managedStage.PrepFile is not null &&
+           managedStage.PreparedFile is not null &&
            File.ReadAllText(importedPath, Encoding.UTF8) == beforeManagedStage,
         "Expected Canary preparation to produce validated staged content without touching imported_patch.yml.");
 
@@ -5071,7 +5071,7 @@ static void Can_Imp(SmokeEnv env, string officialPatchYmlPath)
     Console.WriteLine("Canary imported_patch.yml contract smoke PASS.");
 }
 
-static void Pat_All(SmokeEnv env, R3Game rogue)
+static void Pat_All(SmokeEnv env, Rpcs3GameDescriptor rogue)
 {
     var patchYmlPath = Path.Combine(env.FakeRoot, "patches", "patch.yml");
     File.WriteAllText(patchYmlPath, PatYaml());
@@ -5109,7 +5109,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     const string ExactHashC = "cccccccccccccccccccccccccccccccccccccccc";
     const string ExactHashD = "dddddddddddddddddddddddddddddddddddddddd";
 
-    var patchHashProbe = new HashPrb();
+    var patchHashProbe = new PatchHashProbeService();
     var noHashProbeResult = patchHashProbe.Probe(env.Install, rogue);
     Assert(!noHashProbeResult.HasHash &&
            noHashProbeResult.EviKind == HashEvi.None,
@@ -5125,7 +5125,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     Directory.CreateDirectory(Path.Combine(
         gameCacheDir,
         "ppu-0000000000000000000000000000000000000000-EBOOT.BIN"));
-    var zeroCacheHashGame = new HashPrb().Enrich(env.Install, rogue);
+    var zeroCacheHashGame = new PatchHashProbeService().Enrich(env.Install, rogue);
     Assert(zeroCacheHashGame.PpuHash is null && zeroCacheHashGame.SpuHash is null,
         "Expected all-zero placeholder PPU cache hash not to be treated as ready.");
     Directory.Delete(gameCacheDir, recursive: true);
@@ -5135,7 +5135,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         gameCacheDir,
         "ppu-QoiFRPF8j00N996aQMthtWqEUG0Y-EBOOT.BIN");
     Directory.CreateDirectory(base57CacheEntry);
-    var base57CacheHashGame = new HashPrb().Enrich(env.Install, rogue);
+    var base57CacheHashGame = new PatchHashProbeService().Enrich(env.Install, rogue);
     Assert(base57CacheHashGame.PpuHash ==
                "728fc4496a4c347a654ab54d3e3f0e44ed3c9af5" &&
            base57CacheHashGame.HashEvi == HashEvi.Cache,
@@ -5147,42 +5147,42 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         gameCacheDir,
         $"ppu-{ExactHashD}-EBOOT.BIN");
     Directory.CreateDirectory(exactCacheEntry);
-    var cacheHashGame = new HashPrb().Enrich(env.Install, rogue);
+    var cacheHashGame = new PatchHashProbeService().Enrich(env.Install, rogue);
     Assert(cacheHashGame.PpuHash == ExactHashD &&
            cacheHashGame.HashEvi == HashEvi.Cache &&
            cacheHashGame.HashSrc == exactCacheEntry,
         "Expected PatchHashProbeService to read an exact 40-hex PPU hash from the per-game cache.");
     Directory.Delete(gameCacheDir, recursive: true);
 
-    var metadataZeroHashResult = new HashPrb().Probe(env.Install, rogue with
+    var metadataZeroHashResult = new PatchHashProbeService().Probe(env.Install, rogue with
     {
         PpuHash = "0000000000000000000000000000000000000000"
     });
     Assert(!metadataZeroHashResult.HasHash,
         "Expected all-zero game metadata PPU hash not to be treated as ready.");
 
-    var shortMetadataHashResult = new HashPrb().Probe(env.Install, rogue with
+    var shortMetadataHashResult = new PatchHashProbeService().Probe(env.Install, rogue with
     {
         PpuHash = new string('a', 39)
     });
     Assert(!shortMetadataHashResult.HasHash,
         "Expected a 39-character game metadata hash to be rejected.");
 
-    var longMetadataHashResult = new HashPrb().Probe(env.Install, rogue with
+    var longMetadataHashResult = new PatchHashProbeService().Probe(env.Install, rogue with
     {
         PpuHash = new string('a', 41)
     });
     Assert(!longMetadataHashResult.HasHash,
         "Expected a 41-character game metadata hash to be rejected.");
 
-    var nonHexMetadataHashResult = new HashPrb().Probe(env.Install, rogue with
+    var nonHexMetadataHashResult = new PatchHashProbeService().Probe(env.Install, rogue with
     {
         PpuHash = "gggggggggggggggggggggggggggggggggggggggg"
     });
     Assert(!nonHexMetadataHashResult.HasHash,
         "Expected a non-hex game metadata hash to be rejected.");
 
-    var metadataHashResult = new HashPrb().Probe(env.Install, rogue with
+    var metadataHashResult = new PatchHashProbeService().Probe(env.Install, rogue with
     {
         PpuHash = ExactHashA
     });
@@ -5197,7 +5197,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         rootLogPath,
         $"License maintenance referenced {rogue.Serial}.{Environment.NewLine}" +
         $"ppu_loader: PPU executable hash: PPU-{ExactHashA}{Environment.NewLine}");
-    var maintenanceMentionGame = new HashPrb().Enrich(env.Install, rogue);
+    var maintenanceMentionGame = new PatchHashProbeService().Enrich(env.Install, rogue);
     Assert(maintenanceMentionGame.PpuHash is null,
         "Expected a serial mention outside a SYS: Serial session not to establish hash evidence.");
 
@@ -5207,7 +5207,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         $"No executable hash was emitted for this session.{Environment.NewLine}" +
         $"SYS: Serial: BLUS99999{Environment.NewLine}" +
         $"ppu_loader: PPU executable hash: PPU-{ExactHashB}{Environment.NewLine}");
-    var crossedSessionGame = new HashPrb().Enrich(env.Install, rogue);
+    var crossedSessionGame = new PatchHashProbeService().Enrich(env.Install, rogue);
     Assert(crossedSessionGame.PpuHash is null,
         "Expected the hash probe not to cross into another game's SYS: Serial session.");
 
@@ -5215,7 +5215,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         rootLogPath,
         $"SYS: Serial: {rogue.Serial}{Environment.NewLine}" +
         $"ppu_loader: PPU executable hash: PPU-{ExactHashA}{Environment.NewLine}");
-    var probedGame = new HashPrb().Enrich(env.Install, rogue);
+    var probedGame = new PatchHashProbeService().Enrich(env.Install, rogue);
     Assert(probedGame.PpuHash == ExactHashA &&
            probedGame.HashEvi == HashEvi.PlainLog &&
            probedGame.HashSrc == rootLogPath,
@@ -5230,9 +5230,9 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         movedPlainLogPath,
         $"SYS: Serial: {rogue.Serial}{Environment.NewLine}" +
         $"ppu_loader: PPU executable hash: PPU-{ExactHashB}{Environment.NewLine}");
-    var movedLogInstall = InstSvc.FromExe(
+    var movedLogInstall = Rpcs3InstallService.FromExe(
         Path.Combine(movedLogRoot, "rpcs3.exe"));
-    var movedLogGame = new HashPrb().Enrich(movedLogInstall, rogue);
+    var movedLogGame = new PatchHashProbeService().Enrich(movedLogInstall, rogue);
     Assert(movedLogGame.PpuHash == ExactHashB &&
            movedLogGame.HashEvi == HashEvi.PlainLog,
         "Expected PatchHashProbeService to read PPU hash from the modern log/RPCS3.log path.");
@@ -5256,9 +5256,9 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         }
     }
 
-    var largeLogInstall = InstSvc.FromExe(
+    var largeLogInstall = Rpcs3InstallService.FromExe(
         Path.Combine(largeLogRoot, "rpcs3.exe"));
-    var largePlainLogGame = new HashPrb().Enrich(
+    var largePlainLogGame = new PatchHashProbeService().Enrich(
         largeLogInstall,
         rogue);
     Assert(largePlainLogGame.PpuHash == ExactHashC &&
@@ -5280,7 +5280,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         writer.WriteLine($"ppu_loader: PPU executable hash: PPU-{ExactHashD}");
     }
 
-    var largeTailLogGame = new HashPrb().Enrich(
+    var largeTailLogGame = new PatchHashProbeService().Enrich(
         largeLogInstall,
         rogue);
     Assert(largeTailLogGame.PpuHash == ExactHashD &&
@@ -5304,7 +5304,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         }
     }
 
-    var largeCompressedLogGame = new HashPrb().Enrich(
+    var largeCompressedLogGame = new PatchHashProbeService().Enrich(
         largeLogInstall,
         rogue);
     Assert(largeCompressedLogGame.PpuHash == ExactHashB &&
@@ -5338,9 +5338,9 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     File.SetLastWriteTimeUtc(newerCompressedLog, newerTimestamp);
     var actualNewerTimestamp = File.GetLastWriteTimeUtc(newerCompressedLog);
 
-    var newestEvidenceInstall = InstSvc.FromExe(
+    var newestEvidenceInstall = Rpcs3InstallService.FromExe(
         Path.Combine(newestEvidenceRoot, "rpcs3.exe"));
-    var newestEvidenceGame = new HashPrb().Enrich(
+    var newestEvidenceGame = new PatchHashProbeService().Enrich(
         newestEvidenceInstall,
         rogue);
 
@@ -5360,7 +5360,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     }
 
     File.SetLastWriteTimeUtc(newerCompressedLog, DateTime.UtcNow);
-    var newestInvalidGame = new HashPrb().Enrich(
+    var newestInvalidGame = new PatchHashProbeService().Enrich(
         newestEvidenceInstall,
         rogue);
 
@@ -5369,7 +5369,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         "Expected newest-valid selection to ignore a newer invalid compressed log and retain the older valid evidence.");
 
     var matchedGame = probedGame;
-    var patchMatches = new R3Config.Svc.MatchSvc().Match(patchRead.Catalog, [matchedGame]);
+    var patchMatches = new R3Config.Svc.PatchMatchService().Match(patchRead.Catalog, [matchedGame]);
     Assert(patchMatches.Single(match => match.Patch.Title == "Skip Intro Videos").Status == MatStat.Match,
         "Expected matching serial/version/PPU hash to be ExactMatch.");
     var exactEvidence = patchMatches.Single(match => match.Patch.Title == "Skip Intro Videos");
@@ -5384,11 +5384,11 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     Assert(patchMatches.Single(match => match.Patch.Title == "SPU Timing Patch").Status == MatStat.SerBad,
         "Expected unmatched serial to stay SerialMismatch.");
 
-    var missingHashMatches = new R3Config.Svc.MatchSvc().Match(patchRead.Catalog, [rogue]);
+    var missingHashMatches = new R3Config.Svc.PatchMatchService().Match(patchRead.Catalog, [rogue]);
     Assert(missingHashMatches.Single(match => match.Patch.Title == "Skip Intro Videos").Status == MatStat.Unknown,
         "Expected missing hash to be SerialVersionMatchHashUnknown.");
 
-    var wrongHashMatches = new R3Config.Svc.MatchSvc().Match(patchRead.Catalog, [rogue with
+    var wrongHashMatches = new R3Config.Svc.PatchMatchService().Match(patchRead.Catalog, [rogue with
     {
         PpuHash = "cccccccccccccccccccccccccccccccccccccccc"
     }]);
@@ -5398,7 +5398,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
             .Contains("cccccccccccccccccccccccccccccccccccccccc", StringComparer.OrdinalIgnoreCase),
         "Expected a rejected patch to show the conflicting detected hash.");
 
-    var wrongVersionMatches = new R3Config.Svc.MatchSvc().Match(patchRead.Catalog, [rogue with
+    var wrongVersionMatches = new R3Config.Svc.PatchMatchService().Match(patchRead.Catalog, [rogue with
     {
         Version = "99.99",
         PpuHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -5406,7 +5406,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     Assert(wrongVersionMatches.Single(match => match.Patch.Title == "Skip Intro Videos").Status == MatStat.VerBad,
         "Expected mismatched version to be VersionMismatch.");
 
-    var unknownVersionMatches = new R3Config.Svc.MatchSvc().Match(patchRead.Catalog, [rogue with
+    var unknownVersionMatches = new R3Config.Svc.PatchMatchService().Match(patchRead.Catalog, [rogue with
     {
         Version = null,
         PpuHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -5414,15 +5414,15 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     Assert(unknownVersionMatches.Single(match => match.Patch.Title == "Skip Intro Videos").Status == MatStat.VerUnk,
         "Expected missing version to be VersionUnknown.");
 
-    var serialMismatchMatches = new R3Config.Svc.MatchSvc().Match(patchRead.Catalog, [rogue with
+    var serialMismatchMatches = new R3Config.Svc.PatchMatchService().Match(patchRead.Catalog, [rogue with
     {
         Serial = "BLUS99999",
         PpuHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     }]);
     Assert(serialMismatchMatches.Single(match => match.Patch.Title == "Skip Intro Videos").Status == MatStat.SerBad,
         "Expected missing serial to be SerialMismatch.");
-    var noMetadataMatch = new R3Config.Svc.MatchSvc().Match(
-        new PatEntry(
+    var noMetadataMatch = new R3Config.Svc.PatchMatchService().Match(
+        new Rpcs3PatchEntry(
             Title: "No Metadata Patch",
             HashKind: HashKind.Ppu,
             Hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -5443,8 +5443,8 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     var cheatPatch = patchMatches.Single(match => match.Patch.Title == "Infinite Health Cheat");
     var experimentalPatch = patchMatches.Single(match => match.Patch.Title == "Experimental Test Patch");
     var unknownPatch = patchMatches.Single(match => match.Patch.Title == "Unknown Memory Patch");
-    var canaryPatch = new R3Config.Svc.MatchSvc().Match(
-        new PatEntry(
+    var canaryPatch = new R3Config.Svc.PatchMatchService().Match(
+        new Rpcs3PatchEntry(
             Title: "Canary Timing Patch",
             HashKind: HashKind.Spu,
             Hash: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -5493,7 +5493,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         "Expected Canary patches not to be auto-selected.");
 
     var selectedGamePreviewMatches = patchRead.Catalog.Entries
-        .Select(entry => new MatchSvc().Match(entry, [matchedGame]))
+        .Select(entry => new PatchMatchService().Match(entry, [matchedGame]))
         .Where(match => match.Status is not MatStat.SerBad and not MatStat.NoMeta)
         .ToArray();
     Assert(selectedGamePreviewMatches.Length == 7,
@@ -5509,10 +5509,10 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         env.Install,
         [exactSafeFix],
         expertMode: false);
-    var backupService = new BkpSvc();
-    var missingPatchConfigApplyResult = new PatApply().Apply(
+    var backupService = new BackupService();
+    var missingPatchConfigApplyResult = new PatchApplyService().Apply(
         missingPatchConfigApplyPlan,
-        R3Paths.BkpRoot(env.Install));
+        Rpcs3AppPaths.BkpRoot(env.Install));
     Assert(!missingPatchConfigApplyResult.Backup.Files.Single().Existed,
         "Expected missing patch_config.yml backup entry to record Existed=false.");
     Assert(new CfgRead().IsOn(patchConfigPreviewPath, missingPatchConfigApplyPlan.Changes.Single()),
@@ -5522,7 +5522,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
         "Expected restore to remove patch_config.yml that did not exist before apply.");
 
     File.WriteAllText(patchConfigPreviewPath, CfgYaml());
-    var canaryExact = new R3Config.Svc.MatchSvc().Match(canaryPatch.Patch, [new R3Game(
+    var canaryExact = new R3Config.Svc.PatchMatchService().Match(canaryPatch.Patch, [new Rpcs3GameDescriptor(
         Serial: "BLES00001",
         Title: "Canary Game",
         InstPath: env.TempRoot,
@@ -5565,8 +5565,8 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     Assert(patchApplyPlan.Changes.Any(change => change.PatTitle == "Canary Timing Patch"),
         "Expected exact Canary patches to be planned when explicitly selected by the user.");
 
-    var patchApplyService = new PatApply();
-    var patchBackupRoot = R3Paths.BkpRoot(env.Install);
+    var patchApplyService = new PatchApplyService();
+    var patchBackupRoot = Rpcs3AppPaths.BkpRoot(env.Install);
     var patchApplyResult = patchApplyService.Apply(patchApplyPlan, patchBackupRoot);
     Assert(patchApplyResult.Backup.Files.Single().TgtPath == patchConfigPreviewPath,
         "Expected patch_config.yml to be backed up before write.");
@@ -5599,8 +5599,8 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     Assert(!restoredPatchConfigText.Contains("Skip Intro Videos", StringComparison.Ordinal),
         "Expected restore to remove applied patch entry.");
 
-    var failingPatchBackup = new BkpSvc();
-    var failingPatchTransaction = new PatTxn(
+    var failingPatchBackup = new BackupService();
+    var failingPatchTransaction = new PatchFileTransactionService(
         failingPatchBackup,
         commitFile: (stagePath, targetPath) =>
         {
@@ -5608,7 +5608,7 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
             throw new UnauthorizedAccessException(
                 "Simulated permission denied.");
         });
-    var failingPatchApplyService = new PatApply(
+    var failingPatchApplyService = new PatchApplyService(
         failingPatchBackup,
         transaction: failingPatchTransaction);
     try
@@ -5650,13 +5650,13 @@ static void Pat_All(SmokeEnv env, R3Game rogue)
     Flow_Cat(env, patchYmlPath);
 }
 
-static void R3_Pat(SmokeEnv env, R3Game rogue)
+static void R3_Pat(SmokeEnv env, Rpcs3GameDescriptor rogue)
 {
     const string primaryHash = "1111111111111111111111111111111111111111";
     const string secondaryHash = "2222222222222222222222222222222222222222";
-    var matchService = new R3Config.Svc.MatchSvc();
+    var matchService = new R3Config.Svc.PatchMatchService();
 
-    var multiTargetPatch = new PatEntry(
+    var multiTargetPatch = new Rpcs3PatchEntry(
         Title: "Best Target Patch",
         HashKind: HashKind.Ppu,
         Hash: secondaryHash,
@@ -5881,7 +5881,7 @@ PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
 
     var imported = multiTargetPatch with { PatVer = "1.1", Source = PatSrc.Imported };
     var bundled = multiTargetPatch with { PatVer = "2.0", Source = PatSrc.Can };
-    var merged = new PatMerge().Merge(
+    var merged = new PatchCatalogMergeService().Merge(
         new R3Config.Mdl.PatCat("1.2", [multiTargetPatch]),
         new R3Config.Mdl.PatCat("1.2", [imported]),
         new R3Config.Mdl.PatCat("1.2", [bundled]));
@@ -5890,7 +5890,7 @@ PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
     Assert(merged.Diag.Count == 2,
         "Expected every dropped or superseded duplicate patch to be reported.");
 
-    var mergeService = new PatMerge();
+    var mergeService = new PatchCatalogMergeService();
     var versionBase = multiTargetPatch with
     {
         PatVer = "1.2",
@@ -6104,8 +6104,8 @@ PPU-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:
         $"ppu_loader: PPU executable hash: PPU-{primaryHash}{Environment.NewLine}" +
         $"ppu_loader: PPU executable hash: PPU-{secondaryHash}{Environment.NewLine}" +
         $"ppu_loader: SPU executable hash: SPU-{primaryHash}{Environment.NewLine}");
-    var probeInstall = InstSvc.FromExe(Path.Combine(hashProbeRoot, "rpcs3.exe"));
-    var multiHashGame = new HashPrb().Enrich(probeInstall, rogue);
+    var probeInstall = Rpcs3InstallService.FromExe(Path.Combine(hashProbeRoot, "rpcs3.exe"));
+    var multiHashGame = new PatchHashProbeService().Enrich(probeInstall, rogue);
     Assert(multiHashGame.Hashes.Count == 2 && multiHashGame.SpuList.Count == 1,
         "Expected bounded RPCS3 log probing to retain every relevant PPU/SPU hash in the game session.");
     Assert(matchService.Match(multiTargetPatch, [multiHashGame]).Status == MatStat.Match,
@@ -6211,7 +6211,7 @@ static void R3_Read(string rootOrExePath)
         : rootOrExePath;
     Assert(File.Exists(exePath), "RPCS3 integration path must contain rpcs3.exe: " + exePath);
 
-    var install = InstSvc.FromExe(exePath);
+    var install = Rpcs3InstallService.FromExe(exePath);
     var officialPath = Path.Combine(install.PatPath, "patch.yml");
     var importedPath = Path.Combine(install.PatPath, "imported_patch.yml");
     var trackedPaths = new[] { officialPath, importedPath, install.PatCfg }
@@ -6228,7 +6228,7 @@ static void R3_Read(string rootOrExePath)
                    Sha256: string.Empty),
             StringComparer.OrdinalIgnoreCase);
 
-    var games = new GmScan().Scan(install);
+    var games = new GameScanner().Scan(install);
     Assert(games.Count > 0, "Expected the supplied RPCS3 installation to expose installed games.");
 
     var patchReader = new R3Config.Svc.ReadSvc();
@@ -6278,7 +6278,7 @@ static void R3_Read(string rootOrExePath)
     Assert(flowResult.Cat is not null && flowResult.Cat.Entries.Count > 0,
         "Expected AppFlow to load available RPCS3 and bundled patch sources: " + flowResult.Error);
 
-    var hashProbe = new HashPrb();
+    var hashProbe = new PatchHashProbeService();
     var enrichedGames = games
         .Select(game => hashProbe.Enrich(install, game))
         .ToArray();
@@ -6337,13 +6337,13 @@ static void R3_Read(string rootOrExePath)
         "Expected every real actionable patch to have a valid RPCS3 runtime key and a positive canonical decision.");
     var realExactCount = actionableEvaluations.Count(item =>
         item.Match.Cmp?.Verdict ==
-            CmpVerd.Compat);
+            PatchCompatibilityVerdict.Compat);
     var realRuntimeGuardedCount = actionableEvaluations.Count(item =>
         item.Match.Cmp?.Verdict ==
-            CmpVerd.Guarded);
+            PatchCompatibilityVerdict.Guarded);
     var exactSamples = realEvaluations
         .Where(item => item.Match.Cmp?.Verdict ==
-            CmpVerd.Compat)
+            PatchCompatibilityVerdict.Compat)
         .Select(item =>
             $"{item.Game.Serial} {item.Game.Version}: {item.Match.Patch.Title} [{item.Match.Patch.Risk}]")
         .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -6840,11 +6840,11 @@ sealed record SmokeEnv(
     string CfgPath,
     string GameDir,
     string WikiPath,
-    R3Inst Install);
+    Rpcs3InstallDescriptor Install);
 
 sealed record HwState(HwInfo LowEnd);
 
-sealed record ScanStat(R3Game Rogue);
+sealed record ScanStat(Rpcs3GameDescriptor Rogue);
 
 sealed record CatState(
     WikiRec Rec,

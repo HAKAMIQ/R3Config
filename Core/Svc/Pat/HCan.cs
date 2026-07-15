@@ -698,16 +698,16 @@ public sealed class HCanCat
         return Norm2(trimmed);
     }
 
-    private static Dictionary<string, Queue<PatEntry>> Build(
-        IEnumerable<PatEntry> entries)
+    private static Dictionary<string, Queue<Rpcs3PatchEntry>> Build(
+        IEnumerable<Rpcs3PatchEntry> entries)
     {
-        var output = new Dictionary<string, Queue<PatEntry>>(StringComparer.Ordinal);
+        var output = new Dictionary<string, Queue<Rpcs3PatchEntry>>(StringComparer.Ordinal);
         foreach (var entry in entries)
         {
             var key = Baseline(entry.HashKind, entry.Hash, entry.Title);
             if (!output.TryGetValue(key, out var queue))
             {
-                queue = new Queue<PatEntry>();
+                queue = new Queue<Rpcs3PatchEntry>();
                 output.Add(key, queue);
             }
 
@@ -1116,7 +1116,7 @@ public sealed class PortEvi
 
     public IReadOnlyList<PortAnlz> Analyze(
         CanCat catalog,
-        R3Game game)
+        Rpcs3GameDescriptor game)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(game);
@@ -1265,7 +1265,7 @@ public sealed class PortEvi
 
     private static PortAnlz Create(
         CanFam family,
-        R3Game game,
+        Rpcs3GameDescriptor game,
         PortStat status,
         IReadOnlyList<CanDef> candidateReferences,
         IReadOnlyList<CanDef> exactReferences,
@@ -1331,7 +1331,7 @@ public sealed class PortEvi
 
     private static IReadOnlyList<string> Tgt(
         IReadOnlyList<CanDef> references,
-        R3Game game)
+        Rpcs3GameDescriptor game)
     {
         var kinds = references
             .Select(reference => reference.ModKind)
@@ -1357,7 +1357,7 @@ public sealed class PortEvi
 
     private static bool RefHash(
         CanDef reference,
-        R3Game game)
+        Rpcs3GameDescriptor game)
     {
         var normalized = reference.NormHash;
         if (normalized is null)
@@ -1532,7 +1532,7 @@ public sealed class HashExt
     }
 }
 
-public sealed class PatAuth
+public sealed class HCanaryPatchAuthoringService
 {
     public const string PatVer = "1.2";
     public const string MetaName = "r3hcan.json";
@@ -1572,14 +1572,14 @@ public sealed class PatAuth
 
     private static readonly HashSet<string> OpSet = new(Op, StringComparer.Ordinal);
     private readonly ReadSvc _reader;
-    private readonly PatTxn _Txn;
+    private readonly PatchFileTransactionService _Txn;
 
-    public PatAuth(
+    public HCanaryPatchAuthoringService(
         ReadSvc? reader = null,
-        PatTxn? transaction = null)
+        PatchFileTransactionService? transaction = null)
     {
         _reader = reader ?? new ReadSvc();
-        _Txn = transaction ?? new PatTxn();
+        _Txn = transaction ?? new PatchFileTransactionService();
     }
 
     public VldRes Validate(HCanDrft draft)
@@ -1909,9 +1909,9 @@ public sealed class PatAuth
         var metadataText = Write(metadata);
         var backup = _Txn.Commit(backupRootPath,
         [
-            new PrepFile(importedPatchPath, text, PrepKind.PatCat,
+            new PatchPreparedFile(importedPatchPath, text, PrepKind.PatCat,
                 PatSrc.Imported, read.Catalog.Entries.Count),
-            new PrepFile(metadataPath, metadataText, PrepKind.JsonMeta)
+            new PatchPreparedFile(metadataPath, metadataText, PrepKind.JsonMeta)
         ], validatePaths);
         return new SaveRes(importedPatchPath, backup, read.Catalog.Entries.Count, replaced);
     }
@@ -1947,9 +1947,9 @@ public sealed class PatAuth
         metadata.Remove(identity);
         var backup = _Txn.Commit(backupRootPath,
         [
-            new PrepFile(importedPatchPath, text, PrepKind.PatCat,
+            new PatchPreparedFile(importedPatchPath, text, PrepKind.PatCat,
                 PatSrc.Imported, read.Catalog.Entries.Count),
-            new PrepFile(metadataPath, Write(metadata), PrepKind.JsonMeta)
+            new PatchPreparedFile(metadataPath, Write(metadata), PrepKind.JsonMeta)
         ], validatePaths);
         return new SaveRes(importedPatchPath, backup, read.Catalog.Entries.Count, true);
     }

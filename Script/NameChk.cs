@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -10,219 +11,357 @@ if (args.Length != 1)
 }
 
 var root = Path.GetFullPath(args[0]);
-var bad = new List<string>();
-var ext = new HashSet<string>(StringComparer.Ordinal)
+var errors = new List<string>();
+var sourceFiles = new[] { "App", "Core", "Tst", "Script" }
+    .SelectMany(area => Directory.EnumerateFiles(
+        Path.Combine(root, area),
+        "*.cs",
+        SearchOption.AllDirectories))
+    .Where(path => !IsBuild(path))
+    .Order(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
+var retiredNames = new HashSet<string>(StringComparer.Ordinal)
 {
-    "rpcs3.exe",
-    "PARAM.SFO",
-    "patch.yml",
-    "imported_patch.yml",
-    "patch_config.yml",
-    "config_<SERIAL>.yml",
-    "<TITLE_ID>_patch.yml",
+    "AnlzCase", "AppCases", "BkpCase", "CfgCase", "HCanCase",
+    "PatMut", "RecCat", "AppComp", "PatCmp", "PatTxn", "MutGuard",
+    "IMutGd", "ImpSvc", "CanBndl", "ChtBndl", "BkpSvc", "GmScan",
+    "InstSvc", "HashPrb", "PatMerge", "SelComp", "PatApply", "CfgApply",
+    "R3Inst", "R3Game", "CmpDec", "CmpVerd", "CmpCode", "PatEntry",
+    "PatPlan", "PrepFile", "ScanDiag", "ScanRes", "BkpMan", "BkpSnap",
+    "CatLoad", "PatCatRs", "PatSrcSt", "GameRow", "AnlzRes", "IPatMsg",
+    "R3Paths", "AppRun", "PlanSvc", "MatchSvc", "PatAuth", "PatMsgFm"
+};
+
+var requiredTypes = new HashSet<string>(StringComparer.Ordinal)
+{
+    "AnalysisUseCase", "AppUseCases", "BackupUseCase", "CanaryImportUseCase",
+    "ConfigUseCase", "HCanaryUseCase", "PatchCatalogUseCase",
+    "PatchMutationUseCase", "RecommendationCatalogUseCase", "AppComposition",
+    "PatchCompatibilityService", "PatchFileTransactionService",
+    "Rpcs3MutationGuard", "IRpcs3MutationGuard", "CanaryPatchImportService",
+    "BundledCanaryPatchService", "BundledCheatPatchService", "BackupService",
+    "GameScanner", "Rpcs3InstallService", "PatchHashProbeService",
+    "PatchCatalogMergeService", "PatchSelectionCompiler", "PatchApplyService",
+    "ConfigApplyService", "Rpcs3InstallDescriptor", "Rpcs3GameDescriptor",
+    "PatchCompatibilityDecision", "PatchCompatibilityVerdict",
+    "PatchCompatibilityReasonCode", "Rpcs3PatchEntry", "PatchApplyPlan",
+    "PatchPreparedFile", "GameScanDiagnostic", "GameScanResult",
+    "BackupManifest", "BackupSnapshot", "PlanService", "PatchMatchService",
+    "HCanaryPatchAuthoringService", "LocalizedPatchCatalogMessageFormatter"
+};
+
+var externalContracts = new[]
+{
+    "rpcs3.exe", "PARAM.SFO", "patch.yml", "imported_patch.yml",
+    "patch_config.yml", "config_<SERIAL>.yml", "<TITLE_ID>_patch.yml",
     "RPCS3_CONFIG_DIR"
 };
 
-void ChkName(string kind, string name, string path)
+var ownedRuntimeNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 {
-    if (name.Length is >= 2 and <= 8)
+    "r3hcan.json", "r3config_hcanary.json", "r3cht.yml",
+    "r3config_cheats_patch.yml"
+};
+
+var requiredRuntimeNames = externalContracts.Concat(new[]
+{
+    "R3Bkp", "R3ConfigBackups", "r3hcan.json", "r3config_hcanary.json",
+    "r3cht.yml", "r3config_cheats_patch.yml"
+}).ToArray();
+
+var typeDecls = new List<(string FullName, string Name, string Path, bool IsPublic, bool IsPartial)>();
+var codeTexts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+var resourceKeys = new HashSet<string>(StringComparer.Ordinal);
+
+foreach (var file in sourceFiles)
+{
+    var relative = Path.GetRelativePath(root, file);
+    var text = File.ReadAllText(file);
+    codeTexts[file] = text;
+    var tree = CSharpSyntaxTree.ParseText(text);
+    var syntaxRoot = tree.GetRoot();
+
+    foreach (var node in syntaxRoot.DescendantNodes().OfType<BaseTypeDeclarationSyntax>())
     {
-        return;
-    }
+        var name = node.Identifier.ValueText;
+        var isPublic = node.Modifiers.Any(token => token.IsKind(SyntaxKind.PublicKeyword));
+        var isPartial = node.Modifiers.Any(token => token.IsKind(SyntaxKind.PartialKeyword));
+        var ns = node.Ancestors().OfType<BaseNamespaceDeclarationSyntax>().FirstOrDefault()?.Name.ToString()
+                 ?? string.Empty;
+        var parents = node.Ancestors().OfType<BaseTypeDeclarationSyntax>()
+            .Reverse()
+            .Select(parent => parent.Identifier.ValueText);
+        var fullName = string.Join(
+            ".",
+            new[] { ns }.Concat(parents).Append(name).Where(part => part.Length > 0));
 
-    bad.Add($"{kind} '{name}' at {path}");
-}
+        typeDecls.Add((fullName, name, relative, isPublic, isPartial));
 
-bool IsExt(string name)
-{
-    return ext.Contains(name) ||
-           name.StartsWith("config_", StringComparison.Ordinal) &&
-           name.EndsWith(".yml", StringComparison.Ordinal) ||
-           name.EndsWith("_patch.yml", StringComparison.Ordinal);
-}
-
-bool IsBuild(string path)
-{
-    var rel = Path.GetRelativePath(root, path);
-    return rel.Split(Path.DirectorySeparatorChar)
-        .Any(part => part is "bin" or "obj");
-}
-
-string Stem(string name)
-{
-    while (Path.HasExtension(name))
-    {
-        name = Path.GetFileNameWithoutExtension(name);
-    }
-
-    return name;
-}
-
-foreach (var area in new[] { "App", "Core", "Tst", "docs", "Script" })
-{
-    var areaPath = Path.Combine(root, area);
-    if (!Directory.Exists(areaPath))
-    {
-        continue;
-    }
-
-    foreach (var dir in Directory.EnumerateDirectories(
-                 areaPath,
-                 "*",
-                 SearchOption.AllDirectories))
-    {
-        if (!IsBuild(dir))
+        if (isPublic && name.Length == 1)
         {
-            ChkName("Folder", Path.GetFileName(dir), Path.GetRelativePath(root, dir));
+            errors.Add($"Public type '{name}' uses a one-character name at {relative}.");
+        }
+
+        if (isPublic && retiredNames.Contains(name))
+        {
+            errors.Add($"Public API still uses retired ambiguous name '{name}' at {relative}.");
         }
     }
 
-    foreach (var file in Directory.EnumerateFiles(
-                 areaPath,
-                 "*",
-                 SearchOption.AllDirectories))
+    foreach (var node in syntaxRoot.DescendantNodes().OfType<DelegateDeclarationSyntax>())
     {
-        if (IsBuild(file))
+        var name = node.Identifier.ValueText;
+        if (node.Modifiers.Any(token => token.IsKind(SyntaxKind.PublicKeyword)) && name.Length == 1)
         {
-            continue;
+            errors.Add($"Public delegate '{name}' uses a one-character name at {relative}.");
         }
+    }
 
-        var name = Path.GetFileName(file);
-        if (!name.StartsWith('.') && !IsExt(name))
+    foreach (var ns in syntaxRoot.DescendantNodes().OfType<BaseNamespaceDeclarationSyntax>())
+    {
+        var parts = ns.Name.ToString().Split('.');
+        if (parts.Contains("Case", StringComparer.Ordinal) ||
+            parts.Contains("Comp", StringComparer.Ordinal))
         {
-            ChkName("File", Stem(name), Path.GetRelativePath(root, file));
+            errors.Add($"Retired architecture namespace '{ns.Name}' remains at {relative}.");
+        }
+    }
+
+    foreach (Match match in Regex.Matches(
+                 text,
+                 "(?:Resources|FindResource)\\s*(?:\\[|\\()\\s*\"(?<key>[^\"]+)\""))
+    {
+        resourceKeys.Add(match.Groups["key"].Value);
+    }
+
+    foreach (var literal in syntaxRoot.DescendantNodes().OfType<LiteralExpressionSyntax>()
+                 .Where(node => node.IsKind(SyntaxKind.StringLiteralExpression)))
+    {
+        var value = literal.Token.ValueText;
+        if (Regex.IsMatch(value, "^(?:r3config|r3)[a-z0-9_-]*\\.(?:json|ya?ml)$", RegexOptions.IgnoreCase) &&
+            !ownedRuntimeNames.Contains(value))
+        {
+            errors.Add($"Unapproved R3Config runtime filename '{value}' at {relative}.");
         }
     }
 }
 
-foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.TopDirectoryOnly))
+foreach (var group in typeDecls.GroupBy(item => item.FullName, StringComparer.Ordinal)
+             .Where(group => group.Count() > 1 && !group.All(item => item.IsPartial)))
 {
-    var name = Path.GetFileName(file);
-    if (!name.StartsWith('.') && !IsExt(name))
-    {
-        ChkName("File", Stem(name), name);
-    }
+    errors.Add(
+        $"Type collision for '{group.Key}': {string.Join(", ", group.Select(item => item.Path).Distinct())}.");
 }
 
-foreach (var area in new[] { "App", "Core", "Tst", "Script" })
+var publicTypeNames = typeDecls
+    .Where(item => item.IsPublic)
+    .Select(item => item.Name)
+    .ToHashSet(StringComparer.Ordinal);
+foreach (var required in requiredTypes.Where(required => !publicTypeNames.Contains(required)))
 {
-    var areaPath = Path.Combine(root, area);
-    foreach (var file in Directory.EnumerateFiles(
-                 areaPath,
-                 "*.cs",
-                 SearchOption.AllDirectories))
-    {
-        if (IsBuild(file))
-        {
-            continue;
-        }
-
-        var rel = Path.GetRelativePath(root, file);
-        var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(file));
-        foreach (var node in tree.GetRoot().DescendantNodesAndSelf())
-        {
-            string? name = null;
-            string? kind = null;
-            switch (node)
-            {
-                case BaseTypeDeclarationSyntax item:
-                    name = item.Identifier.ValueText;
-                    kind = "Type";
-                    break;
-                case DelegateDeclarationSyntax item:
-                    name = item.Identifier.ValueText;
-                    kind = "Type";
-                    break;
-                case MethodDeclarationSyntax item:
-                    if (item.ExplicitInterfaceSpecifier is not null ||
-                        item.Modifiers.Any(token => token.IsKind(SyntaxKind.OverrideKeyword)))
-                    {
-                        continue;
-                    }
-                    name = item.Identifier.ValueText;
-                    kind = "Method";
-                    break;
-                case LocalFunctionStatementSyntax item:
-                    name = item.Identifier.ValueText;
-                    kind = "Method";
-                    break;
-                case ConstructorDeclarationSyntax item:
-                    name = item.Identifier.ValueText;
-                    kind = "Method";
-                    break;
-                case PropertyDeclarationSyntax item:
-                    name = item.Identifier.ValueText;
-                    kind = "Property";
-                    break;
-                case EventDeclarationSyntax item:
-                    if (item.ExplicitInterfaceSpecifier is not null)
-                    {
-                        continue;
-                    }
-                    name = item.Identifier.ValueText;
-                    kind = "Property";
-                    break;
-                case EnumMemberDeclarationSyntax item:
-                    name = item.Identifier.ValueText;
-                    kind = "Property";
-                    break;
-                case VariableDeclaratorSyntax item
-                    when item.Parent?.Parent is FieldDeclarationSyntax or
-                        EventFieldDeclarationSyntax:
-                    name = item.Identifier.ValueText;
-                    kind = "Field";
-                    break;
-                case ParameterSyntax item
-                    when item.Parent?.Parent is RecordDeclarationSyntax:
-                    name = item.Identifier.ValueText;
-                    kind = "Property";
-                    break;
-                case BaseNamespaceDeclarationSyntax item:
-                    foreach (var part in item.Name.ToString().Split('.'))
-                    {
-                        if (part != "R3Config")
-                        {
-                            ChkName("Namespace", part, rel);
-                        }
-                    }
-                    break;
-            }
-
-            if (name is not null && !ext.Contains(name))
-            {
-                ChkName(kind!, name, rel);
-            }
-        }
-    }
+    errors.Add($"Required architectural or contract type '{required}' is missing.");
 }
 
 var xns = XNamespace.Get("http://schemas.microsoft.com/winfx/2006/xaml");
-foreach (var file in Directory.EnumerateFiles(
-             Path.Combine(root, "App"),
-             "*.xaml",
-             SearchOption.AllDirectories))
+var xamlFiles = Directory.EnumerateFiles(
+        Path.Combine(root, "App"),
+        "*.xaml",
+        SearchOption.AllDirectories)
+    .Where(path => !IsBuild(path))
+    .Order(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+var xamlDocs = new List<(string Path, XDocument Document)>();
+
+foreach (var file in xamlFiles)
 {
-    var rel = Path.GetRelativePath(root, file);
-    var doc = XDocument.Load(file, LoadOptions.SetLineInfo);
-    foreach (var attr in doc.Descendants().Attributes(xns + "Name"))
+    var relative = Path.GetRelativePath(root, file);
+    XDocument document;
+    try
     {
-        if (!attr.Value.StartsWith("PART_", StringComparison.Ordinal))
+        document = XDocument.Load(file, LoadOptions.SetLineInfo);
+    }
+    catch (Exception exception)
+    {
+        errors.Add($"Invalid XAML at {relative}: {exception.Message}");
+        continue;
+    }
+
+    xamlDocs.Add((relative, document));
+    foreach (var key in document.Descendants().Attributes(xns + "Key"))
+    {
+        resourceKeys.Add(key.Value);
+    }
+
+    foreach (var classAttr in document.Root?.DescendantsAndSelf().Attributes(xns + "Class") ?? [])
+    {
+        if (!typeDecls.Any(item => string.Equals(item.FullName, classAttr.Value, StringComparison.Ordinal)))
         {
-            ChkName("XAML", attr.Value, rel);
+            errors.Add($"x:Class '{classAttr.Value}' has no matching source type at {relative}.");
         }
     }
 }
 
-if (bad.Count > 0)
+var resourcePattern = new Regex(
+    "\\{(?:StaticResource|DynamicResource)\\s+(?<key>[^},\\s]+)",
+    RegexOptions.CultureInvariant);
+foreach (var (path, document) in xamlDocs)
 {
-    foreach (var item in bad.Order(StringComparer.Ordinal))
+    foreach (var attr in document.Descendants().Attributes())
     {
-        Console.Error.WriteLine(item);
+        foreach (Match match in resourcePattern.Matches(attr.Value))
+        {
+            var key = match.Groups["key"].Value;
+            if (key.StartsWith("{x:Type", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (!resourceKeys.Contains(key))
+            {
+                errors.Add($"Missing XAML resource key '{key}' referenced at {path}.");
+            }
+        }
+
+        if ((attr.Value.Contains("{Binding", StringComparison.Ordinal) ||
+             attr.Value.Contains("Resource", StringComparison.Ordinal)) &&
+            retiredNames.Any(name => Regex.IsMatch(attr.Value, $@"\b{Regex.Escape(name)}\b")))
+        {
+            errors.Add($"XAML contract at {path} references a retired identifier: {attr.Value}");
+        }
+    }
+}
+
+var docs = new[]
+    {
+        Path.Combine(root, "README.md"),
+        Path.Combine(root, "NAMES.md"),
+        Path.Combine(root, "docs", "ProdAr.md")
+    }
+    .Concat(Directory.EnumerateFiles(Path.Combine(root, "docs", "Arch"), "*.md"))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .Where(File.Exists)
+    .ToArray();
+var docTexts = docs.ToDictionary(path => path, File.ReadAllText, StringComparer.OrdinalIgnoreCase);
+
+foreach (var (path, text) in docTexts)
+{
+    var relative = Path.GetRelativePath(root, path);
+    var isNameRegistry = relative.Equals("NAMES.md", StringComparison.OrdinalIgnoreCase);
+    foreach (Match match in Regex.Matches(text, "`(?<value>[^`\\r\\n]+)`"))
+    {
+        var value = match.Groups["value"].Value.Trim().Replace('\\', '/');
+        if (value.StartsWith("./", StringComparison.Ordinal))
+        {
+            value = value[2..];
+        }
+
+        if (Regex.IsMatch(value, "^(?:App|Core|Tst|Script|docs)/", RegexOptions.CultureInvariant))
+        {
+            var wildcard = value.IndexOfAny(['*', '<', '>', '{', '}']);
+            if (wildcard >= 0)
+            {
+                value = value[..wildcard].TrimEnd('/');
+            }
+
+            value = value.TrimEnd('/');
+            if (value.Length > 0 && !value.Contains(' ') &&
+                !File.Exists(Path.Combine(root, value.Replace('/', Path.DirectorySeparatorChar))) &&
+                !Directory.Exists(Path.Combine(root, value.Replace('/', Path.DirectorySeparatorChar))))
+            {
+                errors.Add($"Documented path '{value}' does not exist ({relative}).");
+            }
+        }
+
+        if (Regex.IsMatch(
+                value,
+                "^[A-Z][A-Za-z0-9]*(?:UseCase|Service|Guard|Descriptor|Decision|Verdict|Result|Manifest|Snapshot|Formatter)$") &&
+            !publicTypeNames.Contains(value))
+        {
+            errors.Add($"Documented type '{value}' does not exist ({relative}).");
+        }
     }
 
-    Console.Error.WriteLine($"Name verification failed with {bad.Count} violation(s).");
+    if (!isNameRegistry)
+    {
+        var identifierText = Regex.Replace(text, @"\]\([^\)\r\n]+\)", "]");
+        foreach (var retired in retiredNames.Where(retired =>
+                     Regex.IsMatch(identifierText, $@"\b{Regex.Escape(retired)}\b")))
+        {
+            errors.Add($"Documentation still references retired identifier '{retired}' ({relative}).");
+        }
+    }
+
+    if (!isNameRegistry && HasRetiredArchitectureName(text))
+    {
+        errors.Add($"Documentation still references a retired architecture path or namespace ({relative}).");
+    }
+}
+
+var testText = File.ReadAllText(Path.Combine(root, "Tst", "Program.cs"));
+if (HasRetiredArchitectureName(testText))
+{
+    errors.Add("Test architecture assertion still references a retired path or namespace.");
+}
+
+foreach (var stale in new[]
+         {
+             "ImpSvc", "AppComp.cs", "PatMut.cs", "new PatTxn", "new MutGuard"
+         }.Where(stale => Regex.IsMatch(testText, $@"\b{Regex.Escape(stale)}\b")))
+{
+    errors.Add($"Test architecture assertion still references retired name '{stale}'.");
+}
+
+var policyFiles = docs.Concat(new[]
+{
+    Path.Combine(root, "Script", "NameChk.cs"),
+    Path.Combine(root, "Script", "NameChk.ps1"),
+    Path.Combine(root, "Script", "SrcChk.ps1"),
+    Path.Combine(root, "Script", "SrcExp.ps1")
+});
+var numericNameRule = new Regex(
+    "(?:2\\s*(?:<=|through|to|-)\\s*(?:name\\s*length\\s*)?8|name\\.Length\\s+is\\s+>=\\s*2\\s+and\\s+<=\\s*8|الحد\\s+الأقصى.{0,24}8)",
+    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+foreach (var file in policyFiles.Distinct(StringComparer.OrdinalIgnoreCase).Where(File.Exists))
+{
+    if (numericNameRule.IsMatch(File.ReadAllText(file)))
+    {
+        errors.Add($"Numeric identifier-length policy remains in {Path.GetRelativePath(root, file)}.");
+    }
+}
+
+var allContractText = string.Join(
+    "\n",
+    codeTexts.Values.Concat(docTexts.Values));
+foreach (var contract in requiredRuntimeNames.Where(contract =>
+             !allContractText.Contains(contract, StringComparison.Ordinal)))
+{
+    errors.Add($"Required RPCS3 or migration contract name '{contract}' is missing.");
+}
+
+if (errors.Count > 0)
+{
+    foreach (var error in errors.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal))
+    {
+        Console.Error.WriteLine(error);
+    }
+
+    Console.Error.WriteLine($"Contract verification failed with {errors.Distinct().Count()} violation(s).");
     return 1;
 }
 
-Console.WriteLine("Name verification passed.");
+Console.WriteLine("Architecture, naming, XAML, runtime, and documentation contracts passed.");
 return 0;
+
+bool IsBuild(string path)
+{
+    var relative = Path.GetRelativePath(root, path);
+    return relative.Split(Path.DirectorySeparatorChar)
+        .Any(part => part is "bin" or "obj" or "artifacts");
+}
+
+bool HasRetiredArchitectureName(string text)
+{
+    return Regex.IsMatch(text, @"App/(?:Case|Comp)(?:/|\b)") ||
+           Regex.IsMatch(text, @"R3Config\.(?:Case|Comp)\b");
+}

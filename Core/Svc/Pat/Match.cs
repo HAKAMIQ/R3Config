@@ -6,24 +6,24 @@ namespace R3Config.Svc;
 
 /// <summary>
 /// Compatibility facade kept for existing callers.  All decisions are owned
-/// by <see cref="PatCmp"/>.
+/// by <see cref="PatchCompatibilityService"/>.
 /// </summary>
-public sealed class MatchSvc(
-    PatCmp? compatibility = null)
+public sealed class PatchMatchService(
+    PatchCompatibilityService? compatibility = null)
 {
-    private readonly PatCmp _Cmp =
-        compatibility ?? new PatCmp();
+    private readonly PatchCompatibilityService _Cmp =
+        compatibility ?? new PatchCompatibilityService();
 
     public IReadOnlyList<Mdl.PatMatch> Match(
         PatCat catalog,
-        IEnumerable<R3Game> games)
+        IEnumerable<Rpcs3GameDescriptor> games)
     {
         return _Cmp.Evaluate(catalog, games);
     }
 
     public Mdl.PatMatch Match(
-        PatEntry patch,
-        IEnumerable<R3Game> games)
+        Rpcs3PatchEntry patch,
+        IEnumerable<Rpcs3GameDescriptor> games)
     {
         return _Cmp.Evaluate(patch, games);
     }

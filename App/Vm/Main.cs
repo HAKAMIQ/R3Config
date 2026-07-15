@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Markup;
 using R3Config;
-using R3Config.Comp;
+using R3Config.Composition;
 using R3Config.Svc;
 using R3Config.Lang;
 using R3Config.Mdl;
@@ -22,12 +22,12 @@ public sealed partial class MainVm : VmBase
     private readonly SetSvc _setSvc;
     private readonly Func<bool> _isRun;
     private readonly Func<string, string, bool> _confirm;
-    private R3Inst? _install;
+    private Rpcs3InstallDescriptor? _install;
     private RecSvc? _catalog;
     private string? _loadErr;
     private PatCat? _patCat;
     private string? _catErr;
-    private IReadOnlyList<PatSrcSt> _catSrc = [];
+    private IReadOnlyList<PatchCatalogSourceStatus> _catSrc = [];
     private CfgPlan? _curPlan;
     private UiLaySt _layout = UiLaySvc.Current;
     private HwInfo? _hwInfo;
@@ -44,11 +44,11 @@ public sealed partial class MainVm : VmBase
     private bool _isPatCf;
 
     public MainVm()
-        : this(AppComp.BuildRun())
+        : this(AppComposition.BuildRun())
     {
     }
 
-    public MainVm(AppRun services)
+    public MainVm(AppRuntimeServices services)
         : this(
             services,
             isRpcs3Running: null,
@@ -57,7 +57,7 @@ public sealed partial class MainVm : VmBase
     }
 
     public MainVm(
-        AppRun services,
+        AppRuntimeServices services,
         Func<bool>? isRpcs3Running,
         Func<string, string, bool>? confirm)
     {
@@ -65,7 +65,7 @@ public sealed partial class MainVm : VmBase
         _flow = services.Flow;
         _setSvc = services.Settings;
         _isRun = isRpcs3Running ??
-            InstSvc.IsR3;
+            Rpcs3InstallService.IsR3;
         _confirm = confirm ?? UiDlg.Confirm;
         HCanary = new HCanVm(
             _flow,

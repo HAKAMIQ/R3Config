@@ -2,12 +2,12 @@ using System.IO;
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.Case;
+namespace R3Config.Application;
 
-public static class R3Paths
+public static class Rpcs3AppPaths
 {
     public static string BkpRoot(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return Path.Combine(
             install.CfgPath,
@@ -15,7 +15,7 @@ public static class R3Paths
     }
 
     public static string OldBkp(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return Path.Combine(
             install.CfgPath,
@@ -23,26 +23,26 @@ public static class R3Paths
     }
 
     public static string ImpPat(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return Path.Combine(
             install.PatPath,
-            Svc.ImpSvc.ImpName);
+            Svc.CanaryPatchImportService.ImpName);
     }
 
     public static string HCanMeta(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return Path.Combine(
             install.PatPath,
-            PatAuth.MetaName);
+            HCanaryPatchAuthoringService.MetaName);
     }
 
     public static string HCanOld(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return Path.Combine(
             install.PatPath,
-            PatAuth.OldName);
+            HCanaryPatchAuthoringService.OldName);
     }
 }

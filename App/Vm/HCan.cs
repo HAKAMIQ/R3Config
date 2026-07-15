@@ -87,13 +87,13 @@ public sealed class AncVm : VmBase
 
 public sealed partial class HCanVm : VmBase
 {
-    private readonly PatAuth _auth = new();
+    private readonly HCanaryPatchAuthoringService _auth = new();
     private readonly HashExt _reader = new();
     private readonly AppFlow _flow;
     private readonly Func<bool> _isRun;
     private readonly Func<string, string, bool> _confirm;
-    private R3Inst? _install;
-    private R3Game? _game;
+    private Rpcs3InstallDescriptor? _install;
+    private Rpcs3GameDescriptor? _game;
     private HashVm? _selHash;
     private TgtVm? _gameTgt;
     private InsVm? _selIns;
@@ -135,7 +135,7 @@ public sealed partial class HCanVm : VmBase
     {
         _flow = flow ?? throw new ArgumentNullException(nameof(flow));
         _isRun = isRpcs3Running ??
-            InstSvc.IsR3;
+            Rpcs3InstallService.IsR3;
         _confirm = confirm ?? UiDlg.Confirm;
 
         NewCmd = new RelayCmd(NewDraft);
@@ -170,7 +170,7 @@ public sealed partial class HCanVm : VmBase
     public event EventHandler? CatChg;
 
     public IReadOnlyList<string> PatTypes { get; } = ["PPU", "SPU"];
-    public IReadOnlyList<string> Op => PatAuth.Op;
+    public IReadOnlyList<string> Op => HCanaryPatchAuthoringService.Op;
     public IReadOnlyList<DraftSt> Statuses { get; } = Enum.GetValues<DraftSt>();
     public ObservableCollection<HashVm> Hashes { get; } = [];
     public ObservableCollection<TgtVm> Games { get; } = [];

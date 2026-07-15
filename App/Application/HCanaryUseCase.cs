@@ -1,21 +1,21 @@
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.Case;
+namespace R3Config.Application;
 
-public sealed class HCanCase(
-    PatAuth authoring,
-    IMutGd mutationGuard)
+public sealed class HCanaryUseCase(
+    HCanaryPatchAuthoringService authoring,
+    IRpcs3MutationGuard mutationGuard)
 {
     public IReadOnlyList<HCanStor> Load(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return authoring.Load(
-            R3Paths.ImpPat(install));
+            Rpcs3AppPaths.ImpPat(install));
     }
 
     public SaveRes Save(
-        R3Inst install,
+        Rpcs3InstallDescriptor install,
         HCanDrft draft,
         string? originalIdentity = null,
         bool saveAsNew = false)
@@ -23,8 +23,8 @@ public sealed class HCanCase(
         CheckCan(install);
 
         return authoring.Save(
-            R3Paths.ImpPat(install),
-            R3Paths.BkpRoot(install),
+            Rpcs3AppPaths.ImpPat(install),
+            Rpcs3AppPaths.BkpRoot(install),
             draft,
             originalIdentity,
             saveAsNew,
@@ -35,14 +35,14 @@ public sealed class HCanCase(
     }
 
     public SaveRes Delete(
-        R3Inst install,
+        Rpcs3InstallDescriptor install,
         string identity)
     {
         CheckCan(install);
 
         return authoring.Delete(
-            R3Paths.ImpPat(install),
-            R3Paths.BkpRoot(install),
+            Rpcs3AppPaths.ImpPat(install),
+            Rpcs3AppPaths.BkpRoot(install),
             identity,
             (_, backupRoot, targets) => mutationGuard.CheckCan(
                 install,
@@ -51,15 +51,15 @@ public sealed class HCanCase(
     }
 
     private void CheckCan(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         mutationGuard.CheckCan(
             install,
             [
-                R3Paths.ImpPat(install),
-                R3Paths.HCanMeta(install),
-                R3Paths.HCanOld(install)
+                Rpcs3AppPaths.ImpPat(install),
+                Rpcs3AppPaths.HCanMeta(install),
+                Rpcs3AppPaths.HCanOld(install)
             ],
-            [R3Paths.BkpRoot(install)]);
+            [Rpcs3AppPaths.BkpRoot(install)]);
     }
 }

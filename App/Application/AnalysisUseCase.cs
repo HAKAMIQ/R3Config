@@ -1,21 +1,21 @@
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.Case;
+namespace R3Config.Application;
 
-public sealed class AnlzCase(
-    GmScan scanner,
-    PlanSvc planService,
+public sealed class AnalysisUseCase(
+    GameScanner scanner,
+    PlanService planService,
     HwProbe hardwareProbe,
-    HashPrb patchHashProbe,
-    PatCat patchCatalog,
-    BkpCase backups)
+    PatchHashProbeService patchHashProbe,
+    PatchCatalogUseCase patchCatalog,
+    BackupUseCase backups)
 {
-    public async Task<AnlzRes> RunAsync(
+    public async Task<AnalyzeResult> RunAsync(
         string rpcs3ExePath,
         Svc.RecSvc catalog)
     {
-        var install = InstSvc.FromExe(rpcs3ExePath);
+        var install = Rpcs3InstallService.FromExe(rpcs3ExePath);
 
         var hardwareTask = Task.Run(hardwareProbe.Probe);
         var scanTask = Task.Run(() =>
@@ -48,7 +48,7 @@ public sealed class AnlzCase(
         await Task.WhenAll(rowsTask, patchCatalogTask, backupsTask)
             .ConfigureAwait(false);
 
-        return new AnlzRes(
+        return new AnalyzeResult(
             install,
             hardware,
             await rowsTask.ConfigureAwait(false),
@@ -57,11 +57,11 @@ public sealed class AnlzCase(
             scanResult.Diags);
     }
 
-    private IReadOnlyList<GameRow> BuildRow(
-        R3Inst install,
+    private IReadOnlyList<GamePlanRow> BuildRow(
+        Rpcs3InstallDescriptor install,
         Svc.RecSvc catalog,
         HwInfo hardware,
-        IReadOnlyList<R3Game> games,
+        IReadOnlyList<Rpcs3GameDescriptor> games,
         IReadOnlyList<string> customConfigSerials)
     {
         var gamesBySerial = games
@@ -75,7 +75,7 @@ public sealed class AnlzCase(
         var detectedSerials = gamesBySerial.Keys
             .Concat(customConfigSerials)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var rows = new List<GameRow>(
+        var rows = new List<GamePlanRow>(
             catalog.Count + gamesBySerial.Count);
 
         foreach (var recommendation in catalog.Rec
@@ -88,7 +88,7 @@ public sealed class AnlzCase(
                 recommendation.Serial,
                 out var scannedGame)
                 ? scannedGame
-                : new R3Game(
+                : new Rpcs3GameDescriptor(
                     Serial: recommendation.Serial,
                     Title: recommendation.WikiName,
                     InstPath: string.Empty,
@@ -103,7 +103,7 @@ public sealed class AnlzCase(
                     hardware).RecState
                 : BuildSum(recommendation);
 
-            rows.Add(new GameRow(
+            rows.Add(new GamePlanRow(
                 game,
                 recommendation,
                 recState,
@@ -115,7 +115,7 @@ public sealed class AnlzCase(
                      .OrderBy(game => game.Title)
                      .ThenBy(game => game.Serial))
         {
-            rows.Add(new GameRow(
+            rows.Add(new GamePlanRow(
                 game,
                 Rec: null,
                 RecState: planService.BuildCfg(

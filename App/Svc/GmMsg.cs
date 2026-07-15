@@ -6,7 +6,7 @@ namespace R3Config.Svc;
 
 public sealed class GmDiag
 {
-    public string Format(ScanDiag diagnostic)
+    public string Format(GameScanDiagnostic diagnostic)
     {
         ArgumentNullException.ThrowIfNull(diagnostic);
 
@@ -16,7 +16,7 @@ public sealed class GmDiag
     }
 
     private static string SrcName(
-        ScanDiag diagnostic)
+        GameScanDiagnostic diagnostic)
     {
         if (string.IsNullOrWhiteSpace(diagnostic.SrcPath))
         {

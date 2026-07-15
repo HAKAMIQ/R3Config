@@ -22,8 +22,8 @@ public delegate void PathVld(
     string backupRootPath,
     IReadOnlyList<string> targetPaths);
 
-public sealed class PatTxn(
-    BkpSvc? backupService = null,
+public sealed class PatchFileTransactionService(
+    BackupService? backupService = null,
     ReadSvc? catalogReader = null,
     CfgRead? configReader = null,
     Action<string, string>? commitFile = null,
@@ -32,8 +32,8 @@ public sealed class PatTxn(
     private static readonly Encoding Utf8Bom =
         new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
-    private readonly BkpSvc _BkpSvc =
-        backupService ?? new BkpSvc();
+    private readonly BackupService _BkpSvc =
+        backupService ?? new BackupService();
 
     private readonly ReadSvc _Reader =
         catalogReader ?? new ReadSvc();
@@ -47,9 +47,9 @@ public sealed class PatTxn(
     private readonly Action<string> _DelFile =
         deleteFile ?? Commit2;
 
-    public BkpMan Commit(
+    public BackupManifest Commit(
         string backupRootPath,
-        IReadOnlyList<PrepFile> preparedFiles,
+        IReadOnlyList<PatchPreparedFile> preparedFiles,
         PathVld? validatePaths = null)
     {
         if (preparedFiles.Count == 0)
@@ -136,10 +136,10 @@ public sealed class PatTxn(
         }
     }
 
-    private static List<PrepFile> NormAnd(
-        IReadOnlyList<PrepFile> preparedFiles)
+    private static List<PatchPreparedFile> NormAnd(
+        IReadOnlyList<PatchPreparedFile> preparedFiles)
     {
-        var output = new List<PrepFile>(
+        var output = new List<PatchPreparedFile>(
             preparedFiles.Count);
 
         var seenTargets = new HashSet<string>(
@@ -194,7 +194,7 @@ public sealed class PatTxn(
     }
 
     private StgFile StgAnd(
-        PrepFile prepared)
+        PatchPreparedFile prepared)
     {
         if (prepared.DelTgt)
         {
@@ -248,7 +248,7 @@ public sealed class PatTxn(
 
     private void VldStg(
         string stagedPath,
-        PrepFile prepared)
+        PatchPreparedFile prepared)
     {
         switch (prepared.Kind)
         {
@@ -353,10 +353,10 @@ public sealed class PatTxn(
     }
 
     private sealed class StgFile(
-        PrepFile prepared,
+        PatchPreparedFile prepared,
         string? stagedPath)
     {
-        public PrepFile Prepared { get; } = prepared;
+        public PatchPreparedFile Prepared { get; } = prepared;
 
         public string? StgPath { get; } = stagedPath;
     }

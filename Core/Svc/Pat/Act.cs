@@ -12,7 +12,7 @@ namespace R3Config.Svc;
 /// </summary>
 public static class PatAct
 {
-    private static readonly PatCmp Cmp = new();
+    private static readonly PatchCompatibilityService Cmp = new();
 
     public static bool Can(Mdl.PatMatch match)
     {
@@ -24,7 +24,7 @@ public static class PatAct
         return Cmp.Decide(match).CanOff;
     }
 
-    public static CmpDec Decide(
+    public static PatchCompatibilityDecision Decide(
         Mdl.PatMatch match)
     {
         return Cmp.Decide(match);

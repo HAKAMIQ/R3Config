@@ -25,7 +25,7 @@ public sealed record SelRes(
     }
 }
 
-public sealed partial class SelComp
+public sealed partial class PatchSelectionCompiler
 {
     private const string PatVer = "1.2";
 

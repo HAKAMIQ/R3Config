@@ -2,34 +2,34 @@ using System.IO;
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.Case;
+namespace R3Config.Application;
 
-public sealed class BkpCase(
-    BkpSvc backupService,
-    IMutGd mutationGuard)
+public sealed class BackupUseCase(
+    BackupService backupService,
+    IRpcs3MutationGuard mutationGuard)
 {
-    public IReadOnlyList<BkpSnap> List(
-        R3Inst install)
+    public IReadOnlyList<BackupSnapshot> List(
+        Rpcs3InstallDescriptor install)
     {
         return backupService.ListBkp(
-                R3Paths.BkpRoot(install))
+                Rpcs3AppPaths.BkpRoot(install))
             .Concat(backupService.ListBkp(
-                R3Paths.OldBkp(install)))
+                Rpcs3AppPaths.OldBkp(install)))
             .OrderByDescending(item => item.MadeAt)
             .ThenBy(item => item.DirPath, StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
 
     public void Restore(
-        R3Inst install,
-        BkpSnap snapshot)
+        Rpcs3InstallDescriptor install,
+        BackupSnapshot snapshot)
     {
         var backupRoot = Path.GetFullPath(
-            R3Paths.BkpRoot(install));
+            Rpcs3AppPaths.BkpRoot(install));
         var snapshotPath = Path.GetFullPath(
             snapshot.DirPath);
         var oldRoot = Path.GetFullPath(
-            R3Paths.OldBkp(install));
+            Rpcs3AppPaths.OldBkp(install));
         if (!IsChild(backupRoot, snapshotPath) &&
             !IsChild(oldRoot, snapshotPath))
         {

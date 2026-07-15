@@ -173,7 +173,7 @@ public sealed class PatItVm : VmBase
     public bool IsGuard =>
         PatAct.IsRun(Match);
 
-    public CmpDec Decision =>
+    public PatchCompatibilityDecision Decision =>
         PatAct.Decide(Match);
 
     public bool HasIns =>
@@ -321,13 +321,13 @@ public sealed class PatItVm : VmBase
 
             var compatibilityKey = Decision.Code switch
             {
-                CmpCode.Key =>
+                PatchCompatibilityReasonCode.Key =>
                     "Patch.Direct.InvalidRuntimeKey",
-                CmpCode.KeySerBd =>
+                PatchCompatibilityReasonCode.KeySerBd =>
                     "Patch.Direct.RuntimeKeySerialMismatch",
-                CmpCode.Guard =>
+                PatchCompatibilityReasonCode.Guard =>
                     "Patch.Direct.UntrustedRuntimeGuard",
-                CmpCode.Hash =>
+                PatchCompatibilityReasonCode.Hash =>
                     "Patch.Direct.GlobalNeedsExactHash",
                 _ => null
             };
@@ -546,7 +546,7 @@ public sealed class PatItVm : VmBase
         }
     }
 
-    private static PatSrcKd InferSrc(string sourceLabel, PatEntry patch)
+    private static PatSrcKd InferSrc(string sourceLabel, Rpcs3PatchEntry patch)
     {
         var explicitSource = patch.Source switch
         {

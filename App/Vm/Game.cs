@@ -7,7 +7,7 @@ public sealed class GameVm : VmBase
     private RecSum _recStat;
 
     public GameVm(
-        R3Game game,
+        Rpcs3GameDescriptor game,
         WikiRec? recommendation,
         RecSum recState,
         string serial,
@@ -22,7 +22,7 @@ public sealed class GameVm : VmBase
         InR3 = isDetectedInRpcs3;
     }
 
-    public R3Game Game { get; }
+    public Rpcs3GameDescriptor Game { get; }
 
     public WikiRec? Rec { get; }
 

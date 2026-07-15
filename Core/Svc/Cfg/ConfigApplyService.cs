@@ -3,19 +3,19 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class CfgApply
+public sealed class ConfigApplyService
 {
-    private readonly BkpSvc _BkpSvc;
+    private readonly BackupService _BkpSvc;
     private readonly Action<
         string,
         IReadOnlyList<CfgChg>,
         Action?> _Changes;
 
-    public CfgApply(
-        BkpSvc? backupService = null,
+    public ConfigApplyService(
+        BackupService? backupService = null,
         Action<string, IReadOnlyList<CfgChg>, Action?>? applyChanges = null)
     {
-        _BkpSvc = backupService ?? new BkpSvc();
+        _BkpSvc = backupService ?? new BackupService();
         _Changes = applyChanges ?? R3Yaml.Apply;
     }
 

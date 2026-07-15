@@ -302,7 +302,7 @@ public static class SfoRead
 
 internal sealed record SfoProbe(
     SfoInfo? Info,
-    ScanDiag? Diag)
+    GameScanDiagnostic? Diag)
 {
     public static SfoProbe Success(SfoInfo info)
     {
@@ -316,7 +316,7 @@ internal sealed record SfoProbe(
     {
         return new SfoProbe(
             null,
-            new ScanDiag(
+            new GameScanDiagnostic(
                 code,
                 ScanSev.Warning,
                 ScanSrc.ParamSfo,

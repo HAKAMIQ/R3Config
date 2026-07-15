@@ -20,10 +20,10 @@ public sealed class MutBlkEx(
     public MutBlock Reason { get; } = reason;
 }
 
-public interface IMutGd
+public interface IRpcs3MutationGuard
 {
     void CheckCan(
-        R3Inst install,
+        Rpcs3InstallDescriptor install,
         IReadOnlyList<string> targetPaths,
         IReadOnlyList<string>? workPaths = null);
 }
@@ -185,14 +185,14 @@ public static class CanPath
     }
 }
 
-public sealed class MutGuard(
-    Func<bool>? isRpcs3Running = null) : IMutGd
+public sealed class Rpcs3MutationGuard(
+    Func<bool>? isRpcs3Running = null) : IRpcs3MutationGuard
 {
     private readonly Func<bool> _Running =
-        isRpcs3Running ?? InstSvc.IsR3;
+        isRpcs3Running ?? Rpcs3InstallService.IsR3;
 
     public void CheckCan(
-        R3Inst install,
+        Rpcs3InstallDescriptor install,
         IReadOnlyList<string> targetPaths,
         IReadOnlyList<string>? workPaths = null)
     {
@@ -252,7 +252,7 @@ public sealed class MutGuard(
     }
 
     private static CanRoots VldInst(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         try
         {

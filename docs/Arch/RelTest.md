@@ -79,7 +79,7 @@ portable release يحتاج `-Rpcs3Path` لتشغيل عقد التثبيت ال
 
 - build/publish folders داخل strict source package؛
 - nested ZIP؛
-- `App/Data/cbak.json`؛
+- ملف بيانات التطبيق القديم `cbak.json`؛
 - hard-coded local Windows paths؛
 - cheats catalog بلا notice/hash/license/provenance lines المطلوبة.
 

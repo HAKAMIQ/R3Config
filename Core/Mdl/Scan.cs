@@ -52,19 +52,19 @@ public enum ScanSrc
     Dir
 }
 
-public sealed record ScanDiag(
+public sealed record GameScanDiagnostic(
     ScanCode Code,
     ScanSev Severity,
     ScanSrc SrcKind,
     string SrcPath,
     string TechMsg);
 
-public sealed record ScanRes(
-    IReadOnlyList<R3Game> Games,
-    IReadOnlyList<ScanDiag> Diags,
+public sealed record GameScanResult(
+    IReadOnlyList<Rpcs3GameDescriptor> Games,
+    IReadOnlyList<GameScanDiagnostic> Diags,
     IReadOnlyList<string> CfgSer);
 
-public sealed record R3Inst(
+public sealed record Rpcs3InstallDescriptor(
     string RootPath,
     string ExePath,
     string CfgPath,
@@ -73,7 +73,7 @@ public sealed record R3Inst(
     string PatCfg,
     string? DataRoot = null);
 
-public sealed record R3Game(
+public sealed record Rpcs3GameDescriptor(
     string Serial,
     string Title,
     string InstPath,

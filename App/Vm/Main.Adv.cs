@@ -19,7 +19,7 @@ public sealed partial class MainVm : VmBase
         DiagFmt = new();
 
     private void LogGame(
-        IReadOnlyList<ScanDiag> diagnostics)
+        IReadOnlyList<GameScanDiagnostic> diagnostics)
     {
         foreach (var diagnostic in diagnostics)
         {

@@ -33,11 +33,11 @@ public sealed record CanDel(
 public sealed record CanStage(
     bool IsOk,
     string TgtPath,
-    PrepFile? PrepFile,
+    PatchPreparedFile? PreparedFile,
     string Message,
     string? Error);
 
-public sealed class ImpSvc
+public sealed class CanaryPatchImportService
 {
     public const string ImpName = "imported_patch.yml";
     public const string VerHead = "Version: 1.2";
@@ -55,7 +55,7 @@ public sealed class ImpSvc
 
     private readonly ReadSvc _reader;
 
-    public ImpSvc(
+    public CanaryPatchImportService(
         ReadSvc? catalogReader = null)
     {
         _reader = catalogReader ?? new ReadSvc();
@@ -168,7 +168,7 @@ public sealed class ImpSvc
             null);
     }
 
-    public CanStage PrepFile(
+    public CanStage PrepareManagedImportedPatchFile(
         string patchesPath,
         string sourceText)
     {
@@ -298,7 +298,7 @@ public sealed class ImpSvc
             return new CanStage(
                 true,
                 targetPath,
-                new PrepFile(
+                new PatchPreparedFile(
                     targetPath,
                      finalText,
                      PrepKind.PatCat,
@@ -388,7 +388,7 @@ public sealed class ImpSvc
                 return new CanStage(
                     true,
                     targetPath,
-                    new PrepFile(
+                    new PatchPreparedFile(
                         targetPath,
                         string.Empty,
                         PrepKind.PatCat,
@@ -417,7 +417,7 @@ public sealed class ImpSvc
             return new CanStage(
                 true,
                 targetPath,
-                new PrepFile(
+                new PatchPreparedFile(
                     targetPath,
                     finalText,
                     PrepKind.PatCat,

@@ -51,7 +51,7 @@ public sealed partial class MainVm : VmBase
                 return;
             }
 
-            var plan = _flow.PatPlan(_install, selectedMatches, Preview.ShowExp);
+            var plan = _flow.BuildPatchPlan(_install, selectedMatches, Preview.ShowExp);
             if (!plan.HasChg)
             {
                 UiDlg.Info(UiText.GetText("Msg.NoSafePatchApply"), UiText.GetText("Dialog.NothingToApply"));
@@ -266,7 +266,7 @@ public sealed partial class MainVm : VmBase
     }
 
     private static string? PatWarn(
-        R3Game game,
+        Rpcs3GameDescriptor game,
         IReadOnlyList<PatMatch> matches)
     {
         if (HasHash(game) ||

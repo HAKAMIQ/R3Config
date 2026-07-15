@@ -1,35 +1,35 @@
-using R3Config.Comp;
+using R3Config.Composition;
 using R3Config.Mdl;
 using R3Config.Svc;
-using R3Config.Case;
+using R3Config.Application;
 
 namespace R3Config;
 
 /// <summary>
 /// Compatibility facade for the WPF layer. Business workflows live in
-/// Application use cases and are composed in <see cref="AppComp"/>.
+/// Application use cases and are composed in <see cref="AppComposition"/>.
 /// </summary>
 public sealed class AppFlow
 {
-    private readonly AppCases _cases;
+    private readonly AppUseCases _cases;
 
     public AppFlow()
-        : this(AppComp.Build())
+        : this(AppComposition.Build())
     {
     }
 
-    public AppFlow(AppCases useCases)
+    public AppFlow(AppUseCases useCases)
     {
         _cases = useCases ??
             throw new ArgumentNullException(nameof(useCases));
     }
 
-    public CatLoad LoadCat(string baseDir)
+    public CatalogLoadResult LoadCat(string baseDir)
     {
-        return _cases.RecCat.LoadData(baseDir);
+        return _cases.Recommendations.LoadData(baseDir);
     }
 
-    public Task<AnlzRes> DoAsync(
+    public Task<AnalyzeResult> DoAsync(
         string rpcs3ExePath,
         Svc.RecSvc cat)
     {
@@ -39,8 +39,8 @@ public sealed class AppFlow
     }
 
     public CfgPlan CfgPlan(
-        R3Inst install,
-        R3Game game,
+        Rpcs3InstallDescriptor install,
+        Rpcs3GameDescriptor game,
         WikiRec? rec,
         HwInfo? hw)
     {
@@ -54,7 +54,7 @@ public sealed class AppFlow
     public CfgRes ApplyCfg(
         CfgPlan plan,
         IReadOnlyList<CfgChg> changes,
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return _cases.Config.Apply(
             plan,
@@ -65,7 +65,7 @@ public sealed class AppFlow
     public CfgRes DelCfg(
         CfgPlan plan,
         IReadOnlyList<CfgChg> changes,
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return _cases.Config.Remove(
             plan,
@@ -73,65 +73,65 @@ public sealed class AppFlow
             install);
     }
 
-    public PatCatRs LoadPat(
-        R3Inst install)
+    public PatchCatalogResult LoadPat(
+        Rpcs3InstallDescriptor install)
     {
-        return _cases.PatCat.Load(install);
+        return _cases.PatchCatalog.Load(install);
     }
 
     public CanDel DelCan(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
-        return _cases.CanImp.Remove(install);
+        return _cases.CanaryImport.Remove(install);
     }
 
     public CanNorm NormCan(
         string? sourceText)
     {
-        return _cases.CanImp.Norm(sourceText);
+        return _cases.CanaryImport.Norm(sourceText);
     }
 
     public bool HasImp(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
-        return _cases.CanImp.HasPat(
+        return _cases.CanaryImport.HasPat(
             install);
     }
 
     public CanWrite ImpCan(
-        R3Inst install,
+        Rpcs3InstallDescriptor install,
         string sourceText)
     {
-        return _cases.CanImp.Import(
+        return _cases.CanaryImport.Import(
             install,
             sourceText);
     }
 
     public IReadOnlyList<PatMatch> PatPrev(
         Mdl.PatCat patchCat,
-        R3Game game)
+        Rpcs3GameDescriptor game)
     {
-        return _cases.PatCat.Build(
+        return _cases.PatchCatalog.Build(
             patchCat,
             game);
     }
 
-    public PatPlan PatPlan(
-        R3Inst install,
+    public PatchApplyPlan BuildPatchPlan(
+        Rpcs3InstallDescriptor install,
         IReadOnlyList<PatMatch> matches,
         bool expertMode)
     {
-        return _cases.PatMut.BuildOn(
+        return _cases.PatchMutation.BuildOn(
             install,
             matches,
             expertMode);
     }
 
-    public PatPlan OffPlan(
-        R3Inst install,
+    public PatchApplyPlan OffPlan(
+        Rpcs3InstallDescriptor install,
         IReadOnlyList<PatMatch> matches)
     {
-        return _cases.PatMut.BuildOff(
+        return _cases.PatchMutation.BuildOff(
             install,
             matches);
     }
@@ -139,93 +139,93 @@ public sealed class AppFlow
     public PatChg? PatChg(
         PatMatch match)
     {
-        return _cases.PatMut.BuildChg(match);
+        return _cases.PatchMutation.BuildChg(match);
     }
 
     public PatRes ApplyTxn(
-        PatPlan plan,
-        R3Inst install,
+        PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install,
         IReadOnlyList<PatMatch> selectedMatches)
     {
-        return _cases.PatMut.ApplyTxn(
+        return _cases.PatchMutation.ApplyTxn(
             plan,
             install,
             selectedMatches);
     }
 
     public PatRes ApplyPat(
-        PatPlan plan,
-        R3Inst install)
+        PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install)
     {
-        return _cases.PatMut.Apply(
+        return _cases.PatchMutation.Apply(
             plan,
             install);
     }
 
-    public PatRes OffPat(PatPlan plan,
-        R3Inst install)
+    public PatRes OffPat(PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install)
     {
-        return _cases.PatMut.Disable(
+        return _cases.PatchMutation.Disable(
             plan,
             install);
     }
 
     public bool CanRead(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
-        return _cases.PatCat.CanRead(install);
+        return _cases.PatchCatalog.CanRead(install);
     }
 
     public CfgSnap ReadCfg(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
-        return _cases.PatCat.ReadCfg(install);
+        return _cases.PatchCatalog.ReadCfg(install);
     }
 
     public Svc.RecSvc BuildCat(string xmlPath)
     {
-        return _cases.RecCat.Rebuild(xmlPath);
+        return _cases.Recommendations.Rebuild(xmlPath);
     }
 
     public string CatText(CatInfo info)
     {
-        return _cases.RecCat.FmtInf(info);
+        return _cases.Recommendations.FmtInf(info);
     }
 
     public void ExpCat(
         Svc.RecSvc cat,
         string path)
     {
-        Case.RecCat.Export(cat, path);
+        Application.RecommendationCatalogUseCase.Export(cat, path);
     }
 
-    public IReadOnlyList<BkpSnap> ListBkp(
-        R3Inst install)
+    public IReadOnlyList<BackupSnapshot> ListBkp(
+        Rpcs3InstallDescriptor install)
     {
         return _cases.Backup.List(install);
     }
 
     public void Restore(
-        R3Inst install,
-        BkpSnap backup)
+        Rpcs3InstallDescriptor install,
+        BackupSnapshot backup)
     {
         _cases.Backup.Restore(install, backup);
     }
 
     public static string BkpRoot(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
-        return R3Paths.BkpRoot(install);
+        return Rpcs3AppPaths.BkpRoot(install);
     }
 
     public IReadOnlyList<HCanStor> LoadHCan(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return _cases.HCanary.Load(install);
     }
 
     public SaveRes SaveHCan(
-        R3Inst install,
+        Rpcs3InstallDescriptor install,
         HCanDrft draft,
         string? originalIdentity = null,
         bool saveAsNew = false)
@@ -238,7 +238,7 @@ public sealed class AppFlow
     }
 
     public SaveRes DelHCan(
-        R3Inst install,
+        Rpcs3InstallDescriptor install,
         string identity)
     {
         return _cases.HCanary.Delete(

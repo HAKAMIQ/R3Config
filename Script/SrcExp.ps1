@@ -97,6 +97,7 @@ try {
         'Excluded: .git, .vs, bin, obj, artifacts, publish, local user files, logs, temp files, backups, nested ZIP files'
         'Start-Here: docs/ProdAr.md'
         'Architecture-Index: docs/Arch/README.md'
+        'Contract-Gate: Script/NameChk.ps1'
     )
 
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $stagingRoot 'Script\SrcChk.ps1') -Path $stagingRoot -StrictTree

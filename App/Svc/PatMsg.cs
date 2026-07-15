@@ -1,10 +1,10 @@
 using R3Config.Lang;
-using R3Config.Case;
+using R3Config.Application;
 
 namespace R3Config.Svc;
 
-public sealed class PatMsgFm :
-    IPatMsg
+public sealed class LocalizedPatchCatalogMessageFormatter :
+    IPatchCatalogMessageFormatter
 {
     public string MissCat =>
         UiText.GetText("Patch.FileMissing");

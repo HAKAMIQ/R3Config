@@ -9,7 +9,7 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class HashPrb
+public sealed class PatchHashProbeService
 {
     private const int MaxBytes = 16 * 1024 * 1024;
     private const long MaxByte2 = 64L * 1024 * 1024;
@@ -62,9 +62,9 @@ public sealed class HashPrb
         RegexOptions.CultureInvariant |
         RegexOptions.IgnoreCase);
 
-    public R3Game Enrich(
-        R3Inst install,
-        R3Game game)
+    public Rpcs3GameDescriptor Enrich(
+        Rpcs3InstallDescriptor install,
+        Rpcs3GameDescriptor game)
     {
         var existingPpuHashes = Norm(game.Hashes);
         var existingSpuHashes = Norm(game.SpuList);
@@ -122,16 +122,16 @@ public sealed class HashPrb
         };
     }
 
-    public IReadOnlyList<R3Game> Enrich(
-        R3Inst install,
-        IEnumerable<R3Game> games)
+    public IReadOnlyList<Rpcs3GameDescriptor> Enrich(
+        Rpcs3InstallDescriptor install,
+        IEnumerable<Rpcs3GameDescriptor> games)
     {
         return games.Select(game => Enrich(install, game)).ToArray();
     }
 
     public HashRes Probe(
-        R3Inst install,
-        R3Game game)
+        Rpcs3InstallDescriptor install,
+        Rpcs3GameDescriptor game)
     {
         if (string.IsNullOrWhiteSpace(game.Serial))
         {
@@ -281,7 +281,7 @@ public sealed class HashPrb
     }
 
     private static IEnumerable<MetaCand> ListCand(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         var configBase = Path.GetDirectoryName(install.CfgPath);
         var portablePath = Path.Combine(install.RootPath, "portable");
@@ -340,7 +340,7 @@ public sealed class HashPrb
     }
 
     private static IEnumerable<string> ListCan2(
-        R3Inst install,
+        Rpcs3InstallDescriptor install,
         string serial)
     {
         var configBase = Path.GetDirectoryName(install.CfgPath);
@@ -408,8 +408,8 @@ public sealed class HashPrb
     }
 
     private static DateTime? FindUtc(
-        R3Inst install,
-        R3Game game,
+        Rpcs3InstallDescriptor install,
+        Rpcs3GameDescriptor game,
         string? moduleName)
     {
         if (string.IsNullOrWhiteSpace(moduleName))

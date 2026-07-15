@@ -11,14 +11,14 @@ namespace R3Config.Mdl;
 /// compatibility intentionally remain separate: a cheat can be compatible,
 /// but it still requires an explicit user choice.
 /// </summary>
-public enum CmpVerd
+public enum PatchCompatibilityVerdict
 {
     Compat,
     Guarded,
     Blocked
 }
 
-public enum CmpCode
+public enum PatchCompatibilityReasonCode
 {
     ExactId,
     R3Guard,
@@ -33,9 +33,9 @@ public enum CmpCode
     Hash
 }
 
-public sealed record CmpDec(
-    CmpVerd Verdict,
-    CmpCode Code,
+public sealed record PatchCompatibilityDecision(
+    PatchCompatibilityVerdict Verdict,
+    PatchCompatibilityReasonCode Code,
     bool CanOn,
     bool CanOff,
     bool UseGuard,

@@ -11,13 +11,13 @@ using YamlDotNet.RepresentationModel;
 
 namespace R3Config.Svc;
 
-public sealed partial class GmScan
+public sealed partial class GameScanner
 {
     private readonly int _DirLimi;
     private readonly Func<string, IEnumerable<string>> _Directo;
     private readonly Func<string, IEnumerable<string>> _Files;
 
-    public GmScan(
+    public GameScanner(
         int directoryEntryLimit = R3Limits.DirEnt,
         Func<string, IEnumerable<string>>? enumerateDirectories = null,
         Func<string, IEnumerable<string>>? enumerateCustomConfigFiles = null)
@@ -39,19 +39,19 @@ public sealed partial class GmScan
                 SearchOption.TopDirectoryOnly));
     }
 
-    public IReadOnlyList<R3Game> Scan(
-        R3Inst install)
+    public IReadOnlyList<Rpcs3GameDescriptor> Scan(
+        Rpcs3InstallDescriptor install)
     {
         return ScanInfo(install).Games;
     }
 
-    public ScanRes ScanInfo(
-        R3Inst install)
+    public GameScanResult ScanInfo(
+        Rpcs3InstallDescriptor install)
     {
-        var games = new Dictionary<string, R3Game>(
+        var games = new Dictionary<string, Rpcs3GameDescriptor>(
             StringComparer.OrdinalIgnoreCase);
         var diagnostics =
-            new DiagList<ScanDiag>(
+            new DiagList<GameScanDiagnostic>(
                 R3Limits.Diag);
 
         ScanYml(install, games, diagnostics);
@@ -60,7 +60,7 @@ public sealed partial class GmScan
             install,
             diagnostics);
 
-        return new ScanRes(
+        return new GameScanResult(
             [
                 .. games.Values.OrderBy(
                     game => game.Serial,
@@ -80,7 +80,7 @@ public sealed partial class GmScan
     }
 
     public IReadOnlyList<string> Scan2(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return Scan2(
             install,
@@ -88,8 +88,8 @@ public sealed partial class GmScan
     }
 
     private IReadOnlyList<string> Scan2(
-        R3Inst install,
-        ICollection<ScanDiag>? diagnostics)
+        Rpcs3InstallDescriptor install,
+        ICollection<GameScanDiagnostic>? diagnostics)
     {
         if (!Directory.Exists(install.CustPath))
         {
@@ -104,7 +104,7 @@ public sealed partial class GmScan
                 .ToArray();
             if (entries.Length > _DirLimi)
             {
-                diagnostics?.Add(new ScanDiag(
+                diagnostics?.Add(new GameScanDiagnostic(
                     ScanCode.Reached,
                     ScanSev.Warning,
                     ScanSrc.Dir,
@@ -134,7 +134,7 @@ public sealed partial class GmScan
             ex is IOException or
                 UnauthorizedAccessException)
         {
-            diagnostics?.Add(new ScanDiag(
+            diagnostics?.Add(new GameScanDiagnostic(
                 ScanCode.NoRead,
                 ScanSev.Warning,
                 ScanSrc.Dir,
@@ -145,15 +145,15 @@ public sealed partial class GmScan
     }
 
     private static void ScanYml(
-        R3Inst install,
-        Dictionary<string, R3Game> games,
-        ICollection<ScanDiag> diagnostics)
+        Rpcs3InstallDescriptor install,
+        Dictionary<string, Rpcs3GameDescriptor> games,
+        ICollection<GameScanDiagnostic> diagnostics)
     {
         var gamesYmlPaths = List(install)
             .ToArray();
         if (gamesYmlPaths.Length == 0)
         {
-            diagnostics.Add(new ScanDiag(
+            diagnostics.Add(new GameScanDiagnostic(
                 ScanCode.Missing,
                 ScanSev.Info,
                 ScanSrc.Yaml,
@@ -173,8 +173,8 @@ public sealed partial class GmScan
 
     private static void ScanFile(
         string gamesYmlPath,
-        Dictionary<string, R3Game> games,
-        ICollection<ScanDiag> diagnostics)
+        Dictionary<string, Rpcs3GameDescriptor> games,
+        ICollection<GameScanDiagnostic> diagnostics)
     {
         YamlMappingNode root;
 
@@ -192,7 +192,7 @@ public sealed partial class GmScan
                 yaml.Documents.Count > R3Limits.YamlDoc ||
                 yaml.Documents[0].RootNode is not YamlMappingNode mapping)
             {
-                diagnostics.Add(new ScanDiag(
+                diagnostics.Add(new GameScanDiagnostic(
                     ScanCode.GameBad,
                     ScanSev.Warning,
                     ScanSrc.Yaml,
@@ -209,7 +209,7 @@ public sealed partial class GmScan
                 IOException or
                 UnauthorizedAccessException)
         {
-            diagnostics.Add(new ScanDiag(
+            diagnostics.Add(new GameScanDiagnostic(
                 IsFile(
                     gamesYmlPath,
                     R3Limits.GameByte)
@@ -247,7 +247,7 @@ public sealed partial class GmScan
             }
             var sfo = sfoProbe.Info;
 
-            games[serial] = new R3Game(
+            games[serial] = new Rpcs3GameDescriptor(
                 Serial: sfo?.TitleId ?? serial,
                 Title: sfo?.Title ?? Derive(
                     serial,
@@ -261,7 +261,7 @@ public sealed partial class GmScan
     }
 
     private static IEnumerable<string> List(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         var configBasePath =
             Path.GetDirectoryName(install.CfgPath);
@@ -302,9 +302,9 @@ public sealed partial class GmScan
     }
 
     private void ScanHdd(
-        R3Inst install,
-        Dictionary<string, R3Game> games,
-        ICollection<ScanDiag> diagnostics)
+        Rpcs3InstallDescriptor install,
+        Dictionary<string, Rpcs3GameDescriptor> games,
+        ICollection<GameScanDiagnostic> diagnostics)
     {
         var configBasePath =
             Path.GetDirectoryName(install.CfgPath);
@@ -359,7 +359,7 @@ public sealed partial class GmScan
                 ex is IOException or
                     UnauthorizedAccessException)
             {
-                diagnostics.Add(new ScanDiag(
+                diagnostics.Add(new GameScanDiagnostic(
                     ScanCode.Denied,
                     ScanSev.Warning,
                     ScanSrc.GameDir,
@@ -370,7 +370,7 @@ public sealed partial class GmScan
 
             if (directories.Length > _DirLimi)
             {
-                diagnostics.Add(new ScanDiag(
+                diagnostics.Add(new GameScanDiagnostic(
                     ScanCode.Reached,
                     ScanSev.Warning,
                     ScanSrc.GameDir,
@@ -420,7 +420,7 @@ public sealed partial class GmScan
                     continue;
                 }
 
-                games[serial] = new R3Game(
+                games[serial] = new Rpcs3GameDescriptor(
                     Serial: serial,
                     Title: sfo?.Title ?? serial,
                     InstPath: directory,

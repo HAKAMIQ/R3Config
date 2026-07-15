@@ -17,7 +17,7 @@ public sealed class StateSvc
     ];
 
     public RecSum Evaluate(
-        R3Game game,
+        Rpcs3GameDescriptor game,
         IReadOnlyList<WikiRec> recs,
         Func<string, string, string?> readCurrent,
         HwInfo? hw = null)

@@ -39,5 +39,5 @@ public sealed record CfgPlan(
     bool NeedBkp);
 
 public sealed record CfgRes(
-    BkpMan Backup,
+    BackupManifest Backup,
     IReadOnlyList<CfgChg> ChgList);

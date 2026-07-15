@@ -16,8 +16,8 @@
   <ItemGroup>
     <!-- Keep the mutation boundary explicit so Visual Studio design-time
          builds reload the Core reference when this architecture file changes. -->
-    <Compile Remove="Svc\Mut\Guard.cs" />
-    <Compile Include="Svc\Mut\Guard.cs" />
+    <Compile Remove="Svc\Mut\Rpcs3MutationGuard.cs" />
+    <Compile Include="Svc\Mut\Rpcs3MutationGuard.cs" />
   </ItemGroup>
 
 </Project>

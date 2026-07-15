@@ -2,16 +2,16 @@ using System.IO;
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.Case;
+namespace R3Config.Application;
 
-public sealed class CfgCase(
-    PlanSvc planService,
-    CfgApply applyService,
-    IMutGd mutationGuard)
+public sealed class ConfigUseCase(
+    PlanService planService,
+    ConfigApplyService applyService,
+    IRpcs3MutationGuard mutationGuard)
 {
     public CfgPlan Build(
-        R3Inst install,
-        R3Game game,
+        Rpcs3InstallDescriptor install,
+        Rpcs3GameDescriptor game,
         WikiRec? recommendation,
         HwInfo? hardware)
     {
@@ -25,10 +25,10 @@ public sealed class CfgCase(
     public CfgRes Apply(
         CfgPlan plan,
         IReadOnlyList<CfgChg> changes,
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         Check(plan, install);
-        var backupRoot = R3Paths.BkpRoot(install);
+        var backupRoot = Rpcs3AppPaths.BkpRoot(install);
         var validator = VldFunc(install);
         validator(
             PatPhase.Stg,
@@ -45,10 +45,10 @@ public sealed class CfgCase(
     public CfgRes Remove(
         CfgPlan plan,
         IReadOnlyList<CfgChg> changes,
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         Check(plan, install);
-        var backupRoot = R3Paths.BkpRoot(install);
+        var backupRoot = Rpcs3AppPaths.BkpRoot(install);
         var validator = VldFunc(install);
         validator(
             PatPhase.Stg,
@@ -64,7 +64,7 @@ public sealed class CfgCase(
 
     private static void Check(
         CfgPlan plan,
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         var expected = Path.Combine(
             install.CustPath,
@@ -81,7 +81,7 @@ public sealed class CfgCase(
     }
 
     private PathVld VldFunc(
-        R3Inst install)
+        Rpcs3InstallDescriptor install)
     {
         return (_, backupRoot, targets) =>
             mutationGuard.CheckCan(

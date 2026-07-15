@@ -28,7 +28,7 @@ public sealed partial class MainVm : VmBase
 
         try
         {
-            if (!InstSvc.IsR3())
+            if (!Rpcs3InstallService.IsR3())
             {
                 Process.Start(new ProcessStartInfo(_install.ExePath)
                 {
@@ -166,8 +166,8 @@ public sealed partial class MainVm : VmBase
             return;
         }
 
-        var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(window => window.IsActive)
-            ?? Application.Current?.MainWindow;
+        var owner = System.Windows.Application.Current?.Windows.OfType<Window>().FirstOrDefault(window => window.IsActive)
+            ?? System.Windows.Application.Current?.MainWindow;
 
         var viewModel = new CanImpVm(
             _install,
@@ -265,7 +265,7 @@ public sealed partial class MainVm : VmBase
 
             Log(UiText.Fmt("Msg.CatLoaded", _catalog.DataSrc, _catalog.DataVer, _catalog.Count));
             Log(UiText.Fmt("Msg.GamesFound", GameList.Games.Count));
-            LogGame(result.ScanDiag);
+            LogGame(result.GameScanDiagnostic);
         }
         catch (Exception ex)
         {

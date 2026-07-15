@@ -11,7 +11,7 @@ namespace R3Config.Vm;
 
 public sealed class CanImpVm : VmBase
 {
-    private readonly R3Inst? _install;
+    private readonly Rpcs3InstallDescriptor? _install;
     private readonly AppFlow _flow;
     private readonly Func<bool> _isRun;
     private readonly Func<string, string, bool> _confirm;
@@ -24,7 +24,7 @@ public sealed class CanImpVm : VmBase
     private bool _runUi;
 
     public CanImpVm(
-        R3Inst? install,
+        Rpcs3InstallDescriptor? install,
         AppFlow flow,
         Func<bool>? isRpcs3Running = null,
         Func<string, string, bool>? confirm = null)
@@ -32,7 +32,7 @@ public sealed class CanImpVm : VmBase
         _install = install;
         _flow = flow ?? throw new ArgumentNullException(nameof(flow));
         _isRun = isRpcs3Running ??
-            InstSvc.IsR3;
+            Rpcs3InstallService.IsR3;
         _confirm = confirm ?? UiDlg.Confirm;
 
         PickCmd = new RelayCmd(PickFile);

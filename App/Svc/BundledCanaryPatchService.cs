@@ -8,11 +8,11 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class CanBndl
+public sealed class BundledCanaryPatchService
 {
     public const string BndlName = "can.yml";
 
-    private readonly ImpSvc _impSvc = new();
+    private readonly CanaryPatchImportService _impSvc = new();
 
     public static string GetPath(string baseDirectory)
     {
@@ -71,7 +71,7 @@ public sealed class CanBndl
                 null);
         }
 
-        return _impSvc.PrepFile(
+        return _impSvc.PrepareManagedImportedPatchFile(
             patchesPath,
             selectedText);
     }
@@ -87,7 +87,7 @@ public sealed class CanBndl
         // aliases become dangling and RPCS3/YamlDotNet rejects the result.
         // PatchSelectionCompiler clones the selected entries and expands every
         // alias before the imported_patch.yml transaction is staged.
-        var compiled = new SelComp().Compile(
+        var compiled = new PatchSelectionCompiler().Compile(
             bundledText,
             selectedMatches,
             selectedMatches);

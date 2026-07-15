@@ -6,13 +6,13 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class PlanSvc
+public sealed class PlanService
 {
     private readonly StateSvc _recSvc = new();
 
     public CfgPlan BuildCfg(
-        R3Inst install,
-        R3Game game,
+        Rpcs3InstallDescriptor install,
+        Rpcs3GameDescriptor game,
         WikiRec? recommendation,
         HwInfo? hw = null)
     {

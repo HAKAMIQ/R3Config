@@ -2,12 +2,12 @@ using System.IO;
 using R3Config.Mdl;
 using R3Config.Svc;
 
-namespace R3Config.Case;
+namespace R3Config.Application;
 
-public sealed class RecCat(
+public sealed class RecommendationCatalogUseCase(
     Svc.CatSvc catalogInfo)
 {
-    public CatLoad LoadData(string baseDirectory)
+    public CatalogLoadResult LoadData(string baseDirectory)
     {
         var path = Path.Combine(
             baseDirectory,
@@ -16,21 +16,21 @@ public sealed class RecCat(
 
         try
         {
-            return new CatLoad(
+            return new CatalogLoadResult(
                 catalogInfo.LoadCat(path),
                 null);
         }
         catch (MissEx ex)
         {
-            return new CatLoad(null, ex.Message);
+            return new CatalogLoadResult(null, ex.Message);
         }
         catch (CatBadEx ex)
         {
-            return new CatLoad(null, ex.Message);
+            return new CatalogLoadResult(null, ex.Message);
         }
         catch
         {
-            return new CatLoad(
+            return new CatalogLoadResult(
                 null,
                 CatBadEx.UserMsg);
         }

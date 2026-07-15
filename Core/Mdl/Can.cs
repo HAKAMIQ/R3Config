@@ -260,6 +260,6 @@ public sealed record HCanStor(
 
 public sealed record SaveRes(
     string Path,
-    BkpMan Backup,
+    BackupManifest Backup,
     int PatNum,
     bool Replaced);

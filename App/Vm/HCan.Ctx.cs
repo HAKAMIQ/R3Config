@@ -12,7 +12,7 @@ public sealed partial class HCanVm : VmBase
 {
     public void Load(string baseDirectory) => LoadStor();
 
-    public void SetCtx(R3Inst? install, R3Game? game)
+    public void SetCtx(Rpcs3InstallDescriptor? install, Rpcs3GameDescriptor? game)
     {
         var gameChanged = _game?.Serial != game?.Serial;
         _install = install;
@@ -36,7 +36,7 @@ public sealed partial class HCanVm : VmBase
         LoadMut();
     }
 
-    public void Analyze(R3Game? game) => SetCtx(_install, game);
+    public void Analyze(Rpcs3GameDescriptor? game) => SetCtx(_install, game);
 
     public void SetAvail(
         bool isBusy,

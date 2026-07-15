@@ -4,23 +4,23 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public sealed class PatApply
+public sealed class PatchApplyService
 {
     private readonly CfgWrite _writer;
-    private readonly PatTxn _Txn;
+    private readonly PatchFileTransactionService _Txn;
 
-    public PatApply(
-        BkpSvc? backupService = null,
+    public PatchApplyService(
+        BackupService? backupService = null,
         CfgWrite? writer = null,
-        PatTxn? transaction = null)
+        PatchFileTransactionService? transaction = null)
     {
-        var backup = backupService ?? new BkpSvc();
+        var backup = backupService ?? new BackupService();
         _writer = writer ?? new CfgWrite();
-        _Txn = transaction ?? new PatTxn(backup);
+        _Txn = transaction ?? new PatchFileTransactionService(backup);
     }
 
     public PatRes Apply(
-        Mdl.PatPlan plan,
+        Mdl.PatchApplyPlan plan,
         string backupRootPath,
         PathVld? validatePaths = null)
     {
@@ -32,9 +32,9 @@ public sealed class PatApply
     }
 
     public PatRes ApplyTxn(
-        Mdl.PatPlan plan,
+        Mdl.PatchApplyPlan plan,
         string backupRootPath,
-        IReadOnlyList<PrepFile> preparedFiles,
+        IReadOnlyList<PatchPreparedFile> preparedFiles,
         PathVld? validatePaths = null)
     {
         if (!plan.HasChg)
@@ -50,7 +50,7 @@ public sealed class PatApply
         CfgWrite.VldText(patchConfigText);
 
         var transactionFiles = preparedFiles
-            .Append(new PrepFile(
+            .Append(new PatchPreparedFile(
                 plan.PatCfg,
                 patchConfigText,
                 PrepKind.PatCfg))
@@ -67,7 +67,7 @@ public sealed class PatApply
     }
 
     public PatRes Disable(
-        Mdl.PatPlan plan,
+        Mdl.PatchApplyPlan plan,
         string backupRootPath,
         PathVld? validatePaths = null)
     {
@@ -79,7 +79,7 @@ public sealed class PatApply
     }
 
     private PatRes Apply(
-        Mdl.PatPlan plan,
+        Mdl.PatchApplyPlan plan,
         string backupRootPath,
         bool enabled,
         PathVld? validatePaths)
@@ -99,7 +99,7 @@ public sealed class PatApply
         var backup = _Txn.Commit(
             backupRootPath,
             [
-                new PrepFile(
+                new PatchPreparedFile(
                     plan.PatCfg,
                     patchConfigText,
                     PrepKind.PatCfg)

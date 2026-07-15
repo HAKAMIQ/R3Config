@@ -7,9 +7,9 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-public static class InstSvc
+public static class Rpcs3InstallService
 {
-    public static R3Inst FromExe(string exePath)
+    public static Rpcs3InstallDescriptor FromExe(string exePath)
     {
         if (string.IsNullOrWhiteSpace(exePath))
         {
@@ -50,7 +50,7 @@ public static class InstSvc
             dataRootPath,
             "patches");
 
-        return new R3Inst(
+        return new Rpcs3InstallDescriptor(
             RootPath: rootPath,
             ExePath: fullExePath,
             CfgPath: configPath,
