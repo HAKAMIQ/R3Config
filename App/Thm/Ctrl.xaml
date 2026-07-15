@@ -1564,6 +1564,16 @@
 		<Setter Property="VerticalAlignment" Value="Center" />
 	</Style>
 
+	<Style x:Key="DataGridCellPathText" TargetType="TextBlock" BasedOn="{StaticResource TechText}">
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="TextAlignment" Value="Left" />
+		<Setter Property="TextWrapping" Value="NoWrap" />
+		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+		<Setter Property="Padding" Value="8,0" />
+	</Style>
+
 	<Style x:Key="HCanBox" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Type ComboBox}}">
 		<Setter Property="MinHeight" Value="36" />
 		<Setter Property="Padding" Value="8,4" />

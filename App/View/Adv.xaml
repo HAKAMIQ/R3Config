@@ -48,14 +48,20 @@
 					</Grid.ColumnDefinitions>
 
 					<StackPanel Grid.Column="0"
+                                MinWidth="0"
+                                Margin="0,0,12,0"
                                 VerticalAlignment="Center">
 						<TextBlock Text="{lang:TextExt Key=Adv.Title}"
-                                   Style="{StaticResource R3SettingsTitleText}" />
+                                   Style="{StaticResource R3SettingsTitleText}"
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="NoWrap" />
 
 						<TextBlock Margin="0,4,0,0"
                                    Text="{lang:TextExt Key=Adv.Description}"
                                    Style="{StaticResource R3SettingsDescriptionText}"
-                                   TextWrapping="Wrap" />
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="NoWrap"
+                                   ToolTip="{lang:TextExt Key=Adv.Description}" />
 					</StackPanel>
 
 					<Button Grid.Column="1"
@@ -203,23 +209,25 @@
                                 Margin="0"
                                 Padding="10">
 							<Grid>
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="*" />
-									<ColumnDefinition Width="10" />
-									<ColumnDefinition Width="Auto" />
-								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="8" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
 
-								<TextBlock Grid.Column="0"
+								<TextBlock Grid.Row="0"
+                                           MinWidth="0"
                                            Text="{Binding BkpStat}"
                                            Style="{StaticResource R3SettingsRowDescriptionText}"
                                            Margin="0"
                                            TextWrapping="Wrap"
                                            VerticalAlignment="Center" />
 
-								<Button Grid.Column="2"
+								<Button Grid.Row="2"
                                         Content="{lang:TextExt Key=Adv.RestoreSelected}"
-                                        MinWidth="140"
+                                        MinWidth="120"
                                         Margin="0"
+                                        HorizontalAlignment="Left"
                                         VerticalAlignment="Center"
                                         ToolTip="{lang:TextExt Key=Adv.RestoreTip}"
                                         Command="{Binding RstCmd}" />
@@ -235,7 +243,7 @@
                                       EnableColumnVirtualization="True"
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                      FlowDirection="{DynamicResource App.FlowDirection}"
+                                      FlowDirection="LeftToRight"
                                       HorizontalAlignment="Stretch"
                                       VerticalAlignment="Stretch"
                                       ToolTip="{lang:TextExt Key=Adv.BackupsTip}">
@@ -256,23 +264,25 @@
 									<DataGridTextColumn Header="{lang:TextExt Key=Adv.Date}"
                                                         HeaderStyle="{StaticResource DataGridHeaderUi}"
                                                         Binding="{Binding CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
-                                                        Width="150"
-                                                        MinWidth="135"
+                                                        Width="Auto"
+                                                        MinWidth="140"
+                                                        MaxWidth="170"
                                                         ElementStyle="{StaticResource DataGridCellTextLeft}" />
 
 									<DataGridTextColumn Header="{lang:TextExt Key=Adv.Files}"
                                                         HeaderStyle="{StaticResource DataGridHeaderUi}"
                                                         Binding="{Binding Files.Count}"
-                                                        Width="80"
+                                                        Width="Auto"
                                                         MinWidth="70"
-                                                        ElementStyle="{StaticResource DataGridCellTextCenter}" />
+                                                        MaxWidth="90"
+                                                        ElementStyle="{StaticResource DataGridCellTextLeft}" />
 
 									<DataGridTextColumn Header="{lang:TextExt Key=Adv.Folder}"
                                                         HeaderStyle="{StaticResource DataGridHeaderUi}"
                                                         Binding="{Binding DirectoryPath}"
                                                         Width="*"
-                                                        MinWidth="220"
-                                                        ElementStyle="{StaticResource TechText}" />
+                                                        MinWidth="240"
+                                                        ElementStyle="{StaticResource DataGridCellPathText}" />
 								</DataGrid.Columns>
 							</DataGrid>
 
@@ -280,10 +290,10 @@
                                     Visibility="{Binding Advanced.BkpEmpty, Converter={StaticResource BoolToVisibilityConverter}}">
 								<TextBlock Text="{Binding Advanced.BkpText}"
                                            Style="{StaticResource ArabicEmptyStateText}"
-                                           HorizontalAlignment="Center"
+                                           HorizontalAlignment="Stretch"
                                            VerticalAlignment="Center"
-                                           FlowDirection="{DynamicResource App.FlowDirection}"
-                                           TextAlignment="{DynamicResource App.DefaultTextAlignment}" />
+                                           FlowDirection="LeftToRight"
+                                           TextAlignment="Left" />
 							</Border>
 						</Grid>
 					</Grid>
@@ -294,173 +304,152 @@
 						<TextBlock Text="{lang:TextExt Key=Adv.Diagnostics}" />
 					</TabItem.Header>
 
-					<Grid FlowDirection="{DynamicResource App.FlowDirection}"
+					<Grid Grid.IsSharedSizeScope="True"
+						  FlowDirection="LeftToRight"
                           Language="{DynamicResource App.XmlLanguage}">
-						<ScrollViewer VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Disabled">
-							<StackPanel FlowDirection="{DynamicResource App.FlowDirection}"
-                                        Language="{DynamicResource App.XmlLanguage}">
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto" />
+							<RowDefinition Height="8" />
+							<RowDefinition Height="*" />
+						</Grid.RowDefinitions>
 
-								<Border Style="{StaticResource R3SettingsSection}"
-                                        Margin="0"
-                                        Padding="10">
-									<Grid>
-										<Grid.RowDefinitions>
-											<RowDefinition Height="Auto" />
-											<RowDefinition Height="8" />
-											<RowDefinition Height="Auto" />
-											<RowDefinition Height="6" />
-											<RowDefinition Height="Auto" />
-											<RowDefinition Height="6" />
-											<RowDefinition Height="Auto" />
-											<RowDefinition Height="6" />
-											<RowDefinition Height="Auto" />
-										</Grid.RowDefinitions>
+						<Border Grid.Row="0"
+								Style="{StaticResource R3SettingsSection}"
+								Margin="0"
+								Padding="14">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition Width="Auto"
+												  MaxWidth="180"
+												  SharedSizeGroup="DiagnosticsLabel" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="8" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="6" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="6" />
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="6" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
 
-										<TextBlock Grid.Row="0"
-                                                   Text="{lang:TextExt Key=Adv.Rpcs3Connection}"
-                                                   Style="{StaticResource R3SettingsRowTitleText}" />
+								<TextBlock Grid.Row="0"
+										   Grid.ColumnSpan="2"
+										   Text="{lang:TextExt Key=Adv.Rpcs3Connection}"
+										   Style="{StaticResource R3SettingsRowTitleText}" />
 
-										<Grid Grid.Row="2">
-											<Grid.ColumnDefinitions>
-												<ColumnDefinition Width="140" />
-												<ColumnDefinition Width="10" />
-												<ColumnDefinition Width="*" />
-											</Grid.ColumnDefinitions>
-
-											<TextBlock Grid.Column="0"
-                                                       Text="{lang:TextExt Key=Adv.ConfigPath}"
-                                                       Style="{StaticResource LabelText}"
-                                                       VerticalAlignment="Center" />
-
-											<Border Grid.Column="2"
-                                                    Style="{StaticResource R3ValuePill}">
-												<TextBlock Text="{Binding Advanced.CfgPath}"
-                                                           Style="{StaticResource R3TechnicalValueText}"
-                                                           TextTrimming="CharacterEllipsis" />
-											</Border>
-										</Grid>
-
-										<Grid Grid.Row="4">
-											<Grid.ColumnDefinitions>
-												<ColumnDefinition Width="140" />
-												<ColumnDefinition Width="10" />
-												<ColumnDefinition Width="*" />
-											</Grid.ColumnDefinitions>
-
-											<TextBlock Grid.Column="0"
-                                                       Text="{lang:TextExt Key=Adv.PatchesPath}"
-                                                       Style="{StaticResource LabelText}"
-                                                       VerticalAlignment="Center" />
-
-											<Border Grid.Column="2"
-                                                    Style="{StaticResource R3ValuePill}">
-												<TextBlock Text="{Binding Advanced.PatPath}"
-                                                           Style="{StaticResource R3TechnicalValueText}"
-                                                           TextTrimming="CharacterEllipsis" />
-											</Border>
-										</Grid>
-
-										<Grid Grid.Row="6">
-											<Grid.ColumnDefinitions>
-												<ColumnDefinition Width="140" />
-												<ColumnDefinition Width="10" />
-												<ColumnDefinition Width="*" />
-											</Grid.ColumnDefinitions>
-
-											<TextBlock Grid.Column="0"
-                                                       Text="{lang:TextExt Key=Adv.TargetCfg}"
-                                                       Style="{StaticResource LabelText}"
-                                                       VerticalAlignment="Center" />
-
-											<Border Grid.Column="2"
-                                                    Style="{StaticResource R3ValuePill}">
-												<TextBlock Text="{Binding Advanced.TgtCfg}"
-                                                           Style="{StaticResource R3TechnicalValueText}"
-                                                           TextTrimming="CharacterEllipsis" />
-											</Border>
-										</Grid>
-
-										<Grid Grid.Row="8">
-											<Grid.ColumnDefinitions>
-												<ColumnDefinition Width="140" />
-												<ColumnDefinition Width="10" />
-												<ColumnDefinition Width="*" />
-												<ColumnDefinition Width="10" />
-												<ColumnDefinition Width="Auto" />
-											</Grid.ColumnDefinitions>
-
-											<TextBlock Grid.Column="0"
-                                                       Text="{lang:TextExt Key=Adv.CatVersion}"
-                                                       Style="{StaticResource LabelText}"
-                                                       VerticalAlignment="Center" />
-
-											<Border Grid.Column="2"
-                                                    Style="{StaticResource R3ValuePill}">
-												<TextBlock Text="{Binding Advanced.CatVer}"
-                                                           Style="{StaticResource R3TechnicalValueText}"
-                                                           TextTrimming="CharacterEllipsis" />
-											</Border>
-
-											<TextBlock Grid.Column="4"
-                                                       Text="{Binding RecStat}"
-                                                       Style="{StaticResource R3SettingsRowDescriptionText}"
-                                                       Margin="0"
-                                                       TextWrapping="Wrap"
-                                                       VerticalAlignment="Center" />
-										</Grid>
-									</Grid>
+								<TextBlock Grid.Row="2" Grid.Column="0"
+										   Text="{lang:TextExt Key=Adv.ConfigPath}"
+										   Style="{StaticResource LabelText}"
+										   VerticalAlignment="Center" />
+								<Border Grid.Row="2" Grid.Column="1"
+										Margin="12,0,0,0"
+										Style="{StaticResource R3ValuePill}">
+									<TextBlock Text="{Binding Advanced.CfgPath}"
+											   Style="{StaticResource R3TechnicalValueText}"
+											   TextWrapping="NoWrap"
+											   TextTrimming="CharacterEllipsis" />
 								</Border>
 
-								<Border Style="{StaticResource R3SettingsSection}"
-                                        Margin="0,8,0,0"
-                                        Padding="10">
-									<Grid>
-										<Grid.RowDefinitions>
-											<RowDefinition Height="Auto" />
-											<RowDefinition Height="8" />
-											<RowDefinition Height="110" />
-											<RowDefinition Height="8" />
-											<RowDefinition Height="Auto" />
-										</Grid.RowDefinitions>
-
-										<TextBlock Grid.Row="0"
-                                                   Text="{lang:TextExt Key=Adv.SessionLog}"
-                                                   Style="{StaticResource R3SettingsRowTitleText}" />
-
-										<Border Grid.Row="2"
-                                                Background="{StaticResource SurfaceAltBrush}"
-                                                BorderBrush="{StaticResource BorderSubtleBrush}"
-                                                BorderThickness="1"
-                                                CornerRadius="8"
-                                                Padding="8">
-											<TextBox Text="{Binding Advanced.LogText, Mode=OneWay}"
-                                                     IsReadOnly="True"
-                                                     AcceptsReturn="True"
-                                                     VerticalContentAlignment="Top"
-                                                     TextWrapping="NoWrap"
-                                                     HorizontalScrollBarVisibility="Auto"
-                                                     VerticalScrollBarVisibility="Auto"
-                                                     FlowDirection="LeftToRight"
-                                                     TextAlignment="Left"
-                                                     FontFamily="Consolas, Cascadia Mono, Segoe UI Mono"
-                                                     FontSize="12"
-                                                     BorderThickness="0"
-                                                     Background="Transparent"
-                                                     Foreground="{StaticResource TextPrimaryBrush}" />
-										</Border>
-
-										<Button Grid.Row="4"
-                                                Content="{lang:TextExt Key=Adv.CopyLog}"
-                                                MinWidth="110"
-                                                Margin="0"
-                                                HorizontalAlignment="{DynamicResource App.HorizontalAlignment}"
-                                                ToolTip="{lang:TextExt Key=Adv.CopyLogTip}"
-                                                Command="{Binding CopyCmd}" />
-									</Grid>
+								<TextBlock Grid.Row="4" Grid.Column="0"
+										   Text="{lang:TextExt Key=Adv.PatchesPath}"
+										   Style="{StaticResource LabelText}"
+										   VerticalAlignment="Center" />
+								<Border Grid.Row="4" Grid.Column="1"
+										Margin="12,0,0,0"
+										Style="{StaticResource R3ValuePill}">
+									<TextBlock Text="{Binding Advanced.PatPath}"
+											   Style="{StaticResource R3TechnicalValueText}"
+											   TextWrapping="NoWrap"
+											   TextTrimming="CharacterEllipsis" />
 								</Border>
-							</StackPanel>
-						</ScrollViewer>
+
+								<TextBlock Grid.Row="6" Grid.Column="0"
+										   Text="{lang:TextExt Key=Adv.TargetCfg}"
+										   Style="{StaticResource LabelText}"
+										   VerticalAlignment="Center" />
+								<Border Grid.Row="6" Grid.Column="1"
+										Margin="12,0,0,0"
+										Style="{StaticResource R3ValuePill}">
+									<TextBlock Text="{Binding Advanced.TgtCfg}"
+											   Style="{StaticResource R3TechnicalValueText}"
+											   TextWrapping="NoWrap"
+											   TextTrimming="CharacterEllipsis" />
+								</Border>
+
+								<TextBlock Grid.Row="8" Grid.Column="0"
+										   Text="{lang:TextExt Key=Adv.CatVersion}"
+										   Style="{StaticResource LabelText}"
+										   VerticalAlignment="Top" />
+								<StackPanel Grid.Row="8" Grid.Column="1"
+											Margin="12,0,0,0"
+											MinWidth="0">
+									<Border Style="{StaticResource R3ValuePill}">
+										<TextBlock Text="{Binding Advanced.CatVer}"
+												   Style="{StaticResource R3TechnicalValueText}"
+												   TextWrapping="NoWrap"
+												   TextTrimming="CharacterEllipsis" />
+									</Border>
+									<TextBlock Text="{Binding RecStat}"
+											   Style="{StaticResource R3SettingsRowDescriptionText}"
+											   Margin="0,6,0,0"
+											   MaxWidth="360"
+											   TextWrapping="Wrap" />
+								</StackPanel>
+							</Grid>
+						</Border>
+
+						<Border Grid.Row="2"
+								Style="{StaticResource R3SettingsSection}"
+								Margin="0"
+								Padding="14">
+							<Grid>
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="8" />
+									<RowDefinition Height="*" />
+									<RowDefinition Height="8" />
+									<RowDefinition Height="Auto" />
+								</Grid.RowDefinitions>
+
+								<TextBlock Grid.Row="0"
+										   Text="{lang:TextExt Key=Adv.SessionLog}"
+										   Style="{StaticResource R3SettingsRowTitleText}" />
+								<Border Grid.Row="2"
+										MinHeight="120"
+										Background="{StaticResource SurfaceAltBrush}"
+										BorderBrush="{StaticResource BorderSubtleBrush}"
+										BorderThickness="1"
+										CornerRadius="8"
+										Padding="8">
+									<TextBox Text="{Binding Advanced.LogText, Mode=OneWay}"
+											 IsReadOnly="True"
+											 AcceptsReturn="True"
+											 VerticalContentAlignment="Top"
+											 TextWrapping="NoWrap"
+											 HorizontalScrollBarVisibility="Auto"
+											 VerticalScrollBarVisibility="Auto"
+											 FlowDirection="LeftToRight"
+											 TextAlignment="Left"
+											 FontFamily="Consolas, Cascadia Mono, Segoe UI Mono"
+											 FontSize="12"
+											 BorderThickness="0"
+											 Background="Transparent"
+											 Foreground="{StaticResource TextPrimaryBrush}" />
+								</Border>
+
+								<Button Grid.Row="4"
+										Content="{lang:TextExt Key=Adv.CopyLog}"
+										MinWidth="110"
+										Margin="0"
+										HorizontalAlignment="Left"
+										ToolTip="{lang:TextExt Key=Adv.CopyLogTip}"
+										Command="{Binding CopyCmd}" />
+							</Grid>
+						</Border>
 					</Grid>
 				</TabItem>
 			</TabControl>
