@@ -80,96 +80,12 @@
 
 			<TabControl Grid.Row="1"
                         Margin="12,10,12,12"
-                        Background="Transparent"
-                        BorderThickness="0"
+                        Style="{StaticResource PremiumTopTabControl}"
+                        ItemContainerStyle="{StaticResource PremiumTopTabItem}"
                         FlowDirection="{DynamicResource App.FlowDirection}"
                         Language="{DynamicResource App.XmlLanguage}"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch">
-
-				<TabControl.Resources>
-					<Style TargetType="{x:Type TabControl}">
-						<Setter Property="Template">
-							<Setter.Value>
-								<ControlTemplate TargetType="{x:Type TabControl}">
-									<Grid KeyboardNavigation.TabNavigation="Local">
-										<Grid.RowDefinitions>
-											<RowDefinition Height="Auto" />
-											<RowDefinition Height="*" />
-										</Grid.RowDefinitions>
-
-										<TabPanel Grid.Row="0"
-                                                  IsItemsHost="True"
-                                                  Margin="0,0,0,8"
-                                                  Background="Transparent"
-                                                  KeyboardNavigation.TabIndex="1" />
-
-										<ContentPresenter Grid.Row="1"
-                                                          ContentSource="SelectedContent"
-                                                          HorizontalAlignment="Stretch"
-                                                          VerticalAlignment="Stretch"
-                                                          KeyboardNavigation.TabIndex="2" />
-									</Grid>
-								</ControlTemplate>
-							</Setter.Value>
-						</Setter>
-					</Style>
-
-					<Style TargetType="{x:Type TabItem}">
-						<Setter Property="Background" Value="Transparent" />
-						<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-						<Setter Property="Padding" Value="12,7" />
-						<Setter Property="FocusVisualStyle" Value="{x:Null}" />
-						<Setter Property="Template">
-							<Setter.Value>
-								<ControlTemplate TargetType="{x:Type TabItem}">
-									<Border x:Name="HeadBdr"
-                                            Margin="0,0,4,0"
-                                            Padding="{TemplateBinding Padding}"
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="Transparent"
-                                            BorderThickness="1"
-                                            CornerRadius="6">
-										<ContentPresenter ContentSource="Header"
-                                                          HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center"
-                                                          RecognizesAccessKey="True" />
-									</Border>
-
-									<ControlTemplate.Triggers>
-										<Trigger Property="IsMouseOver" Value="True">
-											<Setter TargetName="HeadBdr"
-                                                    Property="Background"
-                                                    Value="{StaticResource SurfaceHoverBrush}" />
-											<Setter TargetName="HeadBdr"
-                                                    Property="BorderBrush"
-                                                    Value="{StaticResource BorderSubtleBrush}" />
-											<Setter Property="Foreground"
-                                                    Value="{StaticResource TextPrimaryBrush}" />
-										</Trigger>
-
-										<Trigger Property="IsSelected" Value="True">
-											<Setter TargetName="HeadBdr"
-                                                    Property="Background"
-                                                    Value="{StaticResource TabSelectedBackgroundBrush}" />
-											<Setter TargetName="HeadBdr"
-                                                    Property="BorderBrush"
-                                                    Value="{StaticResource BorderSubtleBrush}" />
-											<Setter Property="Foreground"
-                                                    Value="{StaticResource TextPrimaryBrush}" />
-											<Setter Property="FontWeight"
-                                                    Value="SemiBold" />
-										</Trigger>
-
-										<Trigger Property="IsEnabled" Value="False">
-											<Setter Property="Opacity" Value="0.45" />
-										</Trigger>
-									</ControlTemplate.Triggers>
-								</ControlTemplate>
-							</Setter.Value>
-						</Setter>
-					</Style>
-				</TabControl.Resources>
 
 				<TabItem Header="{lang:TextExt Key=Adv.PatchDevelopment}">
 					<ScrollViewer VerticalScrollBarVisibility="Auto"
