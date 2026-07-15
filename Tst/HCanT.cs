@@ -236,8 +236,10 @@ internal static class HCanTst
     private static void Vm_All()
     {
         var temp = NewTemp();
+        var originalLang = UiText.CurLang;
         try
         {
+            UiText.SetLang(UiText.ArabLang);
             var root = Path.Combine(temp, "rpcs3");
             Directory.CreateDirectory(Path.Combine(root, "patches"));
             Directory.CreateDirectory(Path.Combine(root, "config"));
@@ -273,15 +275,72 @@ internal static class HCanTst
             Assert(vm.Ins.Any(item => item.Op == "load"), "ViewModel should add a load reference.");
             vm.SelIns = vm.Ins.Last(); vm.DelICmd.Execute(null);
 
+            vm.PatVer = "bad";
+            vm.Games[0].GameVer = "bad";
+            vm.GameTgt = vm.Games[0];
+            vm.SelIns = vm.Ins[0];
+            var selectedAnchorItem = vm.Anchors[0];
+            vm.SelAnc = selectedAnchorItem;
+            vm.AncIns = selectedAnchorItem.Ins[0];
+            vm.SelPat = new HCanStor("stored", "Stored patch", GoodDrft());
+
             var draftName = vm.PatName;
-            var instructionOrder = vm.Ins.Select(item => item.Address).ToArray();
-            UiText.SetLang(UiText.EnLang); vm.SetLang();
-            UiText.SetLang(UiText.ArabLang); vm.SetLang();
-            Assert(vm.PatName == draftName && vm.Ins.Select(item => item.Address).SequenceEqual(instructionOrder), "Live language switching must preserve the draft and instruction order.");
+            var preview = vm.Preview;
+            var games = JsonSerializer.Serialize(vm.Games.Select(item => item.ToModel()));
+            var instructions = JsonSerializer.Serialize(vm.Ins.Select(item => item.ToModel()));
+            var anchors = JsonSerializer.Serialize(vm.Anchors.Select(item => item.ToModel()));
+            var selectedGame = vm.GameTgt;
+            var selectedInstruction = vm.SelIns;
+            var selectedAnchor = vm.SelAnc;
+            var selectedAnchorInstruction = vm.AncIns;
+            var selectedStoredPatch = vm.SelPat;
+            var dirty = vm.IsDirty;
+            var arabicMessage = vm.Msg;
+            var arabicLogStatus = vm.LogStat;
+            var arabicValidation = vm.VldSum;
+            var arabicVersionError = vm.VerErr;
+            var arabicGameError = vm.Games[0].Error;
+            var filesBefore = FileState(root);
+
+            UiText.SetLang(UiText.EnLang);
+            vm.SetLang();
+
+            Assert(vm.Msg == UiText.GetText("HCanary.Message.NewDraft") && vm.Msg != arabicMessage,
+                "H-Canary message must refresh from its localization key.");
+            Assert(vm.LogStat == UiText.Fmt("HCanary.Log.Found", vm.Hashes.Count, game.HashSrc!) && vm.LogStat != arabicLogStatus,
+                "H-Canary log status must refresh from its localization key and arguments.");
+            Assert(vm.VldSum != arabicValidation && vm.VerErr != arabicVersionError && vm.Games[0].Error != arabicGameError,
+                "Validation summary and field errors must refresh without re-validating the draft.");
+            Assert(vm.PatName == draftName && vm.Preview == preview && vm.IsDirty == dirty,
+                "Language refresh must preserve draft values, preview, and dirty state.");
+            Assert(JsonSerializer.Serialize(vm.Games.Select(item => item.ToModel())) == games &&
+                   JsonSerializer.Serialize(vm.Ins.Select(item => item.ToModel())) == instructions &&
+                   JsonSerializer.Serialize(vm.Anchors.Select(item => item.ToModel())) == anchors,
+                "Language refresh must preserve games, instructions, and anchors.");
+            Assert(ReferenceEquals(vm.GameTgt, selectedGame) &&
+                   ReferenceEquals(vm.SelIns, selectedInstruction) &&
+                   ReferenceEquals(vm.SelAnc, selectedAnchor) &&
+                   ReferenceEquals(vm.AncIns, selectedAnchorInstruction) &&
+                   ReferenceEquals(vm.SelPat, selectedStoredPatch),
+                "Language refresh must preserve every H-Canary selection.");
+            Assert(FileState(root).SequenceEqual(filesBefore),
+                "Language refresh must not mutate the RPCS3 tree.");
+
+            UiText.SetLang(UiText.ArabLang);
+            vm.SetLang();
+            Assert(vm.Msg == arabicMessage && vm.LogStat == arabicLogStatus &&
+                   vm.VldSum == arabicValidation && vm.VerErr == arabicVersionError &&
+                   vm.Games[0].Error == arabicGameError,
+                "Returning to Arabic must restore all localized H-Canary presentation text.");
+
             vm.SetCtx(install, game with { Serial = "BLUS00001", Title = "Other Game" });
             Assert(vm.PatName == draftName && vm.IsDirty, "Changing the selected game must preserve an active draft.");
         }
-        finally { Directory.Delete(temp, true); }
+        finally
+        {
+            UiText.SetLang(originalLang);
+            Directory.Delete(temp, true);
+        }
     }
 
     private static void Ui_Lang()
@@ -299,6 +358,20 @@ internal static class HCanTst
             "Technical YAML content must remain LTR and left aligned.");
         Assert(!xaml.Contains("Enable Code", StringComparison.OrdinalIgnoreCase) && !xaml.Contains("AnalysisItems", StringComparison.Ordinal),
             "The obsolete patch-browser and compatibility-analysis concepts must be absent.");
+    }
+
+
+    private static string[] FileState(string root)
+    {
+        return Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+            .Order(StringComparer.Ordinal)
+            .Select(path =>
+            {
+                var relative = Path.GetRelativePath(root, path).Replace('\\', '/');
+                var bytes = File.ReadAllBytes(path);
+                return $"{relative}|{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes))}";
+            })
+            .ToArray();
     }
 
     private static HCanDrft GoodDrft() => new()

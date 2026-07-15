@@ -114,8 +114,12 @@ public sealed partial class HCanVm : VmBase
     private DraftSt _status = DraftSt.Draft;
     private string _preview = string.Empty;
     private string _vldSum = string.Empty;
-    private string _msg = string.Empty;
-    private string _logStat = string.Empty;
+    private string? _msgKey;
+    private object?[] _msgArgs = [];
+    private string _msgRaw = string.Empty;
+    private string? _logStatKey;
+    private object?[] _logStatArgs = [];
+    private VldRes? _lastValidation;
     private string _hashErr = string.Empty;
     private string _nameErr = string.Empty;
     private string _verErr = string.Empty;
@@ -229,8 +233,8 @@ public sealed partial class HCanVm : VmBase
     public DraftSt Status { get => _status; set => Set(ref _status, value); }
     public string Preview { get => _preview; private set => Set(ref _preview, value); }
     public string VldSum { get => _vldSum; private set => Set(ref _vldSum, value); }
-    public string Msg { get => _msg; private set => Set(ref _msg, value); }
-    public string LogStat { get => _logStat; private set => Set(ref _logStat, value); }
+    public string Msg => ResolveLocalizedText(_msgKey, _msgArgs, _msgRaw);
+    public string LogStat => ResolveLocalizedText(_logStatKey, _logStatArgs, string.Empty);
     public string HashErr { get => _hashErr; private set => Set(ref _hashErr, value); }
     public string NameErr { get => _nameErr; private set => Set(ref _nameErr, value); }
     public string VerErr { get => _verErr; private set => Set(ref _verErr, value); }

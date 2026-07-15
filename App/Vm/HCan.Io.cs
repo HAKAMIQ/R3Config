@@ -44,10 +44,10 @@ public sealed partial class HCanVm : VmBase
             var result = _flow.SaveHCan(_install, Build(), _curId, saveAsNew);
             Status = DraftSt.Saved; _dirty = false;
             _curId = ExeHash.Trim() + "\0" + PatName.Trim();
-            Msg = UiText.Fmt("HCanary.Message.Saved", result.Path, result.PatNum);
+            SetMsg("HCanary.Message.Saved", result.Path, result.PatNum);
             LoadStor(); CatChg?.Invoke(this, EventArgs.Empty); LoadDrft(markDirty: false);
         }
-        catch (Exception ex) { UiDlg.Error(UiText.Fmt("HCanary.Error.Save", ex.Message), UiText.GetText("HCanary.Title")); Msg = ex.Message; }
+        catch (Exception ex) { UiDlg.Error(UiText.Fmt("HCanary.Error.Save", ex.Message), UiText.GetText("HCanary.Title")); SetRawMsg(ex.Message); }
         finally { LoadMut(); }
     }
 
@@ -80,7 +80,7 @@ public sealed partial class HCanVm : VmBase
         try
         {
             _flow.DelHCan(_install, _curId);
-            CatChg?.Invoke(this, EventArgs.Empty); LoadStor(); NewDraft(); Msg = UiText.GetText("HCanary.Message.Deleted");
+            CatChg?.Invoke(this, EventArgs.Empty); LoadStor(); NewDraft(); SetMsg("HCanary.Message.Deleted");
         }
         catch (Exception ex) { UiDlg.Error(UiText.Fmt("HCanary.Error.Delete", ex.Message), UiText.GetText("HCanary.Title")); }
         finally { LoadMut(); }
