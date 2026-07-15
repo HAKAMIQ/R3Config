@@ -10,18 +10,18 @@ public enum HwTier
 
 public sealed record HwInfo(
     string CpuName,
-    int LogicalProcessorCount,
-    ulong? TotalMemoryBytes,
+    int CpuNum,
+    ulong? MemBytes,
     string GpuName,
     HwTier Tier,
-    bool IsFallback,
-    string ProbeMessage)
+    bool IsFall,
+    string ProbeMsg)
 {
-    public double? TotalMemoryGiB => TotalMemoryBytes is null
+    public double? TotalB => MemBytes is null
         ? null
-        : TotalMemoryBytes.Value / 1024d / 1024d / 1024d;
+        : MemBytes.Value / 1024d / 1024d / 1024d;
 
-    public string MemoryDisplay => TotalMemoryGiB is null
+    public string Display => TotalB is null
         ? "RAM: Unknown"
-        : $"RAM: {TotalMemoryGiB.Value:0.#} GB";
+        : $"RAM: {TotalB.Value:0.#} GB";
 }

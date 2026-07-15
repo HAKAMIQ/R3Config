@@ -1,11 +1,13 @@
 using System;
 using R3Config.Mdl;
 
+#pragma warning disable IDE0130
+
 namespace R3Config.Svc;
 
-public static class PatchRiskPolicy
+public static class PatPol
 {
-    public static PatchRisk Classify(
+    public static Mdl.PatRisk Classify(
         string title,
         string? group,
         string? notes,
@@ -14,17 +16,12 @@ public static class PatchRiskPolicy
     {
         var haystack = $"{title} {group} {notes} {author}";
 
-        if (isCanarySource)
+        if (isCanarySource || Contains(haystack, "canary"))
         {
-            return PatchRisk.Canary;
+            return Mdl.PatRisk.Canary;
         }
 
-        if (ContainsAny(haystack, "canary"))
-        {
-            return PatchRisk.Canary;
-        }
-
-        if (ContainsAny(
+        if (Contains(
             haystack,
             "cheat",
             "infinite health",
@@ -36,10 +33,10 @@ public static class PatchRiskPolicy
             "debug menu",
             "freecam"))
         {
-            return PatchRisk.Cheat;
+            return Mdl.PatRisk.Cheat;
         }
 
-        if (ContainsAny(
+        if (Contains(
             haystack,
             "60 fps",
             "60fps",
@@ -51,15 +48,20 @@ public static class PatchRiskPolicy
             "frame rate",
             "vblank"))
         {
-            return PatchRisk.Fps60;
+            return Mdl.PatRisk.Fps60;
         }
 
-        if (ContainsAny(haystack, "experimental", "unstable", "testing only", "test patch"))
+        if (Contains(
+            haystack,
+            "experimental",
+            "unstable",
+            "testing only",
+            "test patch"))
         {
-            return PatchRisk.Experimental;
+            return Mdl.PatRisk.Exp;
         }
 
-        if (ContainsAny(
+        if (Contains(
             haystack,
             "performance",
             "faster",
@@ -68,10 +70,10 @@ public static class PatchRiskPolicy
             "disable shadows",
             "disable effects"))
         {
-            return PatchRisk.Performance;
+            return Mdl.PatRisk.Perf;
         }
 
-        if (ContainsAny(
+        if (Contains(
             haystack,
             "aspect ratio",
             "widescreen",
@@ -86,10 +88,10 @@ public static class PatchRiskPolicy
             "visual",
             "graphics"))
         {
-            return PatchRisk.VisualFix;
+            return Mdl.PatRisk.Fix;
         }
 
-        if (ContainsAny(
+        if (Contains(
             haystack,
             "fix",
             "skip intro",
@@ -100,13 +102,16 @@ public static class PatchRiskPolicy
             "stutter",
             "black screen"))
         {
-            return PatchRisk.SafeFix;
+            return Mdl.PatRisk.SafeFix;
         }
 
-        return PatchRisk.Unknown;
+        return Mdl.PatRisk.Unknown;
     }
 
-    public static string InferPatchType(string title, string? group, PatchRisk risk)
+    public static string InferPat(
+        string title,
+        string? group,
+        Mdl.PatRisk risk)
     {
         if (!string.IsNullOrWhiteSpace(group))
         {
@@ -115,88 +120,132 @@ public static class PatchRiskPolicy
 
         return risk switch
         {
-            PatchRisk.SafeFix => "Fix",
-            PatchRisk.VisualFix => "Visual",
-            PatchRisk.Performance => "Performance",
-            PatchRisk.Fps60 => "FPS",
-            PatchRisk.Cheat => "Cheat",
-            PatchRisk.Experimental => "Experimental",
-            PatchRisk.Canary => "Canary",
-            _ => InferUnknownType(title)
+            Mdl.PatRisk.SafeFix => "Fix",
+            Mdl.PatRisk.Fix => "Visual",
+            Mdl.PatRisk.Perf => "Performance",
+            Mdl.PatRisk.Fps60 => "FPS",
+            Mdl.PatRisk.Cheat => "Cheat",
+            Mdl.PatRisk.Exp => "Experimental",
+            Mdl.PatRisk.Canary => "Canary",
+            _ => Infer(title)
         };
     }
 
-    public static bool IsVisibleInPreview(PatchRisk risk, bool expertMode)
+    public static bool Is(
+        Mdl.PatRisk risk,
+        bool expertMode)
     {
-        // RPCS3 exposes Canary patches as a distinct documented patch type.
-        // The preview must show them for the selected game instead of hiding them
-        // behind an expert toggle, while still requiring an explicit user check.
+        _ = risk;
+        _ = expertMode;
         return true;
     }
 
-    public static bool CanSelectInPreview(PatchRisk risk, PatchMatchStatus matchStatus)
+    public static bool Can(
+        Mdl.PatRisk risk,
+        MatStat matchStatus)
     {
-        return IsUserSelectablePatch(risk) && IsSafeMatchForPatchConfig(matchStatus);
+        return IsUser(risk) &&
+               IsSafe(matchStatus);
     }
 
-    public static bool ShouldSelectByDefaultInPreview(PatchRisk risk, PatchMatchStatus matchStatus)
+    public static bool Can(
+        Mdl.PatMatch match)
     {
-        // Every patch write must reflect an explicit user choice. Even a safe,
-        // exact match starts unchecked.
+        return IsUser(match.Patch.Risk) &&
+               PatAct.Can(match);
+    }
+
+    public static bool Should(
+        Mdl.PatRisk risk,
+        MatStat matchStatus)
+    {
+        _ = risk;
+        _ = matchStatus;
         return false;
     }
 
-    public static bool CanApplyCheckedPatch(PatchRisk risk, PatchMatchStatus matchStatus, bool expertMode)
+    public static bool CanApply(
+        Mdl.PatRisk risk,
+        MatStat matchStatus,
+        bool expertMode)
     {
-        return IsUserSelectablePatch(risk) && IsSafeMatchForPatchConfig(matchStatus);
+        _ = expertMode;
+
+        return IsUser(risk) &&
+               IsSafe(matchStatus);
     }
 
-    public static bool CanDisableCheckedPatch(PatchRisk risk, PatchMatchStatus matchStatus)
+    public static bool CanApply(
+        Mdl.PatMatch match,
+        bool expertMode)
     {
-        return IsUserSelectablePatch(risk) && IsKnownPatchConfigMatch(matchStatus);
+        _ = expertMode;
+
+        return IsUser(match.Patch.Risk) &&
+               PatAct.Can(match);
     }
 
-    private static bool IsUserSelectablePatch(PatchRisk risk)
+    public static bool CanPat(
+        Mdl.PatRisk risk,
+        MatStat matchStatus)
     {
-        // The preview is an execution surface, not an automatic policy engine.
-        // Exact and serial/version-matched patches may be selected manually,
-        // while only SafeFix remains auto-selected by default.
-        return risk is PatchRisk.SafeFix
-            or PatchRisk.VisualFix
-            or PatchRisk.Performance
-            or PatchRisk.Fps60
-            or PatchRisk.Cheat
-            or PatchRisk.Experimental
-            or PatchRisk.Canary
-            or PatchRisk.Unknown;
+        return IsUser(risk) &&
+               IsKnown(matchStatus);
     }
 
-    private static bool IsSafeMatchForPatchConfig(PatchMatchStatus matchStatus)
+    public static bool CanPat(
+        Mdl.PatMatch match)
     {
-        return matchStatus == PatchMatchStatus.ExactMatch;
+        return IsUser(match.Patch.Risk) &&
+               PatAct.Can2(match);
     }
 
-    private static bool IsKnownPatchConfigMatch(PatchMatchStatus matchStatus)
+    private static bool IsUser(Mdl.PatRisk risk)
     {
-        return matchStatus is PatchMatchStatus.ExactMatch
-            or PatchMatchStatus.SerialVersionMatchHashUnknown;
+        return risk is Mdl.PatRisk.SafeFix
+            or Mdl.PatRisk.Fix
+            or Mdl.PatRisk.Perf
+            or Mdl.PatRisk.Fps60
+            or Mdl.PatRisk.Cheat
+            or Mdl.PatRisk.Exp
+            or Mdl.PatRisk.Canary
+            or Mdl.PatRisk.Unknown;
     }
 
-    private static string InferUnknownType(string title)
+    private static bool IsSafe(
+        MatStat matchStatus)
+    {
+        return matchStatus == MatStat.Match;
+    }
+
+    private static bool IsKnown(
+        MatStat matchStatus)
+    {
+        return matchStatus is MatStat.Match
+            or MatStat.Unknown;
+    }
+
+    private static string Infer(string title)
     {
         if (string.IsNullOrWhiteSpace(title))
         {
             return "Unknown";
         }
 
-        return ContainsAny(title, "patch") ? "Patch" : "Unknown";
+        return Contains(title, "patch")
+            ? "Patch"
+            : "Unknown";
     }
 
-    private static bool ContainsAny(string value, params string[] fragments)
+    private static bool Contains(
+        string value,
+        params string[] fragments)
     {
         foreach (var fragment in fragments)
         {
-            if (value.Contains(fragment, StringComparison.OrdinalIgnoreCase))
+            if (value.Contains(
+                    fragment,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
@@ -205,3 +254,5 @@ public static class PatchRiskPolicy
         return false;
     }
 }
+
+#pragma warning restore IDE0130

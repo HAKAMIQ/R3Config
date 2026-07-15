@@ -1,18 +1,18 @@
 using System.Windows;
-using AppSvc;
+using R3Config.Svc;
 using R3Config.Lang;
 
 namespace R3Config;
 
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
         UiText.SetLang(UiPrefs.LoadLang());
-        UiLayoutService.ApplyApplicationResources();
+        UiLaySvc.Apply();
         base.OnStartup(e);
 
-        var window = new MainWindow();
+        var window = new MainWin();
         MainWindow = window;
         window.Show();
     }

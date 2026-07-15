@@ -5,9 +5,9 @@ using Microsoft.Win32;
 using R3Config.Lang;
 using R3Config.View.Dlg;
 
-namespace AppSvc;
+namespace R3Config.Svc;
 
-public enum UiDialogKind
+public enum DlgKind
 {
     Info,
     Warning,
@@ -17,12 +17,12 @@ public enum UiDialogKind
 
 public static class UiDlg
 {
-    public static string? PickRpcs3Exe(string currentPath)
+    public static string? PickExe(string currentPath)
     {
         var dialog = new OpenFileDialog
         {
-            Filter = UiText.T("Picker.Rpcs3Filter"),
-            Title = UiText.T("Picker.Rpcs3Title"),
+            Filter = UiText.GetText("Picker.Rpcs3Filter"),
+            Title = UiText.GetText("Picker.Rpcs3Title"),
             CheckFileExists = true,
             CheckPathExists = true,
             Multiselect = false,
@@ -30,60 +30,82 @@ public static class UiDlg
             FileName = "rpcs3.exe"
         };
 
-        ApplyInitialDirectory(dialog, currentPath);
+        SetDir(dialog, currentPath);
 
-        return dialog.ShowDialog(ActiveOwner()) == true ? dialog.FileName : null;
+        return dialog.ShowDialog(Owner()) == true
+            ? dialog.FileName
+            : null;
     }
 
-    public static string? PickWikiXml()
+    public static string? PickWiki()
     {
         var dialog = new OpenFileDialog
         {
-            Filter = UiText.T("Picker.WikiFilter"),
-            Title = UiText.T("Picker.WikiTitle"),
+            Filter = UiText.GetText("Picker.WikiFilter"),
+            Title = UiText.GetText("Picker.WikiTitle"),
             CheckFileExists = true,
             CheckPathExists = true,
             Multiselect = false,
             DefaultExt = ".xml"
         };
 
-        return dialog.ShowDialog(ActiveOwner()) == true ? dialog.FileName : null;
+        return dialog.ShowDialog(Owner()) == true
+            ? dialog.FileName
+            : null;
     }
 
-    public static string? PickCatExportPath()
+    public static string? PickExp()
     {
         var dialog = new SaveFileDialog
         {
-            Filter = UiText.T("Picker.ExportCatFilter"),
-            Title = UiText.T("Picker.ExportCatTitle"),
-            FileName = UiText.T("Picker.ExportCatFileName"),
+            Filter = UiText.GetText("Picker.ExportCatFilter"),
+            Title = UiText.GetText("Picker.ExportCatTitle"),
+            FileName = UiText.GetText("Picker.ExportCatFileName"),
             AddExtension = true,
             CheckPathExists = true,
             OverwritePrompt = true,
             DefaultExt = ".json"
         };
 
-        return dialog.ShowDialog(ActiveOwner()) == true ? dialog.FileName : null;
+        return dialog.ShowDialog(Owner()) == true
+            ? dialog.FileName
+            : null;
     }
 
     public static void Info(string message, string title)
     {
-        Show(message, title, UiDialogKind.Info, isConfirm: false);
+        Show(
+            message,
+            title,
+            DlgKind.Info,
+            isConfirm: false);
     }
 
     public static void Warn(string message, string title)
     {
-        Show(message, title, UiDialogKind.Warning, isConfirm: false);
+        Show(
+            message,
+            title,
+            DlgKind.Warning,
+            isConfirm: false);
     }
 
     public static void Error(string message, string title)
     {
-        Show(message, title, UiDialogKind.Error, isConfirm: false);
+        Show(
+            message,
+            title,
+            DlgKind.Error,
+            isConfirm: false);
     }
 
     public static bool Confirm(string message, string title)
     {
-        return Show(message, title, UiDialogKind.Confirm, isConfirm: true);
+        return Show(
+            message,
+            title,
+            DlgKind.Confirm,
+            isConfirm: true);
     }
 
     public static void CopyText(string text)
@@ -91,14 +113,25 @@ public static class UiDlg
         Clipboard.SetText(text);
     }
 
-    private static bool Show(string message, string title, UiDialogKind kind, bool isConfirm)
+    private static bool Show(
+        string message,
+        string title,
+        DlgKind kind,
+        bool isConfirm)
     {
-        var owner = ActiveOwner();
-        var dialog = new AppDialog(owner, title, message, kind, isConfirm);
+        var dialog = new AppDlg(
+            Owner(),
+            title,
+            message,
+            kind,
+            isConfirm);
+
         return dialog.ShowDialog() == true;
     }
 
-    private static void ApplyInitialDirectory(FileDialog dialog, string path)
+    private static void SetDir(
+        FileDialog dialog,
+        string path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -122,17 +155,17 @@ public static class UiDlg
         }
     }
 
-    private static Window? ActiveOwner()
+    private static Window? Owner()
     {
-        var current = Application.Current;
+        var current = System.Windows.Application.Current;
         if (current is null)
         {
             return null;
         }
 
         return current.Windows
-            .OfType<Window>()
-            .FirstOrDefault(window => window.IsActive)
-            ?? current.MainWindow;
+                   .OfType<Window>()
+                   .FirstOrDefault(window => window.IsActive)
+               ?? current.MainWindow;
     }
 }

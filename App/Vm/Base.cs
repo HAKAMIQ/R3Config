@@ -6,9 +6,15 @@ namespace R3Config.Vm;
 
 public abstract class VmBase : INotifyPropertyChanged
 {
-    public event PropertyChangedEventHandler? PropertyChanged;
+    public event PropertyChangedEventHandler? PropChg;
 
-    protected bool SetProperty<T>(
+    event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
+    {
+        add => PropChg += value;
+        remove => PropChg -= value;
+    }
+
+    protected bool Set<T>(
         ref T storage,
         T value,
         [CallerMemberName] string? propertyName = null)
@@ -19,12 +25,12 @@ public abstract class VmBase : INotifyPropertyChanged
         }
 
         storage = value;
-        OnPropertyChanged(propertyName);
+        OnChange(propertyName);
         return true;
     }
 
-    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    protected void OnChange([CallerMemberName] string? propertyName = null)
     {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        PropChg?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

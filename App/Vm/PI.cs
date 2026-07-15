@@ -1,224 +1,219 @@
 using System;
 using System.Linq;
 using System.Windows;
-using AppSvc;
+using R3Config.Svc;
 using R3Config.Lang;
 using R3Config.Mdl;
-using R3Config.Svc;
 
 namespace R3Config.Vm;
 
-public sealed class PlanItemVm : VmBase
+public sealed class PlanItVm : VmBase
 {
-    private bool _isSelected;
+    private bool _isSel;
 
-    public PlanItemVm(ConfigPlanEntry entry, bool isSelected)
+    public PlanItVm(CfgEntry entry, bool isSelected)
     {
         Entry = entry;
-        _isSelected = entry.State == RecState.Applied || (isSelected && entry.IsActionable);
+        _isSel = isSelected && entry.IsAction;
     }
 
-    public ConfigPlanEntry Entry { get; }
+    public CfgEntry Entry { get; }
 
-    public ConfigChange Change => Entry.Change;
+    public CfgChg Change => Entry.Change;
 
     public string Section => Entry.Section;
 
     public string Key => Entry.Key;
 
-    public string DisplayPath => Entry.DisplayPath;
+    public string DspPath => Entry.Path;
 
-    public string? CurrentValue => Entry.CurrentValue;
+    public string? CurVal => Entry.CurVal;
 
-    public string CurrentDisplay => Entry.CurrentDisplay;
+    public string CurDsp => Entry.Display;
 
-    public string ProposedValue => Entry.ProposedValue;
+    public string Val => Entry.Val;
 
-    public string ValueTransitionDisplay => $"{CurrentDisplay} -> {ProposedValue}";
+    public string TransDsp => $"{CurDsp} -> {Val}";
 
     public string? Notes => Entry.Notes;
 
     public string NoteTag => string.IsNullOrWhiteSpace(Entry.Notes)
-        ? UiText.T("Ui.EmptyValue")
-        : UiText.T(NoteTagKey());
+        ? UiText.GetText("Ui.EmptyValue")
+        : UiText.GetText(TagKey());
 
-    public string NoteTitle => LocalizedNoteTitle;
+    public string NoteName => LocNote;
 
-    public string NoteTypeLine => UiText.F("Plan.NoteTooltipType", LocalizedNoteType);
+    public string TypeLine => UiText.Fmt("Plan.NoteTooltipType", NoteType);
 
-    public string NoteOriginalLabel => UiText.T("Note.OriginalTextLabel");
+    public string NoteOrig => UiText.GetText("Note.OriginalTextLabel");
 
-    public string NoteBody => LocalizedNoteBody;
+    public string NoteBody => LocBody;
 
-    public string LocalizedNoteTitle => PatchTextLocalizer.LocalizeRecommendationNote(Entry.Notes, Entry.Risk).Title;
+    public string LocNote => PatText.RecNote(Entry.Notes, Entry.Risk).Title;
 
-    public string LocalizedNoteType => PatchTextLocalizer.LocalizeRecommendationNote(Entry.Notes, Entry.Risk).Type;
+    public string NoteType => PatText.RecNote(Entry.Notes, Entry.Risk).Type;
 
-    public string LocalizedNoteBody => PatchTextLocalizer.LocalizeRecommendationNote(Entry.Notes, Entry.Risk).Body;
+    public string LocBody => PatText.RecNote(Entry.Notes, Entry.Risk).Body;
 
-    public string LocalizedOriginalBody => PatchTextLocalizer.LocalizeRecommendationNote(Entry.Notes, Entry.Risk).OriginalBody;
+    public string OrigBody => PatText.RecNote(Entry.Notes, Entry.Risk).OrigBody;
 
-    public bool HasOriginalBody => PatchTextLocalizer.LocalizeRecommendationNote(Entry.Notes, Entry.Risk).HasOriginalBody;
+    public bool HasOrig => PatText.RecNote(Entry.Notes, Entry.Risk).HasOrig;
 
-    public FlowDirection NoteFlow => UiLayoutService.Current.TextFlow;
+    public FlowDirection NoteFlow => UiLaySvc.Current.TextFlow;
 
-    public TextAlignment NoteTextAlignment => UiLayoutService.Current.TextAlignment;
+    public TextAlignment NoteText => UiLaySvc.Current.TxtAlign;
 
-    public RecommendationRisk Risk => Entry.Risk;
+    public RecRisk Risk => Entry.Risk;
 
-    public string RiskDisplay => UiText.RecRiskLabel(Entry.Risk);
+    public string RiskDsp => UiText.RecRisk(Entry.Risk);
 
-    public string RiskTooltip => UiText.RecRiskTip(Entry.Risk);
+    public string RiskTip => UiText.RecTip(Entry.Risk);
 
-    public string HandlingDisplay => UiText.T(HandlingKey(Entry.Risk));
+    public string HandDsp => UiText.GetText(Handling(Entry.Risk));
 
-    public string HandlingTooltip => UiText.RecRiskTip(Entry.Risk);
+    public string HandTip => UiText.RecTip(Entry.Risk);
 
-    public string HandlingTone => HandlingToneFor(Entry.Risk);
+    public string Tone => HandTone(Entry.Risk);
 
-    public bool IsDifferent => Entry.IsDifferent;
+    public bool IsDiff => Entry.IsDiff;
 
-    public bool IsActionable => Entry.IsActionable;
+    public bool IsAction => Entry.IsAction;
 
-    public bool IsAutoSelectable => Entry.IsAutoSelectable;
+    public bool AutoSel => Entry.IsSel;
 
     public string Status => Entry.Status;
 
-    public string StatusDisplay => UiText.RecStateLabel(Entry.State);
+    public string StatDsp => UiText.RecState(Entry.State);
 
-    public bool IsApplied => Entry.State == RecState.Applied;
+    public bool IsApply => Entry.State == Mdl.RecState.Applied;
 
     public bool HasNote => !string.IsNullOrWhiteSpace(Entry.Notes);
 
-    public string PrimaryBadgeDisplay => IsApplied
-        ? StatusDisplay
-        : HandlingDisplay;
+    public string BadgeDsp => IsApply
+        ? StatDsp
+        : HandDsp;
 
-    public string PrimaryBadgeTooltip => IsApplied
-        ? StatusDisplay
-        : HandlingTooltip;
+    public string BadgeTip => IsApply
+        ? StatDsp
+        : HandTip;
 
-    public string PrimaryBadgeTone => IsApplied
+    public string MainTone => IsApply
         ? "Auto"
-        : HandlingTone;
+        : Tone;
 
-    public string BeginnerSummary => IsApplied
-        ? UiText.F("Plan.Item.AppliedSummary", ProposedValue)
-        : UiText.F("Plan.Item.PendingSummary", ProposedValue);
+    public string BeginSum => IsApply
+        ? UiText.Fmt("Plan.Item.AppliedSummary", Val)
+        : UiText.Fmt("Plan.Item.PendingSummary", Val);
 
-    public bool IsSelected
+    public bool IsSel
     {
-        get => _isSelected;
+        get => _isSel;
         set
         {
-            if (Entry.State == RecState.Applied)
-            {
-                value = true;
-            }
-            else if (!IsActionable)
+            if (!IsAction)
             {
                 value = false;
             }
 
-            SetProperty(ref _isSelected, value);
+            Set(ref _isSel, value);
         }
     }
 
-    public void RefreshLanguage()
+    public void SetLang()
     {
-        OnPropertyChanged(nameof(RiskDisplay));
-        OnPropertyChanged(nameof(RiskTooltip));
-        OnPropertyChanged(nameof(HandlingDisplay));
-        OnPropertyChanged(nameof(HandlingTooltip));
-        OnPropertyChanged(nameof(HandlingTone));
-        OnPropertyChanged(nameof(StatusDisplay));
-        OnPropertyChanged(nameof(IsApplied));
-        OnPropertyChanged(nameof(HasNote));
-        OnPropertyChanged(nameof(PrimaryBadgeDisplay));
-        OnPropertyChanged(nameof(PrimaryBadgeTooltip));
-        OnPropertyChanged(nameof(PrimaryBadgeTone));
-        OnPropertyChanged(nameof(BeginnerSummary));
-        OnPropertyChanged(nameof(ValueTransitionDisplay));
-        OnPropertyChanged(nameof(NoteTag));
-        OnPropertyChanged(nameof(NoteTitle));
-        OnPropertyChanged(nameof(NoteTypeLine));
-        OnPropertyChanged(nameof(NoteOriginalLabel));
-        OnPropertyChanged(nameof(NoteBody));
-        OnPropertyChanged(nameof(LocalizedNoteTitle));
-        OnPropertyChanged(nameof(LocalizedNoteType));
-        OnPropertyChanged(nameof(LocalizedNoteBody));
-        OnPropertyChanged(nameof(LocalizedOriginalBody));
-        OnPropertyChanged(nameof(HasOriginalBody));
-        OnPropertyChanged(nameof(NoteFlow));
-        OnPropertyChanged(nameof(NoteTextAlignment));
+        OnChange(nameof(RiskDsp));
+        OnChange(nameof(RiskTip));
+        OnChange(nameof(HandDsp));
+        OnChange(nameof(HandTip));
+        OnChange(nameof(Tone));
+        OnChange(nameof(StatDsp));
+        OnChange(nameof(IsApply));
+        OnChange(nameof(HasNote));
+        OnChange(nameof(BadgeDsp));
+        OnChange(nameof(BadgeTip));
+        OnChange(nameof(MainTone));
+        OnChange(nameof(BeginSum));
+        OnChange(nameof(TransDsp));
+        OnChange(nameof(TagKey));
+        OnChange(nameof(NoteName));
+        OnChange(nameof(TypeLine));
+        OnChange(nameof(NoteOrig));
+        OnChange(nameof(NoteBody));
+        OnChange(nameof(LocNote));
+        OnChange(nameof(NoteType));
+        OnChange(nameof(NoteBody));
+        OnChange(nameof(OrigBody));
+        OnChange(nameof(HasOrig));
+        OnChange(nameof(NoteFlow));
+        OnChange(nameof(NoteText));
     }
 
-    private static string HandlingKey(RecommendationRisk risk)
+    private static string Handling(RecRisk risk)
     {
         return risk switch
         {
-            RecommendationRisk.Required or RecommendationRisk.Recommended => "Handling.Auto",
-            RecommendationRisk.Optional => "Handling.Optional",
-            RecommendationRisk.Conditional => "Handling.Conditional",
-            RecommendationRisk.HardwareDependent => "Handling.HardwareDependent",
-            RecommendationRisk.ManualTiming => "Handling.ManualTiming",
-            RecommendationRisk.PatchDependent => "Handling.PatchRequired",
+            RecRisk.Required or RecRisk.Rec => "Handling.Auto",
+            RecRisk.Optional => "Handling.Optional",
+            RecRisk.Cond => "Handling.Conditional",
+            RecRisk.Dep => "Handling.HardwareDependent",
+            RecRisk.Timing => "Handling.ManualTiming",
+            RecRisk.PatDep => "Handling.PatchRequired",
             _ => "Handling.NotAutoSelected"
         };
     }
 
-    private static string HandlingToneFor(RecommendationRisk risk)
+    private static string HandTone(RecRisk risk)
     {
         return risk switch
         {
-            RecommendationRisk.Required or RecommendationRisk.Recommended => "Auto",
-            RecommendationRisk.Optional => "Optional",
-            RecommendationRisk.Conditional or RecommendationRisk.ManualTiming => "Warning",
-            RecommendationRisk.HardwareDependent or RecommendationRisk.PatchDependent => "Info",
+            RecRisk.Required or RecRisk.Rec => "Auto",
+            RecRisk.Optional => "Optional",
+            RecRisk.Cond or RecRisk.Timing => "Warning",
+            RecRisk.Dep or RecRisk.PatDep => "Info",
             _ => "Muted"
         };
     }
 
-    private string NoteTagKey()
+    private string TagKey()
     {
-        if (Entry.Risk == RecommendationRisk.ManualTiming)
+        if (Entry.Risk == RecRisk.Timing)
         {
             return "NoteTag.FpsTiming";
         }
 
-        if (Entry.Risk == RecommendationRisk.HardwareDependent)
+        if (Entry.Risk == RecRisk.Dep)
         {
             return "NoteTag.HardwareBased";
         }
 
-        if (Entry.Risk == RecommendationRisk.PerformanceCost)
+        if (Entry.Risk == RecRisk.PerfCost)
         {
             return "NoteTag.Performance";
         }
 
-        if (Entry.Risk == RecommendationRisk.Conditional)
+        if (Entry.Risk == RecRisk.Cond)
         {
             return "NoteTag.CompatibilityWarning";
         }
 
-        if (Entry.Risk == RecommendationRisk.PatchDependent)
+        if (Entry.Risk == RecRisk.PatDep)
         {
             return "NoteTag.PatchRequired";
         }
 
         var notes = Entry.Notes ?? string.Empty;
 
-        if (Entry.Risk == RecommendationRisk.Recommended && ContainsAny(notes, "fix", "fixes", "resolves"))
+        if (Entry.Risk == RecRisk.Rec && Contains(notes, "fix", "fixes", "resolves"))
         {
             return "NoteTag.Fix";
         }
 
-        if (ContainsAny(notes, "color", "flicker", "rendering", "graphics", "visual"))
+        if (Contains(notes, "color", "flicker", "rendering", "graphics", "visual"))
         {
             return "NoteTag.VisualFix";
         }
 
-        if (Entry.Risk == RecommendationRisk.Optional || ContainsAny(notes, "optional"))
+        if (Entry.Risk == RecRisk.Optional || Contains(notes, "optional"))
         {
             return "NoteTag.Optional";
         }
@@ -226,7 +221,7 @@ public sealed class PlanItemVm : VmBase
         return "NoteTag.WikiNote";
     }
 
-    private static bool ContainsAny(string value, params string[] needles)
+    private static bool Contains(string value, params string[] needles)
     {
         return needles.Any(needle => value.Contains(needle, StringComparison.OrdinalIgnoreCase));
     }

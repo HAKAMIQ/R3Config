@@ -3,65 +3,81 @@ using System.IO;
 using System.Windows;
 using System.Windows.Markup;
 using Microsoft.Win32;
-using AppSvc;
-using R3Config.Lang;
 using R3Config.Svc;
+using R3Config.Lang;
+using R3Config.Mdl;
 
 namespace R3Config.Vm;
 
-public sealed class CanaryPatchImportVm : VmBase
+public sealed class CanImpVm : VmBase
 {
-    private readonly string? _patchesPath;
-    private readonly CanaryPatchImportService _service = new();
+    private readonly Rpcs3InstallDescriptor? _install;
+    private readonly AppFlow _flow;
+    private readonly Func<bool> _isRun;
+    private readonly Func<string, string, bool> _confirm;
 
-    private string _importText = string.Empty;
-    private string _validationMessage = UiText.T("Patch.ImportCanaryPasteLabel");
-    private string _resultMessage = string.Empty;
+    private string _impText = string.Empty;
+    private string _vldMsg = UiText.GetText("Patch.ImportCanaryPasteLabel");
+    private string _resMsg = string.Empty;
     private bool _isValid;
-    private bool _duplicatePpuMerged;
+    private bool _dupPpu;
+    private bool _runUi;
 
-    public CanaryPatchImportVm(string? patchesPath)
+    public CanImpVm(
+        Rpcs3InstallDescriptor? install,
+        AppFlow flow,
+        Func<bool>? isRpcs3Running = null,
+        Func<string, string, bool>? confirm = null)
     {
-        _patchesPath = patchesPath;
+        _install = install;
+        _flow = flow ?? throw new ArgumentNullException(nameof(flow));
+        _isRun = isRpcs3Running ??
+            Rpcs3InstallService.IsR3;
+        _confirm = confirm ?? UiDlg.Confirm;
 
-        ChooseFileCommand = new RelayCommand(ChooseFile);
-        CreateFileCommand = new RelayCommand(CreateImportedPatchFile, () => IsValid);
-        CancelCommand = new RelayCommand(() => RequestClose?.Invoke(this, false));
+        PickCmd = new RelayCmd(PickFile);
+        MakeCmd = new RelayCmd(
+            Build,
+            () => _install is not null &&
+                  IsValid &&
+                  !_runUi);
+        CloseCmd = new RelayCmd(() => CloseReq?.Invoke(this, false));
 
         Validate();
+        LoadMut();
     }
 
-    public event EventHandler<bool>? RequestClose;
+    public event EventHandler<bool>? CloseReq;
 
-    public RelayCommand ChooseFileCommand { get; }
+    public RelayCmd PickCmd { get; }
 
-    public RelayCommand CreateFileCommand { get; }
+    public RelayCmd MakeCmd { get; }
 
-    public RelayCommand CancelCommand { get; }
+    public RelayCmd CloseCmd { get; }
 
-    public string ImportText
+    public string ImpText
     {
-        get => _importText;
+        get => _impText;
         set
         {
-            if (SetProperty(ref _importText, value))
+            if (Set(ref _impText, value))
             {
-                ResultMessage = string.Empty;
+                ResMsg = string.Empty;
                 Validate();
             }
         }
     }
 
-    public string ValidationMessage
+    public string VldMsg
     {
-        get => _validationMessage;
-        private set => SetProperty(ref _validationMessage, value);
+        get => _vldMsg;
+        private set => Set(ref _vldMsg, value);
     }
 
-    public string ResultMessage
+    public string ResMsg
     {
-        get => _resultMessage;
-        private set => SetProperty(ref _resultMessage, value);
+        get => _resMsg;
+        private set => Set(ref _resMsg, value);
     }
 
     public bool IsValid
@@ -69,39 +85,54 @@ public sealed class CanaryPatchImportVm : VmBase
         get => _isValid;
         private set
         {
-            if (SetProperty(ref _isValid, value))
+            if (Set(ref _isValid, value))
             {
-                CreateFileCommand.RaiseCanExecuteChanged();
+                MakeCmd.RaiseCan();
             }
         }
     }
 
-    public bool DuplicatePpuMerged
+    public bool DupPpu
     {
-        get => _duplicatePpuMerged;
-        private set => SetProperty(ref _duplicatePpuMerged, value);
+        get => _dupPpu;
+        private set => Set(ref _dupPpu, value);
     }
 
-    public FlowDirection WindowFlow => UiLayoutService.Current.WindowFlow;
+    public FlowDirection WinFlow => UiLaySvc.Current.WinFlow;
 
-    public FlowDirection ShellFlow => UiLayoutService.Current.ShellFlow;
+    public FlowDirection ShFlow => UiLaySvc.Current.ShFlow;
 
-    public XmlLanguage XmlLanguage => UiLayoutService.Current.XmlLanguage;
+    public XmlLanguage XmlLang => UiLaySvc.Current.XmlLang;
 
-    public FlowDirection TextFlow => UiLayoutService.Current.TextFlow;
+    public FlowDirection TextFlow => UiLaySvc.Current.TextFlow;
 
-    public TextAlignment UiTextAlignment => UiLayoutService.Current.TextAlignment;
+    public TextAlignment UiAlign => UiLaySvc.Current.TxtAlign;
 
-    public TextAlignment TextAlignment => UiTextAlignment;
+    public TextAlignment TxtAlign => UiAlign;
 
-    public HorizontalAlignment HorizontalAlignment => UiLayoutService.Current.HorizontalAlignment;
+    public HorizontalAlignment HorAlign => UiLaySvc.Current.HorAlign;
 
-    private void ChooseFile()
+    public void LoadMut()
+    {
+        try
+        {
+            _runUi =
+                _install is not null && _isRun();
+        }
+        catch
+        {
+            _runUi = true;
+        }
+
+        MakeCmd.RaiseCan();
+    }
+
+    private void PickFile()
     {
         var dialog = new OpenFileDialog
         {
-            Filter = UiText.T("Patch.ImportCanaryFileFilter"),
-            Title = UiText.T("Patch.ImportCanaryChooseFile"),
+            Filter = UiText.GetText("Patch.ImportCanaryFileFilter"),
+            Title = UiText.GetText("Patch.ImportCanaryChooseFile"),
             CheckFileExists = true
         };
 
@@ -112,52 +143,73 @@ public sealed class CanaryPatchImportVm : VmBase
 
         try
         {
-            ImportText = File.ReadAllText(dialog.FileName);
+            ImpText = R3Bound.ReadUtf8(
+                dialog.FileName,
+                R3Limits.PatCatBy,
+                "Canary import patch catalog");
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (
+            ex is InvalidDataException or
+                IOException or
+                UnauthorizedAccessException)
         {
             IsValid = false;
-            ResultMessage = ex.Message;
+            ResMsg = ex.Message;
         }
     }
 
     private void Validate()
     {
-        if (string.IsNullOrWhiteSpace(ImportText))
+        if (string.IsNullOrWhiteSpace(ImpText))
         {
             IsValid = false;
-            DuplicatePpuMerged = false;
-            ValidationMessage = UiText.T("Patch.ImportCanaryPasteLabel");
+            DupPpu = false;
+            VldMsg = UiText.GetText("Patch.ImportCanaryPasteLabel");
             return;
         }
 
-        var result = _service.Normalize(ImportText);
+        var result = _flow.NormCan(ImpText);
 
-        IsValid = result.Succeeded;
-        DuplicatePpuMerged = result.DuplicatePpuMerged;
-        ValidationMessage = result.Message;
+        IsValid = result.IsOk;
+        DupPpu = result.PpuMerge;
+        VldMsg = result.Message;
     }
 
-    private void CreateImportedPatchFile()
+    private void Build()
     {
         if (!IsValid)
         {
-            ResultMessage = ValidationMessage;
+            ResMsg = VldMsg;
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_patchesPath))
+        if (_install is null)
         {
-            ResultMessage = UiText.T("Patch.ImportCanaryNoRpcs3Path");
+            ResMsg = UiText.GetText("Patch.ImportCanaryNoRpcs3Path");
             return;
         }
 
-        var result = _service.WriteImportedPatch(_patchesPath, ImportText);
-        ResultMessage = result.Message;
-
-        if (result.Succeeded)
+        LoadMut();
+        if (_runUi)
         {
-            RequestClose?.Invoke(this, true);
+            ResMsg = UiText.GetText("Msg.BlockedRpcs3");
+            return;
+        }
+
+        if (!_confirm(
+                UiText.GetText("Patch.ImportCanaryConfirm"),
+                UiText.GetText("Patch.ImportCanaryTitle")))
+        {
+            ResMsg = UiText.GetText("Msg.UserCancelPatch");
+            return;
+        }
+
+        var result = _flow.ImpCan(_install, ImpText);
+        ResMsg = result.Message;
+
+        if (result.IsOk)
+        {
+            CloseReq?.Invoke(this, true);
         }
     }
 }

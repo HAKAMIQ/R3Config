@@ -2,9 +2,9 @@ using System.Windows.Controls;
 
 namespace R3Config.Ctrl;
 
-public partial class RecPlanView : UserControl
+public partial class RecView : UserControl
 {
-    public RecPlanView()
+    public RecView()
     {
         InitializeComponent();
     }

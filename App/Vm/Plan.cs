@@ -10,180 +10,177 @@ namespace R3Config.Vm;
 
 public sealed class PlanVm : VmBase
 {
-    private string _title = UiText.T("Plan.Title");
-    private string _summary = UiText.T("Plan.SelectGame");
-    private string _gameSerial = string.Empty;
-    private string _emptyStateText = UiText.T("Plan.Empty");
-    private string _targetConfigPath = "-";
-    private bool _showApplied = true;
-    private ConfigPlan? _plan;
+    private string _title = UiText.GetText("Plan.Title");
+    private string _summary = UiText.GetText("Plan.SelectGame");
+    private string _serial = string.Empty;
+    private string _empty = UiText.GetText("Plan.Empty");
+    private string _tgtCfg = "-";
+    private bool _applied = true;
+    private CfgPlan? _plan;
 
-    public event EventHandler? SelectionStateChanged;
+    public event EventHandler? SelState;
 
-    public ObservableCollection<PlanItemVm> Items { get; } = [];
+    public ObservableCollection<PlanItVm> Items { get; } = [];
 
     public string Title
     {
         get => _title;
-        set => SetProperty(ref _title, value);
+        set => Set(ref _title, value);
     }
 
     public string Summary
     {
         get => _summary;
-        set => SetProperty(ref _summary, value);
+        set => Set(ref _summary, value);
     }
 
-    public string GameSerial
+    public string Serial
     {
-        get => _gameSerial;
-        private set => SetProperty(ref _gameSerial, value);
+        get => _serial;
+        private set => Set(ref _serial, value);
     }
 
-    public string TargetConfigPath
+    public string TgtCfg
     {
-        get => _targetConfigPath;
-        set => SetProperty(ref _targetConfigPath, value);
+        get => _tgtCfg;
+        set => Set(ref _tgtCfg, value);
     }
 
-    public bool HasSelectedChanges => Items.Any(item => item.IsSelected && item.IsDifferent && item.IsActionable);
+    public bool HasChg => Items.Any(item => item.IsSel && item.IsDiff && item.IsAction);
 
-    public bool HasRemovableSettings => _plan?.Items.Any(item => item.CurrentValue is not null) == true;
+    public bool CanDel => _plan?.Items.Any(item => item.CurVal is not null) == true;
 
     public bool IsEmpty => Items.Count == 0;
 
-    public string EmptyStateText
+    public string EmptyTxt
     {
-        get => _emptyStateText;
-        private set => SetProperty(ref _emptyStateText, value);
+        get => _empty;
+        private set => Set(ref _empty, value);
     }
 
-    public bool ShowApplied
+    public bool ShowDone
     {
-        get => _showApplied;
+        get => _applied;
         set
         {
-            if (SetProperty(ref _showApplied, value))
+            if (Set(ref _applied, value))
             {
-                ReloadItems(preserveSelection: true);
+                Reload(preserveSelection: true);
             }
         }
     }
 
-    public void RefreshLanguage()
+    public void SetLang()
     {
         if (_plan is null)
         {
-            Title = UiText.T("Plan.Title");
-            GameSerial = string.Empty;
+            Title = UiText.GetText("Plan.Title");
+            Serial = string.Empty;
         }
 
-        EmptyStateText = _plan is null
-            ? UiText.T("Plan.Empty")
-            : GetEmptyStateText(_plan);
+        EmptyTxt = _plan is null
+            ? UiText.GetText("Plan.Empty")
+            : GetEmpty(_plan);
 
-        UpdateSummary();
+        SetSum();
 
         foreach (var item in Items)
         {
-            item.RefreshLanguage();
+            item.SetLang();
         }
     }
 
     public void Clear()
     {
-        UnsubscribeItems();
+        Unsub();
 
         Items.Clear();
-        Title = UiText.T("Plan.Title");
-        GameSerial = string.Empty;
-        Summary = UiText.T("Plan.SelectGame");
-        EmptyStateText = UiText.T("Plan.Empty");
-        TargetConfigPath = "-";
+        Title = UiText.GetText("Plan.Title");
+        Serial = string.Empty;
+        Summary = UiText.GetText("Plan.SelectGame");
+        EmptyTxt = UiText.GetText("Plan.Empty");
+        TgtCfg = "-";
         _plan = null;
 
-        OnPropertyChanged(nameof(IsEmpty));
-        OnPropertyChanged(nameof(HasRemovableSettings));
-        RaiseSelectionChanged();
+        OnChange(nameof(IsEmpty));
+        OnChange(nameof(CanDel));
+        RaiseSel();
     }
 
-    public void Load(ConfigPlan plan)
+    public void Load(CfgPlan plan)
     {
         Clear();
 
         _plan = plan;
-        Title = plan.GameTitle;
-        GameSerial = plan.GameSerial;
-        TargetConfigPath = plan.TargetConfigPath;
+        Title = plan.GameName;
+        Serial = plan.GameSer;
+        TgtCfg = plan.CfgPath;
 
-        ReloadItems(preserveSelection: false);
+        Reload(preserveSelection: false);
     }
 
-    public void SelectRecommended()
+    public void Select()
     {
         foreach (var item in Items)
         {
-            item.IsSelected = item.IsAutoSelectable && item.IsDifferent && item.IsActionable;
+            item.IsSel = item.AutoSel && item.IsDiff && item.IsAction;
         }
 
-        UpdateSummary();
-        RaiseSelectionChanged();
+        SetSum();
+        RaiseSel();
     }
 
-    public void ClearSelection()
+    public void ClearSel()
     {
         foreach (var item in Items)
         {
-            item.IsSelected = false;
+            item.IsSel = false;
         }
 
-        UpdateSummary();
-        RaiseSelectionChanged();
+        SetSum();
+        RaiseSel();
     }
 
-    private void ReloadItems(bool preserveSelection)
+    private void Reload(bool preserveSelection)
     {
         var selectedKeys = preserveSelection
-            ? SelectedItemKeys()
+            ? SelItem()
             : [];
 
-        var hadVisibleItems = Items.Count > 0;
-
-        UnsubscribeItems();
+        Unsub();
         Items.Clear();
 
         if (_plan is null)
         {
-            OnPropertyChanged(nameof(IsEmpty));
-            OnPropertyChanged(nameof(HasRemovableSettings));
-            UpdateSummary();
-            RaiseSelectionChanged();
+            OnChange(nameof(IsEmpty));
+            OnChange(nameof(CanDel));
+            SetSum();
+            RaiseSel();
             return;
         }
 
-        var visibleItems = _plan.Items.Where(ShouldShowItem);
+        var visibleItems = _plan.Items.Where(ShowItem);
 
         foreach (var item in visibleItems)
         {
-            var isSelected = hadVisibleItems && selectedKeys.Contains(ItemKey(item))
-                ? true
-                : IsDefaultSelected(item);
+            var isSelected = preserveSelection &&
+                             selectedKeys.Contains(ItemKey(item));
 
-            var viewModel = new PlanItemVm(item, isSelected);
-            viewModel.PropertyChanged += Item_PropertyChanged;
+            var viewModel = new PlanItVm(item, isSelected);
+            viewModel.PropChg += OnItem;
             Items.Add(viewModel);
         }
 
-        EmptyStateText = GetEmptyStateText(_plan);
-        OnPropertyChanged(nameof(IsEmpty));
-        OnPropertyChanged(nameof(HasRemovableSettings));
-        UpdateSummary();
-        RaiseSelectionChanged();
+        EmptyTxt = GetEmpty(_plan);
+        OnChange(nameof(IsEmpty));
+        OnChange(nameof(CanDel));
+        SetSum();
+        RaiseSel();
     }
 
-    private bool ShouldShowItem(ConfigPlanEntry item)
+    private bool ShowItem(CfgEntry item)
     {
-        if (ShowApplied)
+        if (ShowDone)
         {
             return true;
         }
@@ -207,72 +204,67 @@ public sealed class PlanVm : VmBase
             && state.Unknown == 0;
     }
 
-    private HashSet<string> SelectedItemKeys()
+    private HashSet<string> SelItem()
     {
         return Items
-            .Where(item => item.IsSelected)
+            .Where(item => item.IsSel)
             .Select(item => ItemKey(item.Entry))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
-    private void UnsubscribeItems()
+    private void Unsub()
     {
         foreach (var item in Items)
         {
-            item.PropertyChanged -= Item_PropertyChanged;
+            item.PropChg -= OnItem;
         }
     }
 
-    private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnItem(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PlanItemVm.IsSelected))
+        if (e.PropertyName == nameof(PlanItVm.IsSel))
         {
-            UpdateSummary();
-            RaiseSelectionChanged();
+            SetSum();
+            RaiseSel();
         }
     }
 
-    private void UpdateSummary()
+    private void SetSum()
     {
         if (_plan is null)
         {
-            Summary = UiText.T("Plan.SelectGame");
+            Summary = UiText.GetText("Plan.SelectGame");
             return;
         }
 
         var state = _plan.RecState;
-        Summary = UiText.F("Plan.SummaryFormat", state.Total, state.Applied, state.Pending);
+        Summary = UiText.Fmt("Plan.SummaryFormat", state.Total, state.Applied, state.Pending);
     }
 
-    private static bool IsDefaultSelected(ConfigPlanEntry item)
+    private static string ItemKey(CfgEntry item)
     {
-        return item.IsAutoSelectable && item.IsDifferent && item.IsActionable;
+        return string.Join("|", item.Section, item.Key, item.Path);
     }
 
-    private static string ItemKey(ConfigPlanEntry item)
-    {
-        return string.Join("|", item.Section, item.Key, item.DisplayPath);
-    }
-
-    private static string GetEmptyStateText(ConfigPlan plan)
+    private static string GetEmpty(CfgPlan plan)
     {
         if (plan.RecState.Total == 0)
         {
-            return UiText.T("Plan.NoRec");
+            return UiText.GetText("Plan.NoRec");
         }
 
         if (plan.RecState.Applied == plan.RecState.Total)
         {
-            return UiText.T("Plan.AllApplied");
+            return UiText.GetText("Plan.AllApplied");
         }
 
         return string.Empty;
     }
 
-    private void RaiseSelectionChanged()
+    private void RaiseSel()
     {
-        OnPropertyChanged(nameof(HasSelectedChanges));
-        OnPropertyChanged(nameof(HasRemovableSettings));
-        SelectionStateChanged?.Invoke(this, EventArgs.Empty);
+        OnChange(nameof(HasChg));
+        OnChange(nameof(CanDel));
+        SelState?.Invoke(this, EventArgs.Empty);
     }
 }

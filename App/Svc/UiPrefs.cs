@@ -5,13 +5,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using R3Config.Lang;
 
-namespace AppSvc;
+namespace R3Config.Svc;
 
 public static class UiPrefs
 {
     private const string FileName = "ui.json";
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    private static readonly JsonSerializerOptions JsonOpt = new()
     {
         WriteIndented = true
     };
@@ -20,21 +20,29 @@ public static class UiPrefs
     {
         try
         {
-            var path = ResolvePath();
+            var path = GetPath();
             if (!File.Exists(path))
             {
-                return UiText.ArabicLang;
+                return UiText.ArabLang;
             }
 
             using var stream = File.OpenRead(path);
-            var prefs = JsonSerializer.Deserialize<UiPrefsData>(stream, JsonOptions);
+            var prefs = JsonSerializer.Deserialize<PrefData>(
+                stream,
+                JsonOpt);
 
-            return UiText.NormalizeLang(prefs?.Lang);
+            return UiText.NormLang(prefs?.Lang);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
+        catch (Exception ex) when (
+            ex is IOException or
+            UnauthorizedAccessException or
+            JsonException or
+            NotSupportedException)
         {
-            Trace.TraceWarning($"R3Config UI preferences load failed: {ex.Message}");
-            return UiText.ArabicLang;
+            Trace.TraceWarning(
+                $"R3Config UI preferences load failed: {ex.Message}");
+
+            return UiText.ArabLang;
         }
     }
 
@@ -44,8 +52,9 @@ public static class UiPrefs
 
         try
         {
-            var path = ResolvePath();
+            var path = GetPath();
             var directory = Path.GetDirectoryName(path);
+
             if (string.IsNullOrWhiteSpace(directory))
             {
                 return;
@@ -53,36 +62,56 @@ public static class UiPrefs
 
             Directory.CreateDirectory(directory);
 
-            var prefs = new UiPrefsData
+            var prefs = new PrefData
             {
-                Lang = UiText.NormalizeLang(lang)
+                Lang = UiText.NormLang(lang)
             };
 
-            var json = JsonSerializer.Serialize(prefs, JsonOptions);
+            var json = JsonSerializer.Serialize(
+                prefs,
+                JsonOpt);
+
             tempPath = path + ".tmp";
 
-            File.WriteAllText(tempPath, json);
-            File.Move(tempPath, path, overwrite: true);
+            File.WriteAllText(
+                tempPath,
+                json);
+
+            File.Move(
+                tempPath,
+                path,
+                overwrite: true);
+
             tempPath = null;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
+        catch (Exception ex) when (
+            ex is IOException or
+            UnauthorizedAccessException or
+            JsonException or
+            NotSupportedException)
         {
             if (!string.IsNullOrWhiteSpace(tempPath))
             {
-                TryDeleteFile(tempPath);
+                TryDel(tempPath);
             }
 
-            Trace.TraceWarning($"R3Config UI preferences save failed: {ex.Message}");
+            Trace.TraceWarning(
+                $"R3Config UI preferences save failed: {ex.Message}");
         }
     }
 
-    private static string ResolvePath()
+    private static string GetPath()
     {
-        var root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(root, "R3Config", FileName);
+        var root = Environment.GetFolderPath(
+            Environment.SpecialFolder.LocalApplicationData);
+
+        return Path.Combine(
+            root,
+            "R3Config",
+            FileName);
     }
 
-    private static void TryDeleteFile(string path)
+    private static void TryDel(string path)
     {
         try
         {
@@ -93,11 +122,10 @@ public static class UiPrefs
         }
         catch
         {
-            // Best-effort cleanup for temporary UI preference files.
         }
     }
 
-    private sealed class UiPrefsData
+    private sealed class PrefData
     {
         [JsonPropertyName("lang")]
         public string? Lang { get; init; }

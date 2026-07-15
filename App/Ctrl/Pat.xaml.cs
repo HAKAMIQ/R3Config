@@ -3,60 +3,86 @@ using System.Windows.Controls;
 
 namespace R3Config.Ctrl;
 
-public enum PatchViewMode
+public enum PatMode
 {
-    Official,
+    Patches,
     Canary,
     Cheat
 }
 
-public partial class PatchView : UserControl
+public partial class PatView : UserControl
 {
-    public static readonly DependencyProperty ModeProperty = DependencyProperty.Register(
+    public static readonly DependencyProperty ModeProp = DependencyProperty.Register(
         nameof(Mode),
-        typeof(PatchViewMode),
-        typeof(PatchView),
-        new PropertyMetadata(PatchViewMode.Official, OnModeChanged));
+        typeof(PatMode),
+        typeof(PatView),
+        new PropertyMetadata(PatMode.Patches, ModeChg));
 
-    public static readonly DependencyProperty SelectedIndexProperty = DependencyProperty.Register(
-        nameof(SelectedIndex),
-        typeof(int),
-        typeof(PatchView),
-        new PropertyMetadata(0));
-
-    public PatchView()
+    public PatView()
     {
         InitializeComponent();
-        UpdateSelectedIndex();
+        SetMode();
     }
 
-    public PatchViewMode Mode
+    public PatMode Mode
     {
-        get => (PatchViewMode)GetValue(ModeProperty);
-        set => SetValue(ModeProperty, value);
+        get => (PatMode)GetValue(ModeProp);
+        set => SetValue(ModeProp, value);
     }
 
-    public int SelectedIndex
+    private static void ModeChg(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs eventArgs)
     {
-        get => (int)GetValue(SelectedIndexProperty);
-        private set => SetValue(SelectedIndexProperty, value);
-    }
-
-    private static void OnModeChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs eventArgs)
-    {
-        if (dependencyObject is PatchView view)
+        if (dependencyObject is PatView view)
         {
-            view.UpdateSelectedIndex();
+            view.SetMode();
         }
     }
 
-    private void UpdateSelectedIndex()
+    private void SetMode()
     {
-        SelectedIndex = Mode switch
+        if (PatRoot is null ||
+            ChtRoot is null ||
+            OfclSrc is null ||
+            CanSrc is null)
         {
-            PatchViewMode.Canary => 1,
-            PatchViewMode.Cheat => 2,
-            _ => 0
-        };
+            return;
+        }
+
+        var showPatchLibrary = Mode != PatMode.Cheat;
+        PatRoot.Visibility = showPatchLibrary
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        ChtRoot.Visibility = showPatchLibrary
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+        OfclSrc.Visibility = Mode == PatMode.Patches
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        CanSrc.Visibility = Mode == PatMode.Canary
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        if (showPatchLibrary)
+        {
+            ShowCan(Mode == PatMode.Canary);
+        }
+    }
+
+    private void ShowCan(bool showCanary)
+    {
+        if (OfclBody is null || CanBody is null)
+        {
+            return;
+        }
+
+        OfclBody.Visibility = showCanary
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+        CanBody.Visibility = showCanary
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
     }
 }

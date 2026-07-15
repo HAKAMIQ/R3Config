@@ -1,11 +1,12 @@
 Copyright (c) 2026 HAKAMIQ.
 All rights reserved.
 
-R3Config is distributed as a HAKAMIQ Windows desktop utility.
-You may use the compiled portable release for personal RPCS3 configuration assistance.
-You may not sell, sublicense, repackage, or redistribute modified versions without explicit permission from HAKAMIQ.
+R3Config is a proprietary HAKAMIQ Windows desktop utility.
 
-This project does not include RPCS3, PlayStation firmware, game files, copyrighted game data, or third-party emulator binaries.
-Third-party dependencies remain under their own licenses.
+You may use the official compiled portable release for personal, non-commercial RPCS3 configuration assistance.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGE, OR OTHER LIABILITY ARISING FROM USE OF THE SOFTWARE.
+You may not copy, sell, sublicense, modify, repackage, or redistribute R3Config, its source code, or compiled releases without prior written permission from HAKAMIQ.
+
+R3Config does not include RPCS3, PlayStation firmware, game files, copyrighted game data, or third-party emulator binaries. Third-party components and community-created patch or cheat definitions remain subject to their own licenses and rights.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGE, OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.

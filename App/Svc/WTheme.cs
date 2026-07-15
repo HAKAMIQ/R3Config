@@ -4,14 +4,14 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace AppSvc;
+namespace R3Config.Svc;
 
-public static class WindowThemeService
+public static class WinTheme
 {
-    private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
-    private const int DWMWA_USE_IMMERSIVE_DARK_MODE_LEGACY = 19;
+    private const int DarkMode = 20;
+    private const int DarkOld = 19;
 
-    public static void ApplyDwmSetWindowAttributeDarkMode(Window? window)
+    public static void Apply(Window? window)
     {
         if (window is null)
         {
@@ -21,61 +21,61 @@ public static class WindowThemeService
         var handle = new WindowInteropHelper(window).Handle;
         if (handle == IntPtr.Zero)
         {
-            window.SourceInitialized -= Window_SourceInitialized;
-            window.SourceInitialized += Window_SourceInitialized;
+            window.SourceInitialized -= WinInit;
+            window.SourceInitialized += WinInit;
             return;
         }
 
-        TryApplyDarkMode(handle);
+        TryApply(handle);
     }
 
-    private static void Window_SourceInitialized(object? sender, EventArgs e)
+    private static void WinInit(
+        object? sender,
+        EventArgs e)
     {
         if (sender is not Window window)
         {
             return;
         }
 
-        window.SourceInitialized -= Window_SourceInitialized;
-        ApplyDwmSetWindowAttributeDarkMode(window);
+        window.SourceInitialized -= WinInit;
+        Apply(window);
     }
 
-    private static void TryApplyDarkMode(IntPtr handle)
+    private static void TryApply(IntPtr handle)
     {
         try
         {
             var enabled = 1;
-            var result = DwmSetWindowAttribute(
+            var result = DwmSet(
                 handle,
-                DWMWA_USE_IMMERSIVE_DARK_MODE,
+                DarkMode,
                 ref enabled,
-                Marshal.SizeOf<int>());
+                sizeof(int));
 
             if (result != 0)
             {
-                _ = DwmSetWindowAttribute(
+                _ = DwmSet(
                     handle,
-                    DWMWA_USE_IMMERSIVE_DARK_MODE_LEGACY,
+                    DarkOld,
                     ref enabled,
-                    Marshal.SizeOf<int>());
+                    sizeof(int));
             }
         }
-        catch (DllNotFoundException)
+        catch (Exception ex) when (
+            ex is DllNotFoundException or
+            EntryPointNotFoundException or
+            Win32Exception)
         {
-            // DWM dark mode is cosmetic. Ignore when unavailable.
-        }
-        catch (EntryPointNotFoundException)
-        {
-            // DWM dark mode is cosmetic. Ignore when unavailable.
-        }
-        catch (Win32Exception)
-        {
-            // DWM dark mode is cosmetic. Ignore when unavailable.
         }
     }
 
-    [DllImport("dwmapi.dll", PreserveSig = true)]
-    private static extern int DwmSetWindowAttribute(
+    [DllImport(
+        "dwmapi.dll",
+        EntryPoint = "DwmSetWindowAttribute",
+        ExactSpelling = true,
+        PreserveSig = true)]
+    private static extern int DwmSet(
         IntPtr hwnd,
         int dwAttribute,
         ref int pvAttribute,

@@ -1,97 +1,127 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using AppSvc;
+using R3Config.Svc;
 using R3Config.Lang;
 
 namespace R3Config.View.Dlg;
 
-public partial class AppDialog : Window
+public partial class AppDlg : Window
 {
-    private readonly bool _isConfirm;
-
-    public AppDialog(Window? owner, string title, string message, UiDialogKind kind, bool isConfirm)
+    public AppDlg(
+        Window? owner,
+        string title,
+        string message,
+        DlgKind kind,
+        bool isConfirm)
     {
         InitializeComponent();
-        SourceInitialized += (_, _) => WindowThemeService.ApplyDwmSetWindowAttributeDarkMode(this);
-        Owner = owner;
-        _isConfirm = isConfirm;
-        Title = title;
-        TitleText.Text = title;
-        MessageText.Text = message;
-        PrimaryButton.Content = isConfirm ? UiText.T("Dialog.Yes") : UiText.T("Dialog.Ok");
-        SecondaryButton.Content = isConfirm ? UiText.T("Dialog.No") : UiText.T("Dialog.Cancel");
-        SecondaryButton.Visibility = isConfirm ? Visibility.Visible : Visibility.Collapsed;
 
-        ApplyKind(kind);
-        ApplyTextDirection();
+        SourceInitialized += (_, _) =>
+            WinTheme.Apply(this);
+
+        Owner = owner;
+        Title = title;
+
+        TitlTxt.Text = title;
+        MsgText.Text = message;
+
+        MainBtn.Content = isConfirm
+            ? UiText.GetText("Dialog.Yes")
+            : UiText.GetText("Dialog.Ok");
+
+        AltBtn.Content = isConfirm
+            ? UiText.GetText("Dialog.No")
+            : UiText.GetText("Dialog.Cancel");
+
+        AltBtn.Visibility = isConfirm
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        SetKind(kind);
+        SetFlow();
 
         KeyDown += (_, e) =>
         {
-            if (e.Key == Key.Escape)
+            if (e.Key != Key.Escape)
             {
-                DialogResult = isConfirm ? false : true;
-                Close();
+                return;
             }
+
+            DialogResult = !isConfirm;
+            Close();
         };
     }
 
-    private void ApplyTextDirection()
+    private void SetFlow()
     {
-        var layout = UiLayoutService.Current;
-        ContentGrid.FlowDirection = layout.TextFlow;
-        ButtonPanel.FlowDirection = layout.TextFlow;
-        TitleText.FlowDirection = layout.TextFlow;
-        TitleText.TextAlignment = layout.TextAlignment;
-        TitleText.HorizontalAlignment = HorizontalAlignment.Stretch;
-        MessageText.FlowDirection = layout.TextFlow;
-        MessageText.TextAlignment = layout.TextAlignment;
-        MessageText.HorizontalAlignment = HorizontalAlignment.Stretch;
+        var layout = UiLaySvc.Current;
+
+        CntGrid.FlowDirection = layout.TextFlow;
+        Btns.FlowDirection = layout.TextFlow;
+
+        TitlTxt.FlowDirection = layout.TextFlow;
+        TitlTxt.TextAlignment = layout.TxtAlign;
+        TitlTxt.HorizontalAlignment = HorizontalAlignment.Stretch;
+
+        MsgText.FlowDirection = layout.TextFlow;
+        MsgText.TextAlignment = layout.TxtAlign;
+        MsgText.HorizontalAlignment = HorizontalAlignment.Stretch;
     }
 
-    private void ApplyKind(UiDialogKind kind)
+    private void SetKind(DlgKind kind)
     {
         var accent = (Brush)FindResource("AccentBrush");
         var warning = (Brush)FindResource("WarningBrush");
         var danger = (Brush)FindResource("DangerBrush");
         var border = (Brush)FindResource("BorderBrushSoft");
+        var warningSurface = (Brush)FindResource("ChipWarningBackgroundBrush");
+        var dangerSurface = (Brush)FindResource("DangerSurfaceBrush");
+        var infoSurface = (Brush)FindResource("ChipInfoBackgroundBrush");
 
         switch (kind)
         {
-            case UiDialogKind.Warning:
+            case DlgKind.Warning:
                 IconText.Text = "!";
                 IconText.Foreground = warning;
-                IconBadge.Background = new SolidColorBrush(Color.FromArgb(0x33, 0xF2, 0xC9, 0x4C));
-                IconBadge.BorderBrush = warning;
+                IconBdg.Background = warningSurface;
+                IconBdg.BorderBrush = warning;
                 break;
-            case UiDialogKind.Error:
+
+            case DlgKind.Error:
                 IconText.Text = "×";
                 IconText.Foreground = danger;
-                IconBadge.Background = new SolidColorBrush(Color.FromArgb(0x2A, 0xF8, 0x71, 0x71));
-                IconBadge.BorderBrush = danger;
+                IconBdg.Background = dangerSurface;
+                IconBdg.BorderBrush = danger;
                 break;
-            case UiDialogKind.Confirm:
+
+            case DlgKind.Confirm:
                 IconText.Text = "?";
                 IconText.Foreground = accent;
-                IconBadge.Background = new SolidColorBrush(Color.FromArgb(0x2A, 0x5B, 0x8D, 0xEF));
-                IconBadge.BorderBrush = accent;
+                IconBdg.Background = infoSurface;
+                IconBdg.BorderBrush = accent;
                 break;
+
             default:
                 IconText.Text = "i";
                 IconText.Foreground = accent;
-                IconBadge.Background = new SolidColorBrush(Color.FromArgb(0x2A, 0x5B, 0x8D, 0xEF));
-                IconBadge.BorderBrush = border;
+                IconBdg.Background = infoSurface;
+                IconBdg.BorderBrush = border;
                 break;
         }
     }
 
-    private void PrimaryButton_Click(object sender, RoutedEventArgs e)
+    private void MainClk(
+        object sender,
+        RoutedEventArgs e)
     {
         DialogResult = true;
         Close();
     }
 
-    private void SecondaryButton_Click(object sender, RoutedEventArgs e)
+    private void AltClick(
+        object sender,
+        RoutedEventArgs e)
     {
         DialogResult = false;
         Close();

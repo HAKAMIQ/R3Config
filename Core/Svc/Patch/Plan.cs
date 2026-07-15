@@ -2,104 +2,122 @@ using System;
 using System.Linq;
 using R3Config.Mdl;
 
+#pragma warning disable CA1822, IDE0130
+
 namespace R3Config.Svc;
 
-public sealed class PatchApplyPlanner
+public sealed class PatPlnr
 {
-    public PatchApplyPlan CreatePlan(
+    public Mdl.PatchApplyPlan Build(
         Rpcs3InstallDescriptor install,
-        IEnumerable<Rpcs3PatchMatchResult> checkedMatches,
+        IEnumerable<Mdl.PatMatch> checkedMatches,
         bool expertMode)
     {
         var changes = checkedMatches
-            .Where(match => PatchRiskPolicy.CanApplyCheckedPatch(match.Patch.Risk, match.Status, expertMode))
-            .Select(TryCreateChange)
+            .Where(match => PatPol.CanApply(
+                match,
+                expertMode))
+            .Select(Try)
             .Where(change => change is not null)
-            .Cast<PatchApplyChange>()
-            .GroupBy(change => $"{change.HashKey}\0{change.PatchTitle}\0{change.GameTitle}\0{change.Serial}\0{change.Version}", StringComparer.Ordinal)
+            .Cast<PatChg>()
+            .GroupBy(
+                change => $"{change.HashKey}\0{change.PatTitle}\0{change.GameName}\0{change.Serial}\0{change.Version}",
+                StringComparer.Ordinal)
             .Select(group => group.First())
             .ToArray();
 
-        return new PatchApplyPlan(install.PatchConfigPath, changes);
+        return new Mdl.PatchApplyPlan(
+            install.PatCfg,
+            changes);
     }
 
-    public PatchApplyPlan CreateDisablePlan(
+    public Mdl.PatchApplyPlan Build2(
         Rpcs3InstallDescriptor install,
-        IEnumerable<Rpcs3PatchMatchResult> checkedMatches)
+        IEnumerable<Mdl.PatMatch> checkedMatches)
     {
         var changes = checkedMatches
-            .Where(match => PatchRiskPolicy.CanDisableCheckedPatch(match.Patch.Risk, match.Status))
-            .Select(CreateChangeForMatch)
+            .Where(PatPol.CanPat)
+            .Select(Build3)
             .Where(change => change is not null)
-            .Cast<PatchApplyChange>()
-            .GroupBy(change => $"{change.HashKey}\0{change.PatchTitle}\0{change.GameTitle}\0{change.Serial}\0{change.Version}", StringComparer.Ordinal)
+            .Cast<PatChg>()
+            .GroupBy(
+                change => $"{change.HashKey}\0{change.PatTitle}\0{change.GameName}\0{change.Serial}\0{change.Version}",
+                StringComparer.Ordinal)
             .Select(group => group.First())
             .ToArray();
 
-        return new PatchApplyPlan(install.PatchConfigPath, changes);
+        return new Mdl.PatchApplyPlan(
+            install.PatCfg,
+            changes);
     }
 
-    public PatchApplyChange? CreateChangeForMatch(Rpcs3PatchMatchResult match)
+    public PatChg? Build3(
+        Mdl.PatMatch match)
     {
-        return TryCreateChange(match);
+        return Try(match);
     }
 
-    private static PatchApplyChange? TryCreateChange(Rpcs3PatchMatchResult match)
+    private static PatChg? Try(
+        Mdl.PatMatch match)
     {
-        var target = ResolveTarget(match);
+        var target = GetTgt(match);
 
         if (target is null)
         {
             return null;
         }
 
-        var targetVersion = match.MatchedTargetVersion
-            ?? target.Versions.FirstOrDefault(version => Rpcs3PatchVersion.Equals(version, match.MatchedVersion))
-            ?? (target.Versions.Any(Rpcs3PatchVersion.IsAll) || target.Versions.Count == 0
-                ? Rpcs3PatchVersion.All
-                : null);
+        var targetVersion = match.TgtVer
+            ?? target.Versions.FirstOrDefault(version =>
+                PatVer.Equals(
+                    version,
+                    match.MatVer))
+            ?? (target.Versions.Any(PatVer.IsAll) ||
+                target.Versions.Count == 0
+                    ? PatVer.All
+                    : null);
 
         if (string.IsNullOrWhiteSpace(targetVersion))
         {
             return null;
         }
 
-        return new PatchApplyChange(
-            HashKey: ToHashKey(match.Patch),
-            PatchTitle: match.Patch.Title,
-            GameTitle: match.MatchedTargetTitle ?? target.Title,
-            Serial: match.MatchedTargetSerial ?? target.Serial,
+        return new PatChg(
+            HashKey: ToHash(match.Patch),
+            PatTitle: match.Patch.Title,
+            GameName: match.TgtName ?? target.Title,
+            Serial: match.TgtSer ?? target.Serial,
             Version: targetVersion,
             Risk: match.Patch.Risk);
     }
 
-    private static Rpcs3PatchGameTarget? ResolveTarget(Rpcs3PatchMatchResult match)
+    private static R3PatTgt? GetTgt(
+        Mdl.PatMatch match)
     {
-        if (!string.IsNullOrWhiteSpace(match.MatchedTargetSerial))
+        if (!string.IsNullOrWhiteSpace(match.TgtSer))
         {
-            return match.Patch.GameTargets.FirstOrDefault(candidate =>
-                candidate.Serial.Equals(match.MatchedTargetSerial, StringComparison.OrdinalIgnoreCase) &&
-                (string.IsNullOrWhiteSpace(match.MatchedTargetTitle) ||
-                 candidate.Title.Equals(match.MatchedTargetTitle, StringComparison.OrdinalIgnoreCase)));
+            return match.Patch.GameTgt.FirstOrDefault(candidate =>
+                candidate.Serial.Equals(
+                    match.TgtSer,
+                    StringComparison.OrdinalIgnoreCase) &&
+                (string.IsNullOrWhiteSpace(match.TgtName) ||
+                 candidate.Title.Equals(
+                     match.TgtName,
+                     StringComparison.OrdinalIgnoreCase)));
         }
 
-        return match.Patch.GameTargets.FirstOrDefault(candidate =>
-            (!string.IsNullOrWhiteSpace(match.MatchedSerial) &&
-             candidate.Serial.Equals(match.MatchedSerial, StringComparison.OrdinalIgnoreCase)) ||
-            Rpcs3PatchVersion.IsAll(candidate.Serial));
+        return match.Patch.GameTgt.FirstOrDefault(candidate =>
+            (!string.IsNullOrWhiteSpace(match.MatSer) &&
+             candidate.Serial.Equals(
+                 match.MatSer,
+                 StringComparison.OrdinalIgnoreCase)) ||
+            PatVer.IsAll(candidate.Serial));
     }
 
-    private static string ToHashKey(Rpcs3PatchEntry patch)
+    private static string ToHash(Rpcs3PatchEntry patch)
     {
-        var prefix = patch.HashKind switch
-        {
-            PatchHashKind.Ppu => "PPU",
-            PatchHashKind.Spu => "SPU",
-            PatchHashKind.Prx => "PRX",
-            PatchHashKind.Ovl => "OVL",
-            _ => "UNKNOWN"
-        };
-
-        return $"{prefix}-{patch.Hash}";
+        return patch.RunKey;
     }
 }
+
+#pragma warning restore CA1822, IDE0130

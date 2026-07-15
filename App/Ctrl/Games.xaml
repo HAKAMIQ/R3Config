@@ -1,129 +1,119 @@
-<UserControl x:Class="R3Config.Ctrl.GamesListView"
+<UserControl x:Class="R3Config.Ctrl.GameList"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:lang="clr-namespace:R3Config.Lang"
              FlowDirection="{DynamicResource App.FlowDirection}"
              Language="{DynamicResource App.XmlLanguage}">
-	<Border Style="{StaticResource LeftRailBorder}"
+    <Border Style="{StaticResource LeftRailBorder}"
             HorizontalAlignment="Stretch"
             FlowDirection="{DynamicResource App.FlowDirection}">
-		<Grid FlowDirection="{DynamicResource App.FlowDirection}"
+        <Grid FlowDirection="{DynamicResource App.FlowDirection}"
               HorizontalAlignment="Stretch">
-			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="10" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="8" />
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="12" />
-				<RowDefinition Height="*" />
-			</Grid.RowDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="8" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-			<Grid Grid.Row="0"
+            <Grid Grid.Row="0"
                   FlowDirection="{DynamicResource App.FlowDirection}"
                   HorizontalAlignment="Stretch">
-				<Grid.RowDefinitions>
-					<RowDefinition Height="Auto" />
-					<RowDefinition Height="Auto" />
-				</Grid.RowDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-				<TextBlock Grid.Row="0"
-                           Text="{lang:Text Key=Games.Title}"
+                <TextBlock Grid.Row="0"
+                           Text="{lang:TextExt Key=Games.Title}"
                            Style="{StaticResource RailTitleText}"
                            FlowDirection="{DynamicResource App.FlowDirection}"
-                           TextAlignment="{DynamicResource App.DefaultTextAlignment}"
+                           TextAlignment="Justify"
                            HorizontalAlignment="Stretch" />
 
-				<TextBlock Grid.Row="1"
-                           Text="{lang:Text Key=Games.Caption}"
+                <TextBlock Grid.Row="1"
+                           Text="{lang:TextExt Key=Games.Caption}"
                            Style="{StaticResource RailCaptionText}"
                            FlowDirection="{DynamicResource App.FlowDirection}"
-                           TextAlignment="{DynamicResource App.DefaultTextAlignment}"
+                           TextAlignment="Justify"
                            HorizontalAlignment="Stretch"
                            Margin="0,4,0,0" />
-			</Grid>
+            </Grid>
 
-			<Grid Grid.Row="2"
-                  ToolTip="{lang:Text Key=Games.SearchTip}">
-				<TextBox Text="{Binding GameList.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            <Grid Grid.Row="2"
+                  FlowDirection="{DynamicResource App.FlowDirection}"
+                  ToolTip="{lang:TextExt Key=Games.SearchTip}">
+                <TextBox Text="{Binding GameList.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          FlowDirection="{DynamicResource App.FlowDirection}"
-                         TextAlignment="{DynamicResource App.DefaultTextAlignment}"
-                         ToolTip="{lang:Text Key=Games.SearchTip}" />
+                         TextAlignment="Justify"
+                         ToolTip="{lang:TextExt Key=Games.SearchTip}" />
 
-				<TextBlock Text="{lang:Text Key=Games.SearchPlaceholder}"
+                <TextBlock Text="{lang:TextExt Key=Games.SearchPlaceholder}"
                            Style="{StaticResource RailCaptionText}"
                            Foreground="{StaticResource TextMutedBrush}"
                            Margin="10,0"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Stretch"
                            FlowDirection="{DynamicResource App.FlowDirection}"
-                           TextAlignment="{DynamicResource App.DefaultTextAlignment}"
+                           TextAlignment="Justify"
                            IsHitTestVisible="False"
-                           Visibility="{Binding GameList.IsSearchEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
-			</Grid>
+                           Visibility="{Binding GameList.IsSearch, Converter={StaticResource BoolToVisibilityConverter}}" />
+            </Grid>
 
-			<Border Grid.Row="4"
+            <Border Grid.Row="4"
                     Style="{StaticResource GameFilterSurface}"
-                    ToolTip="{Binding GameList.FilterTooltip}">
-				<CheckBox Content="{lang:Text Key=Games.FilterDetectedOnly}"
+                    FlowDirection="{DynamicResource App.FlowDirection}"
+                    ToolTip="{Binding GameList.Tip}">
+                <CheckBox Content="{lang:TextExt Key=Games.FilterDetectedOnly}"
                           Style="{StaticResource GameFilterCheckBox}"
-                          IsChecked="{Binding GameList.ShowOnlyDetectedInRpcs3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          IsChecked="{Binding GameList.InR3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                           FlowDirection="{DynamicResource App.FlowDirection}"
                           HorizontalContentAlignment="{DynamicResource App.HorizontalAlignment}"
                           HorizontalAlignment="Stretch"
-                          ToolTip="{Binding GameList.FilterTooltip}" />
-			</Border>
+                          ToolTip="{Binding GameList.Tip}" />
+            </Border>
 
-			<Grid Grid.Row="6"
+            <Grid Grid.Row="6"
                   HorizontalAlignment="Stretch">
-				<ListBox FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
-                         HorizontalAlignment="Stretch"
-                         ItemsSource="{Binding GameList.Games}"
-                         SelectedItem="{Binding GameList.SelectedGame, Mode=TwoWay}"
+                <ListBox ItemsSource="{Binding GameList.Games}"
+                         SelectedItem="{Binding GameList.SelGame, Mode=TwoWay}"
                          ItemContainerStyle="{StaticResource GameRailItem}"
                          Background="Transparent"
                          BorderThickness="0"
+                         FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
+                         HorizontalAlignment="Stretch"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          ScrollViewer.VerticalScrollBarVisibility="Visible"
-                         ToolTip="{lang:Text Key=Games.Tooltip}">
-					<ListBox.ItemTemplate>
-						<DataTemplate>
-							<Grid Margin="0" FlowDirection="LeftToRight">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="*" />
-									<ColumnDefinition Width="Auto" />
-								</Grid.ColumnDefinitions>
-
-								<StackPanel Grid.Column="0"
-                                            MinWidth="0">
-									<TextBlock Text="{Binding Title}"
+                         ToolTip="{lang:TextExt Key=Games.Tooltip}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0"
+                                  FlowDirection="LeftToRight">
+                                <StackPanel MinWidth="0">
+                                    <TextBlock Text="{Binding Title}"
                                                Style="{StaticResource GameRailTitleText}" />
-									<TextBlock Text="{Binding Serial}"
+
+                                    <TextBlock Text="{Binding Serial}"
                                                Style="{StaticResource GameRailSerialText}"
                                                Margin="0,3,0,0" />
-								</StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
 
-								<Border Grid.Column="1"
-                                        Style="{StaticResource GameNeedBadge}"
-                                        Margin="8,0,0,0"
-                                        ToolTip="{Binding NeedTip}">
-									<TextBlock Text="{Binding NeedDisplay}"
-                                               Style="{StaticResource GameNeedBadgeText}" />
-								</Border>
-							</Grid>
-						</DataTemplate>
-					</ListBox.ItemTemplate>
-				</ListBox>
-
-				<TextBlock Text="{Binding GameList.EmptyStateText}"
+                <TextBlock Text="{Binding GameList.EmptyTxt}"
                            Style="{StaticResource ArabicEmptyStateText}"
                            FlowDirection="{DynamicResource App.FlowDirection}"
-                           TextAlignment="{DynamicResource App.DefaultTextAlignment}"
+                           TextAlignment="Justify"
                            HorizontalAlignment="Stretch"
                            VerticalAlignment="Center"
                            Visibility="{Binding GameList.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}"
                            IsHitTestVisible="False" />
-			</Grid>
-		</Grid>
-	</Border>
+            </Grid>
+        </Grid>
+    </Border>
 </UserControl>

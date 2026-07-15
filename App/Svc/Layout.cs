@@ -1,12 +1,13 @@
+using System;
 using System.Windows;
 using System.Windows.Markup;
 using R3Config.Lang;
 
-namespace AppSvc;
+namespace R3Config.Svc;
 
-public sealed class UiLayoutState
+public sealed class UiLaySt
 {
-    private UiLayoutState(
+    private UiLaySt(
         string language,
         bool isRtl,
         XmlLanguage xmlLanguage,
@@ -15,96 +16,149 @@ public sealed class UiLayoutState
     {
         Language = language;
         IsRtl = isRtl;
-        XmlLanguage = xmlLanguage;
-        GamesPanelWidth = gamesPanelWidth;
-        DetailsPanelWidth = detailsPanelWidth;
+        XmlLang = xmlLanguage;
+        GameWide = gamesPanelWidth;
+        DetWide = detailsPanelWidth;
     }
 
     public string Language { get; }
 
     public bool IsRtl { get; }
 
-    public XmlLanguage XmlLanguage { get; }
+    public XmlLanguage XmlLang { get; }
 
-    public FlowDirection WindowFlow => TextFlow;
+    public FlowDirection WinFlow => TextFlow;
 
-    public FlowDirection ShellFlow => TextFlow;
+    public FlowDirection ShFlow => TextFlow;
 
-    public FlowDirection TextFlow => IsRtl ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+    public FlowDirection TextFlow =>
+        IsRtl
+            ? FlowDirection.RightToLeft
+            : FlowDirection.LeftToRight;
 
-    public FlowDirection TechnicalFlow => FlowDirection.LeftToRight;
+    public FlowDirection TechFlow { get; } =
+        FlowDirection.LeftToRight;
 
-    public TextAlignment TextAlignment => IsRtl ? TextAlignment.Right : TextAlignment.Left;
+    public TextAlignment TxtAlign =>
+        IsRtl
+            ? TextAlignment.Right
+            : TextAlignment.Left;
 
-    public TextAlignment SettingsTextAlignment => TextAlignment.Left;
+    public TextAlignment SetAlign { get; } =
+        TextAlignment.Left;
 
-    public TextAlignment TechnicalTextAlignment => TextAlignment.Left;
+    public TextAlignment TechAlgn { get; } =
+        TextAlignment.Left;
 
-    public HorizontalAlignment HorizontalAlignment => IsRtl ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+    public HorizontalAlignment HorAlign =>
+        IsRtl
+            ? HorizontalAlignment.Right
+            : HorizontalAlignment.Left;
 
-    public GridLength GamesPanelWidth { get; }
+    public GridLength GameWide { get; }
 
-    public GridLength DetailsPanelWidth { get; }
+    public GridLength DetWide { get; }
 
-    public int GamesPanelColumn => 0;
+    public int GameCol { get; } = 0;
 
-    public int DetailsPanelColumn => 1;
+    public int DetCol { get; } = 1;
 
-    public GridLength LeftShellColumnWidth => GamesPanelWidth;
+    public GridLength LeftWide => GameWide;
 
-    public GridLength RightShellColumnWidth => DetailsPanelWidth;
+    public GridLength RghtWide => DetWide;
 
-    public FlowDirection SelectedGameTitleFlow(bool hasSelectedGame)
+    public FlowDirection GameFlow(
+        bool hasSelectedGame)
     {
-        return hasSelectedGame ? TechnicalFlow : TextFlow;
+        return hasSelectedGame
+            ? TechFlow
+            : TextFlow;
     }
 
-    public TextAlignment SelectedGameTitleAlignment(bool hasSelectedGame)
+    public TextAlignment GameAlgn(
+        bool hasSelectedGame)
     {
-        return hasSelectedGame ? TechnicalTextAlignment : TextAlignment;
+        return hasSelectedGame
+            ? TechAlgn
+            : TxtAlign;
     }
 
-    public static UiLayoutState FromLanguage(string? language)
+    public static UiLaySt FromLang(string? language)
     {
-        var normalized = UiText.NormalizeLang(language);
-        return new UiLayoutState(
+        var normalized = UiText.NormLang(language);
+
+        return new UiLaySt(
             normalized,
-            normalized == UiText.ArabicLang,
+            string.Equals(
+                normalized,
+                UiText.ArabLang,
+                StringComparison.Ordinal),
             XmlLanguage.GetLanguage(normalized),
             new GridLength(304, GridUnitType.Pixel),
             new GridLength(1, GridUnitType.Star));
     }
 }
 
-public static class UiLayoutService
+public static class UiLaySvc
 {
-    public static UiLayoutState Current => UiLayoutState.FromLanguage(UiText.CurrentLang);
+    public static UiLaySt Current =>
+        UiLaySt.FromLang(UiText.CurLang);
 
-    public static void ApplyApplicationResources()
+    public static void Apply()
     {
-        var app = Application.Current;
+        var app = System.Windows.Application.Current;
         if (app is null)
         {
             return;
         }
 
         var layout = Current;
-        app.Resources["App.FlowDirection"] = layout.TextFlow;
-        app.Resources["App.CaptionButtonsFlowDirection"] = layout.IsRtl ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
-        app.Resources["App.DefaultTextAlignment"] = layout.TextAlignment;
-        app.Resources["Options.SettingsTextAlignment"] = layout.SettingsTextAlignment;
-        app.Resources["App.HorizontalAlignment"] = layout.HorizontalAlignment;
-        app.Resources["App.XmlLanguage"] = layout.XmlLanguage;
 
-        app.Resources["TechnicalText.FlowDirection"] = layout.TechnicalFlow;
-        app.Resources["TechnicalText.TextAlignment"] = layout.TechnicalTextAlignment;
-        app.Resources["TechnicalText.HorizontalAlignment"] = HorizontalAlignment.Left;
-        app.Resources["TechnicalText.Language"] = XmlLanguage.GetLanguage(UiText.EnglishLang);
+        app.Resources["App.FlowDirection"] =
+            layout.TextFlow;
 
-        app.Resources["App.ShellFlowDirection"] = layout.ShellFlow;
-        app.Resources["App.TextFlowDirection"] = layout.TextFlow;
-        app.Resources["App.TechnicalFlowDirection"] = layout.TechnicalFlow;
-        app.Resources["App.TextAlignment"] = layout.TextAlignment;
-        app.Resources["App.TechnicalTextAlignment"] = layout.TechnicalTextAlignment;
+        app.Resources["App.CaptionButtonsFlowDirection"] =
+            layout.IsRtl
+                ? FlowDirection.RightToLeft
+                : FlowDirection.LeftToRight;
+
+        app.Resources["App.DefaultTextAlignment"] =
+            layout.TxtAlign;
+
+        app.Resources["Options.SettingsTextAlignment"] =
+            layout.SetAlign;
+
+        app.Resources["App.HorizontalAlignment"] =
+            layout.HorAlign;
+
+        app.Resources["App.XmlLanguage"] =
+            layout.XmlLang;
+
+        app.Resources["TechnicalText.FlowDirection"] =
+            layout.TechFlow;
+
+        app.Resources["TechnicalText.TextAlignment"] =
+            layout.TechAlgn;
+
+        app.Resources["TechnicalText.HorizontalAlignment"] =
+            HorizontalAlignment.Left;
+
+        app.Resources["TechnicalText.Language"] =
+            XmlLanguage.GetLanguage(UiText.EnLang);
+
+        app.Resources["App.ShellFlowDirection"] =
+            layout.ShFlow;
+
+        app.Resources["App.TextFlowDirection"] =
+            layout.TextFlow;
+
+        app.Resources["App.TechnicalFlowDirection"] =
+            layout.TechFlow;
+
+        app.Resources["App.TextAlignment"] =
+            layout.TxtAlign;
+
+        app.Resources["App.TechnicalTextAlignment"] =
+            layout.TechAlgn;
     }
 }
