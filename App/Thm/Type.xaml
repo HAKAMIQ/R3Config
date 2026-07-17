@@ -1,127 +1,113 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	<Style x:Key="ArabicBlockText" TargetType="TextBlock">
-		<Setter Property="FontFamily" Value="{DynamicResource AppFont}" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
-		<Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
-		<Setter Property="TextAlignment" Value="Left" />
-		<Setter Property="HorizontalAlignment" Value="Stretch" />
-		<Setter Property="TextWrapping" Value="Wrap" />
-		<Setter Property="SnapsToDevicePixels" Value="True" />
-	</Style>
+    <FontFamily x:Key="Type.Font.Body">Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="Type.Font.Display">Segoe UI Variable Display, Segoe UI</FontFamily>
+    <FontFamily x:Key="Type.Font.Technical">Cascadia Mono, Consolas, Segoe UI Mono</FontFamily>
 
-	<Style x:Key="ArabicHeadingText" TargetType="TextBlock" BasedOn="{StaticResource ArabicBlockText}">
-		<Setter Property="FontWeight" Value="SemiBold" />
-		<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-	</Style>
+    <Style x:Key="Type.Body" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource Type.Font.Body}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Regular" />
+        <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+        <Setter Property="FlowDirection" Value="LeftToRight" />
+        <Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
+        <Setter Property="TextAlignment" Value="Left" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
 
-	<Style x:Key="ArabicCaptionText" TargetType="TextBlock" BasedOn="{StaticResource ArabicBlockText}">
-		<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
-	</Style>
+    <Style x:Key="Type.BodyStrong" TargetType="TextBlock" BasedOn="{StaticResource Type.Body}">
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
 
-	<Style x:Key="ArabicEmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource ArabicBlockText}">
-		<Setter Property="FontSize" Value="13" />
-		<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-		<Setter Property="VerticalAlignment" Value="Center" />
-		<Setter Property="TextWrapping" Value="Wrap" />
-		<Setter Property="Margin" Value="24" />
-	</Style>
+    <Style x:Key="Type.Caption" TargetType="TextBlock" BasedOn="{StaticResource Type.Body}">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
 
-	<Style x:Key="ArabicText" TargetType="TextBlock" BasedOn="{StaticResource ArabicBlockText}" />
+    <Style x:Key="Type.Subtitle" TargetType="TextBlock" BasedOn="{StaticResource Type.BodyStrong}">
+        <Setter Property="FontSize" Value="15" />
+    </Style>
 
-	<Style x:Key="TitlTxt" TargetType="TextBlock" BasedOn="{StaticResource ArabicHeadingText}">
-		<Setter Property="FontSize" Value="15" />
-	</Style>
+    <Style x:Key="Type.Title" TargetType="TextBlock" BasedOn="{StaticResource Type.BodyStrong}">
+        <Setter Property="FontFamily" Value="{DynamicResource Type.Font.Display}" />
+        <Setter Property="FontSize" Value="18" />
+    </Style>
 
-	<Style x:Key="CaptionText" TargetType="TextBlock" BasedOn="{StaticResource ArabicCaptionText}">
-		<Setter Property="FontSize" Value="12" />
-	</Style>
+    <Style x:Key="Type.TitleLarge" TargetType="TextBlock" BasedOn="{StaticResource Type.Title}">
+        <Setter Property="FontSize" Value="22" />
+    </Style>
 
-	<Style x:Key="StatusText" TargetType="TextBlock" BasedOn="{StaticResource ArabicCaptionText}">
-		<Setter Property="FontSize" Value="12" />
-		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
-	</Style>
+    <Style x:Key="Type.Display" TargetType="TextBlock" BasedOn="{StaticResource Type.TitleLarge}">
+        <Setter Property="FontSize" Value="28" />
+    </Style>
 
-	<Style x:Key="LabelText" TargetType="TextBlock" BasedOn="{StaticResource ArabicHeadingText}">
-		<Setter Property="FontSize" Value="12" />
-	</Style>
+    <Style x:Key="Type.Technical" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource Type.Font.Technical}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+        <Setter Property="FlowDirection" Value="LeftToRight" />
+        <Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
+        <Setter Property="TextAlignment" Value="Left" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
 
-	<Style x:Key="EmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource ArabicEmptyStateText}" />
+    <!-- Existing view contracts mapped onto the Fluent 2 type ramp. -->
+    <Style x:Key="ArabicHeadingText" TargetType="TextBlock" BasedOn="{StaticResource Type.BodyStrong}" />
+    <Style x:Key="ArabicCaptionText" TargetType="TextBlock" BasedOn="{StaticResource Type.Caption}" />
 
-	<Style x:Key="TechText" TargetType="TextBlock">
-		<Setter Property="FontFamily" Value="Consolas, Cascadia Mono, Segoe UI Mono" />
-		<Setter Property="FlowDirection" Value="{DynamicResource TechnicalText.FlowDirection}" />
-		<Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
-		<Setter Property="TextAlignment" Value="{DynamicResource TechnicalText.TextAlignment}" />
-		<Setter Property="HorizontalAlignment" Value="{DynamicResource TechnicalText.HorizontalAlignment}" />
-		<Setter Property="TextWrapping" Value="NoWrap" />
-		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
-		<Setter Property="SnapsToDevicePixels" Value="True" />
-		<Setter Property="VerticalAlignment" Value="Center" />
-		<Setter Property="Padding" Value="8,0" />
-	</Style>
+    <Style x:Key="ArabicEmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource Type.Body}">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="24" />
+    </Style>
 
-	<Style x:Key="RailTitleText" TargetType="TextBlock" BasedOn="{StaticResource ArabicText}">
-		<Setter Property="FontSize" Value="15" />
-		<Setter Property="FontWeight" Value="SemiBold" />
-		<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-	</Style>
+    <Style x:Key="StatusText" TargetType="TextBlock" BasedOn="{StaticResource Type.Caption}" />
+    <Style x:Key="LabelText" TargetType="TextBlock" BasedOn="{StaticResource Type.BodyStrong}">
+        <Setter Property="FontSize" Value="12" />
+    </Style>
 
-	<Style x:Key="RailCaptionText" TargetType="TextBlock" BasedOn="{StaticResource ArabicText}">
-		<Setter Property="FontSize" Value="11" />
-		<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-		<Setter Property="TextWrapping" Value="Wrap" />
-	</Style>
+    <Style x:Key="TechText" TargetType="TextBlock" BasedOn="{StaticResource Type.Technical}">
+        <Setter Property="Padding" Value="8,0" />
+    </Style>
 
-	<Style x:Key="GameRailTitleText" TargetType="TextBlock" BasedOn="{StaticResource TechText}">
-		<Setter Property="FontSize" Value="13" />
-		<Setter Property="FontWeight" Value="SemiBold" />
-		<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
-	</Style>
+    <Style x:Key="RailTitleText" TargetType="TextBlock" BasedOn="{StaticResource Type.Subtitle}" />
 
-	<Style x:Key="GameRailSerialText" TargetType="TextBlock" BasedOn="{StaticResource TechText}">
-		<Setter Property="FontSize" Value="11" />
-		<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
-	</Style>
+    <Style x:Key="RailCaptionText" TargetType="TextBlock" BasedOn="{StaticResource Type.Caption}">
+        <Setter Property="FontSize" Value="12" />
+    </Style>
 
-	<Style x:Key="HeroTitleText" TargetType="TextBlock" BasedOn="{StaticResource TechText}">
-		<Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI" />
-		<Setter Property="FontSize" Value="21" />
-		<Setter Property="FontWeight" Value="SemiBold" />
-		<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
-	</Style>
+    <Style x:Key="GameRailTitleText" TargetType="TextBlock" BasedOn="{StaticResource Type.Technical}">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+    </Style>
 
-	<Style x:Key="HeroSerialText" TargetType="TextBlock" BasedOn="{StaticResource TechText}">
-		<Setter Property="FontSize" Value="12" />
-		<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
-	</Style>
+    <Style x:Key="GameRailSerialText" TargetType="TextBlock" BasedOn="{StaticResource Type.Technical}">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+    </Style>
 
-	<Style x:Key="SectionTitleText" TargetType="TextBlock" BasedOn="{StaticResource ArabicText}">
-		<Setter Property="FontSize" Value="15" />
-		<Setter Property="FontWeight" Value="SemiBold" />
-		<Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-		<Setter Property="HorizontalAlignment" Value="Stretch" />
-	</Style>
+    <Style x:Key="HeroTitleText" TargetType="TextBlock" BasedOn="{StaticResource Type.TitleLarge}">
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+    </Style>
 
-	<Style x:Key="SectionCaptionText" TargetType="TextBlock" BasedOn="{StaticResource ArabicText}">
-		<Setter Property="FontSize" Value="12" />
-		<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-		<Setter Property="HorizontalAlignment" Value="Stretch" />
-		<Setter Property="TextWrapping" Value="Wrap" />
-		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
-		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
-	</Style>
+    <Style x:Key="SectionTitleText" TargetType="TextBlock" BasedOn="{StaticResource Type.Subtitle}" />
 
-	<Style x:Key="BottomBarLabelText" TargetType="TextBlock" BasedOn="{StaticResource ArabicCaptionText}">
-		<Setter Property="FontSize" Value="12" />
-		<Setter Property="FontWeight" Value="SemiBold" />
-		<Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-		<Setter Property="VerticalAlignment" Value="Center" />
-		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
-	</Style>
+    <Style x:Key="SectionCaptionText" TargetType="TextBlock" BasedOn="{StaticResource Type.Caption}">
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+    </Style>
+
+    <Style x:Key="BottomBarLabelText" TargetType="TextBlock" BasedOn="{StaticResource Type.Caption}">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
 </ResourceDictionary>

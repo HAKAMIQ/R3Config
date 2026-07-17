@@ -161,15 +161,15 @@
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0"
-                    Background="{StaticResource WarningBadgeBackgroundBrush}"
-                    BorderBrush="{StaticResource WarningBadgeBorderBrush}"
+                    Background="{DynamicResource Status.WarningSurface}"
+                    BorderBrush="{DynamicResource Status.Warning}"
                     BorderThickness="1"
-                    CornerRadius="8"
+                    CornerRadius="{StaticResource Radius.Medium}"
                     Padding="10,8"
                     Margin="0,0,0,10"
                     Visibility="{Binding Preview.HasWarn, Converter={StaticResource BoolToVisibilityConverter}}">
                 <TextBlock Text="{Binding Preview.WarnText}"
-                           Foreground="{StaticResource TextPrimaryBrush}"
+                           Foreground="{DynamicResource Text.Primary}"
                            FlowDirection="{Binding Preview.TextFlow}"
                            TextAlignment="{Binding Preview.TxtAlign}"
                            NumberSubstitution.Substitution="European"
@@ -180,10 +180,10 @@
                   Margin="0,0,0,10"
                   HorizontalAlignment="Stretch">
                 <Border x:Name="OfclSrc"
-                        Background="{StaticResource SurfaceAltBrush}"
-                        BorderBrush="{StaticResource BorderSubtleBrush}"
+                        Background="{DynamicResource Surface.Subtle}"
+                        BorderBrush="{DynamicResource Stroke.Subtle}"
                         BorderThickness="1"
-                        CornerRadius="8"
+                        CornerRadius="{StaticResource Radius.Medium}"
                         Padding="10,9">
                     <Grid FlowDirection="{Binding Preview.TextFlow}">
                         <Grid.ColumnDefinitions>
@@ -231,10 +231,10 @@
 
                 <Border x:Name="CanSrc"
                         Visibility="Collapsed"
-                        Background="{StaticResource SurfaceAltBrush}"
-                        BorderBrush="{StaticResource BorderSubtleBrush}"
+                        Background="{DynamicResource Surface.Subtle}"
+                        BorderBrush="{DynamicResource Stroke.Subtle}"
                         BorderThickness="1"
-                        CornerRadius="8"
+                        CornerRadius="{StaticResource Radius.Medium}"
                         Padding="10,9">
                     <Grid FlowDirection="{Binding Preview.TextFlow}">
                         <Grid.ColumnDefinitions>
@@ -327,7 +327,7 @@
                                        HorizontalAlignment="Right"
                                        VerticalAlignment="Center">
                                 <Button Content="{lang:TextExt Key=Patch.ApplyOfficialSection}"
-                                        Style="{StaticResource MainBtn}"
+                                        Style="{StaticResource FluentButton.Primary}"
                                         MinWidth="104"
                                         Margin="0,0,6,0"
                                         Command="{Binding OfclOn}" />
@@ -406,7 +406,7 @@
                                        HorizontalAlignment="Right"
                                        VerticalAlignment="Center">
                                 <Button Content="{lang:TextExt Key=Patch.ApplyCanarySection}"
-                                        Style="{StaticResource MainBtn}"
+                                        Style="{StaticResource FluentButton.Primary}"
                                         MinWidth="118"
                                         Margin="0,0,6,0"
                                         Command="{Binding CanOn}"
@@ -491,7 +491,7 @@
                                HorizontalAlignment="Right"
                                VerticalAlignment="Center">
                         <Button Content="{lang:TextExt Key=Patch.ApplyCheatSection}"
-                                Style="{StaticResource MainBtn}"
+                                Style="{StaticResource FluentButton.Primary}"
                                 MinWidth="118"
                                 Margin="0,0,6,0"
                                 Command="{Binding ChtOn}"

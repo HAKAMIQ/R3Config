@@ -28,12 +28,8 @@
             <HorizontalAlignment x:Key="TechnicalText.HorizontalAlignment">Left</HorizontalAlignment>
             <markup:XmlLanguage x:Key="TechnicalText.Language">en-US</markup:XmlLanguage>
 
-            <FontFamily x:Key="AppFont">Segoe UI Variable Text, Segoe UI</FontFamily>
-            <FontFamily x:Key="HeaderEnglishFont">Segoe UI Variable Display, Segoe UI</FontFamily>
-            <FontFamily x:Key="HeaderArabicFont">Segoe UI Variable Display, Segoe UI</FontFamily>
 
-            <Style TargetType="{x:Type TextBlock}">
-                <Setter Property="FontFamily" Value="{DynamicResource AppFont}" />
+            <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource Type.Body}">
                 <Setter Property="TextAlignment" Value="{DynamicResource App.DefaultTextAlignment}" />
                 <Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
                 <Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
@@ -41,8 +37,7 @@
                 <Setter Property="SnapsToDevicePixels" Value="True" />
             </Style>
 
-            <Style x:Key="TechnicalTextBlock" TargetType="{x:Type TextBlock}">
-                <Setter Property="FontFamily" Value="Consolas, Cascadia Mono, Segoe UI Mono" />
+            <Style x:Key="TechnicalTextBlock" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource Type.Technical}">
                 <Setter Property="FlowDirection" Value="{DynamicResource TechnicalText.FlowDirection}" />
                 <Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
                 <Setter Property="TextAlignment" Value="{DynamicResource TechnicalText.TextAlignment}" />

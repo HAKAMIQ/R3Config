@@ -2133,7 +2133,7 @@ static void App_Pat()
     Assert(!patchView.Contains("Key=Patch.SourceStatus.CanaryMatching", StringComparison.Ordinal),
         "Expected the Canary page to avoid a permanent technical matching paragraph on the player surface.");
     Assert(patchView.Split(
-               "Style=\"{StaticResource MainBtn}\"",
+               "Style=\"{StaticResource FluentButton.Primary}\"",
                StringSplitOptions.None).Length == 4,
         "Expected the three positive patch actions to use the primary action style.");
     Assert(patchView.Contains("PatSrc", StringComparison.Ordinal) &&

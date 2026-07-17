@@ -4,13 +4,13 @@
              xmlns:lang="clr-namespace:R3Config.Lang"
              FlowDirection="{DynamicResource App.FlowDirection}"
              Language="{DynamicResource App.XmlLanguage}">
-	<Border Background="{StaticResource SurfaceAltBrush}"
-            BorderBrush="{StaticResource BorderSubtleBrush}"
+	<Border Background="{DynamicResource Surface.Subtle}"
+            BorderBrush="{DynamicResource Stroke.Subtle}"
             BorderThickness="1"
-            CornerRadius="8"
+            CornerRadius="{StaticResource Radius.Medium}"
             Padding="4">
-		<UniformGrid Columns="5"
-                     FlowDirection="{DynamicResource App.FlowDirection}">
+		<WrapPanel Orientation="Horizontal"
+                   FlowDirection="{DynamicResource App.FlowDirection}">
 			<Border Style="{StaticResource StatusMetricPill}">
 				<TextBlock Text="{Binding R3Status}"
                            Style="{StaticResource StatusText}"
@@ -60,6 +60,6 @@
                            TextTrimming="CharacterEllipsis"
                            ToolTip="{lang:TextExt Key=Status.BkpTip}" />
 			</Border>
-		</UniformGrid>
+		</WrapPanel>
 	</Border>
 </UserControl>

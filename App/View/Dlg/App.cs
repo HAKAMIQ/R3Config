@@ -71,13 +71,13 @@ public partial class AppDlg : Window
 
     private void SetKind(DlgKind kind)
     {
-        var accent = (Brush)FindResource("AccentBrush");
-        var warning = (Brush)FindResource("WarningBrush");
-        var danger = (Brush)FindResource("DangerBrush");
-        var border = (Brush)FindResource("BorderBrushSoft");
-        var warningSurface = (Brush)FindResource("ChipWarningBackgroundBrush");
-        var dangerSurface = (Brush)FindResource("DangerSurfaceBrush");
-        var infoSurface = (Brush)FindResource("ChipInfoBackgroundBrush");
+        var accent = (Brush)FindResource("Accent.Default");
+        var warning = (Brush)FindResource("Status.Warning");
+        var danger = (Brush)FindResource("Status.Danger");
+        var border = (Brush)FindResource("Stroke.Default");
+        var warningSurface = (Brush)FindResource("Status.WarningSurface");
+        var dangerSurface = (Brush)FindResource("Status.DangerSurface");
+        var infoSurface = (Brush)FindResource("Status.InfoSurface");
 
         switch (kind)
         {
