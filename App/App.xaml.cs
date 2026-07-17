@@ -11,6 +11,7 @@ public partial class App : System.Windows.Application
         UiText.SetLang(UiPrefs.LoadLang());
         UiLaySvc.Apply();
         base.OnStartup(e);
+        WinTheme.ApplyResources();
 
         var window = new MainWin();
         MainWindow = window;

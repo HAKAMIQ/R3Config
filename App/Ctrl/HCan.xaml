@@ -77,8 +77,8 @@
         </Border>
 
         <TabControl Grid.Row="2"
-                    Style="{StaticResource Win11TabControl}"
-                    ItemContainerStyle="{StaticResource Win11TabItem}"
+                    Style="{StaticResource FluentTabControl}"
+                    ItemContainerStyle="{StaticResource FluentTabItem}"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch">
 
@@ -409,6 +409,7 @@
                                            TextAlignment="Left" />
 
                                 <DataGrid Grid.Row="2"
+                                          Style="{StaticResource FluentDataGrid}"
                                           ItemsSource="{Binding HCanary.Games}"
                                           SelectedItem="{Binding HCanary.GameTgt}"
                                           AutoGenerateColumns="False"
@@ -489,6 +490,7 @@
                                TextWrapping="Wrap" />
 
                     <DataGrid Grid.Row="2"
+                              Style="{StaticResource FluentDataGrid}"
                               ItemsSource="{Binding HCanary.Ins}"
                               SelectedItem="{Binding HCanary.SelIns}"
                               AutoGenerateColumns="False"
@@ -537,23 +539,23 @@
                                HorizontalAlignment="Left">
                         <Button Content="{lang:TextExt Key=HCanary.Add}"
                                 Command="{Binding HCanary.AddICmd}"
-                                Style="{StaticResource HCanBtn}" />
+                                Style="{StaticResource FluentButton.Compact}" />
 
                         <Button Content="{lang:TextExt Key=HCanary.Delete}"
                                 Command="{Binding HCanary.DelICmd}"
-                                Style="{StaticResource HCanBtn}" />
+                                Style="{StaticResource FluentButton.Compact}" />
 
                         <Button Content="{lang:TextExt Key=HCanary.Duplicate}"
                                 Command="{Binding HCanary.DupICmd}"
-                                Style="{StaticResource HCanBtn}" />
+                                Style="{StaticResource FluentButton.Compact}" />
 
                         <Button Content="{lang:TextExt Key=HCanary.MoveUp}"
                                 Command="{Binding HCanary.InsUp}"
-                                Style="{StaticResource HCanBtn}" />
+                                Style="{StaticResource FluentButton.Compact}" />
 
                         <Button Content="{lang:TextExt Key=HCanary.MoveDown}"
                                 Command="{Binding HCanary.InsDown}"
-                                Style="{StaticResource HCanBtn}" />
+                                Style="{StaticResource FluentButton.Compact}" />
                     </WrapPanel>
 
                     <TextBlock Grid.Row="6"
@@ -595,12 +597,12 @@
                         <Button
                                 Content="{lang:TextExt Key=HCanary.AddAnchor}"
                                 Command="{Binding HCanary.AddACmd}"
-                                Style="{StaticResource HCanBtn}" />
+                                Style="{StaticResource FluentButton.Compact}" />
 
                         <Button
                                 Content="{lang:TextExt Key=HCanary.Delete}"
                                 Command="{Binding HCanary.DelACmd}"
-                                Style="{StaticResource HCanBtn}" />
+                                Style="{StaticResource FluentButton.Compact}" />
                     </WrapPanel>
 
                     <Grid Grid.Row="0"
@@ -621,6 +623,7 @@
                                  ToolTip="{lang:TextExt Key=HCanary.Tooltip.Anchor}" />
 
                         <DataGrid Grid.Row="2"
+                                  Style="{StaticResource FluentDataGrid}"
                                   ItemsSource="{Binding HCanary.SelAnc.Ins}"
                                   SelectedItem="{Binding HCanary.AncIns}"
                                   AutoGenerateColumns="False"
@@ -669,15 +672,15 @@
                                    HorizontalAlignment="Left">
                             <Button Content="{lang:TextExt Key=HCanary.AddInstruction}"
                                     Command="{Binding HCanary.AncAdd}"
-                                    Style="{StaticResource HCanBtn}" />
+                                    Style="{StaticResource FluentButton.Compact}" />
 
                             <Button Content="{lang:TextExt Key=HCanary.Delete}"
                                     Command="{Binding HCanary.AncDel}"
-                                    Style="{StaticResource HCanBtn}" />
+                                    Style="{StaticResource FluentButton.Compact}" />
 
                             <Button Content="{lang:TextExt Key=HCanary.LoadAnchor}"
                                     Command="{Binding HCanary.AncLoad}"
-                                    Style="{StaticResource HCanBtn}" />
+                                    Style="{StaticResource FluentButton.Compact}" />
                         </WrapPanel>
                     </Grid>
                 </Grid>
@@ -733,36 +736,36 @@
                            HorizontalAlignment="Center">
                     <Button Content="{lang:TextExt Key=HCanary.OpenFolder}"
                             Command="{Binding HCanary.PatDir}"
-                            Style="{StaticResource HCanBtn}" />
+                            Style="{StaticResource FluentButton.Compact}" />
 
                     <Button Content="imported_patch.yml"
                             Command="{Binding HCanary.ImpFile}"
                             FlowDirection="LeftToRight"
-                            Style="{StaticResource HCanBtn}" />
+                            Style="{StaticResource FluentButton.Compact}" />
 
                     <Button Content="RPCS3"
                             Command="{Binding HCanary.R3Cmd}"
                             FlowDirection="LeftToRight"
-                            Style="{StaticResource HCanBtn}" />
+                            Style="{StaticResource FluentButton.Compact}" />
                 </WrapPanel>
 
                 <WrapPanel Grid.Row="2"
                            HorizontalAlignment="Center">
                     <Button Content="{lang:TextExt Key=HCanary.CopyYaml}"
                             Command="{Binding HCanary.CopyCmd}"
-                            Style="{StaticResource HCanBtn}" />
+                            Style="{StaticResource FluentButton.Compact}" />
 
                     <Button Content="{lang:TextExt Key=HCanary.DeletePatch}"
                             Command="{Binding HCanary.DelCmd}"
-                            Style="{StaticResource HCanBtn}" />
+                            Style="{StaticResource FluentButton.Compact}" />
 
                     <Button Content="{lang:TextExt Key=HCanary.SaveAs}"
                             Command="{Binding HCanary.SaveAs}"
-                            Style="{StaticResource HCanBtn}" />
+                            Style="{StaticResource FluentButton.Compact}" />
 
                     <Button Content="{lang:TextExt Key=HCanary.Save}"
                             Command="{Binding HCanary.SaveCmd}"
-                            Style="{StaticResource MainBtn}"
+                            Style="{StaticResource FluentButton.Primary}"
                             MinWidth="104"
                             MinHeight="32"
                             Margin="4"

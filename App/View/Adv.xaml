@@ -15,8 +15,8 @@
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
-        Foreground="{StaticResource TextPrimaryBrush}"
-        FontFamily="Segoe UI Variable Text, Segoe UI"
+        Foreground="{DynamicResource Text.Primary}"
+        FontFamily="{DynamicResource Type.Font.Body}"
         FlowDirection="{DynamicResource App.FlowDirection}"
         Language="{DynamicResource App.XmlLanguage}">
 
@@ -28,7 +28,7 @@
                             UseAeroCaptionButtons="False" />
 	</shell:WindowChrome.WindowChrome>
 
-	<Border Style="{StaticResource R3WindowRootFrame}">
+	<Border Style="{StaticResource FluentSurface.Dialog}">
 		<Grid ClipToBounds="True"
               FlowDirection="{DynamicResource App.FlowDirection}"
               Language="{DynamicResource App.XmlLanguage}">
@@ -65,7 +65,8 @@
 					</StackPanel>
 
 					<Button Grid.Column="1"
-                            Style="{StaticResource HeaderCloseButton}"
+                            Style="{StaticResource FluentButton.Close}"
+                            AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
                             ToolTip="{lang:TextExt Key=Window.CloseTip}"
                             Click="CloseWin"
                             VerticalAlignment="Center"
@@ -86,8 +87,8 @@
 
 			<TabControl Grid.Row="1"
                         Margin="12,10,12,12"
-                        Style="{StaticResource PremiumTopTabControl}"
-                        ItemContainerStyle="{StaticResource PremiumTopTabItem}"
+                        Style="{StaticResource FluentTabControl}"
+                        ItemContainerStyle="{StaticResource FluentTabItem}"
                         FlowDirection="{DynamicResource App.FlowDirection}"
                         Language="{DynamicResource App.XmlLanguage}"
                         HorizontalAlignment="Stretch"
@@ -249,7 +250,7 @@
                                       ToolTip="{lang:TextExt Key=Adv.BackupsTip}">
 								<DataGrid.Style>
 									<Style TargetType="DataGrid"
-                                           BasedOn="{StaticResource {x:Type DataGrid}}">
+                                           BasedOn="{StaticResource FluentDataGrid}">
 										<Style.Triggers>
 											<DataTrigger Binding="{Binding Advanced.BkpEmpty}"
                                                          Value="True">
@@ -420,10 +421,10 @@
 										   Style="{StaticResource R3SettingsRowTitleText}" />
 								<Border Grid.Row="2"
 										MinHeight="120"
-										Background="{StaticResource SurfaceAltBrush}"
-										BorderBrush="{StaticResource BorderSubtleBrush}"
+										Background="{DynamicResource Surface.Subtle}"
+										BorderBrush="{DynamicResource Stroke.Subtle}"
 										BorderThickness="1"
-										CornerRadius="8"
+										CornerRadius="{StaticResource Radius.Medium}"
 										Padding="8">
 									<TextBox Text="{Binding Advanced.LogText, Mode=OneWay}"
 											 IsReadOnly="True"
@@ -438,7 +439,7 @@
 											 FontSize="12"
 											 BorderThickness="0"
 											 Background="Transparent"
-											 Foreground="{StaticResource TextPrimaryBrush}" />
+											 Foreground="{DynamicResource Text.Primary}" />
 								</Border>
 
 								<Button Grid.Row="4"
@@ -456,7 +457,7 @@
 
 			<Border Grid.Row="2"
                     Style="{StaticResource R3DialogActionBar}"
-                    CornerRadius="0,0,14,14">
+                    CornerRadius="{StaticResource Radius.Dialog.Bottom}">
 				<Button Content="{lang:TextExt Key=Adv.Close}"
                         MinWidth="100"
                         Margin="0"

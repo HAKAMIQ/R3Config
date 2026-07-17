@@ -14,8 +14,8 @@
         AllowsTransparency="True"
         ShowInTaskbar="False"
         Background="Transparent"
-        Foreground="{StaticResource TextPrimaryBrush}"
-        FontFamily="Segoe UI Variable Text, Segoe UI"
+        Foreground="{DynamicResource Text.Primary}"
+        FontFamily="{DynamicResource Type.Font.Body}"
         FlowDirection="{DynamicResource App.FlowDirection}"
         Language="{DynamicResource App.XmlLanguage}">
 
@@ -27,24 +27,8 @@
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
 
-    <Window.Resources>
-        <Style x:Key="CanState"
-               TargetType="{x:Type TextBlock}"
-               BasedOn="{StaticResource R3SettingsDescriptionText}">
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Style.Triggers>
-                <Trigger Property="Text" Value="{x:Null}">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </Trigger>
-                <Trigger Property="Text" Value="">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-    </Window.Resources>
 
-    <Border Style="{StaticResource R3WindowRootFrame}">
+    <Border Style="{StaticResource FluentSurface.Dialog}">
         <Grid ClipToBounds="True">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -70,7 +54,8 @@
                                VerticalAlignment="Center" />
 
                     <Button Grid.Column="1"
-                            Style="{StaticResource HeaderCloseButton}"
+                            Style="{StaticResource FluentButton.Close}"
+                            AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
                             ToolTip="{lang:TextExt Key=Window.CloseTip}"
                             Click="CloseWin"
                             VerticalAlignment="Center"
@@ -136,10 +121,10 @@
                 <Border Grid.Row="1"
                         Margin="0,10,0,0"
                         Padding="10"
-                        Background="{StaticResource SurfaceAltBrush}"
-                        BorderBrush="{StaticResource BorderSubtleBrush}"
+                        Background="{DynamicResource Surface.Subtle}"
+                        BorderBrush="{DynamicResource Stroke.Subtle}"
                         BorderThickness="1"
-                        CornerRadius="8"
+                        CornerRadius="{StaticResource Radius.Medium}"
                         FlowDirection="{DynamicResource App.FlowDirection}">
                     <Border.Style>
                         <Style TargetType="{x:Type Border}">
@@ -191,18 +176,18 @@
 
                     <StackPanel>
                         <TextBlock Text="{Binding VldMsg}"
-                                   Style="{StaticResource CanState}"
+                                   Style="{StaticResource FluentStatus.Text}"
                                    Margin="0,0,0,6" />
 
                         <TextBlock Text="{Binding ResMsg}"
-                                   Style="{StaticResource CanState}" />
+                                   Style="{StaticResource FluentStatus.Text}" />
                     </StackPanel>
                 </Border>
             </Grid>
 
             <Border Grid.Row="2"
                     Style="{StaticResource R3DialogActionBar}"
-                    CornerRadius="0,0,14,14">
+                    CornerRadius="{StaticResource Radius.Dialog.Bottom}">
                 <Grid FlowDirection="{DynamicResource App.FlowDirection}"
                       Language="{DynamicResource App.XmlLanguage}">
                     <Grid.ColumnDefinitions>
@@ -230,7 +215,7 @@
                     <Button Grid.Column="4"
                             Content="{lang:TextExt Key=Patch.ImportCanaryCreateFile}"
                             Command="{Binding MakeCmd}"
-                            Style="{StaticResource MainBtn}"
+                            Style="{StaticResource FluentButton.Primary}"
                             MinWidth="138"
                             Margin="0"
                             Padding="12,7" />

@@ -46,14 +46,15 @@
             <Grid Grid.Row="2"
                   FlowDirection="{DynamicResource App.FlowDirection}"
                   ToolTip="{lang:TextExt Key=Games.SearchTip}">
-                <TextBox Text="{Binding GameList.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                <TextBox Style="{StaticResource FluentTextBox}"
+                         Text="{Binding GameList.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          FlowDirection="{DynamicResource App.FlowDirection}"
                          TextAlignment="Left"
                          ToolTip="{lang:TextExt Key=Games.SearchTip}" />
 
                 <TextBlock Text="{lang:TextExt Key=Games.SearchPlaceholder}"
                            Style="{StaticResource RailCaptionText}"
-                           Foreground="{StaticResource TextMutedBrush}"
+                           Foreground="{DynamicResource Text.Disabled}"
                            Margin="10,0"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Stretch"

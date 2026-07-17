@@ -13,44 +13,12 @@
         AllowsTransparency="True"
         ShowInTaskbar="False"
         Background="Transparent"
-        FontFamily="Segoe UI Variable Text, Segoe UI"
-        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="{DynamicResource Type.Font.Body}"
+        Foreground="{DynamicResource Text.Primary}"
         FlowDirection="{DynamicResource App.FlowDirection}"
         Language="{DynamicResource App.XmlLanguage}">
-    <Window.Resources>
-        <Style x:Key="AppFlow"
-               TargetType="{x:Type FrameworkElement}">
-            <Setter Property="FlowDirection" Value="LeftToRight" />
-        </Style>
 
-        <Style x:Key="AppTitle"
-               TargetType="{x:Type TextBlock}"
-               BasedOn="{StaticResource R3SettingsTitleText}">
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="TextAlignment" Value="Left" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-        </Style>
-
-        <Style x:Key="AppMsg"
-               TargetType="{x:Type TextBlock}"
-               BasedOn="{StaticResource R3SettingsDescriptionText}">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="TextAlignment" Value="Left" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="Margin" Value="0,8,0,0" />
-        </Style>
-
-        <Style x:Key="AppBtns"
-               TargetType="{x:Type StackPanel}">
-            <Setter Property="Orientation" Value="Horizontal" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="FlowDirection" Value="LeftToRight" />
-        </Style>
-    </Window.Resources>
-
-    <Border Style="{StaticResource R3WindowRootFrame}">
+    <Border Style="{StaticResource FluentSurface.Dialog}">
         <Grid ClipToBounds="True">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -60,7 +28,7 @@
             <Grid x:Name="CntGrid"
                   Grid.Row="0"
                   Margin="16"
-                  Style="{StaticResource AppFlow}">
+                  Style="{StaticResource FluentDialog.Flow}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="12" />
@@ -71,7 +39,7 @@
                         Grid.Column="0"
                         Width="28"
                         Height="28"
-                        CornerRadius="14"
+                        CornerRadius="{StaticResource Radius.Circle.28}"
                         BorderThickness="1"
                         VerticalAlignment="Top"
                         Margin="0,2,0,0">
@@ -86,24 +54,25 @@
                 <StackPanel Grid.Column="2"
                             HorizontalAlignment="Stretch">
                     <TextBlock x:Name="TitlTxt"
-                               Style="{StaticResource AppTitle}" />
+                               Style="{StaticResource FluentDialog.Title}" />
 
                     <TextBlock x:Name="MsgText"
-                               Style="{StaticResource AppMsg}" />
+                               Style="{StaticResource FluentDialog.Message}" />
                 </StackPanel>
             </Grid>
 
             <Border Grid.Row="1"
                     Style="{StaticResource R3DialogActionBar}"
-                    CornerRadius="0,0,14,14">
+                    CornerRadius="{StaticResource Radius.Dialog.Bottom}">
                 <StackPanel x:Name="Btns"
-                            Style="{StaticResource AppBtns}">
+                            Style="{StaticResource FluentDialog.Buttons}">
                     <Button x:Name="AltBtn"
+                            Style="{StaticResource FluentButton.Secondary}"
                             MinWidth="92"
                             Margin="4,0"
                             Click="AltClick" />
                     <Button x:Name="MainBtn"
-                            Style="{StaticResource MainBtn}"
+                            Style="{StaticResource FluentButton.Primary}"
                             MinWidth="92"
                             Margin="4,0"
                             Click="MainClk" />

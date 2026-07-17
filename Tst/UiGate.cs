@@ -47,6 +47,80 @@ internal static class UiGate
             .Where(key => !string.IsNullOrWhiteSpace(key))
             .ToHashSet(StringComparer.Ordinal);
 
+        var themeKeys = new[]
+        {
+            Path.Combine(appDir, "Thm", "Colors.xaml"),
+            Path.Combine(appDir, "Thm", "Type.xaml"),
+            Path.Combine(appDir, "Thm", "Ctrl.xaml")
+        }
+        .SelectMany(path => XDocument.Load(path).Descendants())
+        .Select(node => node.Attribute(xkey)?.Value)
+        .Where(key => !string.IsNullOrWhiteSpace(key))
+        .ToHashSet(StringComparer.Ordinal);
+        var required = new[]
+        {
+            "Surface.Background", "Surface.Card", "Surface.CardHover", "Surface.CardPressed",
+            "Surface.Subtle", "Surface.Overlay", "Text.Primary", "Text.Secondary",
+            "Text.Disabled", "Text.OnAccent", "Stroke.Default", "Stroke.Subtle",
+            "Stroke.Strong", "Stroke.Focus", "Accent.Default", "Accent.Hover",
+            "Accent.Pressed", "Accent.Disabled", "Status.Success", "Status.Warning",
+            "Status.Danger", "Status.Info", "Type.Display", "Type.TitleLarge",
+            "Type.Title", "Type.Subtitle", "Type.Body", "Type.BodyStrong",
+            "Type.Caption", "Type.Technical", "Space.4", "Space.8", "Space.12",
+            "Space.16", "Space.20", "Space.24", "Space.32", "Radius.Small",
+            "Radius.Medium", "Radius.Large", "Radius.XLarge", "Elevation.1",
+            "Elevation.2", "Elevation.3", "Motion.Hover", "Motion.Press",
+            "Motion.Surface", "FluentButton.Primary", "FluentButton.Secondary",
+            "FluentButton.Subtle", "FluentButton.Danger", "FluentButton.Icon",
+            "FluentButton.Compact", "FluentDataGrid", "FluentDataGridHeader",
+            "FluentDataGridCell", "FluentDataGridRow", "FluentTabControl", "FluentTabItem"
+        };
+        foreach (var key in required.Where(key => !themeKeys.Contains(key)))
+        {
+            errs.Add($"Missing Fluent 2 contract '{key}'.");
+        }
+
+        foreach (var mode in new[] { "Dark", "Light" })
+        {
+            foreach (var key in new[]
+                     {
+                         "Surface.Background", "Surface.Card", "Text.Primary", "Text.Secondary",
+                         "Stroke.Default", "Stroke.Focus", "Accent.Default", "Status.Success",
+                         "Status.Warning", "Status.Danger", "Status.Info"
+                     })
+            {
+                if (!themeKeys.Contains($"Fluent.{mode}.{key}.Color"))
+                {
+                    errs.Add($"Missing Fluent {mode} palette token '{key}'.");
+                }
+            }
+        }
+
+        var focusContracts = new (string Target, string? Key)[]
+        {
+            ("Button", null),
+            ("TextBox", null),
+            ("ComboBox", null),
+            ("CheckBox", null),
+            ("TabItem", "FluentTabItem")
+        };
+        foreach (var contract in focusContracts)
+        {
+            var style = ctrl.Descendants()
+                .FirstOrDefault(node =>
+                    node.Name.LocalName == "Style" &&
+                    Target(node.Attribute("TargetType")?.Value, contract.Target) &&
+                    string.Equals(node.Attribute(xkey)?.Value, contract.Key, StringComparison.Ordinal));
+            var focus = style?.Descendants()
+                .Any(node =>
+                    node.Name.LocalName == "Trigger" &&
+                    node.Attribute("Property")?.Value is "IsKeyboardFocused" or "IsKeyboardFocusWithin") == true;
+            if (!focus)
+            {
+                errs.Add($"Fluent {contract.Target} contract requires a visible keyboard focus state.");
+            }
+        }
+
         foreach (var file in files)
         {
             var rel = Path.GetRelativePath(repo, file);
@@ -77,6 +151,29 @@ internal static class UiGate
                 {
                     errs.Add($"{rel}: literal color '{val}' outside Colors.xaml.");
                 }
+
+                if (!rel.EndsWith(
+                        Path.Combine("Thm", "Ctrl.xaml"),
+                        StringComparison.OrdinalIgnoreCase) &&
+                    attr.Name.LocalName == "CornerRadius" &&
+                    attr.Parent?.Name.LocalName != "WindowChrome" &&
+                    !val.StartsWith('{'))
+                {
+                    errs.Add($"{rel}: literal CornerRadius '{val}' outside Fluent tokens.");
+                }
+            }
+
+            foreach (var button in doc.Descendants()
+                         .Where(node => node.Name.LocalName == "Button" &&
+                                        (node.Attribute("Style")?.Value.Contains("FluentButton.Icon", StringComparison.Ordinal) == true ||
+                                         node.Attribute("Style")?.Value.Contains("FluentButton.Close", StringComparison.Ordinal) == true)))
+            {
+                var raw = button.ToString(SaveOptions.DisableFormatting);
+                if (button.Attribute("ToolTip") is null ||
+                    !raw.Contains("AutomationProperties.Name=", StringComparison.Ordinal))
+                {
+                    errs.Add($"{rel}: icon button requires ToolTip and AutomationProperties.Name.");
+                }
             }
 
             foreach (var grid in doc.Descendants()
@@ -89,6 +186,21 @@ internal static class UiGate
                 if (!hpol || !vpol)
                 {
                     errs.Add($"{rel}: DataGrid must declare horizontal and vertical scroll policy.");
+                }
+
+                var direct = grid.Attribute("Style")?.Value.Contains(
+                    "FluentDataGrid",
+                    StringComparison.Ordinal) == true;
+                var local = grid.Elements()
+                    .Where(node => node.Name.LocalName == "DataGrid.Style")
+                    .Descendants()
+                    .Any(node => node.Name.LocalName == "Style" &&
+                                 node.Attribute("BasedOn")?.Value.Contains(
+                                     "FluentDataGrid",
+                                     StringComparison.Ordinal) == true);
+                if (!direct && !local)
+                {
+                    errs.Add($"{rel}: DataGrid must use FluentDataGrid.");
                 }
             }
 
@@ -160,6 +272,12 @@ internal static class UiGate
 
         Check(errs.Count == 0, string.Join(Environment.NewLine, errs));
         Console.WriteLine($"UI XAML gate PASS ({files.Length} files).");
+    }
+
+    private static bool Target(string? value, string name)
+    {
+        return string.Equals(value, name, StringComparison.Ordinal) ||
+               string.Equals(value, $"{{x:Type {name}}}", StringComparison.Ordinal);
     }
 
     private static bool IsColor(string name, string val)
@@ -242,6 +360,7 @@ internal static class UiGate
 
         try
         {
+            var themes = new[] { true, false };
             var langs = new[] { UiText.ArabLang, UiText.EnLang };
             var sizes = new[]
             {
@@ -254,47 +373,51 @@ internal static class UiGate
             var shotDir = Environment.GetEnvironmentVariable("R3_UI_SHOTS");
             var held = new List<Window>();
 
-            foreach (var lang in langs)
+            foreach (var isDark in themes)
             {
-                UiText.SetLang(lang);
-                UiLaySvc.Apply();
-                var wins = Make();
-                try
+                WinTheme.ApplyResources(isDark);
+                foreach (var lang in langs)
                 {
-                    if (!string.IsNullOrWhiteSpace(shotDir))
+                    UiText.SetLang(lang);
+                    UiLaySvc.Apply();
+                    var wins = Make();
+                    try
                     {
-                        Shots(wins, lang, shotDir);
-                    }
-
-                    foreach (var size in sizes)
-                    {
-                        foreach (var win in wins)
+                        if (!string.IsNullOrWhiteSpace(shotDir))
                         {
-                            Lay(win, size);
-                            Tabs(win, size);
-                            var root = (FrameworkElement)win.Content;
-                            Align(root);
-                            Bounds(root, size);
-                            foreach (var dpi in dpis)
+                            Shots(wins, lang, isDark, shotDir);
+                        }
+
+                        foreach (var size in sizes)
+                        {
+                            foreach (var win in wins)
                             {
-                                Dpi(win, size, dpi);
+                                Lay(win, size);
+                                Tabs(win, size);
+                                var root = (FrameworkElement)win.Content;
+                                Align(root);
+                                Bounds(root, size);
+                                foreach (var dpi in dpis)
+                                {
+                                    Dpi(win, size, dpi);
+                                }
                             }
                         }
-                    }
 
-                    SelLang(wins[0], lang);
-                }
-                finally
-                {
-                    if (!string.IsNullOrWhiteSpace(shotDir))
-                    {
-                        held.AddRange(wins);
+                        SelLang(wins[0], lang);
                     }
-                    else
+                    finally
                     {
-                        foreach (var win in wins)
+                        if (!string.IsNullOrWhiteSpace(shotDir))
                         {
-                            win.Close();
+                            held.AddRange(wins);
+                        }
+                        else
+                        {
+                            foreach (var win in wins)
+                            {
+                                win.Close();
+                            }
                         }
                     }
                 }
@@ -308,7 +431,7 @@ internal static class UiGate
             trace.Flush();
             var log = buf.ToString();
             Check(string.IsNullOrWhiteSpace(log), $"WPF binding error:{Environment.NewLine}{log}");
-            Console.WriteLine("Runtime UI gate PASS (4 windows, 4 sizes, 3 DPI scales, 2 languages).");
+            Console.WriteLine("Runtime UI gate PASS (4 windows, 4 sizes, 3 DPI scales, 2 languages, 2 themes).");
         }
         finally
         {
@@ -513,10 +636,12 @@ internal static class UiGate
             $"DPI render failed at {dpi / 96d:P0}.");
     }
 
-    private static void Shots(Window[] wins, string lang, string outDir)
+    private static void Shots(Window[] wins, string lang, bool isDark, string outDir)
     {
         Directory.CreateDirectory(outDir);
-        var tag = lang == UiText.ArabLang ? "ar" : "en";
+        var langTag = lang == UiText.ArabLang ? "ar" : "en";
+        var themeTag = isDark ? "dark" : "light";
+        var tag = $"{themeTag}-{langTag}";
         Save(wins[0], $"{tag}-Main.png", outDir);
         Save(wins[2], $"{tag}-CanDlg.png", outDir);
         Save(wins[3], $"{tag}-AppDlg.png", outDir);

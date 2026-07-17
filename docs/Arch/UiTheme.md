@@ -1,148 +1,230 @@
-# دليل الثيم والألوان
+# R3Config Fluent 2 visual contract
 
-هذا الملف هو عقد واجهة R3Config. الهدف أن تبقى كل شاشة واضحة في الوضع الداكن،
-وألا تعود عناصر WPF إلى قوالب ويندوز الفاتحة عند إضافة شاشة أو نمط محلي.
+هذا الملف هو عقد طبقة العرض في R3Config. التطبيق يبقى WPF و.NET 8 من دون
+WinUI أو مكتبات UI خارجية. Fluent 2 هنا نظام Tokens وقوالب WPF مركزية، وليس
+تغييرًا في ViewModels أو Commands أو Workflow.
 
 ## مصدر الحقيقة
 
-- `App/Thm/Colors.xaml`: قيم الألوان والـ brushes الدلالية فقط.
-- `App/Thm/Ctrl.xaml`: القوالب العامة وحالات عناصر التحكم.
-- `App/Thm/Type.xaml`: الخطوط وأدوار النص.
-- ملفات `App/View` و`App/Ctrl`: التخطيط وربط البيانات فقط؛ لا تضيف ألوانًا حرفية.
+- `App/Thm/Colors.xaml`: لوحتا Light وDark والـsemantic brushes النشطة.
+- `App/Thm/Type.xaml`: خطوط Segoe UI Variable وأدوار Typography.
+- `App/Thm/Ctrl.xaml`: Spacing وRadius وStroke وControl sizes وElevation وMotion
+  وقوالب عناصر التحكم.
+- `App/Svc/WTheme.cs`: اختيار Light/Dark بحسب إعداد تطبيقات Windows مع إبقاء
+  مفاتيح الموارد نفسها.
+- ملفات `App/View` و`App/Ctrl`: تخطيط وربط بيانات فقط.
 
-لا تستخدم `#RRGGBB` أو `White` أو `Black` خارج `Colors.xaml`. إذا احتاجت ميزة
-حالة لونية جديدة، سمِّها بحسب وظيفتها مثل `InputDisabledBrush` أو
-`DangerSurfaceBrush`، وليس بحسب درجتها مثل `DarkGrayBrush`.
+لا تستخدم لونًا حرفيًا خارج `Colors.xaml`، ولا تضف `CornerRadius` حرفيًا داخل
+View. عند الحاجة إلى قيمة جديدة، أضف Token دلاليًا ثم استخدمه من العرض.
 
-## أدوار الألوان
+## Semantic color contract
 
-| الدور | الموارد الأساسية | الاستخدام |
-|---|---|---|
-| خلفية التطبيق | `AppBackgroundBrush`, `SidebarBackgroundBrush` | جذور النوافذ والشريط الجانبي |
-| الأسطح | `SurfaceBrush`, `SurfaceAltBrush`, `CardBackgroundBrush` | البطاقات والأشرطة والمجموعات |
-| الإدخال | `InputBackgroundBrush`, `InputHoverBrush` | `TextBox`, `ComboBox`, القوائم القابلة للتفاعل |
-| النوافذ المنبثقة | `PopupSurfaceBrush` | قائمة `ComboBox` وأي popup داكن |
-| الحدود | `BorderSubtleBrush`, `BorderBrush`, `FocusBorderBrush` | عادي، مرور، وتركيز لوحة المفاتيح |
-| النص | `TextPrimaryBrush`, `TextSecondaryBrush`, `TextMutedBrush` | رئيسي، وصفي، وبيانات ثانوية |
-| التعطيل | `InputDisabledBrush`, `DisabledBorderBrush`, `DisabledTextBrush` | عناصر غير متاحة من دون إخفائها |
-| التحديد | `SelectionBrush`, `SelectionHoverBrush`, `SelectionInactiveBrush` | الصف أو العنصر المحدد وحالة فقد التركيز |
-| الدلالات | `AccentBrush`, `WarningBrush`, `DangerBrush`, `SuccessBrush` | إجراء أساسي، تحذير، خطأ، نجاح |
-
-## عقد حالات عناصر التحكم
-
-كل عنصر تفاعلي يجب أن يعرّف الحالات التالية في قالبه المركزي:
-
-| الحالة | المطلوب |
-|---|---|
-| عادي | سطح داكن ونص رئيسي وحد خافت |
-| مرور المؤشر | رفع تباين السطح أو الحد، من دون قلب العنصر إلى الأبيض |
-| ضغط | سطح أغمق واضح |
-| تركيز لوحة المفاتيح | `FocusBorderBrush` ظاهر |
-| تحديد | خلفية معتمة من `SelectionBrush` ونص مقروء |
-| تعطيل | ألوان التعطيل الثلاثة؛ لا تعتمد على `Opacity` وحدها |
-
-الألوان ليست وسيلة البيان الوحيدة: الخطأ يحتاج نصًا، والتعطيل يحتاج `CanExecute`
-صحيحًا، والتحديد يحتاج حدًا أو سطحًا واضحًا.
-
-## قاعدة الوراثة المهمة في WPF
-
-النمط المحلي الذي يحمل `x:Key` لا يرث النمط الضمني تلقائيًا. لذلك اكتب:
-
-```xaml
-<Style x:Key="FeatureActionButton"
-       TargetType="{x:Type Button}"
-       BasedOn="{StaticResource {x:Type Button}}">
-    <Setter Property="MinWidth" Value="104" />
-</Style>
-```
-
-ينطبق ذلك على `Button`, `TextBox`, `ComboBox`, `ListBox` وبقية العناصر. يجوز
-عدم استخدام `BasedOn` فقط إذا كان النمط يملك قالبًا كاملًا ويغطي كل حالات العقد.
-الأنماط المحلية تضبط القياسات والمحاذاة عادة، بينما يبقى اللون والسلوك في
-`Ctrl.xaml`.
-
-## عقد الاتجاه والمحاذاة
-
-واجهة R3Config ثابتة من اليسار إلى اليمين في العربية والإنجليزية. تغيير اللغة
-يغيّر `Language` والنصوص فقط، ولا يعكس التخطيط أو محاذاة النص. القيم المركزية
-التالية تبقى دائمًا `LeftToRight` و`Left`:
+العروض والقوالب تستخدم هذه المفاتيح فقط:
 
 ```text
-App.FlowDirection
-App.ShellFlowDirection
-App.TextFlowDirection
-App.DefaultTextAlignment
-App.TextAlignment
-App.HorizontalAlignment
-Options.SettingsTextAlignment
+Surface.Background
+Surface.Card
+Surface.CardHover
+Surface.CardPressed
+Surface.Subtle
+Surface.Overlay
+
+Text.Primary
+Text.Secondary
+Text.Disabled
+Text.OnAccent
+
+Stroke.Default
+Stroke.Subtle
+Stroke.Strong
+Stroke.Focus
+
+Accent.Default
+Accent.Hover
+Accent.Pressed
+Accent.Disabled
+
+Status.Success
+Status.Warning
+Status.Danger
+Status.Info
 ```
 
-وينطبق ذلك على العناوين، الحقول، الرسائل، رؤوس الجداول وخلاياها، القوائم،
-التلميحات والحالات الفارغة. تبقى المسارات والـhashes والقيم التقنية
-`LeftToRight` مع `TextAlignment="Left"` وخط تقني. أزرار تصغير وتكبير وإغلاق
-النافذة تبقى في موضع Windows المعتاد على اليمين، وهو استثناء موضعي للتخطيط لا
-لاتجاه النص.
+توجد القيم الفعلية تحت `Fluent.Dark.*.Color` و`Fluent.Light.*.Color`. تغيير
+الثيم يبدل الألوان خلف العقد نفسه؛ View لا يعرف اسم الوضع أو قيمة اللون.
 
-لا تستخدم في XAML:
+الأزرق محصور في الإجراء الأساسي، الحالة المحددة، التركيز، والحالة النشطة
+المهمة. لا تستخدم خطوط Accent زخرفية.
+
+## Typography
+
+الموارد الأساسية:
+
+```text
+Type.Font.Body
+Type.Font.Display
+Type.Font.Technical
+
+Type.Display      28
+Type.TitleLarge   22
+Type.Title        18
+Type.Subtitle     15
+Type.Body         14
+Type.BodyStrong   14 SemiBold
+Type.Caption      12
+Type.Technical    13
+```
+
+استخدم `Segoe UI Variable Text` للنصوص، و`Segoe UI Variable Display` للعناوين،
+و`Cascadia Mono` مع fallbacks للقيم التقنية. لا تستخدم Bold مبالغًا فيه.
+
+## Spacing, radius, stroke, and size
+
+```text
+Space.2 / 4 / 8 / 12 / 16 / 20 / 24 / 32
+Radius.Small / Medium / Large / XLarge
+Stroke.Width.Default / Stroke.Width.Focus
+Stroke.Thickness.Default / Stroke.Thickness.Focus
+Control.Height.Compact / Standard / Large
+DataGrid.HeaderHeight / DataGrid.RowHeight
+```
+
+- العناصر الصغيرة: 4–8.
+- داخل الحقول والأزرار: 8–12.
+- داخل الأسطح: 12–16.
+- بين الأقسام: 20–24.
+- الحقول والأزرار: Radius 6–8 فعليًا عبر `Radius.Medium`.
+- البطاقات: `Radius.Large`.
+- الحوارات: `Radius.XLarge`.
+- الحد العادي 1، والتركيز 2 عند الحاجة.
+
+## Elevation and motion
+
+```text
+Elevation.1
+Elevation.2
+Elevation.3
+Motion.Hover
+Motion.Press
+Motion.Surface
+```
+
+الظلال خفيفة وتستخدم للأسطح والـflyouts والحوارات فقط. لا تضف ظلًا ثقيلًا إلى
+كل Card. الحركة قصيرة وهادئة، ولا تستخدم Animations على DataGrid كبير أو أثناء
+تحديث كثيف.
+
+## Named Fluent controls
+
+```text
+FluentButton.Primary
+FluentButton.Secondary
+FluentButton.Subtle
+FluentButton.Danger
+FluentButton.Icon
+FluentButton.Close
+FluentButton.Compact
+
+FluentTextBox
+FluentComboBox
+FluentCheckBox
+
+FluentDataGrid
+FluentDataGridRow
+FluentDataGridHeader
+FluentDataGridCell
+
+FluentTabControl
+FluentTabItem
+
+FluentSurface.Card
+FluentSurface.Subtle
+FluentSurface.Dialog
+```
+
+كل Surface أو Dialog يملك إجراء Primary واحدًا فقط. بقية الإجراءات Secondary
+أو Subtle. الأزرار الأيقونية تحتاج `ToolTip` و`AutomationProperties.Name`.
+
+## Direction and alignment
+
+العربية والإنجليزية تعملان دائمًا بهذه القيم:
+
+```text
+FlowDirection = LeftToRight
+TextAlignment = Left
+HorizontalContentAlignment = Left
+```
+
+تغيير اللغة يغير النص و`Language` فقط. المسارات والـhashes والقيم التقنية تبقى
+LTR وخطها تقني. أزرار نافذة Windows تبقى في الجهة اليمنى كاستثناء Layout.
+
+يمنع:
 
 ```xaml
 TextAlignment="Right"
+TextAlignment="Center"
 TextAlignment="Justify"
 FlowDirection="RightToLeft"
 ```
 
-## عقد التخطيط البريميوم
+## Data surfaces
 
-- استخدم مسافات `4 / 8 / 12 / 16 / 24`، وحوافًا دائرية
-  `8 / 10 / 12 / 14`، وحدًا بسماكة بكسل واحد.
-- يكون ارتفاع عنصر التحكم بين 34 و40، وحشو القسم بين 14 و16، وحشو شريط
-  إجراءات الحوار بين 12 و16.
-- استخدم أعمدة `*` للمحتوى المتغير و`Auto` للبيانات القصيرة، مع `MinWidth`
-  و`MaxWidth` منطقيين عند الحاجة. المسارات الطويلة تستخدم ellipsis و`ToolTip`.
-- لا تضع `DataGrid` رئيسيًا داخل `ScrollViewer` رأسي يملك اتجاه التمرير نفسه.
-  يعلن كل `DataGrid` سياسة التمرير الأفقية والرأسية ويتولى تمرير صفوفه.
-- اجعل أشرطة الأوامر القابلة للضيق `WrapPanel`، كي تنتقل الأزرار إلى صف تالٍ
-  بدل ضغط النص أوتداخله.
-- لا تستخدم هوامش سالبة، أوبطاقات متداخلة بلا حاجة، أوأكثر من تمرير رئيسي
-  للمنطقة نفسها.
-- يكون المحتوى الفارغ والمحتوى الفعلي متبادلي الظهور؛ لا ترتب عنصرين مرئيين في
-  الخلية نفسها.
+كل `DataGrid` يستخدم `FluentDataGrid` ويعلن سياسات التمرير الأفقية والرأسية.
+ارتفاع الرأس والصف مركزي. استخدم `Auto` للقيم القصيرة و`*` للنصوص الطويلة مع
+`MinWidth` و`MaxWidth` عند الحاجة. المسار الطويل يستخدم Ellipsis وToolTip.
 
-أنماط شريط تبويبات الأدوات المتقدمة وحقول H-Canary وأزراره موجودة مركزيًا في
-`App/Thm/Ctrl.xaml`. تبويب المعلومات في H-Canary يفصل النموذج القابل للتمرير
-عن جدول الألعاب، بينما تتولى جداول الألعاب والتعليمات والمراسي تمريرها الداخلي.
+لا تضع DataGrid رئيسيًا داخل ScrollViewer رأسي يملك اتجاه التمرير نفسه. أشرطة
+الأوامر الضيقة تستخدم WrapPanel بدل UniformGrid ثابت.
 
-## إضافة شاشة أو عنصر جديد
+## Advanced tools and H-Canary
 
-1. استخدم النمط الضمني أو نمطًا مركزيًا قائمًا.
-2. اجعل أي نمط محلي `BasedOn` على النمط العام.
-3. أضف الدور المفقود إلى `Colors.xaml` كـ `Color` و`SolidColorBrush` معًا.
-4. أضف الحالة إلى القالب المركزي، لا إلى نسخة منفصلة داخل الشاشة.
-5. افحص العربية والإنجليزية مع بقاء التخطيط `LeftToRight` والنص يسارًا.
-6. افتح القوائم المنسدلة فعليًا؛ الـ `Popup` نافذة بصرية منفصلة وقد يبدو مختلفًا
-   عن الحقل المغلق.
-7. افحص الحالات العادية، المركّزة، المحددة، والمعطلة بلوحة المفاتيح والمؤشر.
+بنية `AdvDlg`:
 
-## بوابات المراجعة
-
-```powershell
-rg -n '#[0-9A-Fa-f]{6,8}|\b(White|Black|Gray|Red|Blue|Green)\b' App --glob '*.xaml' -g '!App/Thm/Colors.xaml'
-rg -n 'Color\.|Colors\.|Brushes\.|FromRgb|FromArgb' App --glob '*.cs'
-dotnet build .\R3Cfg.slnx -c Debug
-dotnet run --project .\Tst\R3Test.csproj -c Debug --no-build
+```text
+Dialog header
+Fluent tab navigation
+Single content surface per tab
+Contextual command area
+Status or validation region
+Dialog footer
 ```
 
-نتيجة `rg` غير الفارغة تحتاج تبريرًا أو نقل اللون إلى اللوحة. بعد ذلك شغّل
-التطبيق وافحص النافذة الرئيسية، الأدوات المتقدمة، قائمة `ComboBox` ممتلئة،
-تحديد `ListBox`/`DataGrid`، وأزرار `PrimaryButton` والمعطلة.
+- Recovery: ملخص وإجراء منفصلان، DataGrid مرن، Empty state مستقل.
+- Diagnostics: Label Auto وقيمة `*`، والمسارات Ellipsis، والسجل Surface خافت.
+- H-Canary: جداول Responsive، أشرطة WrapPanel، لا nested scrolling، وقيم تقنية
+  موحدة.
 
-يشغّل Runner بوابتين للواجهة:
+## Accessibility
 
-- `UI XAML gate`: يفحص اتجاه النص، الهوامش، الألوان الحرفية، سياسة تمرير
-  الجداول، عروض الأعمدة، الأنماط المحلية المكررة، التمرير المتداخل وحالة
-  التعطيل.
-- `Runtime UI gate`: ينشئ `MainWin` و`AdvDlg` و`CanDlg` و`AppDlg` فعليًا،
-  ويفتح تبويبات الأدوات المتقدمة وH-Canary، ثم يقيسها ويرندرها عند
-  `960×620` و`1120×700` و`1366×768` و`1920×1080`، بمقاييس
-  100% و125% و150%، وبالعربية والإنجليزية. كما يفشل عند أخطاء Binding أو
-  خروج العناصر عن حدودها أوتداخل عناصر الإجراءات مع النص والمحتوى الفارغ.
+- Focus keyboard ظاهر في القوالب المركزية.
+- ترتيب Tab منطقي.
+- الأزرار الأيقونية لها ToolTip وAutomation name.
+- الخطأ والتحذير والتحديد لا يعتمدان على اللون وحده.
+- حالات Disabled تستخدم ألوانًا وحدودًا صحيحة، لا Opacity وحدها.
+- Runtime gate يختبر Light وDark، العربية والإنجليزية، أربع نوافذ، أربع أحجام،
+  و100% و125% و150% DPI.
+
+## UI gates
+
+`Tst/UiGate.cs` يفشل عند:
+
+- لون حرفي خارج `Colors.xaml`.
+- CornerRadius حرفي داخل View.
+- Margin سالب.
+- اتجاه أو محاذاة نص مخالفة.
+- DataGrid بلا `FluentDataGrid` أو سياسة تمرير.
+- نمط محلي يكرر نمطًا مركزيًا.
+- زر أيقوني بلا ToolTip أو Automation name.
+- nested vertical ScrollViewer داخل Tab واحد.
+- Disabled state يعتمد على Opacity وحدها.
+- فقد أي Token أساسي أو أي لوحة Light/Dark.
+
+## Verification
+
+```powershell
+dotnet restore .\R3Cfg.slnx
+dotnet build .\R3Cfg.slnx -c Debug --no-restore --nologo
+dotnet build .\R3Cfg.slnx -c Release --no-restore --nologo
+dotnet run --project .\Tst\R3Test.csproj -c Release --no-build
+powershell -ExecutionPolicy Bypass -File .\Script\SrcChk.ps1
+powershell -ExecutionPolicy Bypass -File .\Script\RelTest.ps1 -Configuration Release
+```
