@@ -37,6 +37,8 @@ public sealed partial class HCanVm : VmBase
         else AddGame(new TgtVm());
         AddIns(new InsVm());
         _curId = null;
+        OnChange(nameof(HasStoredPatch));
+        OnChange(nameof(SaveHint));
         SelPat = null;
         _dirty = false;
         _noRfsh = false;
@@ -167,6 +169,9 @@ public sealed partial class HCanVm : VmBase
             ? UiText.GetText("HCanary.Validation.Valid")
             : UiText.Fmt("HCanary.Validation.Summary", result.Issues.Count) + Environment.NewLine +
               string.Join(Environment.NewLine, result.Issues.Select(issue => "• " + FmtIssue(issue)));
+        OnChange(nameof(CanAdvanceTarget));
+        OnChange(nameof(CanAdvanceDetails));
+        OnChange(nameof(CanAdvanceInstructions));
     }
 
     private string TryPrev()

@@ -51,7 +51,11 @@ public sealed partial class MainVm : VmBase
                 return;
             }
 
-            var plan = _flow.BuildPatchPlan(_install, selectedMatches, Preview.ShowExp);
+            var plan = _flow.BuildPatchPlan(
+                _install,
+                selectedMatches,
+                Preview.Enabled(),
+                Preview.ShowExp);
             if (!plan.HasChg)
             {
                 UiDlg.Info(UiText.GetText("Msg.NoSafePatchApply"), UiText.GetText("Dialog.NothingToApply"));
@@ -59,8 +63,11 @@ public sealed partial class MainVm : VmBase
                 return;
             }
 
+            var confirmMessage = section == PatSect.Canary
+                ? CanaryConfirm(selectedMatches, plan.Changes.Count)
+                : UiText.Fmt("Msg.ApplyPatchConfirm", plan.Changes.Count);
             var confirmed = _confirm(
-                UiText.Fmt("Msg.ApplyPatchConfirm", plan.Changes.Count),
+                confirmMessage,
                 UiText.GetText("Dialog.ApplyPatchTitle"));
 
             if (!confirmed)
@@ -379,5 +386,62 @@ public sealed partial class MainVm : VmBase
             PatSect.Cheat => "Msg.PatchApplyCheatSuccess",
             _ => "Msg.PatchApplySuccess"
         };
+    }
+
+    private static string CanaryConfirm(
+        IReadOnlyList<PatMatch> selectedMatches,
+        int changeCount)
+    {
+        const int maxVisible = 8;
+        var lines = new List<string>
+        {
+            UiText.Fmt("Msg.ApplyCanaryConfirm", changeCount)
+        };
+
+        foreach (var match in selectedMatches.Take(maxVisible))
+        {
+            var patch = match.Patch;
+            var serials = !string.IsNullOrWhiteSpace(match.TgtSer)
+                ? match.TgtSer!
+                : string.Join(", ", patch.Serials);
+            var versions = !string.IsNullOrWhiteSpace(match.TgtVer)
+                ? match.TgtVer!
+                : string.Join(", ", patch.GameVer);
+            var reasonKey = patch.Source switch
+            {
+                Mdl.PatSrc.Can => "Patch.CanaryReason.Bundled",
+                Mdl.PatSrc.Imported => "Patch.CanaryReason.Imported",
+                _ => "Patch.CanaryReason.Metadata"
+            };
+
+            lines.Add(UiText.Fmt(
+                "Msg.ApplyCanaryItem",
+                Value(patch.Title),
+                Value(patch.Author),
+                Value(patch.Notes),
+                Value(patch.PatVer),
+                Value(serials),
+                Value(versions),
+                Value(patch.RunKey),
+                UiText.GetText(reasonKey)));
+        }
+
+        if (selectedMatches.Count > maxVisible)
+        {
+            lines.Add(UiText.Fmt(
+                "Msg.ApplyCanaryMore",
+                selectedMatches.Count - maxVisible));
+        }
+
+        return string.Join(
+            Environment.NewLine + Environment.NewLine,
+            lines);
+    }
+
+    private static string Value(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? UiText.GetText("Ui.EmptyValue")
+            : value.Trim();
     }
 }

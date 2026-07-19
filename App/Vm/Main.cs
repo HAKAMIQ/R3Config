@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Markup;
 using R3Config;
+using R3Config.Application;
 using R3Config.Composition;
 using R3Config.Svc;
 using R3Config.Lang;
@@ -22,6 +23,7 @@ public sealed partial class MainVm : VmBase
     private readonly SetSvc _setSvc;
     private readonly Func<bool> _isRun;
     private readonly Func<string, string, bool> _confirm;
+    private readonly Func<Rpcs3InstallDescriptor, Rpcs3GameDescriptor, GameLaunchResult> _launchGame;
     private Rpcs3InstallDescriptor? _install;
     private RecSvc? _catalog;
     private string? _loadErr;
@@ -59,7 +61,8 @@ public sealed partial class MainVm : VmBase
     public MainVm(
         AppRuntimeServices services,
         Func<bool>? isRpcs3Running,
-        Func<string, string, bool>? confirm)
+        Func<string, string, bool>? confirm,
+        Func<Rpcs3InstallDescriptor, Rpcs3GameDescriptor, GameLaunchResult>? launchGame = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         _flow = services.Flow;
@@ -67,13 +70,21 @@ public sealed partial class MainVm : VmBase
         _isRun = isRpcs3Running ??
             Rpcs3InstallService.IsR3;
         _confirm = confirm ?? UiDlg.Confirm;
+        _launchGame = launchGame ?? _flow.LaunchGame;
         HCanary = new HCanVm(
             _flow,
             _isRun,
-            _confirm);
+            _confirm,
+            _launchGame);
 
         R3Cmd = new RelayCmd(FindR3);
         AnlzCmd = new AsyncCmd(DoAsync, CanAnlz);
+        LaunchGameCmd = new RelayCmd(
+            LaunchSelectedGame,
+            CanLaunchSelectedGame);
+        HashRefreshCmd = new AsyncCmd(
+            RefreshHashEvidenceAsync,
+            CanRefreshHashEvidence);
         ApplyCmd = new RelayCmd(Apply, () => CanMut && Plan.HasChg && _curPlan is not null);
         DelSet = new RelayCmd(DelWiki, () => CanMut && Plan.CanDel && _curPlan is not null);
         PatCmd = new RelayCmd(() => ApplyPat(null), () => CanApply(null));
@@ -119,6 +130,7 @@ public sealed partial class MainVm : VmBase
         {
             if (e.PropertyName == nameof(ListVm.SelGame))
             {
+                ResetHashLaunchState();
                 MakePlan();
                 HCanary.SetCtx(_install, GameList.SelGame?.Game);
                 LoadGame();
@@ -172,6 +184,10 @@ public sealed partial class MainVm : VmBase
 
     public AsyncCmd AnlzCmd { get; }
 
+    public RelayCmd LaunchGameCmd { get; }
+
+    public AsyncCmd HashRefreshCmd { get; }
+
     public RelayCmd ApplyCmd { get; }
 
     public RelayCmd DelSet { get; }
@@ -221,8 +237,6 @@ public sealed partial class MainVm : VmBase
     public RelayCmd PatDir { get; }
 
     public string LangText => UiText.GetText("Lang.Toggle");
-
-    public string CurLang => UiText.GetText("Lang.Current");
 
     public string ToolTip => UiText.GetText("Lang.ToggleTip");
 

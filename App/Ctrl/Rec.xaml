@@ -4,18 +4,18 @@
              xmlns:lang="clr-namespace:R3Config.Lang"
              FlowDirection="{DynamicResource App.FlowDirection}"
              Language="{DynamicResource App.XmlLanguage}">
-    <Border Style="{StaticResource SectionCard}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <Border Style="{StaticResource SectionCard}" HorizontalAlignment="Stretch" VerticalAlignment="Top">
         <Grid FlowDirection="LeftToRight"
               Language="{DynamicResource App.XmlLanguage}"
               HorizontalAlignment="Stretch"
-              VerticalAlignment="Stretch">
+              VerticalAlignment="Top">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" MinHeight="140" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0"
-                  Margin="0,0,0,12"
+                  Margin="0,0,0,8"
                   FlowDirection="LeftToRight"
                   HorizontalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
@@ -31,20 +31,19 @@
                             HorizontalAlignment="Stretch">
                     <TextBlock Text="{lang:TextExt Key=Shell.SettingsSection}"
                                Style="{StaticResource SectionTitleText}"
-                               FlowDirection="LeftToRight"
+                               FlowDirection="{DynamicResource App.TextFlowDirection}"
                                TextAlignment="Left"
                                HorizontalAlignment="Stretch" />
                     <TextBlock Text="{Binding Plan.Summary}"
                                Style="{StaticResource RecommendationRowSubtitleText}"
-                               FlowDirection="{DynamicResource App.FlowDirection}"
+                               FlowDirection="{DynamicResource App.TextFlowDirection}"
                                TextAlignment="{DynamicResource App.DefaultTextAlignment}"
-                               Margin="0,3,0,0"
+                               Margin="0,4,0,0"
                                ToolTip="{Binding Plan.TgtCfg}" />
                 </StackPanel>
 
                 <Button Grid.Column="2"
                         Content="{lang:TextExt Key=Plan.RemoveWikiSettings}"
-                        MinWidth="132"
                         ToolTip="{lang:TextExt Key=Plan.RemoveWikiSettingsTip}"
                         Command="{Binding DelSet}"
                         HorizontalAlignment="Right"
@@ -53,7 +52,6 @@
 
                 <Button Grid.Column="4"
                         Content="{lang:TextExt Key=Plan.ApplySection}"
-                        MinWidth="132"
                         ToolTip="{lang:TextExt Key=Plan.ApplySectionTip}"
                         Command="{Binding ApplyCmd}"
                         HorizontalAlignment="Right"
@@ -62,10 +60,10 @@
 
             <Grid Grid.Row="1"
                   HorizontalAlignment="Stretch"
-                  VerticalAlignment="Stretch"
-                  MinHeight="140">
+                  VerticalAlignment="Top">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
+                              MaxHeight="180"
                               Padding="0,0,4,0">
                     <ItemsControl ItemsSource="{Binding Plan.Items}"
                                   FlowDirection="LeftToRight"
@@ -92,11 +90,12 @@
                                                     <TextBlock Text="{Binding Key}"
                                                                Style="{StaticResource ChecklistToolTipTitleText}"
                                                                FlowDirection="LeftToRight"
+                                                               Language="{DynamicResource TechnicalText.Language}"
                                                                TextAlignment="Left" />
 
                                                     <TextBlock Text="{Binding BeginSum}"
                                                                Style="{StaticResource ChecklistToolTipBodyText}"
-                                                               FlowDirection="{DynamicResource App.FlowDirection}"
+                                                               FlowDirection="{DynamicResource App.TextFlowDirection}"
                                                                TextAlignment="{DynamicResource App.DefaultTextAlignment}"
                                                                Margin="0,4,0,8" />
 
@@ -129,6 +128,7 @@
                                                     <TextBlock Text="{Binding DspPath}"
                                                                Style="{StaticResource ChecklistToolTipSubtleText}"
                                                                FlowDirection="LeftToRight"
+                                                               Language="{DynamicResource TechnicalText.Language}"
                                                                TextAlignment="Left"
                                                                Margin="0,0,0,6" />
                                                     <TextBlock Text="{Binding LocBody}"
@@ -171,13 +171,13 @@
 
                 <Border Style="{StaticResource ViewportEmptyStatePanel}"
                         Visibility="{Binding Plan.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinHeight="140">
+                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MinHeight="96">
                         <Grid HorizontalAlignment="Stretch"
                               VerticalAlignment="Center"
                               MaxWidth="540">
-                            <TextBlock Text="{Binding Plan.EmptyTxt}"
-                                       Style="{StaticResource ArabicEmptyStateText}"
-                                       FlowDirection="{DynamicResource App.FlowDirection}"
+                    <TextBlock Text="{Binding Plan.EmptyTxt}"
+                               Style="{StaticResource ArabicEmptyStateText}"
+                               FlowDirection="{DynamicResource App.TextFlowDirection}"
                                        TextAlignment="Left"
                                        HorizontalAlignment="Left"
                                        MaxWidth="460"

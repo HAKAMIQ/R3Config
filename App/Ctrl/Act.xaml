@@ -14,8 +14,6 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="10" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="8" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="12" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="8" />
@@ -28,46 +26,33 @@
                        VerticalAlignment="Center" />
 
             <TextBox Grid.Column="2"
-                     Style="{StaticResource FluentTextBox}"
+                     Style="{StaticResource FluentTextBox.Technical}"
                      Text="{Binding ExePath}"
                      IsReadOnly="True"
                      MinWidth="180"
                      VerticalAlignment="Center"
-                     FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
-                     TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
                      ToolTip="{lang:TextExt Key=Top.Rpcs3Tip}" />
 
             <Button Grid.Column="4"
                     Style="{StaticResource FluentButton.Secondary}"
                     Content="{lang:TextExt Key=Btn.Browse}"
-                    MinWidth="88"
                     VerticalAlignment="Center"
                     ToolTip="{lang:TextExt Key=Btn.BrowseTip}"
                     Command="{Binding R3Cmd}" />
 
             <Button Grid.Column="6"
-                    Content="{lang:TextExt Key=Btn.Analyze}"
-                    Style="{StaticResource FluentButton.Primary}"
-                    MinWidth="88"
-                    VerticalAlignment="Center"
-                    ToolTip="{lang:TextExt Key=Btn.AnalyzeTip}"
-                    Command="{Binding AnlzCmd}" />
-
-            <Button Grid.Column="8"
-                    Style="{StaticResource FluentButton.Subtle}"
-                    Content="{Binding LangText}"
-                    MinWidth="48"
-                    VerticalAlignment="Center"
-                    ToolTip="{Binding ToolTip}"
-                    Command="{Binding LangCmd}" />
-
-            <Button Grid.Column="10"
                     Style="{StaticResource FluentButton.Secondary}"
                     Content="{lang:TextExt Key=Action.More}"
-                    MinWidth="72"
                     VerticalAlignment="Center"
                     ToolTip="{lang:TextExt Key=Action.MoreTip}"
                     Command="{Binding AdvCmd}" />
+
+            <Button Grid.Column="8"
+                    Content="{lang:TextExt Key=Btn.Analyze}"
+                    Style="{StaticResource FluentButton.Primary}"
+                    VerticalAlignment="Center"
+                    ToolTip="{lang:TextExt Key=Btn.AnalyzeTip}"
+                    Command="{Binding AnlzCmd}" />
         </Grid>
     </Border>
 </UserControl>

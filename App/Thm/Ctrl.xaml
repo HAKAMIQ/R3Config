@@ -18,21 +18,26 @@
     <Thickness x:Key="Space.16.All">16</Thickness>
     <Thickness x:Key="Space.20.All">20</Thickness>
     <Thickness x:Key="Space.24.All">24</Thickness>
-    <CornerRadius x:Key="Radius.Small">4</CornerRadius>
-    <CornerRadius x:Key="Radius.Medium">8</CornerRadius>
-    <CornerRadius x:Key="Radius.Large">12</CornerRadius>
-    <CornerRadius x:Key="Radius.XLarge">16</CornerRadius>
-    <CornerRadius x:Key="Radius.Dialog.Bottom">0,0,16,16</CornerRadius>
+    <CornerRadius x:Key="Radius.Small">2</CornerRadius>
+    <CornerRadius x:Key="Radius.Medium">4</CornerRadius>
+    <CornerRadius x:Key="Radius.Large">8</CornerRadius>
+    <CornerRadius x:Key="Radius.XLarge">12</CornerRadius>
+    <CornerRadius x:Key="Radius.Dialog.Bottom">0,0,12,12</CornerRadius>
     <CornerRadius x:Key="Radius.Circle.28">14</CornerRadius>
     <sys:Double x:Key="Stroke.Width.Default">1</sys:Double>
     <sys:Double x:Key="Stroke.Width.Focus">2</sys:Double>
     <Thickness x:Key="Stroke.Thickness.Default">1</Thickness>
     <Thickness x:Key="Stroke.Thickness.Focus">2</Thickness>
-    <sys:Double x:Key="Control.Height.Compact">30</sys:Double>
-    <sys:Double x:Key="Control.Height.Standard">36</sys:Double>
+    <sys:Double x:Key="Control.Height.Compact">24</sys:Double>
+    <sys:Double x:Key="Control.Height.Standard">32</sys:Double>
     <sys:Double x:Key="Control.Height.Large">40</sys:Double>
-    <sys:Double x:Key="DataGrid.HeaderHeight">38</sys:Double>
-    <sys:Double x:Key="DataGrid.RowHeight">40</sys:Double>
+    <sys:Double x:Key="Button.MinWidth.Compact">64</sys:Double>
+    <sys:Double x:Key="Button.MinWidth.Standard">96</sys:Double>
+    <Thickness x:Key="Button.Padding.Compact">8,3</Thickness>
+    <Thickness x:Key="Button.Padding.Standard">12,5</Thickness>
+    <Thickness x:Key="Button.Padding.Large">16,8</Thickness>
+    <sys:Double x:Key="DataGrid.HeaderHeight">32</sys:Double>
+    <sys:Double x:Key="DataGrid.RowHeight">36</sys:Double>
     <Duration x:Key="Motion.Hover">0:0:0.12</Duration>
     <Duration x:Key="Motion.Press">0:0:0.09</Duration>
     <Duration x:Key="Motion.Surface">0:0:0.18</Duration>
@@ -56,7 +61,7 @@
                       Color="{StaticResource Elevation.Shadow.Color}" />
 
 	<Style x:Key="ShellLayout" TargetType="FrameworkElement">
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 	</Style>
 
 	<Style x:Key="FluentSurface.Card" TargetType="Border">
@@ -64,12 +69,12 @@
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="BorderThickness" Value="{StaticResource Stroke.Thickness.Default}" />
 		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
-		<Setter Property="Padding" Value="{StaticResource Space.16.All}" />
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="Padding" Value="12" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 	</Style>
 
 	<Style x:Key="LeftRailBorder" TargetType="Border" BasedOn="{StaticResource FluentSurface.Card}">
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 		<Setter Property="Background" Value="{DynamicResource Surface.Subtle}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="Padding" Value="12" />
@@ -77,7 +82,7 @@
 	</Style>
 
 	<Style x:Key="SectionCard" TargetType="Border" BasedOn="{StaticResource FluentSurface.Card}">
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 		<Setter Property="Padding" Value="12" />
 		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
 	</Style>
@@ -85,22 +90,22 @@
 	<Style x:Key="GameHeaderCard" TargetType="Border" BasedOn="{StaticResource FluentSurface.Card}">
 		<Setter Property="Background" Value="{DynamicResource Surface.Card}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 		<Setter Property="Padding" Value="12" />
 		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
 	</Style>
 
 	<Style x:Key="BottomBarBorder" TargetType="Border" BasedOn="{StaticResource FluentSurface.Card}">
 		<Setter Property="Padding" Value="8" />
-		<Setter Property="CornerRadius" Value="8" />
+		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
 	</Style>
 
 	<Style x:Key="EmptyStatePanel" TargetType="Border">
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 		<Setter Property="Background" Value="{DynamicResource Surface.Subtle}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="BorderThickness" Value="1" />
-		<Setter Property="CornerRadius" Value="8" />
+		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
 		<Setter Property="Padding" Value="12" />
 		<Setter Property="MinHeight" Value="96" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -132,10 +137,10 @@
 		<Setter Property="Background" Value="{DynamicResource Surface.Card}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="BorderThickness" Value="1" />
-		<Setter Property="CornerRadius" Value="7" />
+		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
 		<Setter Property="Padding" Value="10,6" />
 		<Setter Property="Margin" Value="4,0" />
-		<Setter Property="MinHeight" Value="32" />
+		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
 		<Setter Property="MinWidth" Value="148" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="VerticalAlignment" Value="Center" />
@@ -157,7 +162,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="8"
+							CornerRadius="{StaticResource Radius.Large}"
                             Padding="8"
                             SnapsToDevicePixels="True">
 						<ContentPresenter />
@@ -205,7 +210,7 @@
 				<ControlTemplate TargetType="Thumb">
 					<Border x:Name="Thumb"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="4"
+							CornerRadius="{StaticResource Radius.Medium}"
                             Margin="2" />
 					<ControlTemplate.Triggers>
 						<Trigger Property="IsMouseOver" Value="True">
@@ -231,7 +236,7 @@
 		<Border Width="8"
                 Background="Transparent"
                 BorderThickness="0"
-                CornerRadius="4">
+                CornerRadius="{StaticResource Radius.Medium}">
 			<Track x:Name="PART_Track" IsDirectionReversed="True">
 				<Track.DecreaseRepeatButton>
 					<RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource ScrollLineButton}" />
@@ -250,7 +255,7 @@
 		<Border Height="8"
                 Background="Transparent"
                 BorderThickness="0"
-                CornerRadius="4">
+                CornerRadius="{StaticResource Radius.Medium}">
 			<Track x:Name="PART_Track">
 				<Track.DecreaseRepeatButton>
 					<RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource ScrollLineButton}" />
@@ -283,16 +288,18 @@
 
 	<Style TargetType="Button">
 		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
-		<Setter Property="MinWidth" Value="92" />
-		<Setter Property="Padding" Value="12,0" />
-		<Setter Property="Margin" Value="0,0,8,0" />
+		<Setter Property="MinWidth" Value="{StaticResource Button.MinWidth.Standard}" />
+		<Setter Property="Padding" Value="{StaticResource Button.Padding.Standard}" />
+		<Setter Property="Margin" Value="0" />
+		<Setter Property="FontSize" Value="14" />
+		<Setter Property="FontWeight" Value="SemiBold" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
 		<Setter Property="Background" Value="{DynamicResource Surface.Subtle}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Default}" />
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="Cursor" Value="Hand" />
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
-		<Setter Property="HorizontalContentAlignment" Value="Left" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
+		<Setter Property="HorizontalContentAlignment" Value="Center" />
 		<Setter Property="VerticalContentAlignment" Value="Center" />
 		<Setter Property="FocusVisualStyle" Value="{x:Null}" />
 		<Setter Property="Template">
@@ -377,12 +384,12 @@
 	</Style>
 
 	<Style x:Key="FluentButton.Icon" TargetType="Button">
-		<Setter Property="Width" Value="42" />
+		<Setter Property="Width" Value="40" />
 		<Setter Property="Height" Value="32" />
-		<Setter Property="MinWidth" Value="42" />
-		<Setter Property="MinHeight" Value="32" />
+		<Setter Property="MinWidth" Value="40" />
+		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
 		<Setter Property="Padding" Value="0" />
-		<Setter Property="Margin" Value="4,0,0,0" />
+		<Setter Property="Margin" Value="0" />
 		<Setter Property="Background" Value="Transparent" />
 		<Setter Property="BorderBrush" Value="Transparent" />
 		<Setter Property="BorderThickness" Value="1" />
@@ -396,7 +403,7 @@
 					<Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="8"
+							CornerRadius="{StaticResource Radius.Medium}"
                             SnapsToDevicePixels="True">
 						<ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"
@@ -449,16 +456,17 @@
 		<Setter Property="Background" Value="{DynamicResource Surface.Card}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="BorderThickness" Value="1" />
-		<Setter Property="CornerRadius" Value="8" />
-		<Setter Property="Padding" Value="9,7" />
+		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
+		<Setter Property="Padding" Value="12,8" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="FlowDirection" Value="LeftToRight" />
 	</Style>
 
 	<Style TargetType="TextBox">
-		<Setter Property="MinHeight" Value="32" />
+		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
+		<Setter Property="FontSize" Value="14" />
 		<Setter Property="VerticalContentAlignment" Value="Center" />
-		<Setter Property="Padding" Value="10,4" />
+		<Setter Property="Padding" Value="8,4" />
 		<Setter Property="Background" Value="{DynamicResource Surface.Subtle}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="BorderThickness" Value="1" />
@@ -473,7 +481,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6"
+                            CornerRadius="{StaticResource Radius.Medium}"
                             SnapsToDevicePixels="True">
 						<ScrollViewer x:Name="PART_ContentHost"
                                       Margin="{TemplateBinding Padding}"
@@ -517,7 +525,7 @@
 							Background="{TemplateBinding Background}"
 							BorderBrush="Transparent"
 							BorderThickness="1"
-							CornerRadius="5"
+							CornerRadius="{StaticResource Radius.Medium}"
 							Padding="{TemplateBinding Padding}"
 							SnapsToDevicePixels="True">
 						<ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -544,8 +552,9 @@
 	</Style>
 
 	<Style TargetType="{x:Type ComboBox}">
-		<Setter Property="MinHeight" Value="32" />
-		<Setter Property="Padding" Value="10,4" />
+		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
+		<Setter Property="Padding" Value="8,4" />
+		<Setter Property="FontSize" Value="14" />
 		<Setter Property="Background" Value="{DynamicResource Surface.Subtle}" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
@@ -564,7 +573,7 @@
 								Background="{TemplateBinding Background}"
 								BorderBrush="{TemplateBinding BorderBrush}"
 								BorderThickness="{TemplateBinding BorderThickness}"
-								CornerRadius="6">
+								CornerRadius="{StaticResource Radius.Medium}">
 							<Grid FlowDirection="LeftToRight">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="*" />
@@ -628,7 +637,7 @@
 									Background="{DynamicResource Surface.Overlay}"
 									BorderBrush="{DynamicResource Stroke.Default}"
 									BorderThickness="1"
-									CornerRadius="7"
+									CornerRadius="{StaticResource Radius.Large}"
 									SnapsToDevicePixels="True">
 								<ScrollViewer CanContentScroll="True"
 											  HorizontalScrollBarVisibility="Disabled"
@@ -679,7 +688,7 @@
 							Background="{TemplateBinding Background}"
 							BorderBrush="{TemplateBinding BorderBrush}"
 							BorderThickness="{TemplateBinding BorderThickness}"
-							CornerRadius="5"
+							CornerRadius="{StaticResource Radius.Medium}"
 							Padding="{TemplateBinding Padding}"
 							SnapsToDevicePixels="True">
 						<ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -731,7 +740,7 @@
 							Background="{TemplateBinding Background}"
 							BorderBrush="{TemplateBinding BorderBrush}"
 							BorderThickness="{TemplateBinding BorderThickness}"
-							CornerRadius="6"
+							CornerRadius="{StaticResource Radius.Medium}"
 							SnapsToDevicePixels="True">
 						<ScrollViewer Padding="{TemplateBinding Padding}"
 									  Focusable="False">
@@ -753,11 +762,27 @@
 		</Setter>
 	</Style>
 
-	<Style x:Key="PathTextBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-		<Setter Property="FlowDirection" Value="LeftToRight" />
+	<Style x:Key="LocalizedTextBox"
+	       TargetType="TextBox"
+	       BasedOn="{StaticResource {x:Type TextBox}}">
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
+		<Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
 		<Setter Property="TextAlignment" Value="Left" />
 		<Setter Property="HorizontalContentAlignment" Value="Left" />
 	</Style>
+
+	<Style x:Key="TechnicalTextBox"
+	       TargetType="TextBox"
+	       BasedOn="{StaticResource {x:Type TextBox}}">
+		<Setter Property="FlowDirection" Value="{DynamicResource TechnicalText.FlowDirection}" />
+		<Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
+		<Setter Property="TextAlignment" Value="{DynamicResource TechnicalText.TextAlignment}" />
+		<Setter Property="HorizontalContentAlignment" Value="{DynamicResource TechnicalText.HorizontalAlignment}" />
+	</Style>
+
+	<Style x:Key="PathTextBox"
+	       TargetType="TextBox"
+	       BasedOn="{StaticResource TechnicalTextBox}" />
 
 	<Style TargetType="CheckBox">
 		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
@@ -781,7 +806,7 @@
                                 Grid.Column="0"
                                 Width="20"
                                 Height="20"
-                                CornerRadius="6"
+                                CornerRadius="{StaticResource Radius.Medium}"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="1"
@@ -820,6 +845,7 @@
                                           Margin="8,0,0,0"
                                           VerticalAlignment="Center"
                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          FlowDirection="{DynamicResource App.TextFlowDirection}"
                                           RecognizesAccessKey="True" />
 					</Grid>
 
@@ -890,7 +916,7 @@
 					<Border x:Name="Box"
                             Width="20"
                             Height="20"
-                            CornerRadius="6"
+                            CornerRadius="{StaticResource Radius.Medium}"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="1"
@@ -995,13 +1021,13 @@
 					<Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="8"
+                            CornerRadius="{StaticResource Radius.Large}"
                             Padding="{TemplateBinding Padding}"
                             SnapsToDevicePixels="True">
 						<Border.Effect>
 							<StaticResource ResourceKey="Elevation.2" />
 						</Border.Effect>
-						<ContentPresenter />
+						<ContentPresenter FlowDirection="{DynamicResource App.TextFlowDirection}" />
 					</Border>
 				</ControlTemplate>
 			</Setter.Value>
@@ -1010,6 +1036,74 @@
 
 
 	<Style TargetType="{x:Type ToolTip}" BasedOn="{StaticResource ModernToolTip}" />
+
+	<Style TargetType="{x:Type ContextMenu}">
+		<Setter Property="Background" Value="{DynamicResource Surface.Overlay}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Default}" />
+		<Setter Property="BorderThickness" Value="{StaticResource Stroke.Thickness.Default}" />
+		<Setter Property="Padding" Value="4" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="{x:Type ContextMenu}">
+					<Border Background="{TemplateBinding Background}"
+							BorderBrush="{TemplateBinding BorderBrush}"
+							BorderThickness="{TemplateBinding BorderThickness}"
+							CornerRadius="{StaticResource Radius.Large}"
+							Padding="{TemplateBinding Padding}">
+						<StackPanel IsItemsHost="True"
+								KeyboardNavigation.DirectionalNavigation="Cycle" />
+					</Border>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+	<Style TargetType="{x:Type MenuItem}">
+		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
+		<Setter Property="MinWidth" Value="160" />
+		<Setter Property="Padding" Value="12,6" />
+		<Setter Property="Margin" Value="0,1" />
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+		<Setter Property="FontSize" Value="14" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="{x:Type MenuItem}">
+					<Border x:Name="MenuSurface"
+							Background="{TemplateBinding Background}"
+							CornerRadius="{StaticResource Radius.Medium}"
+							Padding="{TemplateBinding Padding}">
+						<ContentPresenter ContentSource="Header"
+									  RecognizesAccessKey="True"
+									  VerticalAlignment="Center"
+									  TextElement.Foreground="{TemplateBinding Foreground}" />
+					</Border>
+					<ControlTemplate.Triggers>
+						<Trigger Property="IsHighlighted" Value="True">
+							<Setter TargetName="MenuSurface" Property="Background" Value="{DynamicResource Surface.CardHover}" />
+						</Trigger>
+						<Trigger Property="IsEnabled" Value="False">
+							<Setter Property="Foreground" Value="{DynamicResource Text.Disabled}" />
+						</Trigger>
+					</ControlTemplate.Triggers>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+	<Style TargetType="{x:Type Separator}">
+		<Setter Property="Height" Value="1" />
+		<Setter Property="Margin" Value="8,4" />
+		<Setter Property="Background" Value="{DynamicResource Stroke.Subtle}" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="{x:Type Separator}">
+					<Border Height="1" Background="{TemplateBinding Background}" />
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
 
 	<Style x:Key="FluentTabControl" TargetType="{x:Type TabControl}">
 		<Setter Property="Background" Value="Transparent" />
@@ -1021,7 +1115,7 @@
 		<Setter Property="ItemsPanel">
 			<Setter.Value>
 				<ItemsPanelTemplate>
-					<UniformGrid Rows="1" />
+					<StackPanel Orientation="Horizontal" />
 				</ItemsPanelTemplate>
 			</Setter.Value>
 		</Setter>
@@ -1034,13 +1128,15 @@
 							<RowDefinition Height="*" />
 						</Grid.RowDefinitions>
 						<Border Grid.Row="0"
-								Background="{DynamicResource Surface.Subtle}"
+								Background="Transparent"
 								BorderBrush="{DynamicResource Stroke.Subtle}"
-								BorderThickness="{StaticResource Stroke.Thickness.Default}"
-								CornerRadius="{StaticResource Radius.Large}"
-								Padding="4"
+								BorderThickness="0,0,0,1"
 								Margin="0,0,0,12">
-							<ItemsPresenter KeyboardNavigation.TabIndex="1" />
+							<ScrollViewer HorizontalScrollBarVisibility="Auto"
+										  VerticalScrollBarVisibility="Disabled"
+										  CanContentScroll="True">
+								<ItemsPresenter KeyboardNavigation.TabIndex="1" />
+							</ScrollViewer>
 						</Border>
 						<ContentPresenter Grid.Row="1"
 									  ContentSource="SelectedContent"
@@ -1057,11 +1153,13 @@
 		<Setter Property="Background" Value="Transparent" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
 		<Setter Property="BorderBrush" Value="Transparent" />
-		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="BorderThickness" Value="0" />
 		<Setter Property="Padding" Value="12,0" />
-		<Setter Property="Margin" Value="2" />
-		<Setter Property="MinHeight" Value="36" />
-		<Setter Property="MaxHeight" Value="40" />
+		<Setter Property="Margin" Value="0" />
+		<Setter Property="MinWidth" Value="72" />
+		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
+		<Setter Property="MaxHeight" Value="{StaticResource Control.Height.Standard}" />
+		<Setter Property="FontSize" Value="14" />
 		<Setter Property="FlowDirection" Value="LeftToRight" />
 		<Setter Property="HorizontalContentAlignment" Value="Left" />
 		<Setter Property="VerticalContentAlignment" Value="Center" />
@@ -1069,37 +1167,41 @@
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="{x:Type TabItem}">
-					<Border x:Name="TabSurface"
-							Background="{TemplateBinding Background}"
-							BorderBrush="{TemplateBinding BorderBrush}"
-							BorderThickness="{TemplateBinding BorderThickness}"
-							CornerRadius="{StaticResource Radius.Medium}"
-							Padding="{TemplateBinding Padding}"
-							MinHeight="{TemplateBinding MinHeight}"
-							MaxHeight="{TemplateBinding MaxHeight}">
-						<ContentPresenter ContentSource="Header"
-									  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-									  VerticalAlignment="Center"
-									  RecognizesAccessKey="True" />
-					</Border>
+					<Grid MinHeight="{TemplateBinding MinHeight}"
+						  MaxHeight="{TemplateBinding MaxHeight}">
+						<Border x:Name="TabSurface"
+								Background="{TemplateBinding Background}"
+								CornerRadius="{StaticResource Radius.Medium}"
+								Padding="{TemplateBinding Padding}">
+							<ContentPresenter ContentSource="Header"
+											  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+											  VerticalAlignment="Center"
+											  FlowDirection="{DynamicResource App.TextFlowDirection}"
+											  RecognizesAccessKey="True" />
+						</Border>
+						<Border x:Name="SelectionIndicator"
+								Height="2"
+								Margin="8,0"
+								Background="{DynamicResource Accent.Default}"
+								CornerRadius="{StaticResource Radius.Small}"
+								VerticalAlignment="Bottom"
+								Visibility="Collapsed" />
+					</Grid>
 					<ControlTemplate.Triggers>
 						<Trigger Property="IsMouseOver" Value="True">
 							<Setter TargetName="TabSurface" Property="Background" Value="{DynamicResource Surface.CardHover}" />
-							<Setter TargetName="TabSurface" Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 							<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
 						</Trigger>
 						<Trigger Property="IsSelected" Value="True">
-							<Setter TargetName="TabSurface" Property="Background" Value="{DynamicResource Selection.Default}" />
-							<Setter TargetName="TabSurface" Property="BorderBrush" Value="{DynamicResource Accent.Default}" />
+							<Setter TargetName="SelectionIndicator" Property="Visibility" Value="Visible" />
 							<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
 							<Setter Property="FontWeight" Value="SemiBold" />
 						</Trigger>
 						<Trigger Property="IsKeyboardFocused" Value="True">
-							<Setter TargetName="TabSurface" Property="BorderBrush" Value="{DynamicResource Stroke.Focus}" />
+							<Setter TargetName="TabSurface" Property="Background" Value="{DynamicResource Selection.Inactive}" />
 						</Trigger>
 						<Trigger Property="IsEnabled" Value="False">
 							<Setter TargetName="TabSurface" Property="Background" Value="{DynamicResource Surface.CardPressed}" />
-							<Setter TargetName="TabSurface" Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 							<Setter Property="Foreground" Value="{DynamicResource Text.Disabled}" />
 						</Trigger>
 					</ControlTemplate.Triggers>
@@ -1129,7 +1231,7 @@
 		<Setter Property="GridLinesVisibility" Value="None" />
 		<Setter Property="HeadersVisibility" Value="Column" />
 		<Setter Property="RowHeaderWidth" Value="0" />
-		<Setter Property="FontSize" Value="12" />
+		<Setter Property="FontSize" Value="13" />
 		<Setter Property="ColumnHeaderHeight" Value="{StaticResource DataGrid.HeaderHeight}" />
 		<Setter Property="BorderThickness" Value="0" />
 		<Setter Property="Background" Value="Transparent" />
@@ -1137,20 +1239,20 @@
 		<Setter Property="RowBackground" Value="Transparent" />
 		<Setter Property="AlternatingRowBackground" Value="Transparent" />
 		<Setter Property="RowHeight" Value="{StaticResource DataGrid.RowHeight}" />
-		<Setter Property="MinRowHeight" Value="36" />
+		<Setter Property="MinRowHeight" Value="32" />
 		<Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="CanUserResizeColumns" Value="True" />
 		<Setter Property="CanUserReorderColumns" Value="False" />
 		<Setter Property="EnableColumnVirtualization" Value="True" />
 		<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
 		<Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 	</Style>
 
 	<Style TargetType="DataGridRow">
 		<Setter Property="Background" Value="Transparent" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 		<Setter Property="FocusVisualStyle" Value="{x:Null}" />
 		<Setter Property="SnapsToDevicePixels" Value="True" />
 		<Style.Triggers>
@@ -1176,12 +1278,12 @@
 		<Setter Property="BorderThickness" Value="0,0,0,1" />
 		<Setter Property="Padding" Value="8,0" />
 		<Setter Property="HorizontalContentAlignment" Value="{DynamicResource App.HorizontalAlignment}" />
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 	</Style>
 
 	<Style x:Key="DataGridHeaderUi" TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
 		<Setter Property="HorizontalContentAlignment" Value="{DynamicResource App.HorizontalAlignment}" />
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 	</Style>
 
 
@@ -1190,7 +1292,7 @@
 		<Setter Property="Padding" Value="8,0" />
 		<Setter Property="VerticalContentAlignment" Value="Center" />
 		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
 		<Setter Property="Background" Value="Transparent" />
 		<Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -1207,10 +1309,23 @@
 	<Style x:Key="DataGridCellTextLeft" TargetType="TextBlock">
 		<Setter Property="VerticalAlignment" Value="Center" />
 		<Setter Property="TextAlignment" Value="Left" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
+		<Setter Property="FlowDirection" Value="{DynamicResource TechnicalText.FlowDirection}" />
+		<Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
 		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
 		<Setter Property="Padding" Value="8,0" />
+	</Style>
+
+	<Style x:Key="DataGridCellLocalizedText"
+	       TargetType="TextBlock"
+	       BasedOn="{StaticResource Type.Body}">
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="TextAlignment" Value="Left" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
+		<Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
+		<Setter Property="TextWrapping" Value="NoWrap" />
+		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
+		<Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
 	</Style>
 
 
@@ -1218,7 +1333,7 @@
 		<Setter Property="MinHeight" Value="28" />
 		<Setter Property="MinWidth" Value="0" />
 		<Setter Property="Padding" Value="10,4" />
-		<Setter Property="CornerRadius" Value="8" />
+		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
 		<Setter Property="Background" Value="{DynamicResource Surface.CardHover}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Default}" />
 		<Setter Property="BorderThickness" Value="1" />
@@ -1266,7 +1381,7 @@
 	</Style>
 
 	<Style x:Key="SemanticChipText" TargetType="TextBlock">
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 		<Setter Property="TextAlignment" Value="Left" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="VerticalAlignment" Value="Center" />
@@ -1281,6 +1396,7 @@
 		<Setter Property="HorizontalAlignment" Value="Left" />
 		<Setter Property="VerticalAlignment" Value="Center" />
 		<Setter Property="MinHeight" Value="28" />
+		<Setter Property="MaxWidth" Value="180" />
 		<Setter Property="Padding" Value="10,4" />
 	</Style>
 
@@ -1288,7 +1404,7 @@
 		<Setter Property="HorizontalAlignment" Value="Left" />
 		<Setter Property="TextAlignment" Value="Left" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
-		<Setter Property="TextTrimming" Value="None" />
+		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
 	</Style>
 
 
@@ -1308,10 +1424,10 @@
 		<Setter Property="Background" Value="Transparent" />
 		<Setter Property="BorderBrush" Value="Transparent" />
 		<Setter Property="BorderThickness" Value="1" />
-		<Setter Property="CornerRadius" Value="6" />
-		<Setter Property="Padding" Value="6,5" />
+		<Setter Property="CornerRadius" Value="{StaticResource Radius.Medium}" />
+		<Setter Property="Padding" Value="8,4" />
 		<Setter Property="Margin" Value="0,0,10,4" />
-		<Setter Property="MinHeight" Value="30" />
+		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="SnapsToDevicePixels" Value="True" />
 		<Setter Property="UseLayoutRounding" Value="True" />
@@ -1324,7 +1440,10 @@
 	</Style>
 
 	<Style x:Key="ChecklistOptionText" TargetType="TextBlock" BasedOn="{StaticResource ArabicHeadingText}">
-		<Setter Property="FontSize" Value="12.5" />
+		<Setter Property="FlowDirection" Value="{DynamicResource TechnicalText.FlowDirection}" />
+		<Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
+		<Setter Property="TextAlignment" Value="{DynamicResource TechnicalText.TextAlignment}" />
+		<Setter Property="FontSize" Value="14" />
 		<Setter Property="FontWeight" Value="SemiBold" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
@@ -1334,7 +1453,7 @@
 	</Style>
 
 	<Style x:Key="ChecklistToolTipTitleText" TargetType="TextBlock" BasedOn="{StaticResource ArabicHeadingText}">
-		<Setter Property="FontSize" Value="13" />
+		<Setter Property="FontSize" Value="14" />
 		<Setter Property="FontWeight" Value="SemiBold" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
 		<Setter Property="TextWrapping" Value="Wrap" />
@@ -1342,14 +1461,14 @@
 	</Style>
 
 	<Style x:Key="ChecklistToolTipSubtleText" TargetType="TextBlock" BasedOn="{StaticResource ArabicCaptionText}">
-		<Setter Property="FontSize" Value="11" />
+		<Setter Property="FontSize" Value="12" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
 		<Setter Property="TextWrapping" Value="Wrap" />
 		<Setter Property="TextTrimming" Value="None" />
 	</Style>
 
 	<Style x:Key="ChecklistToolTipLabelText" TargetType="TextBlock" BasedOn="{StaticResource ArabicCaptionText}">
-		<Setter Property="FontSize" Value="11" />
+		<Setter Property="FontSize" Value="12" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Disabled}" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
 		<Setter Property="VerticalAlignment" Value="Center" />
@@ -1364,7 +1483,7 @@
 	</Style>
 
 	<Style x:Key="ChecklistToolTipBodyText" TargetType="TextBlock" BasedOn="{StaticResource ArabicCaptionText}">
-		<Setter Property="FontSize" Value="11.5" />
+		<Setter Property="FontSize" Value="12" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
 		<Setter Property="TextWrapping" Value="Wrap" />
 		<Setter Property="TextTrimming" Value="None" />
@@ -1373,7 +1492,7 @@
 
 
 	<Style x:Key="RecommendationRowSubtitleText" TargetType="TextBlock" BasedOn="{StaticResource ArabicCaptionText}">
-		<Setter Property="FontSize" Value="11" />
+		<Setter Property="FontSize" Value="12" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -1392,7 +1511,7 @@
 
 
 	<Style x:Key="RecommendationInlineLabelText" TargetType="TextBlock" BasedOn="{StaticResource ArabicCaptionText}">
-		<Setter Property="FontSize" Value="11" />
+		<Setter Property="FontSize" Value="12" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Disabled}" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -1410,7 +1529,7 @@
 	</Style>
 
 	<Style x:Key="HCanBox" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Type ComboBox}}">
-		<Setter Property="MinHeight" Value="36" />
+		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
 		<Setter Property="Padding" Value="8,4" />
 		<Setter Property="HorizontalContentAlignment" Value="Left" />
 	</Style>
@@ -1423,24 +1542,30 @@
 	<Style x:Key="HCanLbl" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource RecommendationInlineLabelText}">
 		<Setter Property="Margin" Value="0,0,0,4" />
 		<Setter Property="VerticalAlignment" Value="Center" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 		<Setter Property="TextAlignment" Value="Left" />
 		<Setter Property="TextWrapping" Value="Wrap" />
 	</Style>
 
 	<Style x:Key="HCanErr" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ArabicCaptionText}">
 		<Setter Property="Foreground" Value="{DynamicResource Status.Danger}" />
-		<Setter Property="FontSize" Value="11" />
+		<Setter Property="FontSize" Value="12" />
 		<Setter Property="Margin" Value="0,4,0,0" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 		<Setter Property="TextAlignment" Value="Left" />
 	</Style>
 
 	<Style x:Key="FluentButton.Compact" TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
-		<Setter Property="MinWidth" Value="96" />
+		<Setter Property="MinWidth" Value="{StaticResource Button.MinWidth.Compact}" />
 		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Compact}" />
-		<Setter Property="Margin" Value="4" />
-		<Setter Property="Padding" Value="12,6" />
+		<Setter Property="Margin" Value="0" />
+		<Setter Property="Padding" Value="{StaticResource Button.Padding.Compact}" />
+		<Setter Property="FontSize" Value="12" />
+		<Setter Property="FontWeight" Value="Regular" />
+	</Style>
+
+	<Style x:Key="FluentButton.Toolbar" TargetType="{x:Type Button}" BasedOn="{StaticResource FluentButton.Compact}">
+		<Setter Property="Margin" Value="0,0,8,0" />
 	</Style>
 
 	<Style x:Key="RecommendationInlineValueText" TargetType="TextBlock" BasedOn="{StaticResource TechText}">
@@ -1453,7 +1578,7 @@
 	</Style>
 
 	<Style x:Key="RecommendationMicroMetaText" TargetType="TextBlock" BasedOn="{StaticResource ArabicCaptionText}">
-		<Setter Property="FontSize" Value="11" />
+		<Setter Property="FontSize" Value="12" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Disabled}" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -1463,12 +1588,12 @@
 
 	<Style x:Key="SemanticChipCompact" TargetType="Border" BasedOn="{StaticResource SemanticChip}">
 		<Setter Property="Padding" Value="7,2" />
-		<Setter Property="CornerRadius" Value="7" />
+		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
 		<Setter Property="MinHeight" Value="24" />
 	</Style>
 
 	<Style x:Key="SemanticChipTextCompact" TargetType="TextBlock" BasedOn="{StaticResource SemanticChipText}">
-		<Setter Property="FontSize" Value="11" />
+		<Setter Property="FontSize" Value="12" />
 		<Setter Property="FontWeight" Value="SemiBold" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -1477,14 +1602,14 @@
 	<Style x:Key="SourcePill" TargetType="Border" BasedOn="{StaticResource SemanticChipCompact}">
 		<Setter Property="MinHeight" Value="20" />
 		<Setter Property="Padding" Value="7,1" />
-		<Setter Property="CornerRadius" Value="7" />
+		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
 		<Setter Property="HorizontalAlignment" Value="Left" />
 		<Setter Property="VerticalAlignment" Value="Center" />
 		<Setter Property="MaxWidth" Value="150" />
 	</Style>
 
 	<Style x:Key="SourcePillText" TargetType="TextBlock" BasedOn="{StaticResource SemanticChipTextCompact}">
-		<Setter Property="FontSize" Value="10.5" />
+		<Setter Property="FontSize" Value="12" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
 		<Setter Property="MaxWidth" Value="136" />
@@ -1506,13 +1631,16 @@
 		<Setter Property="Background" Value="{DynamicResource Surface.Subtle}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="BorderThickness" Value="0,0,0,1" />
-		<Setter Property="Padding" Value="16,10" />
+		<Setter Property="Padding" Value="12,8" />
 		<Setter Property="SnapsToDevicePixels" Value="True" />
 		<Setter Property="UseLayoutRounding" Value="True" />
 	</Style>
 
 	<Style x:Key="R3ShellTitleText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ArabicHeadingText}">
-		<Setter Property="FontSize" Value="15" />
+		<Setter Property="FlowDirection" Value="{DynamicResource TechnicalText.FlowDirection}" />
+		<Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
+		<Setter Property="TextAlignment" Value="{DynamicResource TechnicalText.TextAlignment}" />
+		<Setter Property="FontSize" Value="16" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
 		<Setter Property="VerticalAlignment" Value="Center" />
@@ -1522,7 +1650,7 @@
 		<Setter Property="Background" Value="{DynamicResource Surface.Subtle}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="BorderThickness" Value="0,0,0,1" />
-		<Setter Property="Padding" Value="16,12" />
+		<Setter Property="Padding" Value="12,8" />
 		<Setter Property="SnapsToDevicePixels" Value="True" />
 		<Setter Property="UseLayoutRounding" Value="True" />
 	</Style>
@@ -1531,13 +1659,13 @@
 		<Setter Property="Background" Value="{DynamicResource Surface.Subtle}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="BorderThickness" Value="0,1,0,0" />
-		<Setter Property="Padding" Value="16" />
+		<Setter Property="Padding" Value="12" />
 		<Setter Property="SnapsToDevicePixels" Value="True" />
 		<Setter Property="UseLayoutRounding" Value="True" />
 	</Style>
 
 	<Style x:Key="R3SettingsTitleText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource SectionTitleText}">
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 		<Setter Property="TextAlignment" Value="{DynamicResource Options.SettingsTextAlignment}" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="FontSize" Value="16" />
@@ -1546,7 +1674,7 @@
 	</Style>
 
 	<Style x:Key="R3SettingsDescriptionText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource SectionCaptionText}">
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 		<Setter Property="TextAlignment" Value="{DynamicResource Options.SettingsTextAlignment}" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="TextWrapping" Value="Wrap" />
@@ -1561,7 +1689,7 @@
 		<Setter Property="Background" Value="{DynamicResource Surface.Card}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="BorderThickness" Value="1" />
-		<Setter Property="CornerRadius" Value="10" />
+		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
 		<Setter Property="Padding" Value="0" />
 		<Setter Property="Margin" Value="0,0,0,12" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -1586,9 +1714,9 @@
 
 
 	<Style x:Key="R3SettingsRowTitleText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ArabicHeadingText}">
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 		<Setter Property="TextAlignment" Value="{DynamicResource Options.SettingsTextAlignment}" />
-		<Setter Property="FontSize" Value="13" />
+		<Setter Property="FontSize" Value="14" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -1596,7 +1724,7 @@
 	</Style>
 
 	<Style x:Key="R3SettingsRowDescriptionText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource ArabicCaptionText}">
-		<Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 		<Setter Property="TextAlignment" Value="{DynamicResource Options.SettingsTextAlignment}" />
 		<Setter Property="FontSize" Value="12" />
 		<Setter Property="TextWrapping" Value="Wrap" />
@@ -1610,10 +1738,9 @@
 		<Setter Property="Background" Value="{DynamicResource Surface.Subtle}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Stroke.Subtle}" />
 		<Setter Property="BorderThickness" Value="1" />
-		<Setter Property="CornerRadius" Value="8" />
-		<Setter Property="Padding" Value="10,7" />
+		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
+		<Setter Property="Padding" Value="10,6" />
 		<Setter Property="MinWidth" Value="160" />
-		<Setter Property="MaxWidth" Value="360" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="VerticalAlignment" Value="Center" />
 		<Setter Property="FlowDirection" Value="LeftToRight" />
@@ -1624,6 +1751,7 @@
 		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
 		<Setter Property="FontSize" Value="12" />
 		<Setter Property="FlowDirection" Value="LeftToRight" />
+		<Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
 		<Setter Property="TextAlignment" Value="Left" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="VerticalAlignment" Value="Center" />
@@ -1660,6 +1788,24 @@
            TargetType="TextBox"
            BasedOn="{StaticResource {x:Type TextBox}}">
         <Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
+    </Style>
+
+    <Style x:Key="FluentTextBox.Localized"
+           TargetType="TextBox"
+           BasedOn="{StaticResource FluentTextBox}">
+        <Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
+        <Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
+        <Setter Property="TextAlignment" Value="Left" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+
+    <Style x:Key="FluentTextBox.Technical"
+           TargetType="TextBox"
+           BasedOn="{StaticResource FluentTextBox}">
+        <Setter Property="FlowDirection" Value="{DynamicResource TechnicalText.FlowDirection}" />
+        <Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
+        <Setter Property="TextAlignment" Value="{DynamicResource TechnicalText.TextAlignment}" />
+        <Setter Property="HorizontalContentAlignment" Value="{DynamicResource TechnicalText.HorizontalAlignment}" />
     </Style>
 
     <Style x:Key="FluentComboBox"
@@ -1703,7 +1849,7 @@
 
 
     <Style x:Key="FluentDialog.Flow" TargetType="FrameworkElement">
-        <Setter Property="FlowDirection" Value="LeftToRight" />
+        <Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
     </Style>
 
     <Style x:Key="FluentDialog.Title"
@@ -1722,7 +1868,7 @@
     <Style x:Key="FluentDialog.Buttons" TargetType="StackPanel">
         <Setter Property="Orientation" Value="Horizontal" />
         <Setter Property="HorizontalAlignment" Value="Right" />
-        <Setter Property="FlowDirection" Value="LeftToRight" />
+        <Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
     </Style>
 
     <Style x:Key="FluentStatus.Text"

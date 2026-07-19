@@ -15,7 +15,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="8" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="12" />
+                <RowDefinition Height="8" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -30,26 +30,17 @@
                 <TextBlock Grid.Row="0"
                            Text="{lang:TextExt Key=Games.Title}"
                            Style="{StaticResource RailTitleText}"
-                           FlowDirection="{DynamicResource App.FlowDirection}"
+                           FlowDirection="{DynamicResource App.TextFlowDirection}"
                            TextAlignment="Left"
                            HorizontalAlignment="Stretch" />
 
-                <TextBlock Grid.Row="1"
-                           Text="{lang:TextExt Key=Games.Caption}"
-                           Style="{StaticResource RailCaptionText}"
-                           FlowDirection="{DynamicResource App.FlowDirection}"
-                           TextAlignment="Left"
-                           HorizontalAlignment="Stretch"
-                           Margin="0,4,0,0" />
             </Grid>
 
             <Grid Grid.Row="2"
                   FlowDirection="{DynamicResource App.FlowDirection}"
                   ToolTip="{lang:TextExt Key=Games.SearchTip}">
-                <TextBox Style="{StaticResource FluentTextBox}"
+                <TextBox Style="{StaticResource FluentTextBox.Localized}"
                          Text="{Binding GameList.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                         FlowDirection="{DynamicResource App.FlowDirection}"
-                         TextAlignment="Left"
                          ToolTip="{lang:TextExt Key=Games.SearchTip}" />
 
                 <TextBlock Text="{lang:TextExt Key=Games.SearchPlaceholder}"
@@ -58,7 +49,7 @@
                            Margin="10,0"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Stretch"
-                           FlowDirection="{DynamicResource App.FlowDirection}"
+                           FlowDirection="{DynamicResource App.TextFlowDirection}"
                            TextAlignment="Left"
                            IsHitTestVisible="False"
                            Visibility="{Binding GameList.IsSearch, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -99,7 +90,7 @@
 
                                     <TextBlock Text="{Binding Serial}"
                                                Style="{StaticResource GameRailSerialText}"
-                                               Margin="0,3,0,0" />
+                                               Margin="0,4,0,0" />
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
@@ -108,7 +99,7 @@
 
                 <TextBlock Text="{Binding GameList.EmptyTxt}"
                            Style="{StaticResource ArabicEmptyStateText}"
-                           FlowDirection="{DynamicResource App.FlowDirection}"
+                           FlowDirection="{DynamicResource App.TextFlowDirection}"
                            TextAlignment="Left"
                            HorizontalAlignment="Stretch"
                            VerticalAlignment="Center"

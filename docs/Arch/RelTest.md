@@ -88,7 +88,9 @@ portable release يحتاج `-Rpcs3Path` لتشغيل عقد التثبيت ال
 ## Portable verifier
 
 يتحقق من required files، executable version، غياب source/debug/emulator payload،
-language parity، catalog non-empty، cheats notice، و`SHA256SUMS`.
+language parity، catalog non-empty، cheats notice، و`SHA256SUMS`. فحص الـmanifest
+ثنائي الاتجاه: كل سطر يشير إلى ملف داخل مجلد الإصدار وبصمة صحيحة بلا تكرار، وكل
+ملف إصدار عدا manifest نفسه يجب أن يكون مدرجًا.
 
 عند إضافة shipped file: csproj + verifier + license/provenance + publish-directory
 test، وليس bin test فقط.

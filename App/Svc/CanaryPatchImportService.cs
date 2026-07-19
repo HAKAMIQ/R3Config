@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using R3Config.Lang;
@@ -46,6 +47,8 @@ public sealed class CanaryPatchImportService
 
     private const string BlkBegin = "# R3Config managed Canary patches v1 - begin";
     private const string BlkEnd = "# R3Config managed Canary patches v1 - end";
+    private const string AncBegin = "# R3Config managed Canary anchors v1 - begin";
+    private const string AncEnd = "# R3Config managed Canary anchors v1 - end";
 
     private static readonly Regex TopKeyRx = new(@"^(?<key>[^\s:#][^:#]*):(?:\s.*)?$", RegexOptions.Compiled);
 
@@ -68,7 +71,10 @@ public sealed class CanaryPatchImportService
             return Failure(UiText.GetText("Patch.ImportCanaryInvalidYaml"));
         }
 
-        var normalizedInput = sourceText
+        var cleanInput = sourceText![0] == '\uFEFF'
+            ? sourceText[1..]
+            : sourceText;
+        var normalizedInput = cleanInput
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace("\r", "\n", StringComparison.Ordinal);
 
@@ -219,9 +225,11 @@ public sealed class CanaryPatchImportService
                     error);
             }
 
-            var existingText = File.Exists(targetPath)
-                ? ReadText(targetPath)
-                : string.Empty;
+            var targetExisted = File.Exists(targetPath);
+            var existing = targetExisted
+                ? ReadTarget(targetPath)
+                : null;
+            var existingText = existing?.Text ?? string.Empty;
 
             if (!string.IsNullOrWhiteSpace(existingText))
             {
@@ -242,7 +250,9 @@ public sealed class CanaryPatchImportService
                 }
 
                 var existingNormalized = Norm(existingText);
-                if (existingNormalized.IsOk &&
+                if (existing is { HasBom: false } &&
+                    HasCanonicalHeader(existing.Text) &&
+                    existingNormalized.IsOk &&
                     string.Equals(
                         existingNormalized.NormText,
                         normalize.NormText,
@@ -265,7 +275,8 @@ public sealed class CanaryPatchImportService
                 preservedText,
                 normalize.NormText);
 
-            if (File.Exists(targetPath) &&
+            if (targetExisted &&
+                existing is { HasBom: false } &&
                 string.Equals(existingText, finalText, StringComparison.Ordinal))
             {
                 return new CanStage(
@@ -303,7 +314,9 @@ public sealed class CanaryPatchImportService
                      finalText,
                      PrepKind.PatCat,
                      PatSrc.Imported,
-                     finalCatalog.Catalog.Entries.Count),
+                     finalCatalog.Catalog.Entries.Count,
+                     ExpectedExists: targetExisted,
+                     ExpectedSha256: existing?.Sha256),
                  UiText.GetText("Patch.PrepareCanarySelectedSuccess"),
                  null);
         }
@@ -351,7 +364,8 @@ public sealed class CanaryPatchImportService
                     null);
             }
 
-            var existingText = ReadText(targetPath);
+            var existing = ReadTarget(targetPath);
+            var existingText = existing.Text;
             var existingCatalog = _reader.ReadText(
                 existingText,
                 PatSrc.Imported,
@@ -393,7 +407,9 @@ public sealed class CanaryPatchImportService
                         string.Empty,
                         PrepKind.PatCat,
                         PatSrc.Imported,
-                        DelTgt: true),
+                        DelTgt: true,
+                        ExpectedExists: true,
+                        ExpectedSha256: existing.Sha256),
                     UiText.GetText("Patch.RemoveCanarySuccess"),
                     null);
             }
@@ -422,7 +438,9 @@ public sealed class CanaryPatchImportService
                     finalText,
                     PrepKind.PatCat,
                     PatSrc.Imported,
-                    finalCatalog.Catalog.Entries.Count),
+                    finalCatalog.Catalog.Entries.Count,
+                    ExpectedExists: true,
+                    ExpectedSha256: existing.Sha256),
                 UiText.GetText("Patch.RemoveCanarySuccess"),
                 null);
         }
@@ -483,6 +501,11 @@ public sealed class CanaryPatchImportService
 
     public string ReadText(string targetPath)
     {
+        return ReadTarget(targetPath).Text;
+    }
+
+    private static TargetRead ReadTarget(string targetPath)
+    {
         using var stream = new FileStream(
             targetPath,
             FileMode.Open,
@@ -495,13 +518,33 @@ public sealed class CanaryPatchImportService
                 $"The imported patch file exceeds the {MaxBytes}-byte read limit.");
         }
 
-        using var reader = new StreamReader(
-            stream,
-            Encoding.UTF8,
-            detectEncodingFromByteOrderMarks: true,
-            leaveOpen: false);
+        var bytes = new byte[checked((int)stream.Length)];
+        stream.ReadExactly(bytes);
+        var digest = Convert.ToHexString(
+            SHA256.HashData(bytes));
+        var hasBom = bytes.Length >= 3 &&
+                     bytes[0] == 0xEF &&
+                     bytes[1] == 0xBB &&
+                     bytes[2] == 0xBF;
+        var offset = hasBom
+            ? 3
+            : 0;
+        var utf8 = new UTF8Encoding(
+            encoderShouldEmitUTF8Identifier: false,
+            throwOnInvalidBytes: true);
+        var text = utf8.GetString(
+            bytes,
+            offset,
+            bytes.Length - offset);
 
-        return reader.ReadToEnd();
+        return new TargetRead(text, digest, hasBom);
+    }
+
+    private static bool HasCanonicalHeader(string text)
+    {
+        return text.Equals(VerHead, StringComparison.Ordinal) ||
+               text.StartsWith(VerHead + "\r\n", StringComparison.Ordinal) ||
+               text.StartsWith(VerHead + "\n", StringComparison.Ordinal);
     }
 
     private static bool IsRunKey(string value)
@@ -663,9 +706,12 @@ public sealed class CanaryPatchImportService
 
     private string Compose(string preservedText, string managedText)
     {
-        var cleanPreservedText = DelBlock(preservedText);
+        var cleanPreservedText = DelAnchors(
+            DelBlock(preservedText));
         var preservedPrefix = ExtLines(
             cleanPreservedText);
+        var managedPrefix = ExtLines(
+            managedText);
         var preservedSections = ExtHash(
             cleanPreservedText);
         var managedSections = ExtHash(managedText);
@@ -701,10 +747,13 @@ public sealed class CanaryPatchImportService
         }
 
         var output = new List<string> { VerHead };
-        if (preservedPrefix.Count > 0)
+        var mergedPrefix = MergeAnchors(
+            preservedPrefix,
+            managedPrefix);
+        if (mergedPrefix.Count > 0)
         {
             output.Add(string.Empty);
-            output.AddRange(preservedPrefix);
+            output.AddRange(mergedPrefix);
         }
 
         foreach (var hashKey in order)
@@ -737,6 +786,186 @@ public sealed class CanaryPatchImportService
         }
 
         return string.Join("\r\n", output).TrimEnd() + "\r\n";
+    }
+
+    private static List<string> MergeAnchors(
+        IReadOnlyList<string> preservedPrefix,
+        IReadOnlyList<string> managedPrefix)
+    {
+        var output = preservedPrefix.ToList();
+        var managed = AnchorSection(managedPrefix);
+        if (managed is null)
+        {
+            return output;
+        }
+
+        var existing = AnchorSection(output);
+        if (existing is null)
+        {
+            if (output.Count > 0 && !string.IsNullOrWhiteSpace(output[^1]))
+            {
+                output.Add(string.Empty);
+            }
+
+            output.Add("Anchors:");
+            output.Add("  " + AncBegin);
+            output.AddRange(managed.Body.Skip(1));
+            output.Add("  " + AncEnd);
+            return output;
+        }
+
+        var known = AnchorEntries(existing.Body)
+            .ToDictionary(
+                entry => entry.Name,
+                entry => entry.Lines,
+                StringComparer.Ordinal);
+        var additions = new List<string>();
+
+        foreach (var incoming in AnchorEntries(managed.Body))
+        {
+            if (!known.TryGetValue(incoming.Name, out var current))
+            {
+                known.Add(incoming.Name, incoming.Lines);
+                additions.AddRange(incoming.Lines);
+                continue;
+            }
+
+            if (!string.Equals(
+                    NormBlk(current),
+                    NormBlk(incoming.Lines),
+                    StringComparison.Ordinal))
+            {
+                throw new InvalidDataException(
+                    $"YAML anchor '{incoming.Name}' already exists with different content.");
+            }
+        }
+
+        if (additions.Count > 0)
+        {
+            additions.Insert(0, "  " + AncBegin);
+            additions.Add("  " + AncEnd);
+            output.InsertRange(existing.End, additions);
+        }
+
+        return output;
+    }
+
+    private static string DelAnchors(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return text;
+        }
+
+        var lines = Lines(text);
+        var output = new List<string>(lines.Count);
+        var insideAnchors = false;
+        var insideManaged = false;
+
+        foreach (var line in lines)
+        {
+            var topKey = TryTop(line);
+            if (topKey is not null)
+            {
+                insideAnchors = string.Equals(
+                    topKey,
+                    "Anchors",
+                    StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (line.Equals("  " + AncBegin, StringComparison.Ordinal))
+            {
+                if (!insideAnchors || insideManaged)
+                {
+                    throw new InvalidDataException(
+                        "A managed Canary anchor marker is misplaced or duplicated.");
+                }
+
+                insideManaged = true;
+                continue;
+            }
+
+            if (line.Equals("  " + AncEnd, StringComparison.Ordinal))
+            {
+                if (!insideAnchors || !insideManaged)
+                {
+                    throw new InvalidDataException(
+                        "A managed Canary anchor marker is incomplete or misplaced.");
+                }
+
+                insideManaged = false;
+                continue;
+            }
+
+            if (!insideManaged)
+            {
+                output.Add(line);
+            }
+        }
+
+        if (insideManaged)
+        {
+            throw new InvalidDataException(
+                "A managed Canary anchor marker is missing its end marker.");
+        }
+
+        return string.Join("\r\n", output).TrimEnd() + "\r\n";
+    }
+
+    private static AnchorSect? AnchorSection(
+        IReadOnlyList<string> lines)
+    {
+        for (var index = 0; index < lines.Count; index++)
+        {
+            var key = TryTop(lines[index]);
+            if (!string.Equals(
+                    key,
+                    "Anchors",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var end = index + 1;
+            while (end < lines.Count && TryTop(lines[end]) is null)
+            {
+                end++;
+            }
+
+            return new AnchorSect(
+                index,
+                end,
+                lines.Skip(index).Take(end - index).ToArray());
+        }
+
+        return null;
+    }
+
+    private static IReadOnlyList<AnchorEnt> AnchorEntries(
+        IReadOnlyList<string> anchorSection)
+    {
+        var output = new List<AnchorEnt>();
+        for (var index = 1; index < anchorSection.Count;)
+        {
+            if (!TryName(anchorSection[index], out var name))
+            {
+                index++;
+                continue;
+            }
+
+            var block = new List<string> { anchorSection[index] };
+            index++;
+            while (index < anchorSection.Count &&
+                   !TryName(anchorSection[index], out _))
+            {
+                block.Add(anchorSection[index]);
+                index++;
+            }
+
+            output.Add(new AnchorEnt(name, block));
+        }
+
+        return output;
     }
 
     private static string DelBlock(string text)
@@ -1068,6 +1297,23 @@ public sealed class CanaryPatchImportService
     }
 
     private sealed record HashSect(string HashKey, IReadOnlyList<string> Lines);
+
+    private sealed record TargetRead(
+        string Text,
+        string Sha256,
+        bool HasBom);
+
+    private sealed record AnchorSect(
+        int Start,
+        int End,
+        IReadOnlyList<string> Lines)
+    {
+        public IReadOnlyList<string> Body => Lines;
+    }
+
+    private sealed record AnchorEnt(
+        string Name,
+        IReadOnlyList<string> Lines);
 
     private static string SafeMsg(Exception exception)
     {

@@ -25,6 +25,8 @@ public sealed partial class HCanVm : VmBase
         OnChange(nameof(GameName));
         OnChange(nameof(GameId));
         OnChange(nameof(GameVer));
+        OnChange(nameof(HasGame));
+        OnChange(nameof(SaveHint));
         if (gameChanged && _dirty)
         {
             SetMsg("HCanary.Message.DraftPreserved");
@@ -45,6 +47,7 @@ public sealed partial class HCanVm : VmBase
         _isBusy = isBusy;
         _runUi = isRpcs3Running;
         OnChange(nameof(CanMut));
+        OnChange(nameof(SaveHint));
         RaiseCmd();
     }
 
@@ -76,8 +79,10 @@ public sealed partial class HCanVm : VmBase
         OnChange(nameof(GameVer));
         OnChange(nameof(DraftTxt));
         OnChange(nameof(Category));
+        OnChange(nameof(SaveHint));
         OnChange(nameof(Msg));
         OnChange(nameof(LogStat));
+        foreach (var status in Statuses) status.SetLang();
         RefreshValidationText();
     }
 

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using R3Config.Application;
 using R3Config.Lang;
 using R3Config.Mdl;
 using R3Config.Svc;
@@ -42,8 +43,10 @@ public sealed partial class HCanVm : VmBase
         try
         {
             var result = _flow.SaveHCan(_install, Build(), _curId, saveAsNew);
-            Status = DraftSt.Saved; _dirty = false;
+            Status = DraftSt.Saved; _dirty = false; OnChange(nameof(IsDirty));
             _curId = ExeHash.Trim() + "\0" + PatName.Trim();
+            OnChange(nameof(HasStoredPatch));
+            OnChange(nameof(SaveHint));
             SetMsg("HCanary.Message.Saved", result.Path, result.PatNum);
             LoadStor(); CatChg?.Invoke(this, EventArgs.Empty); LoadDrft(markDirty: false);
         }
@@ -91,9 +94,49 @@ public sealed partial class HCanVm : VmBase
     private void OpenR3() { if (_install is not null) Process.Start(new ProcessStartInfo(_install.ExePath) { UseShellExecute = true }); }
     private static void OpenPath(string path) => Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
 
+    private void LaunchGame()
+    {
+        if (_install is null || _game is null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (_isRun())
+            {
+                SetLogStat("HCanary.Launch.AlreadyRunning");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            SetLogStat("HCanary.Launch.Failed", ex.Message);
+            return;
+        }
+
+        var result = _launchGame(_install, _game);
+        switch (result.Error)
+        {
+            case GameLaunchError.None when result.Started:
+                SetLogStat("HCanary.Launch.Started", _game.Title);
+                SetAvail(_isBusy, isRpcs3Running: true);
+                break;
+            case GameLaunchError.Rpcs3Missing:
+                SetLogStat("HCanary.Launch.Rpcs3Missing");
+                break;
+            case GameLaunchError.GameIdentityMissing:
+                SetLogStat("HCanary.Launch.GameIdentityMissing", result.Detail ?? _game.Serial);
+                break;
+            default:
+                SetLogStat("HCanary.Launch.Failed", result.Detail ?? string.Empty);
+                break;
+        }
+    }
+
     private void RaiseCmd()
     {
-        foreach (var command in new[] { ReadCmd, UseCmd, DelGmCmd, DelICmd,
+        foreach (var command in new[] { ReadCmd, LaunchCmd, UseCmd, DelGmCmd, DelICmd,
                      DupICmd, InsUp, InsDown, DelACmd,
                      AncAdd, AncDel, AncLoad, OpenCmd,
                      SaveCmd, SaveAs, DelCmd, PatDir, ImpFile,

@@ -373,7 +373,7 @@ public sealed class PatchCatalogUseCase(
                     ? entry with
                     {
                         Risk = PatRisk.Canary,
-                        PatType = "Canary"
+                        Class = PatClass.Canary
                     }
                     : entry)
                 .ToArray()

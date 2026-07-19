@@ -70,14 +70,84 @@ internal static class UiGate
             "Space.16", "Space.20", "Space.24", "Space.32", "Radius.Small",
             "Radius.Medium", "Radius.Large", "Radius.XLarge", "Elevation.1",
             "Elevation.2", "Elevation.3", "Motion.Hover", "Motion.Press",
+            "Button.MinWidth.Compact", "Button.MinWidth.Standard",
+            "Button.Padding.Compact", "Button.Padding.Standard", "Button.Padding.Large",
             "Motion.Surface", "FluentButton.Primary", "FluentButton.Secondary",
             "FluentButton.Subtle", "FluentButton.Danger", "FluentButton.Icon",
-            "FluentButton.Compact", "FluentDataGrid", "FluentDataGridHeader",
+            "FluentButton.Compact", "FluentButton.Toolbar", "FluentDataGrid", "FluentDataGridHeader",
             "FluentDataGridCell", "FluentDataGridRow", "FluentTabControl", "FluentTabItem"
         };
         foreach (var key in required.Where(key => !themeKeys.Contains(key)))
         {
             errs.Add($"Missing Fluent 2 contract '{key}'.");
+        }
+
+        var values = ctrl.Root!
+            .Elements()
+            .Select(node => new
+            {
+                Key = node.Attribute(xkey)?.Value,
+                Value = node.Value.Trim()
+            })
+            .Where(item => !string.IsNullOrWhiteSpace(item.Key))
+            .ToDictionary(item => item.Key!, item => item.Value, StringComparer.Ordinal);
+        var expectedValues = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["Radius.Small"] = "2",
+            ["Radius.Medium"] = "4",
+            ["Radius.Large"] = "8",
+            ["Radius.XLarge"] = "12",
+            ["Control.Height.Compact"] = "24",
+            ["Control.Height.Standard"] = "32",
+            ["Control.Height.Large"] = "40",
+            ["Button.MinWidth.Compact"] = "64",
+            ["Button.MinWidth.Standard"] = "96",
+            ["Button.Padding.Compact"] = "8,3",
+            ["Button.Padding.Standard"] = "12,5",
+            ["Button.Padding.Large"] = "16,8",
+            ["DataGrid.HeaderHeight"] = "32",
+            ["DataGrid.RowHeight"] = "36"
+        };
+        foreach (var pair in expectedValues)
+        {
+            if (!values.TryGetValue(pair.Key, out var value) ||
+                !string.Equals(value, pair.Value, StringComparison.Ordinal))
+            {
+                errs.Add($"Fluent 2 token '{pair.Key}' must be {pair.Value}.");
+            }
+        }
+
+        var type = XDocument.Load(Path.Combine(appDir, "Thm", "Type.xaml"));
+        var typeSizes = type.Descendants()
+            .Where(node => node.Name.LocalName == "Style" &&
+                           node.Attribute(xkey) is not null)
+            .Select(node => new
+            {
+                Key = node.Attribute(xkey)!.Value,
+                Size = node.Elements()
+                    .FirstOrDefault(child => child.Name.LocalName == "Setter" &&
+                                             child.Attribute("Property")?.Value == "FontSize")
+                    ?.Attribute("Value")?.Value
+            })
+            .Where(item => item.Size is not null)
+            .ToDictionary(item => item.Key, item => item.Size!, StringComparer.Ordinal);
+        var expectedType = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["Type.Display"] = "28",
+            ["Type.TitleLarge"] = "24",
+            ["Type.Title"] = "20",
+            ["Type.Subtitle"] = "16",
+            ["Type.Body"] = "14",
+            ["Type.Caption"] = "12",
+            ["Type.Technical"] = "13"
+        };
+        foreach (var pair in expectedType)
+        {
+            if (!typeSizes.TryGetValue(pair.Key, out var value) ||
+                !string.Equals(value, pair.Value, StringComparison.Ordinal))
+            {
+                errs.Add($"Fluent 2 typography role '{pair.Key}' must be {pair.Value}.");
+            }
         }
 
         foreach (var mode in new[] { "Dark", "Light" })
@@ -132,7 +202,7 @@ internal static class UiGate
                     "TextAlignment\\s*=\\s*\"(?:Center|Right|Justify)\"|FlowDirection\\s*=\\s*\"RightToLeft\"",
                     RegexOptions.CultureInvariant))
             {
-                errs.Add($"{rel}: forbidden RTL/right/justify value.");
+                errs.Add($"{rel}: forbidden hard-coded mirroring/right/justify value.");
             }
 
             foreach (var attr in doc.Descendants().Attributes())
@@ -163,6 +233,23 @@ internal static class UiGate
                 }
             }
 
+            var allowedFontSizes = new HashSet<double> { 12, 13, 14, 16, 20, 24, 28 };
+            foreach (var node in doc.Descendants())
+            {
+                var raw = node.Attribute("FontSize")?.Value;
+                if (node.Name.LocalName == "Setter" &&
+                    node.Attribute("Property")?.Value == "FontSize")
+                {
+                    raw = node.Attribute("Value")?.Value;
+                }
+
+                if (double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var size) &&
+                    !allowedFontSizes.Contains(size))
+                {
+                    errs.Add($"{rel}: font size {size:0.##} is outside the Fluent 2 type ramp.");
+                }
+            }
+
             foreach (var button in doc.Descendants()
                          .Where(node => node.Name.LocalName == "Button" &&
                                         (node.Attribute("Style")?.Value.Contains("FluentButton.Icon", StringComparison.Ordinal) == true ||
@@ -174,6 +261,40 @@ internal static class UiGate
                 {
                     errs.Add($"{rel}: icon button requires ToolTip and AutomationProperties.Name.");
                 }
+            }
+
+            if (!rel.EndsWith(
+                    Path.Combine("Thm", "Ctrl.xaml"),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var button in doc.Descendants()
+                             .Where(node => node.Name.LocalName == "Button"))
+                {
+                    foreach (var attrName in new[] { "MinWidth", "MinHeight", "Padding" })
+                    {
+                        var value = button.Attribute(attrName)?.Value;
+                        if (value is not null &&
+                            double.TryParse(value.Split(',')[0], NumberStyles.Float,
+                                CultureInfo.InvariantCulture, out _))
+                        {
+                            errs.Add($"{rel}: Button {attrName} must come from a Fluent button style.");
+                        }
+                    }
+                }
+            }
+
+            foreach (var tab in doc.Descendants()
+                         .Where(node => node.Name.LocalName == "TabControl" &&
+                                        node.Ancestors().Any(parent => parent.Name.LocalName == "TabControl")))
+            {
+                errs.Add($"{rel}: nested TabControl is forbidden; use a separate window or surface.");
+            }
+
+            foreach (var grid in doc.Descendants()
+                         .Where(node => node.Name.LocalName == "DataGrid" &&
+                                        node.Ancestors().Any(parent => parent.Name.LocalName == "DataGrid")))
+            {
+                errs.Add($"{rel}: nested DataGrid is forbidden.");
             }
 
             foreach (var grid in doc.Descendants()
@@ -268,6 +389,85 @@ internal static class UiGate
                     errs.Add($"{rel}: disabled state uses opacity alone.");
                 }
             }
+        }
+
+        var patchView = XDocument.Load(
+            Path.Combine(appDir, "Ctrl", "Pat.xaml"),
+            LoadOptions.SetLineInfo);
+        var patchButtons = patchView
+            .Descendants()
+            .Where(node => node.Name.LocalName == "Button")
+            .ToArray();
+        foreach (var command in new[]
+                 {
+                     "{Binding LaunchGameCmd}",
+                     "{Binding HashRefreshCmd}"
+                 })
+        {
+            if (!patchButtons.Any(button =>
+                    string.Equals(
+                        button.Attribute("Command")?.Value,
+                        command,
+                        StringComparison.Ordinal)))
+            {
+                errs.Add(
+                    $"App\\Ctrl\\Pat.xaml: missing contextual Hash workflow command '{command}'.");
+            }
+        }
+
+        var canarySource = patchView
+            .Descendants()
+            .FirstOrDefault(node =>
+                node.Name.LocalName == "Border" &&
+                string.Equals(
+                    node.Attribute(xkey)?.Value,
+                    "CanSrc",
+                    StringComparison.Ordinal));
+        if (canarySource?.Descendants()
+                .Any(node => node.Name.LocalName == "Button") == true)
+        {
+            errs.Add(
+                "App\\Ctrl\\Pat.xaml: Canary source status must not duplicate the contextual launch/re-analysis actions.");
+        }
+
+        var mainView = XDocument.Load(
+            Path.Combine(appDir, "Main.xaml"),
+            LoadOptions.SetLineInfo);
+        var actionBar = XDocument.Load(
+            Path.Combine(appDir, "Ctrl", "Act.xaml"),
+            LoadOptions.SetLineInfo);
+        var titleLanguageButtons = mainView
+            .Descendants()
+            .Where(node =>
+                node.Name.LocalName == "Button" &&
+                string.Equals(
+                    node.Attribute("Command")?.Value,
+                    "{Binding LangCmd}",
+                    StringComparison.Ordinal))
+            .ToArray();
+        if (titleLanguageButtons.Length != 1 ||
+            !titleLanguageButtons[0]
+                .Ancestors()
+                .Any(node =>
+                    node.Name.LocalName == "Border" &&
+                    node.Attribute("Style")?.Value.Contains(
+                        "R3ShellTopBar",
+                        StringComparison.Ordinal) == true))
+        {
+            errs.Add(
+                "App\\Main.xaml: the single language command must live in the Windows title bar.");
+        }
+
+        if (actionBar
+            .Descendants()
+            .Any(node =>
+                string.Equals(
+                    node.Attribute("Command")?.Value,
+                    "{Binding LangCmd}",
+                    StringComparison.Ordinal)))
+        {
+            errs.Add(
+                "App\\Ctrl\\Act.xaml: the bottom action bar must not duplicate the title-bar language command.");
         }
 
         Check(errs.Count == 0, string.Join(Environment.NewLine, errs));
@@ -392,15 +592,19 @@ internal static class UiGate
                         {
                             foreach (var win in wins)
                             {
-                                Lay(win, size);
-                                Tabs(win, size);
-                                var root = (FrameworkElement)win.Content;
-                                Align(root);
-                                Bounds(root, size);
-                                foreach (var dpi in dpis)
+                                if (win is AdvDlg advanced)
                                 {
-                                    Dpi(win, size, dpi);
+                                    for (var page = 0; page < 3; page++)
+                                    {
+                                        SetAdvancedPage(advanced, page);
+                                        VerifySurface(advanced, size, dpis);
+                                    }
+
+                                    SetAdvancedPage(advanced, 0);
+                                    continue;
                                 }
+
+                                VerifySurface(win, size, dpis);
                             }
                         }
 
@@ -431,7 +635,7 @@ internal static class UiGate
             trace.Flush();
             var log = buf.ToString();
             Check(string.IsNullOrWhiteSpace(log), $"WPF binding error:{Environment.NewLine}{log}");
-            Console.WriteLine("Runtime UI gate PASS (4 windows, 4 sizes, 3 DPI scales, 2 languages, 2 themes).");
+            Console.WriteLine("Runtime UI gate PASS (8 windows plus all Advanced Tools pages, 4 sizes, 3 DPI scales, 2 languages, 2 themes).");
         }
         finally
         {
@@ -440,9 +644,35 @@ internal static class UiGate
         }
     }
 
+    private static void VerifySurface(Window window, Size size, IReadOnlyList<double> dpis)
+    {
+        Lay(window, size);
+        Tabs(window, size);
+        var root = (FrameworkElement)window.Content;
+        Align(root);
+        Bounds(root, size);
+        RawLocalization(root);
+        foreach (var dpi in dpis)
+        {
+            Dpi(window, size, dpi);
+        }
+    }
+
+    private static void SetAdvancedPage(AdvDlg window, int selectedIndex)
+    {
+        var navigation = window.FindName("AdvancedNavigation") as ListBox;
+        Check(navigation is not null,
+            "Advanced Tools navigation rail was not found.");
+        var navigationRail = navigation!;
+        Check(selectedIndex >= 0 && selectedIndex < navigationRail.Items.Count,
+            $"Advanced Tools page index {selectedIndex} is outside the navigation rail.");
+        navigationRail.SelectedIndex = selectedIndex;
+    }
+
     private static Window[] Make()
     {
         var flow = new AppFlow();
+        var toolsVm = new MainVm();
         var canVm = new CanImpVm(
             null,
             flow,
@@ -451,14 +681,18 @@ internal static class UiGate
         return
         [
             new MainWin(),
-            new AdvDlg { DataContext = new MainVm() },
+            new AdvDlg { DataContext = toolsVm },
+            new HCanDlg { DataContext = toolsVm },
             new CanDlg(null, canVm),
             new AppDlg(
                 null,
                 UiText.GetText("App.Title"),
                 UiText.GetText("Adv.Description"),
                 DlgKind.Confirm,
-                true)
+                true),
+            new HCanSavedDlg { DataContext = toolsVm },
+            new HCanTargetsDlg { DataContext = toolsVm },
+            new HCanAnchorsDlg { DataContext = toolsVm }
         ];
     }
 
@@ -488,6 +722,7 @@ internal static class UiGate
                 {
                     tab.SelectedIndex = idx;
                     Lay(win, size);
+                    RawLocalization(root);
                     Align(tab);
                     Bounds(tab, new Size(tab.ActualWidth, tab.ActualHeight));
                 }
@@ -500,35 +735,181 @@ internal static class UiGate
 
     private static void Align(DependencyObject root)
     {
+        if (root is FrameworkElement rootElement)
+        {
+            Check(rootElement.FlowDirection == FlowDirection.LeftToRight,
+                $"{rootElement.GetType().Name} root uses {rootElement.FlowDirection}.");
+        }
+
         foreach (var item in Walk<FrameworkElement>(root))
         {
             if (item is TextBlock text)
             {
-                Check(text.FlowDirection == FlowDirection.LeftToRight,
-                    $"{text.GetType().Name} uses {text.FlowDirection}.");
+                CheckTextFlow(text, text.Text, $"TextBlock '{text.Text}'");
                 Check(text.TextAlignment == TextAlignment.Left,
                     $"TextBlock '{text.Text}' uses {text.TextAlignment}.");
             }
             else if (item is TextBox box)
             {
-                Check(box.FlowDirection == FlowDirection.LeftToRight,
-                    $"TextBox uses {box.FlowDirection}.");
+                CheckTextFlow(box, box.Text, TextBoxLabel(box));
                 Check(box.TextAlignment == TextAlignment.Left,
-                    $"TextBox uses {box.TextAlignment}.");
+                    $"{TextBoxLabel(box)} uses {box.TextAlignment}.");
             }
             else if (item is ComboBox combo)
             {
                 Check(combo.FlowDirection == FlowDirection.LeftToRight,
                     $"ComboBox uses {combo.FlowDirection}.");
             }
+            else if (item is CheckBox checkBox)
+            {
+                Check(checkBox.FlowDirection == FlowDirection.LeftToRight,
+                    $"CheckBox layout uses {checkBox.FlowDirection}.");
+            }
+            else if (item is Button button &&
+                     button.Content is string buttonText)
+            {
+                CheckTextFlow(button, buttonText, $"Button '{buttonText}'");
+            }
+            else if (item is TabItem tabItem &&
+                     tabItem.Header is string headerText)
+            {
+                Check(tabItem.FlowDirection == FlowDirection.LeftToRight,
+                    $"TabItem layout uses {tabItem.FlowDirection}.");
+                var presenter = Walk<ContentPresenter>(tabItem)
+                    .FirstOrDefault(candidate =>
+                        Equals(candidate.Content, tabItem.Header));
+                Check(presenter is not null,
+                    $"TabItem '{headerText}' header presenter is unavailable.");
+                CheckTextFlow(
+                    presenter!,
+                    headerText,
+                    $"TabItem header '{headerText}'");
+            }
         }
+    }
+
+    private static void CheckTextFlow(
+        FrameworkElement element,
+        string? text,
+        string label)
+    {
+        if (HasArabic(text) && !UsesTechnicalStyle(element))
+        {
+            Check(element.FlowDirection == FlowDirection.RightToLeft,
+                $"{label} does not use Arabic RTL bidi flow.");
+            return;
+        }
+
+        if (!UiText.IsRtl || IsTechnical(element))
+        {
+            Check(element.FlowDirection == FlowDirection.LeftToRight,
+                $"{label} uses {element.FlowDirection}.");
+            return;
+        }
+    }
+
+    private static bool UsesTechnicalStyle(FrameworkElement element)
+    {
+        var app = Application.Current;
+        if (app is null)
+        {
+            return false;
+        }
+
+        var technicalStyles = new[]
+        {
+            app.TryFindResource("Type.Technical") as Style,
+            app.TryFindResource("TechnicalTextBox") as Style,
+            app.TryFindResource("FluentTextBox.Technical") as Style
+        };
+
+        for (var style = element.Style; style is not null; style = style.BasedOn)
+        {
+            if (technicalStyles.Any(technical =>
+                    technical is not null && ReferenceEquals(style, technical)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool UsesStyle(FrameworkElement element, string key)
+    {
+        var target = Application.Current?.TryFindResource(key) as Style;
+        if (target is null)
+        {
+            return false;
+        }
+
+        for (var style = element.Style; style is not null; style = style.BasedOn)
+        {
+            if (ReferenceEquals(style, target))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string TextBoxLabel(TextBox box)
+    {
+        var path = box
+            .GetBindingExpression(TextBox.TextProperty)
+            ?.ParentBinding
+            .Path
+            ?.Path;
+        var value = Regex.Replace(box.Text ?? string.Empty, "\\s+", " ").Trim();
+        if (value.Length > 72)
+        {
+            value = value[..69] + "...";
+        }
+
+        var label = string.IsNullOrWhiteSpace(path)
+            ? "TextBox"
+            : $"TextBox '{path}'";
+        return string.IsNullOrEmpty(value)
+            ? label
+            : $"{label} value '{value}'";
+    }
+
+    private static bool IsTechnical(FrameworkElement element)
+    {
+        return string.Equals(
+            element.Language.IetfLanguageTag,
+            UiText.EnLang,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasArabic(string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return false;
+        }
+
+        foreach (var ch in text)
+        {
+            if ((ch >= '\u0600' && ch <= '\u06ff') ||
+                (ch >= '\u0750' && ch <= '\u077f') ||
+                (ch >= '\u08a0' && ch <= '\u08ff') ||
+                (ch >= '\ufb50' && ch <= '\ufdff') ||
+                (ch >= '\ufe70' && ch <= '\ufeff'))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void Bounds(DependencyObject root, Size size)
     {
         foreach (var item in Walk<FrameworkElement>(root))
         {
-            if (!item.IsVisible || item.ActualWidth < 0 || item.ActualHeight < 0)
+            if (!item.IsVisible || item.ActualWidth <= 0 || item.ActualHeight <= 0)
             {
                 continue;
             }
@@ -537,10 +918,29 @@ internal static class UiGate
                 $"{item.GetType().Name} has invalid width.");
             Check(!double.IsNaN(item.ActualHeight) && !double.IsInfinity(item.ActualHeight),
                 $"{item.GetType().Name} has invalid height.");
+
+            if (item is Button button && !UsesStyle(button, "FluentButton.Icon"))
+            {
+                var compact = UsesStyle(button, "FluentButton.Compact");
+                var minWidth = compact ? 64d : 96d;
+                var minHeight = compact ? 24d : 32d;
+                Check(button.ActualWidth >= minWidth - 1,
+                    $"Button '{button.Content}' is {button.ActualWidth:0.#} px wide; expected at least {minWidth:0}.");
+                Check(button.ActualHeight >= minHeight - 1,
+                    $"Button '{button.Content}' is {button.ActualHeight:0.#} px high; expected at least {minHeight:0}.");
+            }
+            else if (item is TextBox or ComboBox)
+            {
+                Check(item.ActualHeight >= 31,
+                    $"{item.GetType().Name} is {item.ActualHeight:0.#} px high; expected Fluent medium height 32.");
+            }
+
             if (item is TabItem tab && tab.IsSelected)
             {
                 Check(tab.ActualWidth >= 72,
                     $"Selected tab header is clipped at {tab.ActualWidth:0.#} px.");
+                Check(tab.ActualHeight >= 31,
+                    $"Selected tab header is {tab.ActualHeight:0.#} px high; expected Fluent medium height 32.");
             }
         }
 
@@ -643,46 +1043,91 @@ internal static class UiGate
         var themeTag = isDark ? "dark" : "light";
         var tag = $"{themeTag}-{langTag}";
         Save(wins[0], $"{tag}-Main.png", outDir);
-        Save(wins[2], $"{tag}-CanDlg.png", outDir);
-        Save(wins[3], $"{tag}-AppDlg.png", outDir);
+        Save(wins[3], $"{tag}-CanDlg.png", outDir);
+        Save(wins[4], $"{tag}-AppDlg.png", outDir);
 
         var adv = wins[1];
         var size = new Size(1120, 700);
         LayRoot(adv, size);
-        Save(adv, $"{tag}-Adv-Dev.png", outDir);
         var root = (FrameworkElement)adv.Content;
-        var top = Walk<TabControl>(root).First();
-        var names = new[] { "Dev", "HCan", "Rec", "Diag" };
-        var old = top.SelectedIndex;
-        for (var idx = 0; idx < top.Items.Count; idx++)
+        var navigation = adv.FindName("AdvancedNavigation") as ListBox;
+        Check(navigation is not null, "Advanced Tools navigation rail was not found.");
+        var names = new[] { "HCanary", "Rec", "Diag" };
+        var old = navigation!.SelectedIndex;
+        for (var idx = 0; idx < navigation.Items.Count; idx++)
         {
-            top.SelectedIndex = idx;
+            navigation.SelectedIndex = idx;
             LayRoot(adv, size);
-            if (idx > 0)
-            {
-                Save(adv, $"{tag}-Adv-{names[idx]}.png", outDir);
-            }
-            if (idx != 1)
-            {
-                continue;
-            }
-
-            var inner = Walk<TabControl>(root)
-                .First(tab => tab != top);
-            var inames = new[] { "Info", "Ins", "Anc", "Prev" };
-            var iold = inner.SelectedIndex;
-            for (var item = 0; item < inner.Items.Count; item++)
-            {
-                inner.SelectedIndex = item;
-                LayRoot(adv, size);
-                Save(adv, $"{tag}-HCan-{inames[item]}.png", outDir);
-            }
-
-            inner.SelectedIndex = iold;
+            Save(adv, $"{tag}-Adv-{names[idx]}.png", outDir);
         }
 
-        top.SelectedIndex = old;
+        navigation.SelectedIndex = 0;
         LayRoot(adv, size);
+
+        var hTabs = Walk<TabControl>(root).Single(tab => tab.Name == "Steps");
+        foreach (var item in hTabs.Items.OfType<TabItem>())
+        {
+            item.IsEnabled = true;
+        }
+
+        var hNames = new[] { "Target", "Details", "Instructions", "Review" };
+        var hOld = hTabs.SelectedIndex;
+        for (var idx = 0; idx < hTabs.Items.Count; idx++)
+        {
+            hTabs.SelectedIndex = idx;
+            LayRoot(adv, size);
+            Save(adv, $"{tag}-HCan-{hNames[idx]}.png", outDir);
+        }
+
+        var savedDrawer = Walk<Border>(root).Single(border => border.Name == "SavedDrawer");
+        savedDrawer.Visibility = Visibility.Visible;
+        LayRoot(adv, size);
+        Save(adv, $"{tag}-HCan-Saved.png", outDir);
+        savedDrawer.Visibility = Visibility.Collapsed;
+
+        foreach (var expander in Walk<Expander>(root).Where(expander =>
+                     expander.Name is "TargetsPanel" or "AnchorsPanel"))
+        {
+            expander.IsExpanded = true;
+            LayRoot(adv, size);
+            Save(adv, $"{tag}-HCan-{expander.Name}.png", outDir);
+            expander.IsExpanded = false;
+        }
+
+        hTabs.SelectedIndex = hOld;
+        navigation.SelectedIndex = old;
+        LayRoot(adv, size);
+    }
+
+    private static void RawLocalization(DependencyObject root)
+    {
+        foreach (var text in Walk<TextBlock>(root).Select(item => item.Text))
+        {
+            Check(!IsRawLocalizationKey(text), $"Raw localization key is visible: {text}");
+        }
+
+        foreach (var content in Walk<ContentControl>(root)
+                     .Select(item => item.Content as string)
+                     .Where(value => value is not null))
+        {
+            Check(!IsRawLocalizationKey(content), $"Raw localization key is visible: {content}");
+        }
+
+        foreach (var header in Walk<HeaderedContentControl>(root)
+                     .Select(item => item.Header as string)
+                     .Where(value => value is not null))
+        {
+            Check(!IsRawLocalizationKey(header), $"Raw localization key is visible: {header}");
+        }
+    }
+
+    private static bool IsRawLocalizationKey(string? value)
+    {
+        return value is not null &&
+               Regex.IsMatch(
+                   value,
+                   @"^(?:Adv|HCanary)\.[A-Za-z0-9_.]+$",
+                   RegexOptions.CultureInvariant);
     }
 
     private static void Save(Window win, string name, string outDir)

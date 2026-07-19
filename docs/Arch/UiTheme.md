@@ -66,9 +66,9 @@ Type.Font.Display
 Type.Font.Technical
 
 Type.Display      28
-Type.TitleLarge   22
-Type.Title        18
-Type.Subtitle     15
+Type.TitleLarge   24
+Type.Title        20
+Type.Subtitle     16
 Type.Body         14
 Type.BodyStrong   14 SemiBold
 Type.Caption      12
@@ -86,6 +86,8 @@ Radius.Small / Medium / Large / XLarge
 Stroke.Width.Default / Stroke.Width.Focus
 Stroke.Thickness.Default / Stroke.Thickness.Focus
 Control.Height.Compact / Standard / Large
+Button.MinWidth.Compact / Standard
+Button.Padding.Compact / Standard / Large
 DataGrid.HeaderHeight / DataGrid.RowHeight
 ```
 
@@ -93,7 +95,15 @@ DataGrid.HeaderHeight / DataGrid.RowHeight
 - داخل الحقول والأزرار: 8–12.
 - داخل الأسطح: 12–16.
 - بين الأقسام: 20–24.
-- الحقول والأزرار: Radius 6–8 فعليًا عبر `Radius.Medium`.
+- الزوايا: Small = 2، Medium = 4، Large = 8، XLarge = 12.
+- الزر الصغير: 64×24 كحد أدنى، Padding ‏8×3، ونص 12.
+- الزر المتوسط: 96×32 كحد أدنى، Padding ‏12×5، ونص 14 SemiBold.
+- استخدم إجراءً أساسيًا واحدًا فقط في السطح؛ الإجراءات الأقل أهمية Secondary
+  أو Compact، وتظهر إجراءات النسخ والحذف فقط عندما يوجد عنصر محفوظ.
+- في المسارات متعددة الخطوات استخدم «السابق/التالي»، واجعل «حفظ» الإجراء
+  الأساسي في خطوة المراجعة الأخيرة.
+- الحقل والتبويب المتوسطان: ارتفاع 32.
+- التبويبات بعرض محتواها مع مؤشر Accent سفلي؛ لا تستخدم خلايا متساوية ممتدة.
 - البطاقات: `Radius.Large`.
 - الحوارات: `Radius.XLarge`.
 - الحد العادي 1، والتركيز 2 عند الحاجة.
@@ -123,6 +133,7 @@ FluentButton.Danger
 FluentButton.Icon
 FluentButton.Close
 FluentButton.Compact
+FluentButton.Toolbar
 
 FluentTextBox
 FluentComboBox
@@ -146,16 +157,18 @@ FluentSurface.Dialog
 
 ## Direction and alignment
 
-العربية والإنجليزية تعملان دائمًا بهذه القيم:
+تخطيط النافذة والحاويات يعمل دائمًا بهذه القيم:
 
 ```text
-FlowDirection = LeftToRight
+Shell FlowDirection = LeftToRight
 TextAlignment = Left
 HorizontalContentAlignment = Left
 ```
 
-تغيير اللغة يغير النص و`Language` فقط. المسارات والـhashes والقيم التقنية تبقى
-LTR وخطها تقني. أزرار نافذة Windows تبقى في الجهة اليمنى كاستثناء Layout.
+داخل أسطح النص فقط، تستخدم العربية `RightToLeft` لمعالجة bidi الصحيحة مع بقاء
+`TextAlignment = Left`، بينما تستخدم الإنجليزية `LeftToRight`. المسارات
+والـhashes والقيم التقنية تبقى LTR وخطها تقني. تغيير اللغة لا يعكس الأعمدة أو
+ترتيب الأزرار، وأزرار نافذة Windows تبقى في الجهة اليمنى.
 
 يمنع:
 
@@ -163,8 +176,11 @@ LTR وخطها تقني. أزرار نافذة Windows تبقى في الجهة 
 TextAlignment="Right"
 TextAlignment="Center"
 TextAlignment="Justify"
-FlowDirection="RightToLeft"
+FlowDirection="RightToLeft" <!-- على Window/Grid/Panel أو كقيمة صلبة في View -->
 ```
+
+اتجاه النص المحلي يؤخذ من `App.TextFlowDirection`، واتجاه الحاويات من
+`App.ShellFlowDirection`. لا تستخدم قيمة RTL صلبة داخل ملفات View.
 
 ## Data surfaces
 
@@ -181,17 +197,25 @@ FlowDirection="RightToLeft"
 
 ```text
 Dialog header
-Fluent tab navigation
-Single content surface per tab
-Contextual command area
-Status or validation region
-Dialog footer
+Windows-style navigation rail for H-Canary, Recovery, and Diagnostics
+Direct content surface with H-Canary selected by default
+One shared MainVm / HCanVm instance
 ```
 
+- H-Canary: يفتح مباشرة عند فتح الأدوات المتقدمة؛ لا توجد صفحة وسيطة أو زر
+  «فتح مساحة». التنقل الجانبي يبدّل المحتوى داخل النافذة نفسها من دون إنشاء
+  نافذة أو ViewModel جديد ومن دون فقد المسودة والاختيارات.
 - Recovery: ملخص وإجراء منفصلان، DataGrid مرن، Empty state مستقل.
 - Diagnostics: Label Auto وقيمة `*`، والمسارات Ellipsis، والسجل Surface خافت.
-- H-Canary: جداول Responsive، أشرطة WrapPanel، لا nested scrolling، وقيم تقنية
-  موحدة.
+- مساحة H-Canary تحتوي مستوى تنقل واحدًا من أربع خطوات: الهدف والبصمة، بيانات
+  الباتش، التعليمات، ثم المراجعة والحفظ. الباتشات المحفوظة تظهر في Drawer داخل
+  المساحة، والنسخ المستهدفة Panel داخل خطوة الهدف، والمراجع المتقدمة Expander
+  داخل خطوة التعليمات.
+- زر «التالي» يعكس جاهزية الخطوة الحالية، ويظهر سبب التعطيل بجواره. إجراءات
+  الملفات الثانوية داخل قائمة «الملفات والأدوات»، وإجراءات الحفظ لا تظهر إلا في
+  خطوة المراجعة. قائمة الباتشات المحفوظة تعرض فقط تعريفات H-Canary التي يملك
+  R3Config metadata لها؛ لا يفتح المحرر تعريفًا خارجيًا قد يفقد حقولًا غير مدعومة.
+- يمنع وضع `TabControl` داخل `TabControl` أو `DataGrid` داخل `DataGrid`.
 
 ## Accessibility
 
@@ -200,8 +224,8 @@ Dialog footer
 - الأزرار الأيقونية لها ToolTip وAutomation name.
 - الخطأ والتحذير والتحديد لا يعتمدان على اللون وحده.
 - حالات Disabled تستخدم ألوانًا وحدودًا صحيحة، لا Opacity وحدها.
-- Runtime gate يختبر Light وDark، العربية والإنجليزية، أربع نوافذ، أربع أحجام،
-  و100% و125% و150% DPI.
+- Runtime gate يختبر Light وDark، العربية والإنجليزية، ثماني نوافذ ومساحة
+  H-Canary المضمنة، أربع أحجام، و100% و125% و150% DPI.
 
 ## UI gates
 
@@ -214,6 +238,8 @@ Dialog footer
 - DataGrid بلا `FluentDataGrid` أو سياسة تمرير.
 - نمط محلي يكرر نمطًا مركزيًا.
 - زر أيقوني بلا ToolTip أو Automation name.
+- زر نصي بمقاس يدوي خارج أنماط Fluent المركزية.
+- TabControl أو DataGrid متداخل.
 - nested vertical ScrollViewer داخل Tab واحد.
 - Disabled state يعتمد على Opacity وحدها.
 - فقد أي Token أساسي أو أي لوحة Light/Dark.

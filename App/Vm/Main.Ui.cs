@@ -30,18 +30,7 @@ public sealed partial class MainVm : VmBase
             }
         }
 
-        if (Set(
-                ref _runUi,
-                isRunning,
-                nameof(RunUi)))
-        {
-            OnChange(nameof(CanMut));
-        }
-
-        HCanary.SetAvail(
-            IsBusy,
-            isRunning);
-        RaiseCmd();
+        SetRunUi(isRunning);
     }
 
     private void LoadCat()
@@ -115,6 +104,7 @@ public sealed partial class MainVm : VmBase
         OnChange(nameof(ReadyTon));
         OnChange(nameof(HasGame));
         OnChange(nameof(ShowWarn));
+        OnHashLaunchStateChanged();
     }
 
     private void LoadLang()
@@ -138,7 +128,6 @@ public sealed partial class MainVm : VmBase
         OnChange(nameof(UiAlign));
         OnChange(nameof(UiHoriz));
         OnChange(nameof(LangText));
-        OnChange(nameof(CurLang));
         OnChange(nameof(ToolTip));
 
         LoadGame();
@@ -358,6 +347,8 @@ public sealed partial class MainVm : VmBase
         BuildCmd.RaiseCan();
         InfoCmd.RaiseCan();
         ExpCmd.RaiseCan();
+        LaunchGameCmd.RaiseCan();
+        HashRefreshCmd.RaiseCan();
     }
 
     private void Log(string message)

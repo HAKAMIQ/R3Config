@@ -323,7 +323,12 @@ public sealed class ReadSvc
                 SrcPath: sourcePath,
                 DepList: dependencies,
                 DefPrint: CalcDef(patchNode),
-                KeySer: runtimeKeySerial);
+                KeySer: runtimeKeySerial,
+                Class: source == PatSrc.Can ||
+                       source == PatSrc.Imported &&
+                       risk == Mdl.PatRisk.Canary
+                    ? PatClass.Canary
+                    : PatClass.Main);
         }
     }
 

@@ -126,7 +126,7 @@ public static class PatPol
             Mdl.PatRisk.Fps60 => "FPS",
             Mdl.PatRisk.Cheat => "Cheat",
             Mdl.PatRisk.Exp => "Experimental",
-            Mdl.PatRisk.Canary => "Canary",
+            Mdl.PatRisk.Canary => Infer(title),
             _ => Infer(title)
         };
     }

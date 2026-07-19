@@ -54,9 +54,12 @@ public sealed partial class HCanVm : VmBase
     private void LoadStor()
     {
         Patches.Clear();
-        if (_install is null || !File.Exists(PatPath)) return;
-        try { foreach (var patch in _flow.LoadHCan(_install)) Patches.Add(patch); }
-        catch (Exception ex) { SetMsg("HCanary.Error.ImportedInvalid", ex.Message); }
+        if (_install is not null && File.Exists(PatPath))
+        {
+            try { foreach (var patch in _flow.LoadHCan(_install)) Patches.Add(patch); }
+            catch (Exception ex) { SetMsg("HCanary.Error.ImportedInvalid", ex.Message); }
+        }
+        OnChange(nameof(IsStoredEmpty));
     }
 
     private void OpenSave()
@@ -64,6 +67,8 @@ public sealed partial class HCanVm : VmBase
         if (SelPat is null) return;
         GetDrft(SelPat.Draft);
         _curId = SelPat.Identity;
+        OnChange(nameof(HasStoredPatch));
+        OnChange(nameof(SaveHint));
         _dirty = false;
         SetMsg("HCanary.Message.Opened");
     }

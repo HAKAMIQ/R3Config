@@ -2,17 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Text.RegularExpressions;
 using R3Config.Mdl;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 
-#pragma warning disable CA1822, IDE0130
-
+#pragma warning disable IDE0130
 namespace R3Config.Svc;
+#pragma warning restore IDE0130
 
 public sealed partial class GameScanner
 {
+    private const string CustomConfigPrefix = "config_";
+
     private readonly int _DirLimi;
     private readonly Func<string, IEnumerable<string>> _Directo;
     private readonly Func<string, IEnumerable<string>> _Files;
@@ -48,14 +51,24 @@ public sealed partial class GameScanner
     public GameScanResult ScanInfo(
         Rpcs3InstallDescriptor install)
     {
+        ArgumentNullException.ThrowIfNull(install);
+
         var games = new Dictionary<string, Rpcs3GameDescriptor>(
             StringComparer.OrdinalIgnoreCase);
         var diagnostics =
             new DiagList<GameScanDiagnostic>(
                 R3Limits.Diag);
 
-        ScanYml(install, games, diagnostics);
-        ScanHdd(install, games, diagnostics);
+        ScanYml(
+            install,
+            games,
+            diagnostics);
+
+        ScanHdd(
+            install,
+            games,
+            diagnostics);
+
         var customConfigSerials = Scan2(
             install,
             diagnostics);
@@ -82,6 +95,8 @@ public sealed partial class GameScanner
     public IReadOnlyList<string> Scan2(
         Rpcs3InstallDescriptor install)
     {
+        ArgumentNullException.ThrowIfNull(install);
+
         return Scan2(
             install,
             diagnostics: null);
@@ -89,7 +104,7 @@ public sealed partial class GameScanner
 
     private IReadOnlyList<string> Scan2(
         Rpcs3InstallDescriptor install,
-        ICollection<GameScanDiagnostic>? diagnostics)
+        DiagList<GameScanDiagnostic>? diagnostics)
     {
         if (!Directory.Exists(install.CustPath))
         {
@@ -98,10 +113,10 @@ public sealed partial class GameScanner
 
         try
         {
-            var entries = _Files(
-                    install.CustPath)
+            var entries = _Files(install.CustPath)
                 .Take(_DirLimi + 1)
                 .ToArray();
+
             if (entries.Length > _DirLimi)
             {
                 diagnostics?.Add(new GameScanDiagnostic(
@@ -117,11 +132,12 @@ public sealed partial class GameScanner
                 .. entries
                     .Take(_DirLimi)
                     .Select(Path.GetFileNameWithoutExtension)
-                    .Where(name => name is not null &&
+                    .Where(name =>
+                        !string.IsNullOrWhiteSpace(name) &&
                         name.StartsWith(
-                            "config_",
+                            CustomConfigPrefix,
                             StringComparison.OrdinalIgnoreCase))
-                    .Select(name => name!["config_".Length..]
+                    .Select(name => name![CustomConfigPrefix.Length..]
                         .ToUpperInvariant())
                     .Where(serial => Serial().IsMatch(serial))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -132,7 +148,8 @@ public sealed partial class GameScanner
         }
         catch (Exception ex) when (
             ex is IOException or
-                UnauthorizedAccessException)
+                UnauthorizedAccessException or
+                SecurityException)
         {
             diagnostics?.Add(new GameScanDiagnostic(
                 ScanCode.NoRead,
@@ -140,6 +157,7 @@ public sealed partial class GameScanner
                 ScanSrc.Dir,
                 install.CustPath,
                 ex.Message));
+
             return [];
         }
     }
@@ -147,18 +165,22 @@ public sealed partial class GameScanner
     private static void ScanYml(
         Rpcs3InstallDescriptor install,
         Dictionary<string, Rpcs3GameDescriptor> games,
-        ICollection<GameScanDiagnostic> diagnostics)
+        DiagList<GameScanDiagnostic> diagnostics)
     {
         var gamesYmlPaths = List(install)
             .ToArray();
+
         if (gamesYmlPaths.Length == 0)
         {
             diagnostics.Add(new GameScanDiagnostic(
                 ScanCode.Missing,
                 ScanSev.Info,
                 ScanSrc.Yaml,
-                Path.Combine(install.CfgPath, "games.yml"),
+                Path.Combine(
+                    install.CfgPath,
+                    "games.yml"),
                 "No supported games.yml source was found."));
+
             return;
         }
 
@@ -174,7 +196,7 @@ public sealed partial class GameScanner
     private static void ScanFile(
         string gamesYmlPath,
         Dictionary<string, Rpcs3GameDescriptor> games,
-        ICollection<GameScanDiagnostic> diagnostics)
+        DiagList<GameScanDiagnostic> diagnostics)
     {
         YamlMappingNode root;
 
@@ -184,6 +206,7 @@ public sealed partial class GameScanner
                 gamesYmlPath,
                 R3Limits.GameByte,
                 "games.yml");
+
             var yaml = R3Bound.LoadYaml(
                 text,
                 "games.yml");
@@ -198,6 +221,7 @@ public sealed partial class GameScanner
                     ScanSrc.Yaml,
                     gamesYmlPath,
                     "games.yml must contain one YAML mapping document."));
+
                 return;
             }
 
@@ -207,7 +231,8 @@ public sealed partial class GameScanner
             ex is YamlException or
                 InvalidDataException or
                 IOException or
-                UnauthorizedAccessException)
+                UnauthorizedAccessException or
+                SecurityException)
         {
             diagnostics.Add(new GameScanDiagnostic(
                 IsFile(
@@ -219,6 +244,7 @@ public sealed partial class GameScanner
                 ScanSrc.Yaml,
                 gamesYmlPath,
                 ex.Message));
+
             return;
         }
 
@@ -238,197 +264,152 @@ public sealed partial class GameScanner
                 continue;
             }
 
-            var installPath = valueNode.Value ?? string.Empty;
-            var sfoProbe = SfoRead.ReadFor(
-                installPath);
+            var installPath =
+                valueNode.Value ?? string.Empty;
+
+            var sfoProbe =
+                SfoRead.ReadFor(installPath);
+
             if (sfoProbe.Diag is not null)
             {
                 diagnostics.Add(sfoProbe.Diag);
             }
+
             var sfo = sfoProbe.Info;
 
-            games[serial] = new Rpcs3GameDescriptor(
-                Serial: sfo?.TitleId ?? serial,
-                Title: sfo?.Title ?? Derive(
-                    serial,
-                    installPath),
-                InstPath: installPath,
-                Version: PatVer.Norm(
-                    sfo?.AppVer),
-                PpuHash: null,
-                SpuHash: null);
+            games.TryAdd(
+                serial,
+                new Rpcs3GameDescriptor(
+                    Serial: serial,
+                    Title: sfo?.Title ?? Derive(
+                        serial,
+                        installPath),
+                    InstPath: installPath,
+                    Version: PatVer.Norm(
+                        sfo?.AppVer),
+                    PpuHash: null,
+                    SpuHash: null));
         }
     }
 
     private static IEnumerable<string> List(
         Rpcs3InstallDescriptor install)
     {
-        var configBasePath =
-            Path.GetDirectoryName(install.CfgPath);
+        var dataRoot = DataRoot(install);
 
-        var portablePath = Path.Combine(
-            install.RootPath,
-            "portable");
-
-        string?[] candidates =
+        string[] candidates =
         [
             Path.Combine(
                 install.CfgPath,
                 "games.yml"),
-            configBasePath is null
-                ? null
-                : Path.Combine(
-                    configBasePath,
-                    "games.yml"),
             Path.Combine(
-                install.RootPath,
-                "games.yml"),
-            Path.Combine(
-                portablePath,
-                "config",
-                "games.yml"),
-            Path.Combine(
-                portablePath,
+                dataRoot,
                 "games.yml")
         ];
 
         return candidates
-            .OfType<string>()
-            .Where(path =>
-                !string.IsNullOrWhiteSpace(path))
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .Where(File.Exists);
     }
 
     private void ScanHdd(
         Rpcs3InstallDescriptor install,
         Dictionary<string, Rpcs3GameDescriptor> games,
-        ICollection<GameScanDiagnostic> diagnostics)
+        DiagList<GameScanDiagnostic> diagnostics)
     {
-        var configBasePath =
-            Path.GetDirectoryName(install.CfgPath);
+        var hddGamePath = Path.Combine(
+            DataRoot(install),
+            "dev_hdd0",
+            "game");
 
-        var portablePath = Path.Combine(
-            install.RootPath,
-            "portable");
-
-        string?[] candidates =
-        [
-            configBasePath is null
-                ? null
-                : Path.Combine(
-                    configBasePath,
-                    "dev_hdd0",
-                    "game"),
-            Path.Combine(
-                install.RootPath,
-                "dev_hdd0",
-                "game"),
-            Path.Combine(
-                portablePath,
-                "dev_hdd0",
-                "game")
-        ];
-
-        var hddGamePaths = candidates
-            .OfType<string>()
-            .Where(path =>
-                !string.IsNullOrWhiteSpace(path))
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase);
-
-        foreach (var hddGamePath in hddGamePaths)
+        if (!Directory.Exists(hddGamePath))
         {
-            if (!Directory.Exists(hddGamePath))
+            return;
+        }
+
+        string[] directories;
+
+        try
+        {
+            directories =
+            [
+                .. _Directo(hddGamePath)
+                    .Take(_DirLimi + 1)
+            ];
+        }
+        catch (Exception ex) when (
+            ex is IOException or
+                UnauthorizedAccessException or
+                SecurityException)
+        {
+            diagnostics.Add(new GameScanDiagnostic(
+                ScanCode.Denied,
+                ScanSev.Warning,
+                ScanSrc.GameDir,
+                hddGamePath,
+                ex.Message));
+
+            return;
+        }
+
+        if (directories.Length > _DirLimi)
+        {
+            diagnostics.Add(new GameScanDiagnostic(
+                ScanCode.Reached,
+                ScanSev.Warning,
+                ScanSrc.GameDir,
+                hddGamePath,
+                $"Game-directory enumeration stopped at {_DirLimi} entries."));
+        }
+
+        foreach (var directory in directories.Take(
+                     _DirLimi))
+        {
+            var folderName =
+                Path.GetFileName(directory);
+
+            if (string.IsNullOrWhiteSpace(folderName) ||
+                !Serial().IsMatch(folderName))
             {
                 continue;
             }
 
-            string[] directories;
+            var sfoProbe =
+                SfoRead.ReadFor(directory);
 
-            try
+            if (sfoProbe.Diag is not null)
             {
-                directories =
-                [
-                    .. _Directo(hddGamePath)
-                        .Take(_DirLimi + 1)
-                ];
+                diagnostics.Add(sfoProbe.Diag);
             }
-            catch (Exception ex) when (
-                ex is IOException or
-                    UnauthorizedAccessException)
+
+            var sfo = sfoProbe.Info;
+
+            if (games.TryGetValue(
+                    folderName,
+                    out var existing))
             {
-                diagnostics.Add(new GameScanDiagnostic(
-                    ScanCode.Denied,
-                    ScanSev.Warning,
-                    ScanSrc.GameDir,
-                    hddGamePath,
-                    ex.Message));
+                games[folderName] = existing with
+                {
+                    Title = string.IsNullOrWhiteSpace(
+                        sfo?.Title)
+                        ? existing.Title
+                        : sfo.Title,
+                    Version = Select(
+                        existing.Version,
+                        sfo?.AppVer)
+                };
+
                 continue;
             }
 
-            if (directories.Length > _DirLimi)
-            {
-                diagnostics.Add(new GameScanDiagnostic(
-                    ScanCode.Reached,
-                    ScanSev.Warning,
-                    ScanSrc.GameDir,
-                    hddGamePath,
-                    $"Game-directory enumeration stopped at {_DirLimi} entries."));
-            }
-
-            foreach (var directory in directories.Take(
-                         _DirLimi))
-            {
-                var folderName =
-                    Path.GetFileName(directory);
-
-                if (string.IsNullOrWhiteSpace(folderName) ||
-                    !Serial().IsMatch(folderName))
-                {
-                    continue;
-                }
-
-                var sfoProbe =
-                    SfoRead.ReadFor(
-                        directory);
-                if (sfoProbe.Diag is not null)
-                {
-                    diagnostics.Add(sfoProbe.Diag);
-                }
-                var sfo = sfoProbe.Info;
-
-                var serial =
-                    sfo?.TitleId ?? folderName;
-
-                if (games.TryGetValue(
-                        serial,
-                        out var existing))
-                {
-                    games[serial] = existing with
-                    {
-                        Title = string.IsNullOrWhiteSpace(
-                            sfo?.Title)
-                            ? existing.Title
-                            : sfo!.Title!,
-                        Version = Select(
-                            existing.Version,
-                            sfo?.AppVer)
-                    };
-
-                    continue;
-                }
-
-                games[serial] = new Rpcs3GameDescriptor(
-                    Serial: serial,
-                    Title: sfo?.Title ?? serial,
-                    InstPath: directory,
-                    Version: PatVer.Norm(
-                        sfo?.AppVer),
-                    PpuHash: null,
-                    SpuHash: null);
-            }
+            games[folderName] = new Rpcs3GameDescriptor(
+                Serial: folderName,
+                Title: sfo?.Title ?? folderName,
+                InstPath: directory,
+                Version: PatVer.Norm(
+                    sfo?.AppVer),
+                PpuHash: null,
+                SpuHash: null);
         }
     }
 
@@ -452,15 +433,46 @@ public sealed partial class GameScanner
             return normalizedUpdate;
         }
 
-        return System.Version.TryParse(
-                   normalizedUpdate,
-                   out var update) &&
-               System.Version.TryParse(
-                   normalizedBase,
-                   out var @base) &&
-               update < @base
+        var updateIsVersion = System.Version.TryParse(
+            normalizedUpdate,
+            out var update);
+
+        var baseIsVersion = System.Version.TryParse(
+            normalizedBase,
+            out var @base);
+
+        if (!updateIsVersion)
+        {
+            return normalizedBase;
+        }
+
+        if (!baseIsVersion)
+        {
+            return normalizedUpdate;
+        }
+
+        return update < @base
             ? normalizedBase
             : normalizedUpdate;
+    }
+
+    private static string DataRoot(
+        Rpcs3InstallDescriptor install)
+    {
+        if (!string.IsNullOrWhiteSpace(
+                install.DataRoot))
+        {
+            return install.DataRoot;
+        }
+
+        var configBasePath =
+            Path.GetDirectoryName(
+                install.CfgPath);
+
+        return string.IsNullOrWhiteSpace(
+            configBasePath)
+            ? install.RootPath
+            : configBasePath;
     }
 
     private static string Derive(
@@ -509,7 +521,9 @@ public sealed partial class GameScanner
                    new FileInfo(path).Length > maxBytes;
         }
         catch (Exception ex) when (
-            ex is IOException or UnauthorizedAccessException)
+            ex is IOException or
+                UnauthorizedAccessException or
+                SecurityException)
         {
             return false;
         }
@@ -530,5 +544,3 @@ public sealed partial class GameScanner
         RegexOptions.CultureInvariant)]
     private static partial Regex Repeated();
 }
-
-#pragma warning restore CA1822, IDE0130

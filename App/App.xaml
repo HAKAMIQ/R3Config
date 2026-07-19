@@ -31,7 +31,7 @@
 
             <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource Type.Body}">
                 <Setter Property="TextAlignment" Value="{DynamicResource App.DefaultTextAlignment}" />
-                <Setter Property="FlowDirection" Value="{DynamicResource App.FlowDirection}" />
+                <Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
                 <Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
                 <Setter Property="TextWrapping" Value="Wrap" />
                 <Setter Property="SnapsToDevicePixels" Value="True" />

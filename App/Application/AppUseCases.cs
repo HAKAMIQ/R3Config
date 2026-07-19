@@ -8,4 +8,5 @@ public sealed record AppUseCases(
     CanaryImportUseCase CanaryImport,
     RecommendationCatalogUseCase Recommendations,
     BackupUseCase Backup,
-    HCanaryUseCase HCanary);
+    HCanaryUseCase HCanary,
+    GameLaunchUseCase GameLaunch);

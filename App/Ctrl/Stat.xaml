@@ -11,50 +11,50 @@
             Padding="4">
 		<WrapPanel Orientation="Horizontal"
                    FlowDirection="{DynamicResource App.FlowDirection}">
-			<Border Style="{StaticResource StatusMetricPill}">
-				<TextBlock Text="{Binding R3Status}"
-                           Style="{StaticResource StatusText}"
-                           FlowDirection="{DynamicResource App.FlowDirection}"
+				<Border Style="{StaticResource StatusMetricPill}">
+					<TextBlock Text="{Binding R3Status}"
+	                           Style="{StaticResource StatusText}"
+	                           FlowDirection="{DynamicResource App.TextFlowDirection}"
                            TextAlignment="{DynamicResource App.DefaultTextAlignment}"
                            HorizontalAlignment="Stretch"
                            TextTrimming="CharacterEllipsis"
                            ToolTip="{lang:TextExt Key=Status.Rpcs3Tip}" />
 			</Border>
 
-			<Border Style="{StaticResource StatusMetricPill}">
-				<TextBlock Text="{Binding Status}"
-                           Style="{StaticResource StatusText}"
-                           FlowDirection="{DynamicResource App.FlowDirection}"
+				<Border Style="{StaticResource StatusMetricPill}">
+					<TextBlock Text="{Binding Status}"
+	                           Style="{StaticResource StatusText}"
+	                           FlowDirection="{DynamicResource App.TextFlowDirection}"
                            TextAlignment="{DynamicResource App.DefaultTextAlignment}"
                            HorizontalAlignment="Stretch"
                            TextTrimming="CharacterEllipsis"
                            ToolTip="{lang:TextExt Key=Status.DataTip}" />
 			</Border>
 
-			<Border Style="{StaticResource StatusMetricPill}">
-				<TextBlock Text="{Binding RecStat}"
-                           Style="{StaticResource StatusText}"
-                           FlowDirection="{DynamicResource App.FlowDirection}"
+				<Border Style="{StaticResource StatusMetricPill}">
+					<TextBlock Text="{Binding RecStat}"
+	                           Style="{StaticResource StatusText}"
+	                           FlowDirection="{DynamicResource App.TextFlowDirection}"
                            TextAlignment="{DynamicResource App.DefaultTextAlignment}"
                            HorizontalAlignment="Stretch"
                            TextTrimming="CharacterEllipsis"
                            ToolTip="{lang:TextExt Key=Status.RecTip}" />
 			</Border>
 
-			<Border Style="{StaticResource StatusMetricPill}">
-				<TextBlock Text="{Binding HwStatus}"
-                           Style="{StaticResource StatusText}"
-                           FlowDirection="{DynamicResource App.FlowDirection}"
+				<Border Style="{StaticResource StatusMetricPill}">
+					<TextBlock Text="{Binding HwStatus}"
+	                           Style="{StaticResource StatusText}"
+	                           FlowDirection="{DynamicResource App.TextFlowDirection}"
                            TextAlignment="{DynamicResource App.DefaultTextAlignment}"
                            HorizontalAlignment="Stretch"
                            TextTrimming="CharacterEllipsis"
                            ToolTip="{Binding HwTip}" />
 			</Border>
 
-			<Border Style="{StaticResource StatusMetricPill}">
-				<TextBlock Text="{Binding BkpStat}"
-                           Style="{StaticResource StatusText}"
-                           FlowDirection="{DynamicResource App.FlowDirection}"
+				<Border Style="{StaticResource StatusMetricPill}">
+					<TextBlock Text="{Binding BkpStat}"
+	                           Style="{StaticResource StatusText}"
+	                           FlowDirection="{DynamicResource App.TextFlowDirection}"
                            TextAlignment="{DynamicResource App.DefaultTextAlignment}"
                            HorizontalAlignment="Stretch"
                            TextTrimming="CharacterEllipsis"

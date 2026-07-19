@@ -344,6 +344,14 @@ public sealed class PatPrev : VmBase
             .ToArray();
     }
 
+    public IReadOnlyList<PatMatch> Enabled()
+    {
+        return Items
+            .Where(item => item.IsOn)
+            .Select(item => item.Match)
+            .ToArray();
+    }
+
     public IReadOnlyList<PatMatch> SelCan()
     {
         return CanItems

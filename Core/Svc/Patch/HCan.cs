@@ -33,7 +33,7 @@ public sealed class HCanCat
 
     private static readonly HashSet<string> Kinds = new(
         [
-            "alloc", "calloc", "jump", "jumpl", "jumpf", "load", "byte", "be8",
+            "alloc", "calloc", "jump", "jumpl", "jumpf", "load", "byte",
             "le16", "le32", "le64", "bef32", "bef64", "be16", "be32", "bd32",
             "be64", "bd64", "lef32", "lef64", "bpex", "utf8", "cutf8",
             "move_file", "hide_file"
@@ -41,7 +41,7 @@ public sealed class HCanCat
         StringComparer.Ordinal);
 
     private static readonly HashSet<string> Kinds2 = new(
-        ["byte", "be8", "be16", "be32", "be64", "bef32", "bef64"],
+        ["byte", "be16", "be32", "be64", "bef32", "bef64"],
         StringComparer.Ordinal);
 
     private static readonly HashSet<string> Kinds3 = new(
@@ -1542,10 +1542,6 @@ public sealed class HCanaryPatchAuthoringService
         @"^(?<kind>PPU|SPU)-(?<hash>[0-9a-fA-F]{40})$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex Pattern2 = new(
-        @"^0x[0-9a-fA-F]+$",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
     private static readonly Regex Pattern3 = new(
         @"^[A-Za-z0-9]{9}$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -1564,10 +1560,30 @@ public sealed class HCanaryPatchAuthoringService
 
     public static readonly IReadOnlyList<string> Op =
     [
-        "be32", "be16", "be64", "be8", "byte", "le16", "le32", "le64",
-        "bef32", "bef64", "lef32", "lef64", "bd32", "bd64", "bpex",
-        "alloc", "calloc", "jump", "jumpl", "jumpf", "utf8", "cutf8",
-        "move_file", "hide_file", "load"
+        "alloc",
+        "calloc",
+        "jump",
+        "jumpl",
+        "jumpf",
+        "load",
+        "byte",
+        "le16",
+        "le32",
+        "le64",
+        "bef32",
+        "bef64",
+        "be16",
+        "be32",
+        "bd32",
+        "be64",
+        "bd64",
+        "lef32",
+        "lef64",
+        "bpex",
+        "utf8",
+        "cutf8",
+        "move_file",
+        "hide_file",
     ];
 
     private static readonly HashSet<string> OpSet = new(Op, StringComparer.Ordinal);
@@ -1622,7 +1638,13 @@ public sealed class HCanaryPatchAuthoringService
             Required(target.GameName, $"Games[{index}].GameName", "GameName.Required", "Game Name is required.");
             Required(target.GameId, $"Games[{index}].GameId", "GameId.Required", "Game ID is required.");
             Required(target.GameVer, $"Games[{index}].GameVersion", "GameVersion.Required", "Game Version is required.");
-            if (!string.IsNullOrWhiteSpace(target.GameId) && !Pattern3.IsMatch(target.GameId.Trim()))
+            var allTitle = target.GameName.Trim().Equals("All", StringComparison.OrdinalIgnoreCase);
+            var allId = target.GameId.Trim().Equals("All", StringComparison.OrdinalIgnoreCase);
+            if (allTitle != allId)
+            {
+                Add("GameTarget.AllPair", $"Games[{index}].GameId", "The All target must pair Games: All with Game ID All.");
+            }
+            else if (!allId && !string.IsNullOrWhiteSpace(target.GameId) && !Pattern3.IsMatch(target.GameId.Trim()))
             {
                 Add("GameId.Invalid", $"Games[{index}].GameId", "Game ID must contain exactly nine Latin letters or digits.");
             }
@@ -1716,12 +1738,21 @@ public sealed class HCanaryPatchAuthoringService
                     }
                     continue;
                 }
-                if (!Pattern2.IsMatch(instruction.Address.Trim()))
+                var address = instruction.Address.Trim();
+                var value = instruction.Value.Trim();
+                if (IsFileOperation(operation))
                 {
-                    Add("Address.Invalid", itemField + ".Address", "Address must be hexadecimal and start with 0x.");
+                    if (string.IsNullOrWhiteSpace(address))
+                    {
+                        Add("Address.Invalid", itemField + ".Address", "A source path is required for this operation.");
+                    }
                 }
-                if (string.IsNullOrWhiteSpace(instruction.Value) ||
-                    (HexVal(operation) && !Pattern2.IsMatch(instruction.Value.Trim())))
+                else if (!TryHex32(address))
+                {
+                    Add("Address.Invalid", itemField + ".Address", "Address must be a 32-bit hexadecimal value that starts with 0x.");
+                }
+
+                if (!ValidValue(operation, value))
                 {
                     Add("Value.Invalid", itemField + ".Value", "Value is invalid for this operation.");
                 }
@@ -1749,10 +1780,10 @@ public sealed class HCanaryPatchAuthoringService
         lines.Add(draft.ExeHash.Trim() + ":");
         lines.Add("  " + Quote(draft.PatName.Trim()) + ":");
         lines.Add("    Games:");
-        foreach (var titleGroup in draft.Games.GroupBy(item => item.GameName.Trim(), StringComparer.Ordinal))
+        foreach (var titleGroup in draft.Games.GroupBy(item => NormTitle(item.GameName), StringComparer.Ordinal))
         {
             lines.Add("      " + Quote(titleGroup.Key) + ":");
-            foreach (var idGroup in titleGroup.GroupBy(item => item.GameId.Trim().ToUpperInvariant(), StringComparer.Ordinal))
+            foreach (var idGroup in titleGroup.GroupBy(item => NormId(item.GameId), StringComparer.Ordinal))
             {
                 var versions = idGroup.Select(item => NormVer(item.GameVer))
                     .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
@@ -1818,19 +1849,22 @@ public sealed class HCanaryPatchAuthoringService
                 }
                 var title = Scalar(titleNode);
                 var identity = Identity(hashKey, title);
-                metadata.TryGetValue(identity, out var localMetadata);
+                if (!metadata.TryGetValue(identity, out var localMetadata))
+                {
+                    continue;
+                }
                 var inferredPatchType = match.Groups["kind"].Value == "PPU"
                     ? HCanType.Ppu
                     : HCanType.Spu;
                 var isLegacyCanary =
-                    localMetadata?.PatType == HCanType.Can;
+                    localMetadata.PatType == HCanType.Can;
                 var draft = new HCanDrft
                 {
                     PatType = isLegacyCanary
                         ? inferredPatchType
-                        : localMetadata?.PatType ?? inferredPatchType,
+                        : localMetadata.PatType,
                     IsExp =
-                        localMetadata?.IsExp == true ||
+                        localMetadata.IsExp ||
                         isLegacyCanary,
                     ExeHash = hashKey,
                     PatName = title,
@@ -1838,7 +1872,7 @@ public sealed class HCanaryPatchAuthoringService
                     Notes = Scalar(TryGet(details, "Notes")),
                     Group = Scalar(TryGet(details, "Group")),
                     PatVer = Scalar(TryGet(details, "Patch Version")),
-                    Status = localMetadata?.Status ?? DraftSt.Saved,
+                    Status = localMetadata.Status,
                     Games = Read(TryGet(details, "Games")),
                     Ins = ReadIns(TryGet(details, "Patch"), out var dependencies)
                 };
@@ -1954,19 +1988,86 @@ public sealed class HCanaryPatchAuthoringService
         return new SaveRes(importedPatchPath, backup, read.Catalog.Entries.Count, true);
     }
 
-    private static bool HexVal(string operation) => operation is not
-        ("utf8" or "cutf8" or "move_file" or "hide_file" or "alloc" or "calloc" or "jump" or "jumpl" or "jumpf");
+    private static bool IsFileOperation(string operation) =>
+        operation is "move_file" or "hide_file";
+
+    private static bool ValidValue(string operation, string value)
+    {
+        if (operation == "hide_file") return true;
+        if (operation is "utf8" or "cutf8" or "bpex" or "jumpf" or "move_file")
+        {
+            return !string.IsNullOrWhiteSpace(value);
+        }
+        if (operation is "bef32" or "lef32")
+        {
+            return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) &&
+                   float.IsFinite(number);
+        }
+        if (operation is "bef64" or "lef64")
+        {
+            return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) &&
+                   double.IsFinite(number);
+        }
+        if (operation == "byte") return TryInteger(value, sbyte.MinValue, byte.MaxValue);
+        if (operation is "le16" or "be16") return TryInteger(value, short.MinValue, ushort.MaxValue);
+        if (operation is "le32" or "be32" or "bd32") return TryInteger(value, int.MinValue, uint.MaxValue);
+        if (operation is "le64" or "be64" or "bd64" or "alloc" or "calloc" or "jump" or "jumpl")
+        {
+            return TryInteger(value, long.MinValue, ulong.MaxValue);
+        }
+        return false;
+    }
+
+    private static bool TryHex32(string value)
+    {
+        value = value.Trim();
+        return value.StartsWith("0x", StringComparison.Ordinal) &&
+               uint.TryParse(value.AsSpan(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out _);
+    }
+
+    private static bool TryInteger(string value, long minimum, ulong maximum)
+    {
+        value = value.Trim();
+        if (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+        {
+            return ulong.TryParse(value.AsSpan(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var hexadecimal) &&
+                   hexadecimal <= maximum;
+        }
+        if (long.TryParse(value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var signed))
+        {
+            return signed >= minimum && (signed < 0 || (ulong)signed <= maximum);
+        }
+        return ulong.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var unsigned) &&
+               unsigned <= maximum;
+    }
 
     private static string NormVer(string value) =>
         value.Trim().Equals("All", StringComparison.OrdinalIgnoreCase) ? "All" : value.Trim();
 
+    private static string NormId(string value) =>
+        value.Trim().Equals("All", StringComparison.OrdinalIgnoreCase) ? "All" : value.Trim().ToUpperInvariant();
+
+    private static string NormTitle(string value) =>
+        value.Trim().Equals("All", StringComparison.OrdinalIgnoreCase) ? "All" : value.Trim();
+
     private static string InsYaml(HCanInst instruction)
     {
-        if (instruction.Op.Trim() == "load")
+        var operation = instruction.Op.Trim();
+        var address = instruction.Address.Trim();
+        var value = instruction.Value.Trim();
+        if (operation == "load")
         {
-            return $"- [ load, *{instruction.Address.Trim().TrimStart('*')} ]";
+            return $"- [ load, *{address.TrimStart('*')} ]";
         }
-        return $"- [ {instruction.Op.Trim()}, {instruction.Address.Trim()}, {instruction.Value.Trim()} ]";
+        if (IsFileOperation(operation))
+        {
+            return $"- [ {operation}, {Quote(address)}, {Quote(value)} ]";
+        }
+        if (operation is "utf8" or "cutf8" or "bpex" or "jumpf")
+        {
+            return $"- [ {operation}, {address}, {Quote(value)} ]";
+        }
+        return $"- [ {operation}, {address}, {value} ]";
     }
 
     private static string Quote(string value) => "\"" + value
@@ -1992,7 +2093,11 @@ public sealed class HCanaryPatchAuthoringService
                 {
                     return entry;
                 }
-                return entry with { Risk = Mdl.PatRisk.Canary, PatType = "Canary" };
+                return entry with
+                {
+                    Risk = Mdl.PatRisk.Canary,
+                    Class = Mdl.PatClass.Canary
+                };
             }).ToArray()
         };
     }
@@ -2207,10 +2312,10 @@ public sealed class HCanaryPatchAuthoringService
     {
         var details = new YamlMappingNode();
         var games = new YamlMappingNode();
-        foreach (var titleGroup in draft.Games.GroupBy(item => item.GameName.Trim(), StringComparer.Ordinal))
+        foreach (var titleGroup in draft.Games.GroupBy(item => NormTitle(item.GameName), StringComparer.Ordinal))
         {
             var ids = new YamlMappingNode();
-            foreach (var idGroup in titleGroup.GroupBy(item => item.GameId.Trim().ToUpperInvariant(), StringComparer.Ordinal))
+            foreach (var idGroup in titleGroup.GroupBy(item => NormId(item.GameId), StringComparer.Ordinal))
             {
                 ids.Add(idGroup.Key, new YamlSequenceNode(idGroup.Select(item => new YamlScalarNode(NormVer(item.GameVer)))));
             }

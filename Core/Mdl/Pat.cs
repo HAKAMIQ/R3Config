@@ -184,6 +184,17 @@ public enum PatRisk
     Unknown
 }
 
+/// <summary>
+/// Describes the distribution/stability channel of a patch definition. This
+/// is intentionally independent from <see cref="HashKind"/>: both Main and
+/// Canary definitions can target PPU, SPU, PRX, or OVL runtime keys.
+/// </summary>
+public enum PatClass
+{
+    Main,
+    Canary
+}
+
 public enum MatStat
 {
     Match,
@@ -221,7 +232,8 @@ public sealed record Rpcs3PatchEntry(
     string? SrcPath = null,
     IReadOnlyList<string>? DepList = null,
     string? DefPrint = null,
-    string? KeySer = null)
+    string? KeySer = null,
+    PatClass Class = PatClass.Main)
 {
     public IReadOnlyList<string> Patches =>
         DepList ?? [];
@@ -346,7 +358,9 @@ public sealed record PatchPreparedFile(
     PrepKind Kind,
     PatSrc CatSrc = PatSrc.Unknown,
     int? EntNum = null,
-    bool DelTgt = false);
+    bool DelTgt = false,
+    bool? ExpectedExists = null,
+    string? ExpectedSha256 = null);
 
 public sealed record PatRes(
     BackupManifest Backup,

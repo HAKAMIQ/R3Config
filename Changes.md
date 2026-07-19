@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Added Arabic and English support with improved RTL handling.
+- Added Arabic and English support with direction-aware Arabic text while shell
+  geometry and physical text alignment remain left-to-right/left-aligned.
 - Added local RPCS3 game detection and recommendation review.
 - Added support for Game, Canary, and Cheat patches.
 - Added patch matching by serial, game version, and executable hash.
@@ -17,4 +18,19 @@
 - Added safe backups, rollback, and protection against invalid writes.
 - Added hardware and RPCS3 log detection for better compatibility checks.
 - Improved the interface, empty states, diagnostics, and patch management.
+- Reworked H-Canary authoring into four guided steps, with inline surfaces for
+  saved patches, target versions, and advanced instruction references.
+- Aligned H-Canary operations and value validation with RPCS3's current patch
+  parser, including file operations, decimal values, and canonical All targets.
+- Limited the H-Canary editor to patches created by R3Config so opening and
+  saving cannot silently remove unsupported fields from other imported patches.
+- Simplified H-Canary actions to one primary action per surface, with explicit
+  Previous/Next navigation and contextual save, copy, and delete actions.
 - Added portable build and release verification tools.
+
+## H-Canary Advanced Tools workspace
+
+- Integrated the H-Canary editor into `AdvDlg` without creating a second `HCanVm`.
+- Replaced saved, target, and anchor window nesting with an in-workspace drawer and panels.
+- Added deterministic step readiness, visible blocked-step guidance, and raw localization runtime checks.
+- Kept RPCS3 validation, transaction, save/delete, mutation-guard, and `imported_patch.yml` contracts unchanged.

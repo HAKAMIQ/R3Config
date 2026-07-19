@@ -14,12 +14,14 @@ public sealed class PatchMutationUseCase(
     public Mdl.PatchApplyPlan BuildOn(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<PatMatch> matches,
+        IReadOnlyList<PatMatch> enabledMatches,
         bool expertMode)
     {
         return planner.Build(
             install,
             matches,
-            expertMode);
+            expertMode,
+            enabledMatches);
     }
 
     public Mdl.PatchApplyPlan BuildOff(

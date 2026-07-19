@@ -4,9 +4,9 @@
         xmlns:lang="clr-namespace:R3Config.Lang"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="{lang:TextExt Key=Patch.ImportCanaryTitle}"
-        Width="700"
-        Height="520"
-        MinWidth="620"
+        Width="640"
+        Height="480"
+        MinWidth="560"
         MinHeight="460"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
@@ -49,7 +49,7 @@
                     <TextBlock Grid.Column="0"
                                Text="{lang:TextExt Key=Patch.ImportCanaryTitle}"
                                Style="{StaticResource R3SettingsTitleText}"
-                               FlowDirection="{DynamicResource App.FlowDirection}"
+                               FlowDirection="{DynamicResource App.TextFlowDirection}"
                                TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center" />
 
@@ -75,7 +75,7 @@
             </Border>
 
             <Grid Grid.Row="1"
-                  Margin="14"
+                  Margin="16"
                   FlowDirection="LeftToRight">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -96,7 +96,7 @@
                         <TextBlock Grid.Row="0"
                                    Text="{lang:TextExt Key=Patch.ImportCanaryPasteLabel}"
                                    Style="{StaticResource R3SettingsDescriptionText}"
-                                   FlowDirection="{DynamicResource App.FlowDirection}"
+                                   FlowDirection="{DynamicResource App.TextFlowDirection}"
                                    TextAlignment="{DynamicResource Options.SettingsTextAlignment}"
                                    TextWrapping="Wrap" />
 
@@ -201,24 +201,18 @@
                     <Button Grid.Column="0"
                             Content="{lang:TextExt Key=Patch.ImportCanaryChooseFile}"
                             Command="{Binding PickCmd}"
-                            MinWidth="118"
-                            Margin="0"
-                            Padding="12,7" />
+                            Margin="0" />
 
                     <Button Grid.Column="2"
                             Content="{lang:TextExt Key=Dialog.Cancel}"
                             Command="{Binding CloseCmd}"
-                            MinWidth="88"
-                            Margin="0"
-                            Padding="12,7" />
+                            Margin="0" />
 
                     <Button Grid.Column="4"
                             Content="{lang:TextExt Key=Patch.ImportCanaryCreateFile}"
                             Command="{Binding MakeCmd}"
                             Style="{StaticResource FluentButton.Primary}"
-                            MinWidth="138"
-                            Margin="0"
-                            Padding="12,7" />
+                            Margin="0" />
                 </Grid>
             </Border>
         </Grid>

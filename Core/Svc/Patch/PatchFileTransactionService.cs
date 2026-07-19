@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using R3Config.Mdl;
@@ -71,10 +72,14 @@ public sealed class PatchFileTransactionService(
                 backupRootPath,
                 targets);
 
+            ValidateExpectedState(files);
+
             foreach (var file in files)
             {
                 staged.Add(StgAnd(file));
             }
+
+            ValidateExpectedState(files);
 
             validatePaths?.Invoke(
                 PatPhase.Bkp,
@@ -84,6 +89,8 @@ public sealed class PatchFileTransactionService(
             var backup = _BkpSvc.BuildBkp(
                 backupRootPath,
                 targets);
+
+            ValidateExpectedState(files);
 
             validatePaths?.Invoke(
                 PatPhase.Commit,
@@ -178,6 +185,13 @@ public sealed class PatchFileTransactionService(
 
             var targetPath = Path.GetFullPath(file.TgtPath);
 
+            if (file.ExpectedExists == true &&
+                string.IsNullOrWhiteSpace(file.ExpectedSha256))
+            {
+                throw new InvalidDataException(
+                    $"Prepared patch file is missing its original content fingerprint: {targetPath}");
+            }
+
             if (!seenTargets.Add(targetPath))
             {
                 throw new InvalidOperationException(
@@ -191,6 +205,47 @@ public sealed class PatchFileTransactionService(
         }
 
         return output;
+    }
+
+    private static void ValidateExpectedState(
+        IReadOnlyList<PatchPreparedFile> files)
+    {
+        foreach (var file in files)
+        {
+            if (file.ExpectedExists is not bool expectedExists)
+            {
+                continue;
+            }
+
+            var exists = File.Exists(file.TgtPath);
+            if (exists != expectedExists)
+            {
+                throw new IOException(
+                    $"Transaction target changed externally before commit: {file.TgtPath}");
+            }
+
+            if (!exists)
+            {
+                continue;
+            }
+
+            using var stream = new FileStream(
+                file.TgtPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read);
+            var digest = Convert.ToHexString(
+                SHA256.HashData(stream));
+
+            if (!string.Equals(
+                    digest,
+                    file.ExpectedSha256,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                throw new IOException(
+                    $"Transaction target changed externally before commit: {file.TgtPath}");
+            }
+        }
     }
 
     private StgFile StgAnd(

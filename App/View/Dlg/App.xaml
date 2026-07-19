@@ -45,6 +45,7 @@
                         Margin="0,2,0,0">
                     <TextBlock x:Name="IconText"
                                FlowDirection="LeftToRight"
+                               Language="{DynamicResource TechnicalText.Language}"
                                FontSize="14"
                                FontWeight="Bold"
                                HorizontalAlignment="Center"
@@ -68,12 +69,10 @@
                             Style="{StaticResource FluentDialog.Buttons}">
                     <Button x:Name="AltBtn"
                             Style="{StaticResource FluentButton.Secondary}"
-                            MinWidth="92"
                             Margin="4,0"
                             Click="AltClick" />
                     <Button x:Name="MainBtn"
                             Style="{StaticResource FluentButton.Primary}"
-                            MinWidth="92"
                             Margin="4,0"
                             Click="MainClk" />
                 </StackPanel>

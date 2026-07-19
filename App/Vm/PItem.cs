@@ -74,7 +74,7 @@ public sealed class PatItVm : VmBase
 
     public string SrcDsp => UiText.GetText(SrcKey(PatSrcKd));
 
-    public string SrcTip => PatSrcKd == PatSrcKd.Canary
+    public string SrcTip => IsCanary
         ? UiText.GetText("Patch.CanaryNotice")
         : UiText.Fmt("Patch.Source.Tooltip", SrcDsp);
 
@@ -103,11 +103,9 @@ public sealed class PatItVm : VmBase
 
     public bool IsOfcl => PatSrcKd == PatSrcKd.Official;
 
-    public bool IsCanary => PatSrcKd == PatSrcKd.Canary;
+    public bool IsCanary => Match.Patch.Class == Mdl.PatClass.Canary;
 
-    public bool IsExpPat =>
-        IsCanary ||
-        Risk is Mdl.PatRisk.Exp or Mdl.PatRisk.Canary;
+    public bool IsExpPat => IsCanary;
 
     public bool IsLocal => PatSrcKd == PatSrcKd.Local;
 
@@ -124,7 +122,7 @@ public sealed class PatItVm : VmBase
     public bool HasDef => Match.Patch.Source switch
     {
         PatSrc.Can => true,
-        PatSrc.Imported => IsExpPat,
+        PatSrc.Imported => true,
         PatSrc.Cht or PatSrc.ManCht => true,
         PatSrc.TitlePat => Risk == Mdl.PatRisk.Cheat,
         _ => false
@@ -133,7 +131,7 @@ public sealed class PatItVm : VmBase
     public string DefState => Match.Patch.Source switch
     {
         PatSrc.Can => UiText.GetText("Patch.Definition.NotMerged"),
-        PatSrc.Imported when IsExpPat => UiText.GetText("Patch.Definition.Merged"),
+        PatSrc.Imported => UiText.GetText("Patch.Definition.Merged"),
         PatSrc.Cht => UiText.GetText("Patch.Definition.NotPrepared"),
         PatSrc.ManCht => UiText.GetText("Patch.Definition.Prepared"),
         PatSrc.TitlePat when Risk == Mdl.PatRisk.Cheat => UiText.GetText("Patch.Definition.Existing"),
@@ -546,73 +544,18 @@ public sealed class PatItVm : VmBase
         }
     }
 
-    private static PatSrcKd InferSrc(string sourceLabel, Rpcs3PatchEntry patch)
+    private static PatSrcKd InferSrc(string _, Rpcs3PatchEntry patch)
     {
-        var explicitSource = patch.Source switch
+        return patch.Source switch
         {
             PatSrc.Official => PatSrcKd.Official,
             PatSrc.Can => PatSrcKd.Canary,
             PatSrc.Cht => PatSrcKd.ChtLib,
             PatSrc.ManCht => PatSrcKd.Local,
-            PatSrc.Imported when patch.Risk == Mdl.PatRisk.Canary => PatSrcKd.Canary,
             PatSrc.Imported => PatSrcKd.Local,
             PatSrc.TitlePat => PatSrcKd.Custom,
             _ => PatSrcKd.Unknown
         };
-
-        if (explicitSource != PatSrcKd.Unknown)
-        {
-            return explicitSource;
-        }
-
-        var patchText = string.Join(
-            " ",
-            patch.Title,
-            patch.PatType,
-            patch.Group ?? string.Empty,
-            patch.Notes ?? string.Empty,
-            patch.Author ?? string.Empty);
-
-        if (patch.Risk == Mdl.PatRisk.Canary ||
-            string.Equals(patch.PatType, "Canary", StringComparison.OrdinalIgnoreCase))
-        {
-            return PatSrcKd.Canary;
-        }
-
-        if (string.IsNullOrWhiteSpace(sourceLabel) || Contains(sourceLabel, "missing", "not found"))
-        {
-            return PatSrcKd.Missing;
-        }
-
-        if (Contains(sourceLabel, "custom", "user patch", "user-patch") ||
-            Contains(patchText, "custom", "user patch", "user-patch"))
-        {
-            return PatSrcKd.Custom;
-        }
-
-        if (Contains(sourceLabel, "canary") &&
-            !Contains(sourceLabel, "patch.yml / imported_patch.yml"))
-        {
-            return PatSrcKd.Canary;
-        }
-
-        if (Contains(sourceLabel, "local") &&
-            !Contains(sourceLabel, "patch.yml"))
-        {
-            return PatSrcKd.Local;
-        }
-
-        if (Contains(sourceLabel, "game patches", "wiki", "rpcs3 patches", "patch.yml"))
-        {
-            return PatSrcKd.Official;
-        }
-
-        if (Contains(sourceLabel, ".yml", ".yaml"))
-        {
-            return PatSrcKd.Local;
-        }
-
-        return PatSrcKd.Unknown;
     }
 
     private static string SrcKey(PatSrcKd sourceKind)

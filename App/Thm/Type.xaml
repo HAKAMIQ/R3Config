@@ -9,9 +9,9 @@
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Regular" />
         <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
-        <Setter Property="FlowDirection" Value="LeftToRight" />
+        <Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
         <Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
-        <Setter Property="TextAlignment" Value="Left" />
+        <Setter Property="TextAlignment" Value="{DynamicResource App.TextAlignment}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="TextWrapping" Value="Wrap" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
@@ -28,16 +28,16 @@
     </Style>
 
     <Style x:Key="Type.Subtitle" TargetType="TextBlock" BasedOn="{StaticResource Type.BodyStrong}">
-        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontSize" Value="16" />
     </Style>
 
     <Style x:Key="Type.Title" TargetType="TextBlock" BasedOn="{StaticResource Type.BodyStrong}">
         <Setter Property="FontFamily" Value="{DynamicResource Type.Font.Display}" />
-        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontSize" Value="20" />
     </Style>
 
     <Style x:Key="Type.TitleLarge" TargetType="TextBlock" BasedOn="{StaticResource Type.Title}">
-        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontSize" Value="24" />
     </Style>
 
     <Style x:Key="Type.Display" TargetType="TextBlock" BasedOn="{StaticResource Type.TitleLarge}">
@@ -48,9 +48,9 @@
         <Setter Property="FontFamily" Value="{DynamicResource Type.Font.Technical}" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
-        <Setter Property="FlowDirection" Value="LeftToRight" />
+        <Setter Property="FlowDirection" Value="{DynamicResource App.TechnicalFlowDirection}" />
         <Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
-        <Setter Property="TextAlignment" Value="Left" />
+        <Setter Property="TextAlignment" Value="{DynamicResource App.TechnicalTextAlignment}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="TextWrapping" Value="NoWrap" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
@@ -63,7 +63,7 @@
     <Style x:Key="ArabicCaptionText" TargetType="TextBlock" BasedOn="{StaticResource Type.Caption}" />
 
     <Style x:Key="ArabicEmptyStateText" TargetType="TextBlock" BasedOn="{StaticResource Type.Body}">
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Margin" Value="24" />
@@ -90,12 +90,16 @@
     </Style>
 
     <Style x:Key="GameRailSerialText" TargetType="TextBlock" BasedOn="{StaticResource Type.Technical}">
-        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontSize" Value="12" />
         <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
         <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
     </Style>
 
     <Style x:Key="HeroTitleText" TargetType="TextBlock" BasedOn="{StaticResource Type.TitleLarge}">
+        <Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
     </Style>
 
@@ -107,6 +111,9 @@
     </Style>
 
     <Style x:Key="BottomBarLabelText" TargetType="TextBlock" BasedOn="{StaticResource Type.Caption}">
+        <Setter Property="FlowDirection" Value="{DynamicResource TechnicalText.FlowDirection}" />
+        <Setter Property="Language" Value="{DynamicResource TechnicalText.Language}" />
+        <Setter Property="TextAlignment" Value="{DynamicResource TechnicalText.TextAlignment}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>

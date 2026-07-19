@@ -43,7 +43,7 @@ public sealed class BundledCanaryPatchService
         IReadOnlyList<PatMatch> selectedMatches)
     {
         var selectedCanary = selectedMatches
-            .Where(match => match.Patch.Risk == PatRisk.Canary)
+            .Where(match => match.Patch.Class == PatClass.Canary)
             .ToArray();
 
         if (selectedCanary.Length == 0)

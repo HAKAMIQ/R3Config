@@ -129,12 +129,37 @@ foreach ($requiredLine in $requiredCanaryNoticeLines) {
     }
 }
 
-$manifestPath = Join-Path $releasePath 'SHA256SUMS.txt'
+$manifestPath = [IO.Path]::GetFullPath((Join-Path $releasePath 'SHA256SUMS.txt'))
+$releasePrefix = $releasePath.TrimEnd([IO.Path]::DirectorySeparatorChar) +
+    [IO.Path]::DirectorySeparatorChar
+$manifestEntries = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::OrdinalIgnoreCase)
 foreach ($line in Get-Content -LiteralPath $manifestPath) {
     if ($line -notmatch '^(?<hash>[0-9a-f]{64})  (?<path>.+)$') {
         throw "Invalid SHA256SUMS line: $line"
     }
-    $candidate = Join-Path $releasePath $Matches.path
+    if ([IO.Path]::IsPathRooted($Matches.path)) {
+        throw "SHA256SUMS path must be relative: $($Matches.path)"
+    }
+    $relativePath = $Matches.path.Replace(
+        '/',
+        [IO.Path]::DirectorySeparatorChar)
+    $candidate = [IO.Path]::GetFullPath((Join-Path $releasePath $relativePath))
+    if (-not $candidate.StartsWith(
+            $releasePrefix,
+            [StringComparison]::OrdinalIgnoreCase)) {
+        throw "SHA256SUMS path escapes the release directory: $($Matches.path)"
+    }
+    if ([string]::Equals(
+            $candidate,
+            $manifestPath,
+            [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'SHA256SUMS must not contain a hash for itself.'
+    }
+    $normalizedPath = $candidate.Substring($releasePrefix.Length).Replace('\', '/')
+    if (-not $manifestEntries.Add($normalizedPath)) {
+        throw "SHA256SUMS contains a duplicate path: $normalizedPath"
+    }
     if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
         throw "SHA256SUMS references a missing file: $($Matches.path)"
     }
@@ -142,6 +167,30 @@ foreach ($line in Get-Content -LiteralPath $manifestPath) {
     if ($actual -ne $Matches.hash) {
         throw "SHA256 mismatch: $($Matches.path)"
     }
+}
+
+$releaseFiles = @(
+    Get-ChildItem -LiteralPath $releasePath -Recurse -File -Force |
+        Where-Object {
+            -not [string]::Equals(
+                $_.FullName,
+                $manifestPath,
+                [StringComparison]::OrdinalIgnoreCase)
+        } |
+        ForEach-Object {
+            $_.FullName.Substring($releasePrefix.Length).Replace('\', '/')
+        }
+)
+$unlistedFiles = @(
+    $releaseFiles |
+        Where-Object { -not $manifestEntries.Contains($_) } |
+        Sort-Object
+)
+if ($unlistedFiles.Count -gt 0) {
+    throw "Release contains files not listed in SHA256SUMS: $($unlistedFiles -join ', ')"
+}
+if ($manifestEntries.Count -ne $releaseFiles.Count) {
+    throw "SHA256SUMS entry count '$($manifestEntries.Count)' does not match release file count '$($releaseFiles.Count)'."
 }
 
 Write-Host "Portable release verification passed for R3Config $Version."

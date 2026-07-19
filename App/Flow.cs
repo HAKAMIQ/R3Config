@@ -119,11 +119,13 @@ public sealed class AppFlow
     public PatchApplyPlan BuildPatchPlan(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<PatMatch> matches,
+        IReadOnlyList<PatMatch> enabledMatches,
         bool expertMode)
     {
         return _cases.PatchMutation.BuildOn(
             install,
             matches,
+            enabledMatches,
             expertMode);
     }
 
@@ -244,5 +246,14 @@ public sealed class AppFlow
         return _cases.HCanary.Delete(
             install,
             identity);
+    }
+
+    public GameLaunchResult LaunchGame(
+        Rpcs3InstallDescriptor install,
+        Rpcs3GameDescriptor game)
+    {
+        return _cases.GameLaunch.Launch(
+            install,
+            game);
     }
 }

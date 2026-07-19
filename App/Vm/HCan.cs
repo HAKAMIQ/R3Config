@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using R3Config.Application;
 using R3Config.Svc;
 using R3Config.Lang;
 using R3Config.Mdl;
@@ -85,6 +86,13 @@ public sealed class AncVm : VmBase
     }
 }
 
+public sealed class DraftStatusVm(DraftSt value) : VmBase
+{
+    public DraftSt Value { get; } = value;
+    public string Label => UiText.GetText($"HCanary.DraftStatus.{Value}");
+    public void SetLang() => OnChange(nameof(Label));
+}
+
 public sealed partial class HCanVm : VmBase
 {
     private readonly HCanaryPatchAuthoringService _auth = new();
@@ -92,6 +100,7 @@ public sealed partial class HCanVm : VmBase
     private readonly AppFlow _flow;
     private readonly Func<bool> _isRun;
     private readonly Func<string, string, bool> _confirm;
+    private readonly Func<Rpcs3InstallDescriptor, Rpcs3GameDescriptor, GameLaunchResult> _launchGame;
     private Rpcs3InstallDescriptor? _install;
     private Rpcs3GameDescriptor? _game;
     private HashVm? _selHash;
@@ -135,15 +144,20 @@ public sealed partial class HCanVm : VmBase
     public HCanVm(
         AppFlow flow,
         Func<bool>? isRpcs3Running = null,
-        Func<string, string, bool>? confirm = null)
+        Func<string, string, bool>? confirm = null,
+        Func<Rpcs3InstallDescriptor, Rpcs3GameDescriptor, GameLaunchResult>? launchGame = null)
     {
         _flow = flow ?? throw new ArgumentNullException(nameof(flow));
         _isRun = isRpcs3Running ??
             Rpcs3InstallService.IsR3;
         _confirm = confirm ?? UiDlg.Confirm;
+        _launchGame = launchGame ?? _flow.LaunchGame;
 
         NewCmd = new RelayCmd(NewDraft);
         ReadCmd = new RelayCmd(ReadLog, () => _install is not null);
+        LaunchCmd = new RelayCmd(
+            LaunchGame,
+            () => _install is not null && _game is not null);
         UseCmd = new RelayCmd(AddCur, () => _game is not null);
         AddGmCmd = new RelayCmd(() => AddGame(new TgtVm()));
         DelGmCmd = new RelayCmd(DelGame, () => GameTgt is not null && Games.Count > 1);
@@ -175,15 +189,34 @@ public sealed partial class HCanVm : VmBase
 
     public IReadOnlyList<string> PatTypes { get; } = ["PPU", "SPU"];
     public IReadOnlyList<string> Op => HCanaryPatchAuthoringService.Op;
-    public IReadOnlyList<DraftSt> Statuses { get; } = Enum.GetValues<DraftSt>();
+    public IReadOnlyList<DraftStatusVm> Statuses { get; } =
+        Enum.GetValues<DraftSt>().Select(value => new DraftStatusVm(value)).ToArray();
     public ObservableCollection<HashVm> Hashes { get; } = [];
     public ObservableCollection<TgtVm> Games { get; } = [];
     public ObservableCollection<InsVm> Ins { get; } = [];
     public ObservableCollection<AncVm> Anchors { get; } = [];
     public ObservableCollection<HCanStor> Patches { get; } = [];
 
+    public bool CanAdvanceTarget =>
+        !string.IsNullOrWhiteSpace(ExeHash) &&
+        string.IsNullOrWhiteSpace(HashErr) &&
+        Games.Count > 0 &&
+        Games.All(item => string.IsNullOrWhiteSpace(item.Error));
+
+    public bool CanAdvanceDetails =>
+        CanAdvanceTarget &&
+        string.IsNullOrWhiteSpace(NameErr) &&
+        string.IsNullOrWhiteSpace(VerErr);
+
+    public bool CanAdvanceInstructions =>
+        CanAdvanceDetails &&
+        Ins.Count > 0 &&
+        Ins.All(item => string.IsNullOrWhiteSpace(item.Error)) &&
+        Anchors.All(item => string.IsNullOrWhiteSpace(item.Error));
+
     public RelayCmd NewCmd { get; }
     public RelayCmd ReadCmd { get; }
+    public RelayCmd LaunchCmd { get; }
     public RelayCmd UseCmd { get; }
     public RelayCmd AddGmCmd { get; }
     public RelayCmd DelGmCmd { get; }
@@ -224,13 +257,34 @@ public sealed partial class HCanVm : VmBase
         get => IsExp ? "Experimental" : "Regular";
         set => IsExp = value == "Experimental";
     }
-    public string ExeHash { get => _exeHash; set { if (Set(ref _exeHash, value)) LoadDrft(); } }
+    public string ExeHash
+    {
+        get => _exeHash;
+        set
+        {
+            if (Set(ref _exeHash, value))
+            {
+                OnChange(nameof(HasHashInput));
+                LoadDrft();
+            }
+        }
+    }
     public string PatName { get => _patName; set { if (Set(ref _patName, value)) LoadDrft(); } }
     public string Author { get => _author; set { if (Set(ref _author, value)) LoadDrft(); } }
     public string Notes { get => _notes; set { if (Set(ref _notes, value)) LoadDrft(); } }
     public string Group { get => _group; set { if (Set(ref _group, value)) LoadDrft(); } }
     public string PatVer { get => _patVer; set { if (Set(ref _patVer, value)) LoadDrft(); } }
-    public DraftSt Status { get => _status; set => Set(ref _status, value); }
+    public DraftSt Status
+    {
+        get => _status;
+        set
+        {
+            if (!Set(ref _status, value) || _noRfsh) return;
+            _dirty = true;
+            OnChange(nameof(IsDirty));
+            LoadDrft(markDirty: false);
+        }
+    }
     public string Preview { get => _preview; private set => Set(ref _preview, value); }
     public string VldSum { get => _vldSum; private set => Set(ref _vldSum, value); }
     public string Msg => ResolveLocalizedText(_msgKey, _msgArgs, _msgRaw);
@@ -238,13 +292,37 @@ public sealed partial class HCanVm : VmBase
     public string HashErr { get => _hashErr; private set => Set(ref _hashErr, value); }
     public string NameErr { get => _nameErr; private set => Set(ref _nameErr, value); }
     public string VerErr { get => _verErr; private set => Set(ref _verErr, value); }
-    public bool IsValid { get => _isValid; private set { if (Set(ref _isValid, value)) RaiseCmd(); } }
+    public bool IsValid
+    {
+        get => _isValid;
+        private set
+        {
+            if (Set(ref _isValid, value))
+            {
+                OnChange(nameof(SaveHint));
+                RaiseCmd();
+            }
+        }
+    }
     public bool IsDirty => _dirty;
     public bool CanMut =>
         _install is not null &&
         !_isBusy &&
         !_runUi;
     public bool HasHash => Hashes.Count > 0;
+    public bool HasHashInput => !string.IsNullOrWhiteSpace(ExeHash);
+    public bool HasGame => _game is not null;
+    public bool IsStoredEmpty => Patches.Count == 0;
+    public bool HasStoredPatch => _curId is not null;
+    public string SaveHint => _install is null
+        ? UiText.GetText("HCanary.SaveHint.MissingRpcs3")
+        : _runUi
+            ? UiText.GetText("HCanary.SaveHint.Rpcs3Running")
+            : _isBusy
+                ? UiText.GetText("HCanary.SaveHint.Busy")
+                : IsValid
+                    ? UiText.GetText("HCanary.SaveHint.Ready")
+                    : UiText.GetText("HCanary.SaveHint.Invalid");
     public string R3Path => _install?.RootPath ?? UiText.GetText("HCanary.Error.Rpcs3Missing");
     public string LogPath => _install is null ? string.Empty : Path.Combine(_install.RootPath, "RPCS3.log");
     public string PatPath => _install is null ? string.Empty : Path.Combine(_install.PatPath, "imported_patch.yml");

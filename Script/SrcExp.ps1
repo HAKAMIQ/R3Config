@@ -83,21 +83,49 @@ try {
         Copy-Item -LiteralPath $file.FullName -Destination $destinationPath -Force
     }
 
-    $gitCommit = (& git -C $repoRoot rev-parse HEAD 2>$null)
-    if ($LASTEXITCODE -ne 0) {
+    $gitCommit = @(& git -C $repoRoot rev-parse HEAD 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $gitCommit.Count -eq 0) {
         $gitCommit = 'unavailable'
+    }
+    else {
+        $gitCommit = $gitCommit[0].Trim()
+    }
+
+    $gitBranch = @(& git -C $repoRoot branch --show-current 2>$null)
+    if ($LASTEXITCODE -ne 0) {
+        $gitBranch = 'unavailable'
+    }
+    elseif ($gitBranch.Count -eq 0 -or [string]::IsNullOrWhiteSpace($gitBranch[0])) {
+        $gitBranch = 'detached'
+    }
+    else {
+        $gitBranch = $gitBranch[0].Trim()
+    }
+
+    $gitStatusLines = @(& git -C $repoRoot status --porcelain=v1 --untracked-files=all 2>$null)
+    if ($LASTEXITCODE -ne 0) {
+        $workingTree = 'unavailable'
+        $workingTreeEntryCount = 'unavailable'
+    }
+    else {
+        $workingTreeEntryCount = $gitStatusLines.Count
+        $workingTree = if ($gitStatusLines.Count -eq 0) { 'clean' } else { 'modified' }
     }
 
     $manifest = @(
         'R3Config source handoff package'
         'Generated-UTC: ' + [DateTimeOffset]::UtcNow.ToString('O')
         'Git-Commit: ' + $gitCommit
+        'Git-Branch: ' + $gitBranch
+        'Working-Tree: ' + $workingTree
+        'Working-Tree-Entry-Count: ' + $workingTreeEntryCount
         'Includes-Working-Tree: yes'
         'File-Count: ' + $sourceFiles.Count
         'Excluded: .git, .vs, bin, obj, artifacts, publish, local user files, logs, temp files, backups, nested ZIP files'
         'Start-Here: docs/ProdAr.md'
         'Architecture-Index: docs/Arch/README.md'
         'Contract-Gate: Script/NameChk.ps1'
+        'Source-Gate: Script/SrcChk.ps1 -StrictTree runs before archive creation'
     )
     $handoffText = ($manifest -join "`n") + "`n"
     [IO.File]::WriteAllText(

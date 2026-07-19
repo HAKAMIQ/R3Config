@@ -75,7 +75,10 @@ public static class AppComposition
             backupUseCase,
             new HCanaryUseCase(
                 hCanary,
-                mutationGuard));
+                mutationGuard),
+            new GameLaunchUseCase(
+                new Rpcs3BootPathResolver(),
+                new Rpcs3GameProcessLauncher()));
     }
 }
 

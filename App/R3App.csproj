@@ -31,8 +31,8 @@
     <Content Include="Data\cat.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Data\can.yml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Data\cheats.yml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="Lang\ar-SA.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="Lang\en-US.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Lang\ar-SA.json" CopyToOutputDirectory="Always" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Lang\en-US.json" CopyToOutputDirectory="Always" CopyToPublishDirectory="PreserveNewest" />
     <Resource Include="Data\Icon.ico" />
   </ItemGroup>
 

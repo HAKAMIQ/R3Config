@@ -27,12 +27,15 @@ public sealed class UiLaySt
 
     public XmlLanguage XmlLang { get; }
 
-    public FlowDirection WinFlow => TextFlow;
+    // Shell geometry remains LTR in both languages. Only localized text uses
+    // the language-aware bidi flow exposed by TextFlow.
+    public FlowDirection WinFlow => FlowDirection.LeftToRight;
 
-    public FlowDirection ShFlow => TextFlow;
+    public FlowDirection ShFlow => FlowDirection.LeftToRight;
 
-    public FlowDirection TextFlow { get; } =
-        FlowDirection.LeftToRight;
+    public FlowDirection TextFlow => IsRtl
+        ? FlowDirection.RightToLeft
+        : FlowDirection.LeftToRight;
 
     public FlowDirection TechFlow { get; } =
         FlowDirection.LeftToRight;
@@ -88,7 +91,7 @@ public sealed class UiLaySt
                 UiText.ArabLang,
                 StringComparison.Ordinal),
             XmlLanguage.GetLanguage(normalized),
-            new GridLength(304, GridUnitType.Pixel),
+            new GridLength(264, GridUnitType.Pixel),
             new GridLength(1, GridUnitType.Star));
     }
 }
@@ -109,7 +112,7 @@ public static class UiLaySvc
         var layout = Current;
 
         app.Resources["App.FlowDirection"] =
-            layout.TextFlow;
+            layout.ShFlow;
 
         app.Resources["App.CaptionButtonsFlowDirection"] =
             FlowDirection.LeftToRight;

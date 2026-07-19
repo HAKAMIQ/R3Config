@@ -57,8 +57,8 @@ public partial class AppDlg : Window
     {
         var layout = UiLaySvc.Current;
 
-        CntGrid.FlowDirection = layout.TextFlow;
-        Btns.FlowDirection = layout.TextFlow;
+        CntGrid.FlowDirection = layout.ShFlow;
+        Btns.FlowDirection = layout.ShFlow;
 
         TitlTxt.FlowDirection = layout.TextFlow;
         TitlTxt.TextAlignment = layout.TxtAlign;
