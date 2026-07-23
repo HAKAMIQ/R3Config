@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using R3Config.Lang;
 using R3Config.Mdl;
@@ -25,6 +26,7 @@ public sealed class GmDiag
 
         var normalized = Path.TrimEndingDirectorySeparator(
             diagnostic.SrcPath);
+
         var name = Path.GetFileName(normalized);
 
         if (name.Equals(
@@ -33,6 +35,7 @@ public sealed class GmDiag
         {
             var parent = Path.GetFileName(
                 Path.GetDirectoryName(normalized));
+
             return string.IsNullOrWhiteSpace(parent)
                 ? name
                 : $"{parent}/{name}";

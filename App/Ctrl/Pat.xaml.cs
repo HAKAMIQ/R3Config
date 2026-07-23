@@ -44,6 +44,7 @@ public partial class PatView : UserControl
     {
         if (PatRoot is null ||
             ChtRoot is null ||
+            SourceArea is null ||
             OfclSrc is null ||
             CanSrc is null)
         {
@@ -57,6 +58,9 @@ public partial class PatView : UserControl
         ChtRoot.Visibility = showPatchLibrary
             ? Visibility.Collapsed
             : Visibility.Visible;
+        SourceArea.Visibility = showPatchLibrary
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         OfclSrc.Visibility = Mode == PatMode.Patches
             ? Visibility.Visible
             : Visibility.Collapsed;
@@ -83,6 +87,5 @@ public partial class PatView : UserControl
         CanBody.Visibility = showCanary
             ? Visibility.Visible
             : Visibility.Collapsed;
-
     }
 }

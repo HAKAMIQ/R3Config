@@ -55,4 +55,9 @@ public partial class AdvDlg : Window
         RecoveryWorkspace.Visibility = selectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
         DiagnosticsWorkspace.Visibility = selectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    private void HCanaryWorkspace_Loaded(object sender, RoutedEventArgs e)
+    {
+
+    }
 }

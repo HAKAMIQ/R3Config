@@ -4,10 +4,10 @@
         xmlns:lang="clr-namespace:R3Config.Lang"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="{lang:TextExt Key=Patch.ImportCanaryTitle}"
-        Width="640"
-        Height="480"
+        Width="620"
+        Height="440"
         MinWidth="560"
-        MinHeight="460"
+        MinHeight="400"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         WindowStyle="None"
@@ -16,8 +16,100 @@
         Background="Transparent"
         Foreground="{DynamicResource Text.Primary}"
         FontFamily="{DynamicResource Type.Font.Body}"
-        FlowDirection="{DynamicResource App.FlowDirection}"
-        Language="{DynamicResource App.XmlLanguage}">
+        Language="{DynamicResource App.XmlLanguage}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        FlowDirection="{DynamicResource App.FlowDirection}">
+
+    <Window.Resources>
+        <Style x:Key="CanLocalizedTitleText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource R3SettingsTitleText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+        </Style>
+
+        <Style x:Key="CanLocalizedDescriptionText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource R3SettingsDescriptionText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+        </Style>
+
+        <Style x:Key="CanValidationText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource FluentStatus.Text}">
+            <Setter Property="Visibility"
+                    Value="Visible" />
+            <Setter Property="Margin"
+                    Value="0" />
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="TextWrapping"
+                    Value="Wrap" />
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding VldMsg}"
+                             Value="{x:Null}">
+                    <Setter Property="Visibility"
+                            Value="Collapsed" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding VldMsg}"
+                             Value="">
+                    <Setter Property="Visibility"
+                            Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="CanResultText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource FluentStatus.Text}">
+            <Setter Property="Visibility"
+                    Value="Visible" />
+            <Setter Property="Margin"
+                    Value="0,5,0,0" />
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="TextWrapping"
+                    Value="Wrap" />
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ResMsg}"
+                             Value="{x:Null}">
+                    <Setter Property="Visibility"
+                            Value="Collapsed" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding ResMsg}"
+                             Value="">
+                    <Setter Property="Visibility"
+                            Value="Collapsed" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding VldMsg}"
+                             Value="{x:Null}">
+                    <Setter Property="Margin"
+                            Value="0" />
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding VldMsg}"
+                             Value="">
+                    <Setter Property="Margin"
+                            Value="0" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="40"
@@ -27,9 +119,10 @@
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
 
-
     <Border Style="{StaticResource FluentSurface.Dialog}">
-        <Grid ClipToBounds="True">
+        <Grid ClipToBounds="True"
+              KeyboardNavigation.TabNavigation="Cycle">
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -39,31 +132,28 @@
             <Border Grid.Row="0"
                     Style="{StaticResource R3DialogTopBar}"
                     MouseLeftButtonDown="DragWin">
-                <Grid FlowDirection="{DynamicResource App.FlowDirection}"
-                      Language="{DynamicResource App.XmlLanguage}">
+
+                <Grid FlowDirection="LeftToRight">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0"
-                               Text="{lang:TextExt Key=Patch.ImportCanaryTitle}"
-                               Style="{StaticResource R3SettingsTitleText}"
-                               FlowDirection="{DynamicResource App.TextFlowDirection}"
-                               TextTrimming="CharacterEllipsis"
-                               VerticalAlignment="Center" />
-
-                    <Button Grid.Column="1"
+                    <Button Grid.Column="0"
                             Style="{StaticResource FluentButton.Close}"
                             AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
                             ToolTip="{lang:TextExt Key=Window.CloseTip}"
                             Click="CloseWin"
                             VerticalAlignment="Center"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
+
                         <Grid Width="14"
-                              Height="14">
+                              Height="14"
+                              FlowDirection="LeftToRight">
+
                             <Path Data="M 3 3 L 11 11 M 11 3 L 3 11"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Stroke="{Binding Foreground,
+                                                   RelativeSource={RelativeSource AncestorType=Button}}"
                                   StrokeThickness="1.6"
                                   StrokeStartLineCap="Round"
                                   StrokeEndLineCap="Round"
@@ -71,12 +161,20 @@
                                   VerticalAlignment="Center" />
                         </Grid>
                     </Button>
+
+                    <TextBlock Grid.Column="1"
+                               Text="{lang:TextExt Key=Patch.ImportCanaryTitle}"
+                               Style="{StaticResource CanLocalizedTitleText}"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               TextWrapping="NoWrap" />
                 </Grid>
             </Border>
 
             <Grid Grid.Row="1"
-                  Margin="16"
-                  FlowDirection="LeftToRight">
+                  Margin="12">
+
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
@@ -84,51 +182,56 @@
 
                 <Border Grid.Row="0"
                         Style="{StaticResource R3SettingsSection}"
-                        Margin="0"
-                        Padding="12">
+                        Padding="10">
+
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="8" />
+                            <RowDefinition Height="6" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0"
                                    Text="{lang:TextExt Key=Patch.ImportCanaryPasteLabel}"
-                                   Style="{StaticResource R3SettingsDescriptionText}"
-                                   FlowDirection="{DynamicResource App.TextFlowDirection}"
-                                   TextAlignment="{DynamicResource Options.SettingsTextAlignment}"
+                                   Style="{StaticResource CanLocalizedDescriptionText}"
+                                   HorizontalAlignment="Stretch"
                                    TextWrapping="Wrap" />
 
-                        <TextBox Grid.Row="2"
-                                 Text="{Binding ImpText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox x:Name="ImportTextBox"
+                                 Grid.Row="2"
+                                 Text="{Binding ImpText,
+                                                Mode=TwoWay,
+                                                UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="{lang:TextExt Key=Patch.ImportCanaryPasteLabel}"
                                  AcceptsReturn="True"
                                  AcceptsTab="True"
+                                 SpellCheck.IsEnabled="False"
                                  VerticalScrollBarVisibility="Auto"
                                  HorizontalScrollBarVisibility="Auto"
                                  TextWrapping="NoWrap"
                                  FontFamily="Consolas, Cascadia Mono, Segoe UI Mono"
                                  FontSize="12"
                                  FlowDirection="LeftToRight"
+                                 Language="en-US"
                                  TextAlignment="Left"
                                  HorizontalContentAlignment="Left"
                                  VerticalContentAlignment="Top"
-                                 MinHeight="220"
                                  Style="{StaticResource PathTextBox}" />
                     </Grid>
                 </Border>
 
                 <Border Grid.Row="1"
-                        Margin="0,10,0,0"
-                        Padding="10"
+                        Margin="0,8,0,0"
+                        Padding="10,8"
                         Background="{DynamicResource Surface.Subtle}"
                         BorderBrush="{DynamicResource Stroke.Subtle}"
                         BorderThickness="1"
-                        CornerRadius="{StaticResource Radius.Medium}"
-                        FlowDirection="{DynamicResource App.FlowDirection}">
+                        CornerRadius="{StaticResource Radius.Medium}">
+
                     <Border.Style>
                         <Style TargetType="{x:Type Border}">
-                            <Setter Property="Visibility" Value="Visible" />
+                            <Setter Property="Visibility"
+                                    Value="Visible" />
 
                             <Style.Triggers>
                                 <MultiDataTrigger>
@@ -138,7 +241,9 @@
                                         <Condition Binding="{Binding ResMsg}"
                                                    Value="{x:Null}" />
                                     </MultiDataTrigger.Conditions>
-                                    <Setter Property="Visibility" Value="Collapsed" />
+
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
                                 </MultiDataTrigger>
 
                                 <MultiDataTrigger>
@@ -148,7 +253,9 @@
                                         <Condition Binding="{Binding ResMsg}"
                                                    Value="" />
                                     </MultiDataTrigger.Conditions>
-                                    <Setter Property="Visibility" Value="Collapsed" />
+
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
                                 </MultiDataTrigger>
 
                                 <MultiDataTrigger>
@@ -158,7 +265,9 @@
                                         <Condition Binding="{Binding ResMsg}"
                                                    Value="" />
                                     </MultiDataTrigger.Conditions>
-                                    <Setter Property="Visibility" Value="Collapsed" />
+
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
                                 </MultiDataTrigger>
 
                                 <MultiDataTrigger>
@@ -168,7 +277,9 @@
                                         <Condition Binding="{Binding ResMsg}"
                                                    Value="{x:Null}" />
                                     </MultiDataTrigger.Conditions>
-                                    <Setter Property="Visibility" Value="Collapsed" />
+
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
                                 </MultiDataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -176,11 +287,10 @@
 
                     <StackPanel>
                         <TextBlock Text="{Binding VldMsg}"
-                                   Style="{StaticResource FluentStatus.Text}"
-                                   Margin="0,0,0,6" />
+                                   Style="{StaticResource CanValidationText}" />
 
                         <TextBlock Text="{Binding ResMsg}"
-                                   Style="{StaticResource FluentStatus.Text}" />
+                                   Style="{StaticResource CanResultText}" />
                     </StackPanel>
                 </Border>
             </Grid>
@@ -188,31 +298,30 @@
             <Border Grid.Row="2"
                     Style="{StaticResource R3DialogActionBar}"
                     CornerRadius="{StaticResource Radius.Dialog.Bottom}">
-                <Grid FlowDirection="{DynamicResource App.FlowDirection}"
-                      Language="{DynamicResource App.XmlLanguage}">
+
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <Button Grid.Column="0"
                             Content="{lang:TextExt Key=Patch.ImportCanaryChooseFile}"
-                            Command="{Binding PickCmd}"
-                            Margin="0" />
+                            Command="{Binding PickCmd}" />
 
                     <Button Grid.Column="2"
-                            Content="{lang:TextExt Key=Dialog.Cancel}"
-                            Command="{Binding CloseCmd}"
-                            Margin="0" />
-
-                    <Button Grid.Column="4"
                             Content="{lang:TextExt Key=Patch.ImportCanaryCreateFile}"
                             Command="{Binding MakeCmd}"
                             Style="{StaticResource FluentButton.Primary}"
-                            Margin="0" />
+                            IsDefault="True" />
+
+                    <Button Grid.Column="4"
+                            Content="{lang:TextExt Key=Dialog.Cancel}"
+                            Command="{Binding CloseCmd}"
+                            IsCancel="True" />
                 </Grid>
             </Border>
         </Grid>

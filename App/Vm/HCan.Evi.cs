@@ -16,6 +16,7 @@ public sealed partial class HCanVm : VmBase
         var result = _reader.Read(LogPath);
         Hashes.Clear();
         foreach (var hash in result.Hashes) Hashes.Add(new HashVm(hash));
+
         OnChange(nameof(HasHash));
         if (!result.IsOk)
         {
@@ -40,6 +41,7 @@ public sealed partial class HCanVm : VmBase
             foreach (var hash in _game.Hashes) Hashes.Add(new HashVm(new HCanHash(HashKind.Ppu, hash, source, 0)));
             foreach (var hash in _game.SpuList) Hashes.Add(new HashVm(new HCanHash(HashKind.Spu, hash, source, 0)));
         }
+
         OnChange(nameof(HasHash));
         if (Hashes.Count == 0)
         {

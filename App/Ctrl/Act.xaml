@@ -3,11 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:lang="clr-namespace:R3Config.Lang"
              FlowDirection="{DynamicResource App.FlowDirection}"
-             Language="{DynamicResource App.XmlLanguage}">
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
     <Border Style="{StaticResource BottomBarBorder}">
-        <Grid FlowDirection="LeftToRight"
+        <Grid FlowDirection="{DynamicResource App.FlowDirection}"
               Language="{DynamicResource App.XmlLanguage}"
               VerticalAlignment="Center">
+
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="8" />
@@ -23,6 +27,9 @@
             <TextBlock Grid.Column="0"
                        Text="RPCS3"
                        Style="{StaticResource BottomBarLabelText}"
+                       FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
+                       TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
+                       Language="{DynamicResource TechnicalText.Language}"
                        VerticalAlignment="Center" />
 
             <TextBox Grid.Column="2"

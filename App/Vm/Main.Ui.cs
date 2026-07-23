@@ -98,6 +98,7 @@ public sealed partial class MainVm : VmBase
         OnChange(nameof(SelGame));
         OnChange(nameof(GameFlow));
         OnChange(nameof(GameAlgn));
+        OnChange(nameof(GameLang));
         OnChange(nameof(GameSer));
         OnChange(nameof(PatReady));
         OnChange(nameof(ReadyTip));

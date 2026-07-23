@@ -5,9 +5,8 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="{lang:TextExt Key=HCanary.Stored.Title}"
         Width="720"
-        Height="520"
         MinWidth="600"
-        MinHeight="420"
+        MinHeight="360"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         ShowInTaskbar="False"
@@ -16,8 +15,82 @@
         Background="Transparent"
         Foreground="{DynamicResource Text.Primary}"
         FontFamily="{DynamicResource Type.Font.Body}"
-        FlowDirection="{DynamicResource App.FlowDirection}"
-        Language="{DynamicResource App.XmlLanguage}">
+        Language="{DynamicResource App.XmlLanguage}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        FlowDirection="{DynamicResource App.FlowDirection}">
+
+    <Window.Style>
+        <Style TargetType="{x:Type Window}">
+            <Setter Property="Height"
+                    Value="520" />
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HCanary.IsStoredEmpty}"
+                             Value="True">
+                    <Setter Property="Height"
+                            Value="360" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Style>
+
+    <Window.Resources>
+        <Style x:Key="HCanSavedLocalizedTitleText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource R3SettingsTitleText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+        </Style>
+
+        <Style x:Key="HCanSavedLocalizedDescriptionText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource SectionCaptionText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+        </Style>
+
+        <Style x:Key="HCanSavedLocalizedPatchNameText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource SectionTitleText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+        </Style>
+
+        <Style x:Key="HCanSavedTechnicalHashText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource TechnicalTextBlock}">
+            <Setter Property="FlowDirection"
+                    Value="LeftToRight" />
+            <Setter Property="TextAlignment"
+                    Value="Left" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+            <Setter Property="Language"
+                    Value="en-US" />
+        </Style>
+
+        <Style x:Key="HCanSavedLocalizedEmptyText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource SectionCaptionText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+        </Style>
+    </Window.Resources>
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="40"
@@ -28,7 +101,10 @@
     </shell:WindowChrome.WindowChrome>
 
     <Border Style="{StaticResource FluentSurface.Dialog}">
-        <Grid ClipToBounds="True">
+        <Grid ClipToBounds="True"
+              Language="{DynamicResource App.XmlLanguage}"
+              KeyboardNavigation.TabNavigation="Cycle">
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -37,28 +113,28 @@
             <Border Grid.Row="0"
                     Style="{StaticResource R3DialogTopBar}"
                     MouseLeftButtonDown="DragWin">
-                <Grid>
+
+                <Grid FlowDirection="LeftToRight">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0"
-                               Text="{lang:TextExt Key=HCanary.Stored.Title}"
-                               Style="{StaticResource R3SettingsTitleText}"
-                               TextTrimming="CharacterEllipsis"
-                               VerticalAlignment="Center" />
-
-                    <Button Grid.Column="1"
+                    <Button Grid.Column="0"
                             Style="{StaticResource FluentButton.Close}"
                             AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
                             ToolTip="{lang:TextExt Key=Window.CloseTip}"
                             Click="CloseWin"
                             VerticalAlignment="Center"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                        <Grid Width="14" Height="14">
+
+                        <Grid Width="14"
+                              Height="14"
+                              FlowDirection="LeftToRight">
+
                             <Path Data="M 3 3 L 11 11 M 11 3 L 3 11"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Stroke="{Binding Foreground,
+                                                   RelativeSource={RelativeSource AncestorType=Button}}"
                                   StrokeThickness="1.6"
                                   StrokeStartLineCap="Round"
                                   StrokeEndLineCap="Round"
@@ -66,11 +142,20 @@
                                   VerticalAlignment="Center" />
                         </Grid>
                     </Button>
+
+                    <TextBlock Grid.Column="1"
+                               Text="{lang:TextExt Key=HCanary.Stored.Title}"
+                               Style="{StaticResource HCanSavedLocalizedTitleText}"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               TextWrapping="NoWrap" />
                 </Grid>
             </Border>
 
             <Grid Grid.Row="1"
                   Margin="16">
+
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="12" />
@@ -81,29 +166,32 @@
 
                 <TextBlock Grid.Row="0"
                            Text="{lang:TextExt Key=HCanary.Stored.Description}"
-                           Style="{StaticResource SectionCaptionText}"
+                           Style="{StaticResource HCanSavedLocalizedDescriptionText}"
                            TextWrapping="Wrap" />
 
                 <Grid Grid.Row="2">
                     <ListBox ItemsSource="{Binding HCanary.Patches}"
                              SelectedItem="{Binding HCanary.SelPat}"
                              Style="{StaticResource HCanList}"
-                             FlowDirection="LeftToRight"
+                             HorizontalContentAlignment="Stretch"
+                             Language="{DynamicResource App.XmlLanguage}"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Border Style="{StaticResource SectionCard}"
                                         Margin="0,0,0,8">
+
                                     <StackPanel>
                                         <TextBlock Text="{Binding Draft.PatName}"
-                                                   Style="{StaticResource SectionTitleText}"
+                                                   Style="{StaticResource HCanSavedLocalizedPatchNameText}"
                                                    TextTrimming="CharacterEllipsis"
                                                    ToolTip="{Binding Draft.PatName}" />
 
                                         <TextBlock Text="{Binding Draft.ExeHash}"
                                                    Margin="0,4,0,0"
-                                                   Style="{StaticResource TechnicalTextBlock}"
+                                                   Style="{StaticResource HCanSavedTechnicalHashText}"
                                                    TextTrimming="CharacterEllipsis"
                                                    ToolTip="{Binding Draft.ExeHash}" />
                                     </StackPanel>
@@ -113,26 +201,25 @@
                     </ListBox>
 
                     <Border Style="{StaticResource EmptyStatePanel}"
-                            Visibility="{Binding HCanary.IsStoredEmpty, Converter={StaticResource BoolToVisibilityConverter}}">
+                            Visibility="{Binding HCanary.IsStoredEmpty,
+                                                 Converter={StaticResource BoolToVisibilityConverter}}">
+
                         <TextBlock Text="{lang:TextExt Key=HCanary.Stored.Empty}"
-                                   Style="{StaticResource SectionCaptionText}"
+                                   Style="{StaticResource HCanSavedLocalizedEmptyText}"
                                    TextWrapping="Wrap"
-                                   VerticalAlignment="Center" />
+                                   VerticalAlignment="Center" TextAlignment="{DynamicResource App.TextAlignment}" />
                     </Border>
                 </Grid>
 
-                <Grid Grid.Row="4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel Grid.Row="4"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center">
 
-                    <Button Grid.Column="1"
-                            Content="{lang:TextExt Key=HCanary.Open}"
+                    <Button Content="{lang:TextExt Key=HCanary.Open}"
                             Command="{Binding HCanary.OpenCmd}"
                             Style="{StaticResource FluentButton.Primary}"
                             Click="OpenSelected" />
-                </Grid>
+                </StackPanel>
             </Grid>
         </Grid>
     </Border>

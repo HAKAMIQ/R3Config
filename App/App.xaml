@@ -11,16 +11,25 @@
             </ResourceDictionary.MergedDictionaries>
 
             <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-            <FlowDirection x:Key="App.FlowDirection">LeftToRight</FlowDirection>
-            <FlowDirection x:Key="App.CaptionButtonsFlowDirection">LeftToRight</FlowDirection>
-            <FlowDirection x:Key="App.ShellFlowDirection">LeftToRight</FlowDirection>
-            <FlowDirection x:Key="App.TextFlowDirection">LeftToRight</FlowDirection>
+            <FlowDirection x:Key="App.FlowDirection">RightToLeft</FlowDirection>
+            <FlowDirection x:Key="App.CaptionButtonsFlowDirection">RightToLeft</FlowDirection>
+            <FlowDirection x:Key="App.ShellFlowDirection">RightToLeft</FlowDirection>
+            <FlowDirection x:Key="App.TextFlowDirection">RightToLeft</FlowDirection>
             <FlowDirection x:Key="App.TechnicalFlowDirection">LeftToRight</FlowDirection>
-            <TextAlignment x:Key="App.DefaultTextAlignment">Left</TextAlignment>
-            <TextAlignment x:Key="App.TextAlignment">Left</TextAlignment>
+        <TextAlignment x:Key="App.DefaultTextAlignment">Right</TextAlignment>
+        <TextAlignment x:Key="App.TextAlignment">Right</TextAlignment>
             <TextAlignment x:Key="App.TechnicalTextAlignment">Left</TextAlignment>
             <TextAlignment x:Key="Options.SettingsTextAlignment">Left</TextAlignment>
-            <HorizontalAlignment x:Key="App.HorizontalAlignment">Left</HorizontalAlignment>
+            <HorizontalAlignment x:Key="App.HorizontalAlignment">Right</HorizontalAlignment>
+            <HorizontalAlignment x:Key="App.TrailingHorizontalAlignment">Left</HorizontalAlignment>
+            <Thickness x:Key="App.After6Margin">6,0,0,0</Thickness>
+            <Thickness x:Key="App.After8Margin">8,0,0,0</Thickness>
+            <Thickness x:Key="App.After10Margin">10,0,0,0</Thickness>
+            <Thickness x:Key="App.After12Margin">12,0,0,0</Thickness>
+            <Thickness x:Key="App.Before8Margin">0,0,8,0</Thickness>
+            <Thickness x:Key="App.Before10Margin">0,0,10,0</Thickness>
+            <Thickness x:Key="App.Indent24Margin">0,6,24,0</Thickness>
+            <Thickness x:Key="App.ScrollPadding4">4,0,0,0</Thickness>
             <markup:XmlLanguage x:Key="App.XmlLanguage">ar-SA</markup:XmlLanguage>
 
             <FlowDirection x:Key="TechnicalText.FlowDirection">LeftToRight</FlowDirection>

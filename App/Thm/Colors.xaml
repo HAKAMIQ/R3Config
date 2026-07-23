@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
+
     <!-- Fluent 2 palette tokens. Active semantic brushes are switched by WinTheme. -->
     <Color x:Key="Fluent.Dark.Surface.Background.Color">#FF202020</Color>
     <Color x:Key="Fluent.Dark.Surface.Card.Color">#FF292929</Color>
@@ -28,8 +29,8 @@
     <Color x:Key="Fluent.Dark.Status.WarningSurface.Color">#FF3B321D</Color>
     <Color x:Key="Fluent.Dark.Status.DangerSurface.Color">#FF3D2424</Color>
     <Color x:Key="Fluent.Dark.Status.InfoSurface.Color">#FF193247</Color>
-    <Color x:Key="Fluent.Dark.Selection.Color">#FF173B57</Color>
-    <Color x:Key="Fluent.Dark.SelectionInactive.Color">#FF343A40</Color>
+    <Color x:Key="Fluent.Dark.Selection.Default.Color">#FF173B57</Color>
+    <Color x:Key="Fluent.Dark.Selection.Inactive.Color">#FF343A40</Color>
     <Color x:Key="Fluent.Dark.Scroll.Track.Color">#FF252525</Color>
     <Color x:Key="Fluent.Dark.Scroll.Thumb.Color">#FF888888</Color>
     <Color x:Key="Fluent.Dark.Scroll.ThumbHover.Color">#FFAAAAAA</Color>
@@ -61,8 +62,8 @@
     <Color x:Key="Fluent.Light.Status.WarningSurface.Color">#FFFFF4CE</Color>
     <Color x:Key="Fluent.Light.Status.DangerSurface.Color">#FFFDE7E9</Color>
     <Color x:Key="Fluent.Light.Status.InfoSurface.Color">#FFE5F1FB</Color>
-    <Color x:Key="Fluent.Light.Selection.Color">#FFDCEBFA</Color>
-    <Color x:Key="Fluent.Light.SelectionInactive.Color">#FFE8E8E8</Color>
+    <Color x:Key="Fluent.Light.Selection.Default.Color">#FFDCEBFA</Color>
+    <Color x:Key="Fluent.Light.Selection.Inactive.Color">#FFE8E8E8</Color>
     <Color x:Key="Fluent.Light.Scroll.Track.Color">#FFF0F0F0</Color>
     <Color x:Key="Fluent.Light.Scroll.Thumb.Color">#FF8A8A8A</Color>
     <Color x:Key="Fluent.Light.Scroll.ThumbHover.Color">#FF616161</Color>
@@ -71,35 +72,127 @@
     <Color x:Key="Elevation.Shadow.Color">#66000000</Color>
 
     <!-- Active semantic brush contract. Dark remains the deterministic fallback. -->
-    <SolidColorBrush x:Key="Surface.Background" po:Freeze="False" Color="{StaticResource Fluent.Dark.Surface.Background.Color}" />
-    <SolidColorBrush x:Key="Surface.Card" po:Freeze="False" Color="{StaticResource Fluent.Dark.Surface.Card.Color}" />
-    <SolidColorBrush x:Key="Surface.CardHover" po:Freeze="False" Color="{StaticResource Fluent.Dark.Surface.CardHover.Color}" />
-    <SolidColorBrush x:Key="Surface.CardPressed" po:Freeze="False" Color="{StaticResource Fluent.Dark.Surface.CardPressed.Color}" />
-    <SolidColorBrush x:Key="Surface.Subtle" po:Freeze="False" Color="{StaticResource Fluent.Dark.Surface.Subtle.Color}" />
-    <SolidColorBrush x:Key="Surface.Overlay" po:Freeze="False" Color="{StaticResource Fluent.Dark.Surface.Overlay.Color}" />
-    <SolidColorBrush x:Key="Text.Primary" po:Freeze="False" Color="{StaticResource Fluent.Dark.Text.Primary.Color}" />
-    <SolidColorBrush x:Key="Text.Secondary" po:Freeze="False" Color="{StaticResource Fluent.Dark.Text.Secondary.Color}" />
-    <SolidColorBrush x:Key="Text.Disabled" po:Freeze="False" Color="{StaticResource Fluent.Dark.Text.Disabled.Color}" />
-    <SolidColorBrush x:Key="Text.OnAccent" po:Freeze="False" Color="{StaticResource Fluent.Dark.Text.OnAccent.Color}" />
-    <SolidColorBrush x:Key="Stroke.Default" po:Freeze="False" Color="{StaticResource Fluent.Dark.Stroke.Default.Color}" />
-    <SolidColorBrush x:Key="Stroke.Subtle" po:Freeze="False" Color="{StaticResource Fluent.Dark.Stroke.Subtle.Color}" />
-    <SolidColorBrush x:Key="Stroke.Strong" po:Freeze="False" Color="{StaticResource Fluent.Dark.Stroke.Strong.Color}" />
-    <SolidColorBrush x:Key="Stroke.Focus" po:Freeze="False" Color="{StaticResource Fluent.Dark.Stroke.Focus.Color}" />
-    <SolidColorBrush x:Key="Accent.Default" po:Freeze="False" Color="{StaticResource Fluent.Dark.Accent.Default.Color}" />
-    <SolidColorBrush x:Key="Accent.Hover" po:Freeze="False" Color="{StaticResource Fluent.Dark.Accent.Hover.Color}" />
-    <SolidColorBrush x:Key="Accent.Pressed" po:Freeze="False" Color="{StaticResource Fluent.Dark.Accent.Pressed.Color}" />
-    <SolidColorBrush x:Key="Accent.Disabled" po:Freeze="False" Color="{StaticResource Fluent.Dark.Accent.Disabled.Color}" />
-    <SolidColorBrush x:Key="Status.Success" po:Freeze="False" Color="{StaticResource Fluent.Dark.Status.Success.Color}" />
-    <SolidColorBrush x:Key="Status.Warning" po:Freeze="False" Color="{StaticResource Fluent.Dark.Status.Warning.Color}" />
-    <SolidColorBrush x:Key="Status.Danger" po:Freeze="False" Color="{StaticResource Fluent.Dark.Status.Danger.Color}" />
-    <SolidColorBrush x:Key="Status.Info" po:Freeze="False" Color="{StaticResource Fluent.Dark.Status.Info.Color}" />
-    <SolidColorBrush x:Key="Status.SuccessSurface" po:Freeze="False" Color="{StaticResource Fluent.Dark.Status.SuccessSurface.Color}" />
-    <SolidColorBrush x:Key="Status.WarningSurface" po:Freeze="False" Color="{StaticResource Fluent.Dark.Status.WarningSurface.Color}" />
-    <SolidColorBrush x:Key="Status.DangerSurface" po:Freeze="False" Color="{StaticResource Fluent.Dark.Status.DangerSurface.Color}" />
-    <SolidColorBrush x:Key="Status.InfoSurface" po:Freeze="False" Color="{StaticResource Fluent.Dark.Status.InfoSurface.Color}" />
-    <SolidColorBrush x:Key="Selection.Default" po:Freeze="False" Color="{StaticResource Fluent.Dark.Selection.Color}" />
-    <SolidColorBrush x:Key="Selection.Inactive" po:Freeze="False" Color="{StaticResource Fluent.Dark.SelectionInactive.Color}" />
-    <SolidColorBrush x:Key="Scroll.Track" po:Freeze="False" Color="{StaticResource Fluent.Dark.Scroll.Track.Color}" />
-    <SolidColorBrush x:Key="Scroll.Thumb" po:Freeze="False" Color="{StaticResource Fluent.Dark.Scroll.Thumb.Color}" />
-    <SolidColorBrush x:Key="Scroll.ThumbHover" po:Freeze="False" Color="{StaticResource Fluent.Dark.Scroll.ThumbHover.Color}" />
+    <SolidColorBrush x:Key="Surface.Background"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Surface.Background.Color}" />
+
+    <SolidColorBrush x:Key="Surface.Card"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Surface.Card.Color}" />
+
+    <SolidColorBrush x:Key="Surface.CardHover"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Surface.CardHover.Color}" />
+
+    <SolidColorBrush x:Key="Surface.CardPressed"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Surface.CardPressed.Color}" />
+
+    <SolidColorBrush x:Key="Surface.Subtle"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Surface.Subtle.Color}" />
+
+    <SolidColorBrush x:Key="Surface.Overlay"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Surface.Overlay.Color}" />
+
+    <SolidColorBrush x:Key="Text.Primary"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Text.Primary.Color}" />
+
+    <SolidColorBrush x:Key="Text.Secondary"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Text.Secondary.Color}" />
+
+    <SolidColorBrush x:Key="Text.Disabled"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Text.Disabled.Color}" />
+
+    <SolidColorBrush x:Key="Text.OnAccent"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Text.OnAccent.Color}" />
+
+    <SolidColorBrush x:Key="Stroke.Default"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Stroke.Default.Color}" />
+
+    <SolidColorBrush x:Key="Stroke.Subtle"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Stroke.Subtle.Color}" />
+
+    <SolidColorBrush x:Key="Stroke.Strong"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Stroke.Strong.Color}" />
+
+    <SolidColorBrush x:Key="Stroke.Focus"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Stroke.Focus.Color}" />
+
+    <SolidColorBrush x:Key="Accent.Default"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Accent.Default.Color}" />
+
+    <SolidColorBrush x:Key="Accent.Hover"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Accent.Hover.Color}" />
+
+    <SolidColorBrush x:Key="Accent.Pressed"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Accent.Pressed.Color}" />
+
+    <SolidColorBrush x:Key="Accent.Disabled"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Accent.Disabled.Color}" />
+
+    <SolidColorBrush x:Key="Status.Success"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Status.Success.Color}" />
+
+    <SolidColorBrush x:Key="Status.Warning"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Status.Warning.Color}" />
+
+    <SolidColorBrush x:Key="Status.Danger"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Status.Danger.Color}" />
+
+    <SolidColorBrush x:Key="Status.Info"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Status.Info.Color}" />
+
+    <SolidColorBrush x:Key="Status.SuccessSurface"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Status.SuccessSurface.Color}" />
+
+    <SolidColorBrush x:Key="Status.WarningSurface"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Status.WarningSurface.Color}" />
+
+    <SolidColorBrush x:Key="Status.DangerSurface"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Status.DangerSurface.Color}" />
+
+    <SolidColorBrush x:Key="Status.InfoSurface"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Status.InfoSurface.Color}" />
+
+    <SolidColorBrush x:Key="Selection.Default"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Selection.Default.Color}" />
+
+    <SolidColorBrush x:Key="Selection.Inactive"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Selection.Inactive.Color}" />
+
+    <SolidColorBrush x:Key="Scroll.Track"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Scroll.Track.Color}" />
+
+    <SolidColorBrush x:Key="Scroll.Thumb"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Scroll.Thumb.Color}" />
+
+    <SolidColorBrush x:Key="Scroll.ThumbHover"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Scroll.ThumbHover.Color}" />
 </ResourceDictionary>

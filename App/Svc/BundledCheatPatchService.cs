@@ -20,8 +20,8 @@ public sealed record LibStRes(
 public sealed class BundledCheatPatchService
 {
     public const string BndlName = "cheats.yml";
-    // RPCS3 does not load either managed library name at game boot. The
-    // title-specific file remains the runtime target.
+
+    // Runtime cheat patches use the title-specific *_patch.yml file.
     public const string ManName = "r3cht.yml";
     public const string OldName = "r3config_cheats_patch.yml";
 
@@ -143,6 +143,7 @@ public sealed class BundledCheatPatchService
             }
 
             var sourcePath = GetBndl(baseDirectory);
+
             if (!File.Exists(sourcePath))
             {
                 return Failure(
@@ -154,9 +155,10 @@ public sealed class BundledCheatPatchService
             [
                 .. bundledSelections
             ];
-            var extra = new List<PatchPreparedFile>();
 
+            var extra = new List<PatchPreparedFile>();
             var existingText = string.Empty;
+
             if (File.Exists(targetPath))
             {
                 existingText = File.ReadAllText(
@@ -192,18 +194,19 @@ public sealed class BundledCheatPatchService
                         Exact));
             }
 
-            // Reuse compatible entries from the managed library. If only the
-            // legacy library exists, stage an exact validated copy under the
-            // new name in the same transaction as the runtime patch.
+            // Reuse matching managed entries and migrate the legacy library when needed.
             var targetSerial = GetSer(bundledSelections[0])!;
             var libraryPath = GetPath(patchesPath);
             var legacyPath = OldPath(patchesPath);
             string? readPath = null;
-            if (File.Exists(libraryPath) && IsMan(libraryPath))
+
+            if (File.Exists(libraryPath) &&
+                IsMan(libraryPath))
             {
                 readPath = libraryPath;
             }
-            else if (File.Exists(legacyPath) && IsMan(legacyPath))
+            else if (File.Exists(legacyPath) &&
+                     IsMan(legacyPath))
             {
                 if (File.Exists(libraryPath))
                 {
@@ -222,6 +225,7 @@ public sealed class BundledCheatPatchService
                     readPath,
                     R3Limits.PatCatBy,
                     Path.GetFileName(readPath));
+
                 var libraryRead = _reader.ReadText(
                     libraryText,
                     PatSrc.ManCht,
@@ -249,12 +253,13 @@ public sealed class BundledCheatPatchService
                         legacyPath,
                         StringComparison.OrdinalIgnoreCase))
                 {
-                    extra.Add(new PatchPreparedFile(
-                        libraryPath,
-                        libraryText,
-                        PrepKind.PatCat,
-                        PatSrc.ManCht,
-                        libraryRead.Catalog.Entries.Count));
+                    extra.Add(
+                        new PatchPreparedFile(
+                            libraryPath,
+                            libraryText,
+                            PrepKind.PatCat,
+                            PatSrc.ManCht,
+                            libraryRead.Catalog.Entries.Count));
                 }
             }
 
@@ -312,8 +317,7 @@ public sealed class BundledCheatPatchService
                 targetPath);
 
             if (!validation.IsOk ||
-                validation.Catalog.Entries.Count !=
-                compiled.SelNum)
+                validation.Catalog.Entries.Count != compiled.SelNum)
             {
                 return Failure(
                     targetPath,
@@ -368,10 +372,11 @@ public sealed class BundledCheatPatchService
         var exactVersion = versions.FirstOrDefault(
             version => !PatVer.IsAll(version));
 
-        var version = exactVersion ??
-                      (versions.Length > 0 ? versions[0] : null) ??
-                      throw new InvalidDataException(
-                          $"Managed cheat '{entry.Title}' has no valid version.");
+        var version =
+            exactVersion ??
+            (versions.Length > 0 ? versions[0] : null) ??
+            throw new InvalidDataException(
+                $"Managed cheat '{entry.Title}' has no valid version.");
 
         return new PatMatch(
             Patch: entry with
@@ -479,10 +484,13 @@ public sealed class BundledCheatPatchService
             return null;
         }
 
-        var normalized = serial.Trim().ToUpperInvariant();
+        var normalized =
+            serial.Trim().ToUpperInvariant();
+
         return normalized.Length == 9 &&
                normalized.All(character =>
-                   character is >= 'A' and <= 'Z' or >= '0' and <= '9')
+                   character is >= 'A' and <= 'Z' or
+                   >= '0' and <= '9')
             ? normalized
             : null;
     }
@@ -517,5 +525,4 @@ public sealed class BundledCheatPatchService
             error,
             []);
     }
-
 }

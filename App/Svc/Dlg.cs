@@ -158,6 +158,7 @@ public static class UiDlg
     private static Window? Owner()
     {
         var current = System.Windows.Application.Current;
+
         if (current is null)
         {
             return null;

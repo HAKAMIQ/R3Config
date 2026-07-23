@@ -40,4 +40,9 @@ public partial class HCanAnchorsDlg : Window
     {
         Close();
     }
+
+    private void DataGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+
+    }
 }

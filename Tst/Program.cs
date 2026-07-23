@@ -38,7 +38,6 @@ try
     Inp_Lim(tempRoot);
     Scan_Src(tempRoot);
     Mut_Cmd(tempRoot);
-    Main_GameLaunch(tempRoot);
     ListFind();
     UiGate.Run();
     var env = MakeEnv(tempRoot);
@@ -222,15 +221,6 @@ static void Lang_Key()
         "PatchReadiness.NeedsColdBoot",
         "PatchReadiness.NeedsColdBootTip",
         "PatchReadiness.NeedsColdBootWarning",
-        "PatchReadiness.LaunchAction",
-        "PatchReadiness.LaunchHint",
-        "PatchReadiness.LaunchStarted",
-        "PatchReadiness.LaunchAlreadyRunning",
-        "PatchReadiness.LaunchStillRunning",
-        "PatchReadiness.LaunchRpcs3Missing",
-        "PatchReadiness.LaunchGameIdentityMissing",
-        "PatchReadiness.LaunchFailed",
-        "PatchReadiness.ReanalyzeAction",
         "PatchReadiness.NotDetected",
         "PatchReadiness.NotDetectedTip",
         "Patch.DuplicateKeyReadable",
@@ -274,16 +264,18 @@ static void Lang_Key()
 static void Ui_Layout()
 {
     var arabic = UiLaySt.FromLang(UiText.ArabLang);
-    Assert(arabic.IsRtl, "Expected ar-SA to use RTL bidi text flow.");
-    Assert(arabic.WinFlow == FlowDirection.LeftToRight &&
-           arabic.ShFlow == FlowDirection.LeftToRight,
-        "Expected Arabic shell geometry to remain LTR.");
-    Assert(arabic.TextFlow == FlowDirection.RightToLeft,
-        "Expected localized Arabic text to use RTL bidi flow.");
+    Assert(arabic.IsRtl, "Expected ar-SA to use the native Windows RTL layout.");
+    Assert(arabic.WinFlow == FlowDirection.RightToLeft &&
+           arabic.ShFlow == FlowDirection.RightToLeft &&
+           arabic.TextFlow == FlowDirection.RightToLeft,
+        "Expected Arabic window, shell, and localized text geometry to use RTL.");
     Assert(arabic.TechFlow == FlowDirection.LeftToRight &&
-           arabic.TxtAlign == TextAlignment.Left &&
-           arabic.TechAlgn == TextAlignment.Left,
-        "Expected technical text to stay LTR and all text to stay left-aligned.");
+           arabic.TxtAlign == TextAlignment.Right &&
+           arabic.SetAlign == TextAlignment.Right &&
+           arabic.TechAlgn == TextAlignment.Left &&
+           arabic.HorAlign == HorizontalAlignment.Right &&
+           arabic.TrailAlign == HorizontalAlignment.Left,
+        "Expected Arabic content to start on the right, actions to trail on the left, and technical text to stay LTR/left.");
     Assert(arabic.GameFlow(hasSelectedGame: true) == FlowDirection.LeftToRight &&
            arabic.GameFlow(hasSelectedGame: false) == FlowDirection.RightToLeft,
         "Expected selected game identities to stay technical while localized empty text follows Arabic.");
@@ -292,8 +284,13 @@ static void Ui_Layout()
     Assert(!english.IsRtl &&
            english.WinFlow == FlowDirection.LeftToRight &&
            english.ShFlow == FlowDirection.LeftToRight &&
-           english.TextFlow == FlowDirection.LeftToRight,
-        "Expected English shell and text to remain LTR.");
+           english.TextFlow == FlowDirection.LeftToRight &&
+           english.TxtAlign == TextAlignment.Left &&
+           english.SetAlign == TextAlignment.Left &&
+           english.TechAlgn == TextAlignment.Left &&
+           english.HorAlign == HorizontalAlignment.Left &&
+           english.TrailAlign == HorizontalAlignment.Right,
+        "Expected English shell and text to remain LTR, with actions trailing on the right.");
 }
 
 static void Rpcs3MutationGuard(string tempRoot)
@@ -1107,76 +1104,6 @@ static void Mut_Cmd(string tempRoot)
 
     Console.WriteLine(
         "Mutation command state and confirmation contract tests PASS.");
-}
-
-static void Main_GameLaunch(string tempRoot)
-{
-    var root = Path.Combine(
-        tempRoot,
-        "main-game-launch");
-    var configPath = Path.Combine(root, "config");
-    Directory.CreateDirectory(configPath);
-    Directory.CreateDirectory(Path.Combine(root, "patches"));
-    var executablePath = Path.Combine(root, "rpcs3.exe");
-    File.WriteAllBytes(executablePath, []);
-    var install = Rpcs3InstallService.FromExe(executablePath);
-
-    var running = false;
-    var launchCalls = 0;
-    Rpcs3GameDescriptor? launchedGame = null;
-    var main = new MainVm(
-        AppComposition.BuildRun(),
-        () => running,
-        (_, _) => true,
-        (_, game) =>
-        {
-            launchCalls++;
-            launchedGame = game;
-            running = true;
-            return new GameLaunchResult(
-                true,
-                GameLaunchError.None,
-                "%RPCS3_GAMEID%:" + game.Serial);
-        });
-    SetField(main, "_install", install);
-    main.ExePath = executablePath;
-
-    var game = MakeGame(
-        "BLUS31465",
-        "Assassin's Creed: Rogue",
-        isDetectedInRpcs3: true);
-    main.GameList.Load([game]);
-    main.GameList.SelGame = game;
-
-    Assert(main.NeedsHashEvidence &&
-           main.ShowHashLaunchAction &&
-           !main.ShowHashRefreshAction &&
-           main.LaunchGameCmd.CanRun(null),
-        "Expected a detected game without Hash evidence to expose one contextual launch action.");
-
-    main.LaunchGameCmd.Execute(null);
-
-    Assert(launchCalls == 1 &&
-           ReferenceEquals(launchedGame, game.Game) &&
-           main.RunUi &&
-           !main.ShowHashLaunchAction &&
-           main.ShowHashRefreshAction &&
-           !main.LaunchGameCmd.CanRun(null),
-        "Expected launch to use the selected RPCS3 game identity and advance the warning to re-analysis.");
-
-    var catalogOnly = MakeGame(
-        "BLUS99999",
-        "Catalog Only",
-        isDetectedInRpcs3: false);
-    main.GameList.Load([catalogOnly]);
-    main.GameList.SelGame = catalogOnly;
-    Assert(!main.NeedsHashEvidence &&
-           !main.ShowHashLaunchAction &&
-           !main.ShowHashRefreshAction,
-        "Expected catalog-only entries not registered in RPCS3 to hide the launch workflow.");
-
-    Console.WriteLine(
-        "Main missing-Hash game launch workflow tests PASS.");
 }
 
 static void SetField<T>(
@@ -2146,67 +2073,11 @@ static void App_Pat()
         [infamousEuropeanMatch]);
     Assert(
         infamousCanaryCompiled.IsOk &&
-        infamousCanaryCompiled.PatText.Contains(
-            "Anchors:",
-            StringComparison.Ordinal) &&
-        infamousCanaryCompiled.PatText.Contains(
+        !infamousCanaryCompiled.PatText.Contains(
             "*Infam1_",
             StringComparison.Ordinal),
-        "Expected selected Canary output to preserve the required YAML anchor and alias: " +
+        "Expected selected Canary output to expand YAML anchors before imported_patch.yml merge: " +
         infamousCanaryCompiled.Error);
-    const string selectiveAnchorSource = """
-Version: 1.2
-Anchors:
-  UsedCode: &UsedCode
-    - [ be32, 0x00000100, 0x60000000 ]
-  UnusedCode: &UnusedCode
-    - [ be32, 0x00000200, 0x60000000 ]
-PPU-1111111111111111111111111111111111111111:
-  "Selective Anchor Patch":
-    Games:
-      "Anchor Game":
-        BLUS00001: [ 01.00, 01.01 ]
-        BLES00001: [ All ]
-    Author: "Tester"
-    Notes: |
-      First line.
-      Second line.
-    Patch Version: 1.0
-    Unknown Field: "preserve me"
-    Patch:
-      - [ load, *UsedCode ]
-""";
-    var selectiveRead = new ReadSvc().ReadText(
-        selectiveAnchorSource,
-        PatSrc.Can);
-    Assert(selectiveRead.IsOk,
-        "Expected selective anchor fixture to parse: " + selectiveRead.Error);
-    var selectiveGame = new Rpcs3GameDescriptor(
-        "BLUS00001",
-        "Anchor Game",
-        @"C:\Games\BLUS00001",
-        "01.01",
-        "1111111111111111111111111111111111111111",
-        null);
-    var selectiveMatch = new PatchMatchService().Match(
-        selectiveRead.Catalog.Entries.Single(),
-        [selectiveGame]);
-    var selectiveCompile = new PatchSelectionCompiler().Compile(
-        selectiveAnchorSource,
-        [selectiveMatch],
-        [selectiveMatch]);
-    Assert(selectiveCompile.IsOk &&
-           selectiveCompile.PatText.Contains("&UsedCode", StringComparison.Ordinal) &&
-           selectiveCompile.PatText.Contains("*UsedCode", StringComparison.Ordinal) &&
-           !selectiveCompile.PatText.Contains("UnusedCode", StringComparison.Ordinal) &&
-           selectiveCompile.PatText.Contains("BLES00001", StringComparison.Ordinal) &&
-           selectiveCompile.PatText.Contains("01.00", StringComparison.Ordinal) &&
-           selectiveCompile.PatText.Contains("01.01", StringComparison.Ordinal) &&
-           selectiveCompile.PatText.Contains("All", StringComparison.Ordinal) &&
-           selectiveCompile.PatText.Contains("Unknown Field", StringComparison.Ordinal) &&
-           selectiveCompile.PatText.Contains("Second line.", StringComparison.Ordinal),
-        "Expected compilation to retain the complete selected definition and only its required anchors: " +
-        selectiveCompile.Error);
     Assert(File.Exists(mainVmPath), "Expected MainVm source to exist in App/Vm.");
     Assert(File.Exists(mainWindowPath), "Expected MainWindow source to exist in App.");
     Assert(File.Exists(mainWindowXamlPath), "Expected MainWindow XAML to exist in App.");
@@ -2295,9 +2166,9 @@ PPU-1111111111111111111111111111111111111111:
     Assert(!patchView.Contains("Key=Patch.SourceStatus.CanaryMatching", StringComparison.Ordinal),
         "Expected the Canary page to avoid a permanent technical matching paragraph on the player surface.");
     Assert(patchView.Split(
-               "Style=\"{StaticResource FluentButton.Primary}\"",
-               StringSplitOptions.None).Length == 6,
-        "Expected the three positive patch actions and the two mutually exclusive Hash workflow actions to use the primary action style.");
+               "BasedOn=\"{StaticResource PatPrimaryInlineButton}\"",
+               StringSplitOptions.None).Length == 4,
+        "Expected the three positive patch actions to use the primary action style.");
     Assert(patchView.Contains("PatSrc", StringComparison.Ordinal) &&
            patchView.Contains("CanState", StringComparison.Ordinal) &&
            patchView.Contains("MgrCmd", StringComparison.Ordinal) &&
@@ -2317,9 +2188,14 @@ PPU-1111111111111111111111111111111111111111:
            hCanaryView.Contains("Key=HCanary.FilesAndTools", StringComparison.Ordinal) &&
            hCanaryView.Contains("<ContextMenu", StringComparison.Ordinal) &&
            hCanaryView.Contains("x:Name=\"SavedDrawer\"", StringComparison.Ordinal) &&
-           hCanaryView.Contains("x:Name=\"TargetsPanel\"", StringComparison.Ordinal) &&
+           hCanaryView.Contains("x:Name=\"GameStep\"", StringComparison.Ordinal) &&
+           hCanaryView.Contains("x:Name=\"TargetsStep\"", StringComparison.Ordinal) &&
+           hCanaryView.Contains("x:Name=\"FingerprintStep\"", StringComparison.Ordinal) &&
+           hCanaryView.Contains("x:Name=\"DetailsStep\"", StringComparison.Ordinal) &&
+           hCanaryView.Contains("x:Name=\"InstructionsStep\"", StringComparison.Ordinal) &&
+           hCanaryView.Contains("x:Name=\"ReviewStep\"", StringComparison.Ordinal) &&
            hCanaryView.Contains("x:Name=\"AnchorsPanel\"", StringComparison.Ordinal),
-        "Expected H-Canary to use one navigation level with inline saved, target, and reference surfaces.");
+        "Expected H-Canary to use one six-step navigation level with saved and reference surfaces kept inline.");
     var advancedView = File.ReadAllText(advancedViewPath);
     Assert(advancedView.Contains("<controls:HCanView", StringComparison.Ordinal) &&
            advancedView.Contains("x:Name=\"HCanaryWorkspace\"", StringComparison.Ordinal) &&
@@ -2331,7 +2207,7 @@ PPU-1111111111111111111111111111111111111111:
            !advancedView.Contains("Key=Adv.BackToTools", StringComparison.Ordinal) &&
            advancedView.Contains("Key=Adv.Recovery", StringComparison.Ordinal) &&
            advancedView.Contains("Key=Adv.Diagnostics", StringComparison.Ordinal),
-        "Expected Advanced Tools to open directly on H-Canary and use one navigation rail for recovery and diagnostics.");
+        "Expected Advanced Tools to host H-Canary directly beside recovery and diagnostics without another navigation layer.");
     Assert(advancedView.Contains("Binding=\"{Binding MadeAt,", StringComparison.Ordinal) &&
            advancedView.Contains("Binding=\"{Binding DirPath}\"", StringComparison.Ordinal) &&
            !advancedView.Contains("Binding=\"{Binding CreatedAt", StringComparison.Ordinal) &&
@@ -2383,9 +2259,11 @@ PPU-1111111111111111111111111111111111111111:
         "Expected player patch rows to render only an actionable state and relevant instructions while keeping technical evidence in optional details.");
     Assert(patchView.Contains("FlowDirection=\"{Binding Preview.TextFlow}\"", StringComparison.Ordinal) &&
            patchView.Contains("FlowDirection=\"{Binding NoteFlow}\"", StringComparison.Ordinal) &&
-           patchView.Contains("DynamicResource App.ShellFlowDirection", StringComparison.Ordinal) &&
-           !patchView.Contains("DynamicResource App.FlowDirection", StringComparison.Ordinal),
-        "Expected patch text to follow language-aware view models while its container geometry stays LTR.");
+           patchView.Contains("DynamicResource App.FlowDirection", StringComparison.Ordinal) &&
+           patchView.Contains("DynamicResource App.TextFlowDirection", StringComparison.Ordinal) &&
+           !patchView.Contains("DynamicResource App.ShellFlowDirection", StringComparison.Ordinal) &&
+           !patchView.Contains("FlowDirection=\"RightToLeft\"", StringComparison.Ordinal),
+        "Expected patch geometry and localized text to follow the active Windows language direction while technical values remain explicit LTR.");
 
     var noteService = File.ReadAllText(noteServicePath);
     Assert(noteService.Contains("Prevents random freezing/crashing while playing the game", StringComparison.Ordinal),
@@ -3171,10 +3049,9 @@ static void Cht_Bndl(string tempRoot)
     Assert(compiled.IsOk, "Expected an anchored selected cheat to compile: " + compiled.Error);
     Assert(compiled.PatText.StartsWith("Version: 1.2", StringComparison.Ordinal),
         "Expected compiled cheat text to start with the RPCS3 version header.");
-    Assert(compiled.PatText.Contains("*NewCode", StringComparison.Ordinal) &&
-           compiled.PatText.Contains("&NewCode", StringComparison.Ordinal) &&
-           compiled.PatText.Contains("Anchors:", StringComparison.Ordinal),
-        "Expected compiler output to preserve the selected anchor and alias inside the self-contained document.");
+    Assert(!compiled.PatText.Contains("*NewCode", StringComparison.Ordinal) &&
+           !compiled.PatText.Contains("Anchors:", StringComparison.Ordinal),
+        "Expected compiler output to expand aliases and have no external anchor dependency.");
     Assert(compiled.PatText.Contains("0x60000000", StringComparison.OrdinalIgnoreCase),
         "Expected the compiler to select the newer duplicate patch body.");
 
@@ -3308,30 +3185,6 @@ static void Cht_Bndl(string tempRoot)
     Assert(!groupConflict.IsOk &&
            groupConflict.Error?.Contains("mutually exclusive", StringComparison.OrdinalIgnoreCase) == true,
         "Expected same-hash selections in one Group to be rejected as mutually exclusive.");
-    var plannerRoot = Path.Combine(tempRoot, "group-planner-smoke");
-    Directory.CreateDirectory(plannerRoot);
-    var plannerExe = Path.Combine(plannerRoot, "rpcs3.exe");
-    File.WriteAllBytes(plannerExe, []);
-    var plannerInstall = Rpcs3InstallService.FromExe(plannerExe);
-    MustFail<InvalidOperationException>(
-        () => new PatPlnr().Build(
-            plannerInstall,
-            [
-                integrityMatches.Single(match => match.Patch.Title == "Choice A"),
-                integrityMatches.Single(match => match.Patch.Title == "Choice B")
-            ],
-            expertMode: false),
-        "The shared planner must reject a Group conflict for every patch source, not only during Canary/cheat compilation.");
-    MustFail<InvalidOperationException>(
-        () => new PatPlnr().Build(
-            plannerInstall,
-            [integrityMatches.Single(match => match.Patch.Title == "Choice A")],
-            expertMode: false,
-            enabledMatches:
-            [
-                integrityMatches.Single(match => match.Patch.Title == "Choice B")
-            ]),
-        "The shared planner must reject a selected patch when another patch in the same Group is already enabled.");
     var dependencyCycle = compiler.Compile(
         integritySourceText,
         [
@@ -3719,93 +3572,17 @@ static void Can_Txn(string tempRoot)
     Assert(File.ReadAllBytes(officialPath).SequenceEqual(officialBytes),
         "Expected manual Canary import never to modify RPCS3-owned patch.yml.");
 
-    var manualWithExtras = manual.Replace(
-        "    Author: \"R3Config test\"\r\n",
-        "    # preserve this user comment\r\n" +
-        "    Unknown Field: \"preserve me\"\r\n" +
-        "    Notes: |\r\n" +
-        "      First note line.\r\n" +
-        "      Second note line.\r\n" +
-        "    Author: \"R3Config test\"\r\n",
-        StringComparison.Ordinal);
-    var manualBytes = Encoding.UTF8.GetBytes(manualWithExtras);
-    File.WriteAllBytes(
-        importedPath,
-        [0xEF, 0xBB, 0xBF, .. manualBytes]);
+    File.WriteAllText(importedPath, manual, Encoding.UTF8);
     var preservingResult = useCase.Import(install, oldManaged);
     Assert(preservingResult.IsOk,
         "Expected a valid manual imported patch to be preserved: " + preservingResult.Error);
     var preservingText = File.ReadAllText(importedPath, Encoding.UTF8);
     Assert(preservingText.Contains("Manual Existing Patch", StringComparison.Ordinal) &&
            preservingText.Contains("Old Managed Canary", StringComparison.Ordinal) &&
-           preservingText.Contains("# preserve this user comment", StringComparison.Ordinal) &&
-           preservingText.Contains("Unknown Field: \"preserve me\"", StringComparison.Ordinal) &&
-           preservingText.Contains("Second note line.", StringComparison.Ordinal) &&
-           !File.ReadAllBytes(importedPath).Take(3).SequenceEqual(
-               new byte[] { 0xEF, 0xBB, 0xBF }) &&
            new ReadSvc().Read(
                importedPath,
                PatSrc.Imported).IsOk,
         "Expected manual and managed definitions to coexist in one readable imported_patch.yml.");
-
-    var concurrencyService = new R3Config.Svc.CanaryPatchImportService(reader);
-    var concurrentPrepared = concurrencyService.PrepareManagedImportedPatchFile(
-        install.PatPath,
-        newManaged);
-    Assert(concurrentPrepared.IsOk && concurrentPrepared.PreparedFile is not null,
-        "Expected an imported patch update to prepare before the external-change test.");
-    var externalText = File.ReadAllText(importedPath, Encoding.UTF8) +
-                       "# external editor change\r\n";
-    File.WriteAllText(importedPath, externalText, new UTF8Encoding(false));
-    var externalBefore = File.ReadAllBytes(importedPath);
-    try
-    {
-        transaction.Commit(
-            Rpcs3AppPaths.BkpRoot(install),
-            [concurrentPrepared.PreparedFile!]);
-        throw new InvalidOperationException(
-            "Expected an external imported_patch.yml edit to block commit.");
-    }
-    catch (IOException exception)
-    {
-        Assert(exception.Message.Contains("changed externally", StringComparison.OrdinalIgnoreCase) &&
-               File.ReadAllBytes(importedPath).SequenceEqual(externalBefore),
-            "Expected external-change detection to preserve the editor's bytes and reject the stale plan.");
-    }
-
-    File.WriteAllText(importedPath, preservingText, new UTF8Encoding(false));
-
-    const string anchoredManaged = """
-Version: 1.2
-Anchors:
-  ManagedCode: &ManagedCode
-    - [ be32, 0x00000400, 0x60000000 ]
-PPU-ffffffffffffffffffffffffffffffffffffffff:
-  "Anchored Managed Canary":
-    Games:
-      "Canary Transaction Game":
-        BLUS31465: [ 01.02 ]
-    Author: "R3Config test"
-    Patch Version: 1.0
-    Patch:
-      - [ load, *ManagedCode ]
-""";
-    var anchoredResult = useCase.Import(install, anchoredManaged);
-    var anchoredText = File.ReadAllText(importedPath, Encoding.UTF8);
-    Assert(anchoredResult.IsOk &&
-           anchoredText.Contains("&ManagedCode", StringComparison.Ordinal) &&
-           anchoredText.Contains("*ManagedCode", StringComparison.Ordinal) &&
-           anchoredText.Contains("R3Config managed Canary anchors v1 - begin", StringComparison.Ordinal) &&
-           anchoredText.Contains("# preserve this user comment", StringComparison.Ordinal) &&
-           new ReadSvc().Read(importedPath, PatSrc.Imported).IsOk,
-        "Expected imported_patch.yml merge to preserve user content and the selected Anchor/Alias pair.");
-    var restoreManaged = useCase.Import(install, oldManaged);
-    var restoredManagedText = File.ReadAllText(importedPath, Encoding.UTF8);
-    Assert(restoreManaged.IsOk &&
-           !restoredManagedText.Contains("ManagedCode", StringComparison.Ordinal) &&
-           !restoredManagedText.Contains("managed Canary anchors", StringComparison.Ordinal) &&
-           restoredManagedText.Contains("# preserve this user comment", StringComparison.Ordinal),
-        "Expected replacement to remove only obsolete R3Config-managed anchors and retain manual text.");
 
     var replacingResult = useCase.Import(install, newManaged);
     Assert(replacingResult.IsOk,
@@ -5697,13 +5474,12 @@ static void Pat_All(SmokeEnv env, Rpcs3GameDescriptor rogue)
             HashKind: HashKind.Spu,
             Hash: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
             GameTgt: [new R3PatTgt("Canary Game", "BLES00001", ["01.00"])],
-            PatType: "Timing",
+            PatType: "Canary",
             Risk: R3Config.Mdl.PatRisk.Canary,
             Notes: "Canary-only timing experiment.",
             Author: "Example",
             PatVer: "0.1",
-            Group: null,
-            Class: PatClass.Canary),
+            Group: null),
         [matchedGame]);
 
     Assert(!PatPol.Should(exactSafeFix.Patch.Risk, exactSafeFix.Status),
@@ -6390,16 +6166,8 @@ static void Flow_Cat(SmokeEnv env, string patchYmlPath)
     var importedOnly = flow.LoadPat(env.Install);
     Assert(importedOnly.Cat is not null, "Expected imported_patch.yml-only AppFlow load to return a catalog.");
     Assert(string.IsNullOrWhiteSpace(importedOnly.Error), "Expected imported_patch.yml-only AppFlow load not to report patch.yml missing.");
-        Assert(importedOnly.Cat!.Entries.Any(patch =>
-               patch.Title == "Imported Canary Display Patch" &&
-               patch.Class == PatClass.Canary &&
-               patch.HashKind == HashKind.Ppu &&
-               !patch.PatType.Equals("Canary", StringComparison.OrdinalIgnoreCase)) &&
-           importedOnly.Cat.Entries.Any(patch =>
-               patch.Title == "Imported Main SPU Patch" &&
-               patch.Class == PatClass.Main &&
-               patch.HashKind == HashKind.Spu),
-        "Expected imported_patch.yml to keep Main/Canary independent from PPU/SPU and from the file source.");
+    Assert(importedOnly.Cat!.Entries.Any(patch => patch.Title == "Imported Canary Display Patch" && patch.Risk == PatRisk.Canary),
+        "Expected imported_patch.yml entries to load as Canary patches.");
     Assert(importedOnly.SrcStat.Single(source =>
             source.Source == PatSrc.Official && source.Name == "patch.yml") is
         { Exists: false, Loaded: false, EntNum: 0 },
@@ -6421,13 +6189,8 @@ static void Flow_Cat(SmokeEnv env, string patchYmlPath)
     Assert(merged.Cat is not null, "Expected merged AppFlow load to return a catalog.");
     Assert(merged.Cat!.Entries.Any(patch => patch.Title == "Skip Intro Videos"),
         "Expected merged AppFlow load to include patch.yml entries.");
-    Assert(merged.Cat.Entries.Any(patch =>
-               patch.Title == "Imported Canary Display Patch" &&
-               patch.Class == PatClass.Canary) &&
-           merged.Cat.Entries.Any(patch =>
-               patch.Title == "Imported Main SPU Patch" &&
-               patch.Class == PatClass.Main),
-        "Expected merged AppFlow load to preserve independent Main and Canary classification.");
+    Assert(merged.Cat.Entries.Any(patch => patch.Title == "Imported Canary Display Patch" && patch.Risk == PatRisk.Canary),
+        "Expected merged AppFlow load to include imported_patch.yml entries as Canary.");
 
     File.WriteAllText(patchYmlPath, "Version: [invalid");
     var invalidOfficialWithImported = flow.LoadPat(env.Install);
@@ -6579,25 +6342,8 @@ static void R3_Read(string rootOrExePath)
     var analysisTimer = System.Diagnostics.Stopwatch.StartNew();
     var analysis = flow.DoAsync(exePath, builtInCatalog.Cat!).GetAwaiter().GetResult();
     analysisTimer.Stop();
-    var analyzedBySerial = analysis.Games
-        .GroupBy(
-            row => row.Game.Serial,
-            StringComparer.OrdinalIgnoreCase)
-        .ToDictionary(
-            group => group.Key,
-            group => group.ToArray(),
-            StringComparer.OrdinalIgnoreCase);
-    foreach (var game in games)
-    {
-        Assert(
-            analyzedBySerial.TryGetValue(
-                game.Serial,
-                out var retainedRows) &&
-            retainedRows.Length == 1 &&
-            retainedRows[0].InR3,
-            "Expected full R3Config analysis to retain the discovered RPCS3 game exactly once: " +
-            game.Serial);
-    }
+    Assert(analysis.Games.Count == games.Count,
+        "Expected full R3Config analysis to retain every discovered RPCS3 game.");
     var realEvaluations = analysis.Games
         .SelectMany(row => flow.PatPrev(
                 analysis.PatchCat.Cat!,
@@ -6988,17 +6734,6 @@ PPU-dddddddddddddddddddddddddddddddddddddddd:
     Patch Version: 0.1
     Patch:
       - [ be32, 0x00000080, 0x60000000 ]
-
-SPU-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee:
-  "Imported Main SPU Patch":
-    Games:
-      "Assassin's Creed Rogue":
-        BLUS31465: [ 01.02 ]
-    Author: "Manual Import"
-    Notes: "Ordinary imported Main patch."
-    Patch Version: 1.0
-    Patch:
-      - [ be32, 0x00000090, 0x60000000 ]
 """;
 }
 

@@ -155,10 +155,24 @@ public sealed class HwProbe
             return null;
         }
 
+        var systemDirectory = Environment.GetFolderPath(
+            Environment.SpecialFolder.System);
+
+        var powerShellPath = System.IO.Path.Combine(
+            systemDirectory,
+            "WindowsPowerShell",
+            "v1.0",
+            "powershell.exe");
+
+        if (!System.IO.File.Exists(powerShellPath))
+        {
+            return null;
+        }
+
         using var process = new Process();
         process.StartInfo = new ProcessStartInfo
         {
-            FileName = "powershell.exe",
+            FileName = powerShellPath,
             Arguments = "-NoProfile -ExecutionPolicy Bypass -Command \"Get-CimInstance Win32_VideoController | Select-Object -First 1 -ExpandProperty Name\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -195,6 +209,7 @@ public sealed class HwProbe
         return value.Trim();
     }
 
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport(
         "kernel32.dll",
         EntryPoint = "GlobalMemoryStatusEx",

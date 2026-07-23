@@ -43,75 +43,128 @@ public sealed class CanaryPatchImportService
     public const string ImpName = "imported_patch.yml";
     public const string VerHead = "Version: 1.2";
 
-    private const long MaxBytes = 128L * 1024L * 1024L;
+    private const long MaxBytes =
+        128L * 1024L * 1024L;
 
-    private const string BlkBegin = "# R3Config managed Canary patches v1 - begin";
-    private const string BlkEnd = "# R3Config managed Canary patches v1 - end";
-    private const string AncBegin = "# R3Config managed Canary anchors v1 - begin";
-    private const string AncEnd = "# R3Config managed Canary anchors v1 - end";
+    private const string BlkBegin =
+        "# R3Config managed Canary patches v1 - begin";
 
-    private static readonly Regex TopKeyRx = new(@"^(?<key>[^\s:#][^:#]*):(?:\s.*)?$", RegexOptions.Compiled);
+    private const string BlkEnd =
+        "# R3Config managed Canary patches v1 - end";
+
+    private const string AncBegin =
+        "# R3Config managed Canary anchors v1 - begin";
+
+    private const string AncEnd =
+        "# R3Config managed Canary anchors v1 - end";
+
+    private static readonly Regex TopKeyRx = new(
+        @"^(?<key>[^\s:#][^:#]*):(?:\s.*)?$",
+        RegexOptions.Compiled |
+        RegexOptions.CultureInvariant);
 
     private static readonly Regex MarkRx = new(
         @"^  # R3Config managed Canary patches(?<version> v[0-9]+)? - (?<edge>begin|end)$",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        RegexOptions.Compiled |
+        RegexOptions.CultureInvariant);
 
     private readonly ReadSvc _reader;
 
     public CanaryPatchImportService(
         ReadSvc? catalogReader = null)
     {
-        _reader = catalogReader ?? new ReadSvc();
+        _reader = catalogReader ??
+                  new ReadSvc();
     }
 
     public CanNorm Norm(string? sourceText)
     {
         if (string.IsNullOrWhiteSpace(sourceText))
         {
-            return Failure(UiText.GetText("Patch.ImportCanaryInvalidYaml"));
+            return Failure(
+                UiText.GetText(
+                    "Patch.ImportCanaryInvalidYaml"));
         }
 
-        var cleanInput = sourceText![0] == '\uFEFF'
-            ? sourceText[1..]
-            : sourceText;
-        var normalizedInput = cleanInput
-            .Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace("\r", "\n", StringComparison.Ordinal);
+        var cleanInput =
+            sourceText![0] == '\uFEFF'
+                ? sourceText[1..]
+                : sourceText;
 
-        var lines = normalizedInput.Split('\n');
-        var prefixLines = new List<string>();
-        var ppuBlocks = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        var ppuPatchNames = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
-        var ppuOrder = new List<string>();
+        var normalizedInput = cleanInput
+            .Replace(
+                "\r\n",
+                "\n",
+                StringComparison.Ordinal)
+            .Replace(
+                "\r",
+                "\n",
+                StringComparison.Ordinal);
+
+        var lines =
+            normalizedInput.Split('\n');
+
+        var prefixLines =
+            new List<string>();
+
+        var ppuBlocks =
+            new Dictionary<string, List<string>>(
+                StringComparer.OrdinalIgnoreCase);
+
+        var ppuPatchNames =
+            new Dictionary<string, HashSet<string>>(
+                StringComparer.OrdinalIgnoreCase);
+
+        var ppuOrder =
+            new List<string>();
+
         var duplicatePpuMerged = false;
 
-        for (var index = 0; index < lines.Length;)
+        for (var index = 0;
+             index < lines.Length;)
         {
             var line = lines[index];
             var topKey = TryTop(line);
 
-            if (string.Equals(topKey, "Version", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(
+                    topKey,
+                    "Version",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 index++;
                 continue;
             }
 
-            if (topKey is not null && IsRunKey(topKey))
+            if (topKey is not null &&
+                IsRunKey(topKey))
             {
-                var blockLines = new List<string>();
+                var blockLines =
+                    new List<string>();
+
                 index++;
 
-                while (index < lines.Length && !IsTopKey(lines[index]))
+                while (index < lines.Length &&
+                       !IsTopKey(lines[index]))
                 {
-                    blockLines.Add(lines[index]);
+                    blockLines.Add(
+                        lines[index]);
+
                     index++;
                 }
 
-                if (!ppuBlocks.TryGetValue(topKey, out var existingBody))
+                if (!ppuBlocks.TryGetValue(
+                        topKey,
+                        out var existingBody))
                 {
                     existingBody = [];
-                    ppuBlocks[topKey] = existingBody;
-                    ppuPatchNames[topKey] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    ppuBlocks[topKey] =
+                        existingBody;
+
+                    ppuPatchNames[topKey] =
+                        new HashSet<string>(
+                            StringComparer.OrdinalIgnoreCase);
+
                     ppuOrder.Add(topKey);
                 }
                 else
@@ -119,17 +172,20 @@ public sealed class CanaryPatchImportService
                     duplicatePpuMerged = true;
                 }
 
-                var filteredBlockLines = FiltDup(
-                    blockLines,
-                    ppuPatchNames[topKey],
-                    out var duplicatePatchSkipped);
+                var filteredBlockLines =
+                    FiltDup(
+                        blockLines,
+                        ppuPatchNames[topKey],
+                        out var duplicatePatchSkipped);
 
                 if (duplicatePatchSkipped)
                 {
                     duplicatePpuMerged = true;
                 }
 
-                existingBody.AddRange(filteredBlockLines);
+                existingBody.AddRange(
+                    filteredBlockLines);
+
                 continue;
             }
 
@@ -139,11 +195,19 @@ public sealed class CanaryPatchImportService
 
         if (ppuBlocks.Count == 0)
         {
-            return Failure(UiText.GetText("Patch.ImportCanaryInvalidYaml"));
+            return Failure(
+                UiText.GetText(
+                    "Patch.ImportCanaryInvalidYaml"));
         }
 
-        var output = new List<string> { VerHead };
-        var cleanedPrefix = Trim(prefixLines);
+        var output =
+            new List<string>
+            {
+                VerHead
+            };
+
+        var cleanedPrefix =
+            Trim(prefixLines);
 
         if (cleanedPrefix.Count > 0)
         {
@@ -155,13 +219,22 @@ public sealed class CanaryPatchImportService
         {
             output.Add(string.Empty);
             output.Add(ppu + ":");
-            output.AddRange(Trim(ppuBlocks[ppu]));
+            output.AddRange(
+                Trim(ppuBlocks[ppu]));
         }
 
-        var normalized = string.Join("\r\n", output).TrimEnd() + "\r\n";
+        var normalized =
+            string.Join(
+                "\r\n",
+                output)
+            .TrimEnd() +
+            "\r\n";
+
         if (HasDup(normalized))
         {
-            return Failure(UiText.GetText("Patch.ImportCanaryDuplicateKeyUnmerged"));
+            return Failure(
+                UiText.GetText(
+                    "Patch.ImportCanaryDuplicateKeyUnmerged"));
         }
 
         return new CanNorm(
@@ -169,8 +242,10 @@ public sealed class CanaryPatchImportService
             normalized,
             duplicatePpuMerged,
             duplicatePpuMerged
-                ? UiText.GetText("Patch.ImportCanaryDuplicatePpuMerged")
-                : UiText.GetText("Patch.ImportCanaryFormatValid"),
+                ? UiText.GetText(
+                    "Patch.ImportCanaryDuplicatePpuMerged")
+                : UiText.GetText(
+                    "Patch.ImportCanaryFormatValid"),
             null);
     }
 
@@ -178,7 +253,7 @@ public sealed class CanaryPatchImportService
         string patchesPath,
         string sourceText)
     {
-        string targetPath = string.Empty;
+        var targetPath = string.Empty;
 
         try
         {
@@ -187,6 +262,7 @@ public sealed class CanaryPatchImportService
                 out _,
                 out targetPath,
                 out var validationError);
+
             if (!validation)
             {
                 return new CanStage(
@@ -197,10 +273,15 @@ public sealed class CanaryPatchImportService
                     validationError);
             }
 
-            var normalize = Norm(sourceText);
+            var normalize =
+                Norm(sourceText);
+
             if (!normalize.IsOk)
             {
-                var error = normalize.Error ?? normalize.Message;
+                var error =
+                    normalize.Error ??
+                    normalize.Message;
+
                 return new CanStage(
                     false,
                     targetPath,
@@ -209,38 +290,55 @@ public sealed class CanaryPatchImportService
                     error);
             }
 
-            var incomingCatalog = _reader.ReadText(
-                normalize.NormText,
-                PatSrc.Imported,
-                targetPath);
-            if (!incomingCatalog.IsOk)
-            {
-                var error = incomingCatalog.Error ??
-                            UiText.GetText("Patch.ImportCanaryInvalidYaml");
-                return new CanStage(
-                    false,
-                    targetPath,
-                    null,
-                    error,
-                    error);
-            }
-
-            var targetExisted = File.Exists(targetPath);
-            var existing = targetExisted
-                ? ReadTarget(targetPath)
-                : null;
-            var existingText = existing?.Text ?? string.Empty;
-
-            if (!string.IsNullOrWhiteSpace(existingText))
-            {
-                var existingCatalog = _reader.ReadText(
-                    existingText,
+            var incomingCatalog =
+                _reader.ReadText(
+                    normalize.NormText,
                     PatSrc.Imported,
                     targetPath);
+
+            if (!incomingCatalog.IsOk)
+            {
+                var error =
+                    incomingCatalog.Error ??
+                    UiText.GetText(
+                        "Patch.ImportCanaryInvalidYaml");
+
+                return new CanStage(
+                    false,
+                    targetPath,
+                    null,
+                    error,
+                    error);
+            }
+
+            var targetExisted =
+                File.Exists(targetPath);
+
+            var existing =
+                targetExisted
+                    ? ReadTarget(targetPath)
+                    : null;
+
+            var existingText =
+                existing?.Text ??
+                string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(
+                    existingText))
+            {
+                var existingCatalog =
+                    _reader.ReadText(
+                        existingText,
+                        PatSrc.Imported,
+                        targetPath);
+
                 if (!existingCatalog.IsOk)
                 {
-                    var error = existingCatalog.Error ??
-                                UiText.GetText("Patch.ImportCanaryInvalidYaml");
+                    var error =
+                        existingCatalog.Error ??
+                        UiText.GetText(
+                            "Patch.ImportCanaryInvalidYaml");
+
                     return new CanStage(
                         false,
                         targetPath,
@@ -249,7 +347,9 @@ public sealed class CanaryPatchImportService
                         error);
                 }
 
-                var existingNormalized = Norm(existingText);
+                var existingNormalized =
+                    Norm(existingText);
+
                 if (existing is { HasBom: false } &&
                     HasCanonicalHeader(existing.Text) &&
                     existingNormalized.IsOk &&
@@ -262,42 +362,54 @@ public sealed class CanaryPatchImportService
                         true,
                         targetPath,
                         null,
-                        UiText.GetText("Patch.PrepareCanaryAlreadyReady"),
+                        UiText.GetText(
+                            "Patch.PrepareCanaryAlreadyReady"),
                         null);
                 }
             }
 
-            var preservedText = string.IsNullOrWhiteSpace(existingText)
-                ? string.Empty
-                : DelBlock(existingText);
+            var preservedText =
+                string.IsNullOrWhiteSpace(existingText)
+                    ? string.Empty
+                    : DelBlock(existingText);
 
-            var finalText = Compose(
-                preservedText,
-                normalize.NormText);
+            var finalText =
+                Compose(
+                    preservedText,
+                    normalize.NormText);
 
             if (targetExisted &&
                 existing is { HasBom: false } &&
-                string.Equals(existingText, finalText, StringComparison.Ordinal))
+                string.Equals(
+                    existingText,
+                    finalText,
+                    StringComparison.Ordinal))
             {
                 return new CanStage(
                     true,
                     targetPath,
                     null,
-                    UiText.GetText("Patch.PrepareCanaryAlreadyReady"),
+                    UiText.GetText(
+                        "Patch.PrepareCanaryAlreadyReady"),
                     null);
             }
 
-            var finalCatalog = _reader.ReadText(
-                finalText,
-                PatSrc.Imported,
-                targetPath);
+            var finalCatalog =
+                _reader.ReadText(
+                    finalText,
+                    PatSrc.Imported,
+                    targetPath);
+
             if (!finalText.StartsWith(
                     VerHead,
                     StringComparison.Ordinal) ||
                 !finalCatalog.IsOk)
             {
-                var error = finalCatalog.Error ??
-                            UiText.GetText("Patch.ImportCanaryInvalidYaml");
+                var error =
+                    finalCatalog.Error ??
+                    UiText.GetText(
+                        "Patch.ImportCanaryInvalidYaml");
+
                 return new CanStage(
                     false,
                     targetPath,
@@ -311,18 +423,21 @@ public sealed class CanaryPatchImportService
                 targetPath,
                 new PatchPreparedFile(
                     targetPath,
-                     finalText,
-                     PrepKind.PatCat,
-                     PatSrc.Imported,
-                     finalCatalog.Catalog.Entries.Count,
-                     ExpectedExists: targetExisted,
-                     ExpectedSha256: existing?.Sha256),
-                 UiText.GetText("Patch.PrepareCanarySelectedSuccess"),
-                 null);
+                    finalText,
+                    PrepKind.PatCat,
+                    PatSrc.Imported,
+                    finalCatalog.Catalog.Entries.Count,
+                    ExpectedExists: targetExisted,
+                    ExpectedSha256: existing?.Sha256),
+                UiText.GetText(
+                    "Patch.PrepareCanarySelectedSuccess"),
+                null);
         }
         catch (Exception ex)
         {
-            var error = SafeMsg(ex);
+            var error =
+                SafeMsg(ex);
+
             return new CanStage(
                 false,
                 targetPath,
@@ -335,7 +450,7 @@ public sealed class CanaryPatchImportService
     public CanStage PrepDel(
         string patchesPath)
     {
-        string targetPath = string.Empty;
+        var targetPath = string.Empty;
 
         try
         {
@@ -344,6 +459,7 @@ public sealed class CanaryPatchImportService
                 out _,
                 out targetPath,
                 out var validationError);
+
             if (!validation)
             {
                 return new CanStage(
@@ -360,20 +476,30 @@ public sealed class CanaryPatchImportService
                     true,
                     targetPath,
                     null,
-                    UiText.GetText("Patch.RemoveCanaryNothing"),
+                    UiText.GetText(
+                        "Patch.RemoveCanaryNothing"),
                     null);
             }
 
-            var existing = ReadTarget(targetPath);
-            var existingText = existing.Text;
-            var existingCatalog = _reader.ReadText(
-                existingText,
-                PatSrc.Imported,
-                targetPath);
+            var existing =
+                ReadTarget(targetPath);
+
+            var existingText =
+                existing.Text;
+
+            var existingCatalog =
+                _reader.ReadText(
+                    existingText,
+                    PatSrc.Imported,
+                    targetPath);
+
             if (!existingCatalog.IsOk)
             {
-                var error = existingCatalog.Error ??
-                            UiText.GetText("Patch.ImportCanaryInvalidYaml");
+                var error =
+                    existingCatalog.Error ??
+                    UiText.GetText(
+                        "Patch.ImportCanaryInvalidYaml");
+
                 return new CanStage(
                     false,
                     targetPath,
@@ -382,22 +508,27 @@ public sealed class CanaryPatchImportService
                     error);
             }
 
-            var scan = ScanBlk(existingText);
+            var scan =
+                ScanBlk(existingText);
+
             if (!scan.HasBlock)
             {
                 return new CanStage(
                     true,
                     targetPath,
                     null,
-                    UiText.GetText("Patch.RemoveCanaryNothing"),
+                    UiText.GetText(
+                        "Patch.RemoveCanaryNothing"),
                     null);
             }
 
-            var finalText = Compose(
-                scan.Text,
-                string.Empty);
+            var finalText =
+                Compose(
+                    scan.Text,
+                    string.Empty);
 
-            if (string.IsNullOrWhiteSpace(Body(finalText)))
+            if (string.IsNullOrWhiteSpace(
+                    Body(finalText)))
             {
                 return new CanStage(
                     true,
@@ -410,18 +541,24 @@ public sealed class CanaryPatchImportService
                         DelTgt: true,
                         ExpectedExists: true,
                         ExpectedSha256: existing.Sha256),
-                    UiText.GetText("Patch.RemoveCanarySuccess"),
+                    UiText.GetText(
+                        "Patch.RemoveCanarySuccess"),
                     null);
             }
 
-            var finalCatalog = _reader.ReadText(
-                finalText,
-                PatSrc.Imported,
-                targetPath);
+            var finalCatalog =
+                _reader.ReadText(
+                    finalText,
+                    PatSrc.Imported,
+                    targetPath);
+
             if (!finalCatalog.IsOk)
             {
-                var error = finalCatalog.Error ??
-                            UiText.GetText("Patch.ImportCanaryInvalidYaml");
+                var error =
+                    finalCatalog.Error ??
+                    UiText.GetText(
+                        "Patch.ImportCanaryInvalidYaml");
+
                 return new CanStage(
                     false,
                     targetPath,
@@ -441,12 +578,15 @@ public sealed class CanaryPatchImportService
                     finalCatalog.Catalog.Entries.Count,
                     ExpectedExists: true,
                     ExpectedSha256: existing.Sha256),
-                UiText.GetText("Patch.RemoveCanarySuccess"),
+                UiText.GetText(
+                    "Patch.RemoveCanarySuccess"),
                 null);
         }
         catch (Exception ex)
         {
-            var error = SafeMsg(ex);
+            var error =
+                SafeMsg(ex);
+
             return new CanStage(
                 false,
                 targetPath,
@@ -460,16 +600,24 @@ public sealed class CanaryPatchImportService
     {
         try
         {
-            var validation = VldPath(patchesPath, out _, out var targetPath, out _);
-            if (!validation || !File.Exists(targetPath))
+            var validation = VldPath(
+                patchesPath,
+                out _,
+                out var targetPath,
+                out _);
+
+            if (!validation ||
+                !File.Exists(targetPath))
             {
                 return false;
             }
 
-            var text = R3Bound.ReadUtf8(
-                targetPath,
-                R3Limits.PatCatBy,
-                "imported_patch.yml");
+            var text =
+                R3Bound.ReadUtf8(
+                    targetPath,
+                    R3Limits.PatCatBy,
+                    ImpName);
+
             return ScanBlk(text).HasBlock;
         }
         catch
@@ -478,39 +626,85 @@ public sealed class CanaryPatchImportService
         }
     }
 
-    private static CanNorm Failure(string error)
+    public string ReadText(string targetPath)
     {
-        return new CanNorm(false, string.Empty, false, error, error);
+        return ReadTarget(
+            targetPath).Text;
     }
 
-    private static bool IsTopKey(string line)
+    public static bool InDir(
+        string path,
+        string directory)
+    {
+        var normalizedPath =
+            Path.GetFullPath(path);
+
+        var normalizedDirectory =
+            Path.GetFullPath(directory)
+                .TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar) +
+            Path.DirectorySeparatorChar;
+
+        return normalizedPath.StartsWith(
+                   normalizedDirectory,
+                   StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(
+                   normalizedPath.TrimEnd(
+                       Path.DirectorySeparatorChar,
+                       Path.AltDirectorySeparatorChar),
+                   normalizedDirectory.TrimEnd(
+                       Path.DirectorySeparatorChar,
+                       Path.AltDirectorySeparatorChar),
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static CanNorm Failure(
+        string error)
+    {
+        return new CanNorm(
+            false,
+            string.Empty,
+            false,
+            error,
+            error);
+    }
+
+    private static bool IsTopKey(
+        string line)
     {
         return TryTop(line) is not null;
     }
 
-    private static string? TryTop(string line)
+    private static string? TryTop(
+        string line)
     {
-        if (string.IsNullOrWhiteSpace(line) || char.IsWhiteSpace(line[0]) || line.TrimStart().StartsWith("#", StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(line) ||
+            char.IsWhiteSpace(line[0]) ||
+            line.TrimStart().StartsWith(
+                "#",
+                StringComparison.Ordinal))
         {
             return null;
         }
 
-        var match = TopKeyRx.Match(line);
-        return match.Success ? match.Groups["key"].Value.Trim() : null;
+        var match =
+            TopKeyRx.Match(line);
+
+        return match.Success
+            ? match.Groups["key"].Value.Trim()
+            : null;
     }
 
-    public string ReadText(string targetPath)
+    private static TargetRead ReadTarget(
+        string targetPath)
     {
-        return ReadTarget(targetPath).Text;
-    }
-
-    private static TargetRead ReadTarget(string targetPath)
-    {
-        using var stream = new FileStream(
-            targetPath,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.Read);
+        using var stream =
+            new FileStream(
+                targetPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read);
 
         if (stream.Length > MaxBytes)
         {
@@ -518,38 +712,63 @@ public sealed class CanaryPatchImportService
                 $"The imported patch file exceeds the {MaxBytes}-byte read limit.");
         }
 
-        var bytes = new byte[checked((int)stream.Length)];
+        var bytes =
+            new byte[checked((int)stream.Length)];
+
         stream.ReadExactly(bytes);
-        var digest = Convert.ToHexString(
-            SHA256.HashData(bytes));
-        var hasBom = bytes.Length >= 3 &&
-                     bytes[0] == 0xEF &&
-                     bytes[1] == 0xBB &&
-                     bytes[2] == 0xBF;
-        var offset = hasBom
-            ? 3
-            : 0;
-        var utf8 = new UTF8Encoding(
-            encoderShouldEmitUTF8Identifier: false,
-            throwOnInvalidBytes: true);
-        var text = utf8.GetString(
-            bytes,
-            offset,
-            bytes.Length - offset);
 
-        return new TargetRead(text, digest, hasBom);
+        var digest =
+            Convert.ToHexString(
+                SHA256.HashData(bytes));
+
+        var hasBom =
+            bytes.Length >= 3 &&
+            bytes[0] == 0xEF &&
+            bytes[1] == 0xBB &&
+            bytes[2] == 0xBF;
+
+        var offset =
+            hasBom
+                ? 3
+                : 0;
+
+        var utf8 =
+            new UTF8Encoding(
+                encoderShouldEmitUTF8Identifier: false,
+                throwOnInvalidBytes: true);
+
+        var text =
+            utf8.GetString(
+                bytes,
+                offset,
+                bytes.Length - offset);
+
+        return new TargetRead(
+            text,
+            digest,
+            hasBom);
     }
 
-    private static bool HasCanonicalHeader(string text)
+    private static bool HasCanonicalHeader(
+        string text)
     {
-        return text.Equals(VerHead, StringComparison.Ordinal) ||
-               text.StartsWith(VerHead + "\r\n", StringComparison.Ordinal) ||
-               text.StartsWith(VerHead + "\n", StringComparison.Ordinal);
+        return text.Equals(
+                   VerHead,
+                   StringComparison.Ordinal) ||
+               text.StartsWith(
+                   VerHead + "\r\n",
+                   StringComparison.Ordinal) ||
+               text.StartsWith(
+                   VerHead + "\n",
+                   StringComparison.Ordinal);
     }
 
-    private static bool IsRunKey(string value)
+    private static bool IsRunKey(
+        string value)
     {
-        return RunKey.TryParse(value, out _);
+        return RunKey.TryParse(
+            value,
+            out _);
     }
 
     private static List<string> FiltDup(
@@ -557,58 +776,94 @@ public sealed class CanaryPatchImportService
         HashSet<string> knownPatchNames,
         out bool duplicatePatchSkipped)
     {
-        var output = new List<string>();
+        var output =
+            new List<string>();
+
         duplicatePatchSkipped = false;
 
-        for (var index = 0; index < blockLines.Count;)
+        for (var index = 0;
+             index < blockLines.Count;)
         {
-            var line = blockLines[index];
-            if (!TryName(line, out var patchName))
+            var line =
+                blockLines[index];
+
+            if (!TryName(
+                    line,
+                    out var patchName))
             {
                 output.Add(line);
                 index++;
                 continue;
             }
 
-            var patchBlock = new List<string> { line };
+            var patchBlock =
+                new List<string>
+                {
+                    line
+                };
+
             index++;
 
-            while (index < blockLines.Count && !TryName(blockLines[index], out _))
+            while (index < blockLines.Count &&
+                   !TryName(
+                       blockLines[index],
+                       out _))
             {
-                patchBlock.Add(blockLines[index]);
+                patchBlock.Add(
+                    blockLines[index]);
+
                 index++;
             }
 
-            if (!knownPatchNames.Add(patchName))
+            if (!knownPatchNames.Add(
+                    patchName))
             {
                 duplicatePatchSkipped = true;
                 continue;
             }
 
-            output.AddRange(patchBlock);
+            output.AddRange(
+                patchBlock);
         }
 
         return output;
     }
 
-    private static bool TryName(string line, out string patchName)
+    private static bool TryName(
+        string line,
+        out string patchName)
     {
         patchName = string.Empty;
 
-        if (line.Length < 3 || !line.StartsWith("  ", StringComparison.Ordinal) || char.IsWhiteSpace(line[2]))
+        if (line.Length < 3 ||
+            !line.StartsWith(
+                "  ",
+                StringComparison.Ordinal) ||
+            char.IsWhiteSpace(line[2]))
         {
             return false;
         }
 
-        var trimmed = line.Trim();
-        var colonIndex = FindName(trimmed);
+        var trimmed =
+            line.Trim();
+
+        var colonIndex =
+            FindName(trimmed);
+
         if (colonIndex <= 0)
         {
             return false;
         }
 
-        var candidate = trimmed[..colonIndex].Trim().Trim('"', '\'');
-        if (string.IsNullOrWhiteSpace(candidate))
+        var candidate =
+            trimmed[..colonIndex]
+                .Trim()
+                .Trim(
+                    '"',
+                    '\'');
+
+        if (string.IsNullOrWhiteSpace(
+                candidate))
         {
             return false;
         }
@@ -617,7 +872,8 @@ public sealed class CanaryPatchImportService
         return true;
     }
 
-    private static int FindName(string value)
+    private static int FindName(
+        string value)
     {
         if (value.Length == 0)
         {
@@ -626,10 +882,16 @@ public sealed class CanaryPatchImportService
 
         if (value[0] is '"' or '\'')
         {
-            var quote = value[0];
-            for (var index = 1; index < value.Length; index++)
+            var quote =
+                value[0];
+
+            for (var index = 1;
+                 index < value.Length;
+                 index++)
             {
-                if (value[index] == quote && index + 1 < value.Length && value[index + 1] == ':')
+                if (value[index] == quote &&
+                    index + 1 < value.Length &&
+                    value[index + 1] == ':')
                 {
                     return index + 1;
                 }
@@ -638,33 +900,50 @@ public sealed class CanaryPatchImportService
             return -1;
         }
 
-        return value.IndexOf(':', StringComparison.Ordinal);
+        return value.IndexOf(
+            ':',
+            StringComparison.Ordinal);
     }
 
-    private static List<string> Trim(IEnumerable<string> lines)
+    private static List<string> Trim(
+        IEnumerable<string> lines)
     {
-        var list = lines.ToList();
+        var list =
+            lines.ToList();
 
-        while (list.Count > 0 && string.IsNullOrWhiteSpace(list[0]))
+        while (list.Count > 0 &&
+               string.IsNullOrWhiteSpace(
+                   list[0]))
         {
             list.RemoveAt(0);
         }
 
-        while (list.Count > 0 && string.IsNullOrWhiteSpace(list[^1]))
+        while (list.Count > 0 &&
+               string.IsNullOrWhiteSpace(
+                   list[^1]))
         {
-            list.RemoveAt(list.Count - 1);
+            list.RemoveAt(
+                list.Count - 1);
         }
 
         return list;
     }
 
-    private static bool HasDup(string text)
+    private static bool HasDup(
+        string text)
     {
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var line in text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace("\r", "\n", StringComparison.Ordinal).Split('\n'))
+        var seen =
+            new HashSet<string>(
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach (var line in Lines(text))
         {
-            var key = TryTop(line);
-            if (key is not null && IsRunKey(key) && !seen.Add(key))
+            var key =
+                TryTop(line);
+
+            if (key is not null &&
+                IsRunKey(key) &&
+                !seen.Add(key))
             {
                 return true;
             }
@@ -673,102 +952,185 @@ public sealed class CanaryPatchImportService
         return false;
     }
 
-    private static bool VldPath(string patchesPath, out string patchesDir, out string targetPath, out string error)
+    private static bool VldPath(
+        string patchesPath,
+        out string patchesDir,
+        out string targetPath,
+        out string error)
     {
         patchesDir = string.Empty;
         targetPath = string.Empty;
         error = string.Empty;
 
-        if (string.IsNullOrWhiteSpace(patchesPath))
+        if (string.IsNullOrWhiteSpace(
+                patchesPath))
         {
-            error = UiText.GetText("Patch.ImportCanaryNoRpcs3Path");
+            error =
+                UiText.GetText(
+                    "Patch.ImportCanaryNoRpcs3Path");
+
             return false;
         }
 
-        patchesDir = Path.GetFullPath(patchesPath);
-        var parentPath = Directory.GetParent(patchesDir)?.FullName;
-        targetPath = Path.GetFullPath(Path.Combine(patchesDir, ImpName));
+        patchesDir =
+            Path.GetFullPath(
+                patchesPath);
 
-        if (string.IsNullOrWhiteSpace(parentPath) || !Directory.Exists(parentPath))
+        var parentPath =
+            Directory.GetParent(
+                patchesDir)?.FullName;
+
+        targetPath =
+            Path.GetFullPath(
+                Path.Combine(
+                    patchesDir,
+                    ImpName));
+
+        if (string.IsNullOrWhiteSpace(
+                parentPath) ||
+            !Directory.Exists(parentPath))
         {
-            error = UiText.GetText("Patch.ImportCanaryNoRpcs3Path");
+            error =
+                UiText.GetText(
+                    "Patch.ImportCanaryNoRpcs3Path");
+
             return false;
         }
 
-        if (!InDir(targetPath, patchesDir) || !InDir(patchesDir, parentPath))
+        if (!InDir(
+                targetPath,
+                patchesDir) ||
+            !InDir(
+                patchesDir,
+                parentPath))
         {
-            error = UiText.GetText("Patch.ImportCanaryUnsafePath");
+            error =
+                UiText.GetText(
+                    "Patch.ImportCanaryUnsafePath");
+
             return false;
         }
 
         return true;
     }
 
-    private string Compose(string preservedText, string managedText)
+    private string Compose(
+        string preservedText,
+        string managedText)
     {
-        var cleanPreservedText = DelAnchors(
-            DelBlock(preservedText));
-        var preservedPrefix = ExtLines(
-            cleanPreservedText);
-        var managedPrefix = ExtLines(
-            managedText);
-        var preservedSections = ExtHash(
-            cleanPreservedText);
-        var managedSections = ExtHash(managedText);
+        var cleanPreservedText =
+            DelAnchors(
+                DelBlock(
+                    preservedText));
 
-        var order = new List<string>();
-        var manualByHash = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-        var managedByHash = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        var preservedPrefix =
+            ExtLines(
+                cleanPreservedText);
+
+        var managedPrefix =
+            ExtLines(
+                managedText);
+
+        var preservedSections =
+            ExtHash(
+                cleanPreservedText);
+
+        var managedSections =
+            ExtHash(
+                managedText);
+
+        var order =
+            new List<string>();
+
+        var manualByHash =
+            new Dictionary<string, List<string>>(
+                StringComparer.OrdinalIgnoreCase);
+
+        var managedByHash =
+            new Dictionary<string, List<string>>(
+                StringComparer.OrdinalIgnoreCase);
 
         foreach (var section in preservedSections)
         {
-            if (!manualByHash.ContainsKey(section.HashKey))
+            if (!manualByHash.ContainsKey(
+                    section.HashKey))
             {
-                order.Add(section.HashKey);
+                order.Add(
+                    section.HashKey);
+
                 manualByHash[section.HashKey] = [];
             }
 
-            manualByHash[section.HashKey].AddRange(section.Lines);
+            manualByHash[section.HashKey]
+                .AddRange(
+                    section.Lines);
         }
 
         foreach (var section in managedSections)
         {
-            if (!managedByHash.ContainsKey(section.HashKey))
+            if (!managedByHash.ContainsKey(
+                    section.HashKey))
             {
                 managedByHash[section.HashKey] = [];
             }
 
-            managedByHash[section.HashKey].AddRange(section.Lines);
+            managedByHash[section.HashKey]
+                .AddRange(
+                    section.Lines);
 
-            if (!order.Contains(section.HashKey, StringComparer.OrdinalIgnoreCase))
+            if (!order.Contains(
+                    section.HashKey,
+                    StringComparer.OrdinalIgnoreCase))
             {
-                order.Add(section.HashKey);
+                order.Add(
+                    section.HashKey);
             }
         }
 
-        var output = new List<string> { VerHead };
-        var mergedPrefix = MergeAnchors(
-            preservedPrefix,
-            managedPrefix);
+        var output =
+            new List<string>
+            {
+                VerHead
+            };
+
+        var mergedPrefix =
+            MergeAnchors(
+                preservedPrefix,
+                managedPrefix);
+
         if (mergedPrefix.Count > 0)
         {
             output.Add(string.Empty);
-            output.AddRange(mergedPrefix);
+            output.AddRange(
+                mergedPrefix);
         }
 
         foreach (var hashKey in order)
         {
-            var manualLines = manualByHash.TryGetValue(hashKey, out var manual)
-                ? Trim(manual)
-                : new List<string>();
-            var managedLines = managedByHash.TryGetValue(hashKey, out var managed)
-                ? DelEquiv(managed, manualLines)
-                : new List<string>();
+            var manualLines =
+                manualByHash.TryGetValue(
+                    hashKey,
+                    out var manual)
+                    ? Trim(manual)
+                    : [];
 
-            manualLines = Trim(manualLines);
-            managedLines = Trim(managedLines);
+            var managedLines =
+                managedByHash.TryGetValue(
+                    hashKey,
+                    out var managed)
+                    ? DelEquiv(
+                        managed,
+                        manualLines)
+                    : [];
 
-            if (manualLines.Count == 0 && managedLines.Count == 0)
+            manualLines =
+                Trim(manualLines);
+
+            managedLines =
+                Trim(managedLines);
+
+            if (manualLines.Count == 0 &&
+                managedLines.Count == 0)
             {
                 continue;
             }
@@ -779,54 +1141,93 @@ public sealed class CanaryPatchImportService
 
             if (managedLines.Count > 0)
             {
-                output.Add("  " + BlkBegin);
-                output.AddRange(managedLines);
-                output.Add("  " + BlkEnd);
+                output.Add(
+                    "  " + BlkBegin);
+
+                output.AddRange(
+                    managedLines);
+
+                output.Add(
+                    "  " + BlkEnd);
             }
         }
 
-        return string.Join("\r\n", output).TrimEnd() + "\r\n";
+        return string.Join(
+                   "\r\n",
+                   output)
+               .TrimEnd() +
+               "\r\n";
     }
 
     private static List<string> MergeAnchors(
         IReadOnlyList<string> preservedPrefix,
         IReadOnlyList<string> managedPrefix)
     {
-        var output = preservedPrefix.ToList();
-        var managed = AnchorSection(managedPrefix);
+        var output =
+            preservedPrefix.ToList();
+
+        var managed =
+            AnchorSection(
+                managedPrefix);
+
         if (managed is null)
         {
+            RemoveEmptyAnchorsSection(
+                output);
+
             return output;
         }
 
-        var existing = AnchorSection(output);
+        var existing =
+            AnchorSection(
+                output);
+
         if (existing is null)
         {
-            if (output.Count > 0 && !string.IsNullOrWhiteSpace(output[^1]))
+            if (output.Count > 0 &&
+                !string.IsNullOrWhiteSpace(
+                    output[^1]))
             {
                 output.Add(string.Empty);
             }
 
             output.Add("Anchors:");
-            output.Add("  " + AncBegin);
-            output.AddRange(managed.Body.Skip(1));
-            output.Add("  " + AncEnd);
+            output.Add(
+                "  " + AncBegin);
+
+            output.AddRange(
+                managed.Body.Skip(1));
+
+            output.Add(
+                "  " + AncEnd);
+
             return output;
         }
 
-        var known = AnchorEntries(existing.Body)
-            .ToDictionary(
-                entry => entry.Name,
-                entry => entry.Lines,
-                StringComparer.Ordinal);
-        var additions = new List<string>();
+        var known =
+            AnchorEntries(existing.Body)
+                .ToDictionary(
+                    entry => entry.Name,
+                    entry => entry.Lines,
+                    StringComparer.Ordinal);
 
-        foreach (var incoming in AnchorEntries(managed.Body))
+        var additions =
+            new List<string>();
+
+        foreach (var incoming in
+                 AnchorEntries(managed.Body))
         {
-            if (!known.TryGetValue(incoming.Name, out var current))
+            if (!known.TryGetValue(
+                    incoming.Name,
+                    out var current))
             {
-                known.Add(incoming.Name, incoming.Lines);
-                additions.AddRange(incoming.Lines);
+                known.Add(
+                    incoming.Name,
+                    incoming.Lines);
+
+                additions.AddRange(
+                    incoming.Lines);
+
                 continue;
             }
 
@@ -842,40 +1243,62 @@ public sealed class CanaryPatchImportService
 
         if (additions.Count > 0)
         {
-            additions.Insert(0, "  " + AncBegin);
-            additions.Add("  " + AncEnd);
-            output.InsertRange(existing.End, additions);
+            additions.Insert(
+                0,
+                "  " + AncBegin);
+
+            additions.Add(
+                "  " + AncEnd);
+
+            output.InsertRange(
+                existing.End,
+                additions);
         }
+
+        RemoveEmptyAnchorsSection(
+            output);
 
         return output;
     }
 
-    private static string DelAnchors(string text)
+    private static string DelAnchors(
+        string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
             return text;
         }
 
-        var lines = Lines(text);
-        var output = new List<string>(lines.Count);
+        var lines =
+            Lines(text);
+
+        var output =
+            new List<string>(
+                lines.Count);
+
         var insideAnchors = false;
         var insideManaged = false;
 
         foreach (var line in lines)
         {
-            var topKey = TryTop(line);
+            var topKey =
+                TryTop(line);
+
             if (topKey is not null)
             {
-                insideAnchors = string.Equals(
-                    topKey,
-                    "Anchors",
-                    StringComparison.OrdinalIgnoreCase);
+                insideAnchors =
+                    string.Equals(
+                        topKey,
+                        "Anchors",
+                        StringComparison.OrdinalIgnoreCase);
             }
 
-            if (line.Equals("  " + AncBegin, StringComparison.Ordinal))
+            if (line.Equals(
+                    "  " + AncBegin,
+                    StringComparison.Ordinal))
             {
-                if (!insideAnchors || insideManaged)
+                if (!insideAnchors ||
+                    insideManaged)
                 {
                     throw new InvalidDataException(
                         "A managed Canary anchor marker is misplaced or duplicated.");
@@ -885,9 +1308,12 @@ public sealed class CanaryPatchImportService
                 continue;
             }
 
-            if (line.Equals("  " + AncEnd, StringComparison.Ordinal))
+            if (line.Equals(
+                    "  " + AncEnd,
+                    StringComparison.Ordinal))
             {
-                if (!insideAnchors || !insideManaged)
+                if (!insideAnchors ||
+                    !insideManaged)
                 {
                     throw new InvalidDataException(
                         "A managed Canary anchor marker is incomplete or misplaced.");
@@ -909,15 +1335,31 @@ public sealed class CanaryPatchImportService
                 "A managed Canary anchor marker is missing its end marker.");
         }
 
-        return string.Join("\r\n", output).TrimEnd() + "\r\n";
+        RemoveEmptyAnchorsSection(
+            output);
+
+        var trimmed =
+            Trim(output);
+
+        return trimmed.Count == 0
+            ? string.Empty
+            : string.Join(
+                  "\r\n",
+                  trimmed)
+              .TrimEnd() +
+              "\r\n";
     }
 
-    private static AnchorSect? AnchorSection(
-        IReadOnlyList<string> lines)
+    private static void RemoveEmptyAnchorsSection(
+        List<string> lines)
     {
-        for (var index = 0; index < lines.Count; index++)
+        for (var index = 0;
+             index < lines.Count;
+             index++)
         {
-            var key = TryTop(lines[index]);
+            var key =
+                TryTop(lines[index]);
+
             if (!string.Equals(
                     key,
                     "Anchors",
@@ -926,8 +1368,76 @@ public sealed class CanaryPatchImportService
                 continue;
             }
 
-            var end = index + 1;
-            while (end < lines.Count && TryTop(lines[end]) is null)
+            var end =
+                index + 1;
+
+            while (end < lines.Count &&
+                   TryTop(lines[end]) is null)
+            {
+                end++;
+            }
+
+            var hasAnchorEntry = false;
+
+            for (var bodyIndex = index + 1;
+                 bodyIndex < end;
+                 bodyIndex++)
+            {
+                if (TryName(
+                        lines[bodyIndex],
+                        out _))
+                {
+                    hasAnchorEntry = true;
+                    break;
+                }
+            }
+
+            if (hasAnchorEntry)
+            {
+                return;
+            }
+
+            lines.RemoveRange(
+                index,
+                end - index);
+
+            while (index > 0 &&
+                   index < lines.Count &&
+                   string.IsNullOrWhiteSpace(
+                       lines[index - 1]) &&
+                   string.IsNullOrWhiteSpace(
+                       lines[index]))
+            {
+                lines.RemoveAt(index);
+            }
+
+            return;
+        }
+    }
+
+    private static AnchorSect? AnchorSection(
+        IReadOnlyList<string> lines)
+    {
+        for (var index = 0;
+             index < lines.Count;
+             index++)
+        {
+            var key =
+                TryTop(lines[index]);
+
+            if (!string.Equals(
+                    key,
+                    "Anchors",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var end =
+                index + 1;
+
+            while (end < lines.Count &&
+                   TryTop(lines[end]) is null)
             {
                 end++;
             }
@@ -935,7 +1445,10 @@ public sealed class CanaryPatchImportService
             return new AnchorSect(
                 index,
                 end,
-                lines.Skip(index).Take(end - index).ToArray());
+                lines
+                    .Skip(index)
+                    .Take(end - index)
+                    .ToArray());
         }
 
         return null;
@@ -944,58 +1457,88 @@ public sealed class CanaryPatchImportService
     private static IReadOnlyList<AnchorEnt> AnchorEntries(
         IReadOnlyList<string> anchorSection)
     {
-        var output = new List<AnchorEnt>();
-        for (var index = 1; index < anchorSection.Count;)
+        var output =
+            new List<AnchorEnt>();
+
+        for (var index = 1;
+             index < anchorSection.Count;)
         {
-            if (!TryName(anchorSection[index], out var name))
+            if (!TryName(
+                    anchorSection[index],
+                    out var name))
             {
                 index++;
                 continue;
             }
 
-            var block = new List<string> { anchorSection[index] };
+            var block =
+                new List<string>
+                {
+                    anchorSection[index]
+                };
+
             index++;
+
             while (index < anchorSection.Count &&
-                   !TryName(anchorSection[index], out _))
+                   !TryName(
+                       anchorSection[index],
+                       out _))
             {
-                block.Add(anchorSection[index]);
+                block.Add(
+                    anchorSection[index]);
+
                 index++;
             }
 
-            output.Add(new AnchorEnt(name, block));
+            output.Add(
+                new AnchorEnt(
+                    name,
+                    block));
         }
 
         return output;
     }
 
-    private static string DelBlock(string text)
+    private static string DelBlock(
+        string text)
     {
         return ScanBlk(text).Text;
     }
 
-    private static BlkScan ScanBlk(string text)
+    private static BlkScan ScanBlk(
+        string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
-            return new BlkScan(false, string.Empty);
+            return new BlkScan(
+                false,
+                string.Empty);
         }
 
-        var lines = Lines(text);
-        var output = new List<string>();
+        var lines =
+            Lines(text);
+
+        var output =
+            new List<string>();
+
         var inside = false;
         var found = false;
         var activeVersion = string.Empty;
         var activeHash = string.Empty;
+
         string? currentHash = null;
 
         foreach (var line in lines)
         {
-            var topKey = TryTop(line);
+            var topKey =
+                TryTop(line);
+
             if (topKey is not null)
             {
-                currentHash = IsRunKey(topKey)
-                    ? topKey
-                    : null;
+                currentHash =
+                    IsRunKey(topKey)
+                        ? topKey
+                        : null;
             }
 
             if (!TryMark(
@@ -1035,6 +1578,7 @@ public sealed class CanaryPatchImportService
                 found = true;
                 activeVersion = version;
                 activeHash = currentHash;
+
                 continue;
             }
 
@@ -1065,7 +1609,11 @@ public sealed class CanaryPatchImportService
 
         return new BlkScan(
             found,
-            string.Join("\r\n", output).TrimEnd() + "\r\n");
+            string.Join(
+                    "\r\n",
+                    output)
+                .TrimEnd() +
+            "\r\n");
     }
 
     private static bool TryMark(
@@ -1076,113 +1624,50 @@ public sealed class CanaryPatchImportService
         version = string.Empty;
         isBegin = false;
 
-        var match = MarkRx.Match(line);
+        var match =
+            MarkRx.Match(line);
+
         if (!match.Success)
         {
             return false;
         }
 
-        var markerVersion = match.Groups["version"].Value.Trim();
-        version = string.IsNullOrEmpty(markerVersion)
-            ? "legacy"
-            : markerVersion;
-        isBegin = string.Equals(
-            match.Groups["edge"].Value,
-            "begin",
-            StringComparison.Ordinal);
+        var markerVersion =
+            match.Groups["version"]
+                .Value
+                .Trim();
+
+        version =
+            string.IsNullOrEmpty(
+                markerVersion)
+                ? "legacy"
+                : markerVersion;
+
+        isBegin =
+            string.Equals(
+                match.Groups["edge"].Value,
+                "begin",
+                StringComparison.Ordinal);
+
         return true;
     }
 
-    private static string Body(string text)
+    private static string Body(
+        string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
             return string.Empty;
         }
 
-        var output = new List<string>();
+        var output =
+            new List<string>();
+
         foreach (var line in Lines(text))
         {
-            var key = TryTop(line);
-            if (string.Equals(key, "Version", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
+            var key =
+                TryTop(line);
 
-            output.Add(line);
-        }
-
-        return string.Join("\r\n", Trim(output));
-    }
-
-    private List<HashSect> ExtHash(string text)
-    {
-        if (string.IsNullOrWhiteSpace(Body(text)))
-        {
-            return [];
-        }
-
-        var normalized = Norm(text);
-        if (!normalized.IsOk)
-        {
-            return [];
-        }
-
-        var lines = Lines(normalized.NormText);
-        var sections = new List<HashSect>();
-
-        for (var index = 0; index < lines.Count;)
-        {
-            var key = TryTop(lines[index]);
-            if (key is null || !IsRunKey(key))
-            {
-                index++;
-                continue;
-            }
-
-            var hashKey = key;
-            var body = new List<string>();
-            index++;
-
-            while (index < lines.Count)
-            {
-                var nextKey = TryTop(lines[index]);
-                if (nextKey is not null && IsRunKey(nextKey))
-                {
-                    break;
-                }
-
-                if (!string.Equals(TryTop(lines[index]), "Version", StringComparison.OrdinalIgnoreCase))
-                {
-                    body.Add(lines[index]);
-                }
-
-                index++;
-            }
-
-            sections.Add(new HashSect(hashKey, Trim(body)));
-        }
-
-        return sections;
-    }
-
-    private List<string> ExtLines(string text)
-    {
-        if (string.IsNullOrWhiteSpace(Body(text)))
-        {
-            return [];
-        }
-
-        var normalized = Norm(text);
-        if (!normalized.IsOk)
-        {
-            return [];
-        }
-
-        var output = new List<string>();
-        foreach (var line in Lines(normalized.NormText))
-        {
-            var key = TryTop(line);
             if (string.Equals(
                     key,
                     "Version",
@@ -1191,7 +1676,125 @@ public sealed class CanaryPatchImportService
                 continue;
             }
 
-            if (key is not null && IsRunKey(key))
+            output.Add(line);
+        }
+
+        return string.Join(
+            "\r\n",
+            Trim(output));
+    }
+
+    private List<HashSect> ExtHash(
+        string text)
+    {
+        if (string.IsNullOrWhiteSpace(
+                Body(text)))
+        {
+            return [];
+        }
+
+        var normalized =
+            Norm(text);
+
+        if (!normalized.IsOk)
+        {
+            return [];
+        }
+
+        var lines =
+            Lines(
+                normalized.NormText);
+
+        var sections =
+            new List<HashSect>();
+
+        for (var index = 0;
+             index < lines.Count;)
+        {
+            var key =
+                TryTop(lines[index]);
+
+            if (key is null ||
+                !IsRunKey(key))
+            {
+                index++;
+                continue;
+            }
+
+            var hashKey = key;
+            var body =
+                new List<string>();
+
+            index++;
+
+            while (index < lines.Count)
+            {
+                var nextKey =
+                    TryTop(lines[index]);
+
+                if (nextKey is not null &&
+                    IsRunKey(nextKey))
+                {
+                    break;
+                }
+
+                if (!string.Equals(
+                        TryTop(lines[index]),
+                        "Version",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    body.Add(
+                        lines[index]);
+                }
+
+                index++;
+            }
+
+            sections.Add(
+                new HashSect(
+                    hashKey,
+                    Trim(body)));
+        }
+
+        return sections;
+    }
+
+    private List<string> ExtLines(
+        string text)
+    {
+        if (string.IsNullOrWhiteSpace(
+                Body(text)))
+        {
+            return [];
+        }
+
+        var normalized =
+            Norm(text);
+
+        if (!normalized.IsOk)
+        {
+            return [];
+        }
+
+        var output =
+            new List<string>();
+
+        foreach (var line in
+                 Lines(normalized.NormText))
+        {
+            var key =
+                TryTop(line);
+
+            if (string.Equals(
+                    key,
+                    "Version",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (key is not null &&
+                IsRunKey(key))
             {
                 break;
             }
@@ -1206,25 +1809,43 @@ public sealed class CanaryPatchImportService
         IReadOnlyList<string> candidateLines,
         IReadOnlyList<string> existingLines)
     {
-        var existingBlocks = ReadBlk(existingLines);
-        var output = new List<string>();
+        var existingBlocks =
+            ReadBlk(existingLines);
 
-        for (var index = 0; index < candidateLines.Count;)
+        var output =
+            new List<string>();
+
+        for (var index = 0;
+             index < candidateLines.Count;)
         {
-            var line = candidateLines[index];
-            if (!TryName(line, out var patchName))
+            var line =
+                candidateLines[index];
+
+            if (!TryName(
+                    line,
+                    out var patchName))
             {
                 output.Add(line);
                 index++;
                 continue;
             }
 
-            var patchBlock = new List<string> { line };
+            var patchBlock =
+                new List<string>
+                {
+                    line
+                };
+
             index++;
+
             while (index < candidateLines.Count &&
-                   !TryName(candidateLines[index], out _))
+                   !TryName(
+                       candidateLines[index],
+                       out _))
             {
-                patchBlock.Add(candidateLines[index]);
+                patchBlock.Add(
+                    candidateLines[index]);
+
                 index++;
             }
 
@@ -1232,7 +1853,9 @@ public sealed class CanaryPatchImportService
                     patchName,
                     out var existingBlock))
             {
-                output.AddRange(patchBlock);
+                output.AddRange(
+                    patchBlock);
+
                 continue;
             }
 
@@ -1242,7 +1865,8 @@ public sealed class CanaryPatchImportService
                     StringComparison.Ordinal))
             {
                 throw new InvalidDataException(
-                    UiText.GetText("Patch.ImportCanaryDuplicatePatchName"));
+                    UiText.GetText(
+                        "Patch.ImportCanaryDuplicatePatchName"));
             }
         }
 
@@ -1252,27 +1876,43 @@ public sealed class CanaryPatchImportService
     private static Dictionary<string, IReadOnlyList<string>> ReadBlk(
         IReadOnlyList<string> lines)
     {
-        var output = new Dictionary<string, IReadOnlyList<string>>(
-            StringComparer.OrdinalIgnoreCase);
+        var output =
+            new Dictionary<string, IReadOnlyList<string>>(
+                StringComparer.OrdinalIgnoreCase);
 
-        for (var index = 0; index < lines.Count;)
+        for (var index = 0;
+             index < lines.Count;)
         {
-            if (!TryName(lines[index], out var patchName))
+            if (!TryName(
+                    lines[index],
+                    out var patchName))
             {
                 index++;
                 continue;
             }
 
-            var patchBlock = new List<string> { lines[index] };
+            var patchBlock =
+                new List<string>
+                {
+                    lines[index]
+                };
+
             index++;
+
             while (index < lines.Count &&
-                   !TryName(lines[index], out _))
+                   !TryName(
+                       lines[index],
+                       out _))
             {
-                patchBlock.Add(lines[index]);
+                patchBlock.Add(
+                    lines[index]);
+
                 index++;
             }
 
-            output.TryAdd(patchName, patchBlock);
+            output.TryAdd(
+                patchName,
+                patchBlock);
         }
 
         return output;
@@ -1284,19 +1924,40 @@ public sealed class CanaryPatchImportService
         return string.Join(
             "\n",
             Trim(lines)
-                .Select(line => line.TrimEnd()));
+                .Select(
+                    line =>
+                        line.TrimEnd()));
     }
 
-    private static List<string> Lines(string text)
+    private static List<string> Lines(
+        string text)
     {
         return text
-            .Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace("\r", "\n", StringComparison.Ordinal)
+            .Replace(
+                "\r\n",
+                "\n",
+                StringComparison.Ordinal)
+            .Replace(
+                "\r",
+                "\n",
+                StringComparison.Ordinal)
             .Split('\n')
             .ToList();
     }
 
-    private sealed record HashSect(string HashKey, IReadOnlyList<string> Lines);
+    private static string SafeMsg(
+        Exception exception)
+    {
+        return string.IsNullOrWhiteSpace(
+                exception.Message)
+            ? UiText.GetText(
+                "Patch.ImportCanaryInvalidYaml")
+            : exception.Message;
+    }
+
+    private sealed record HashSect(
+        string HashKey,
+        IReadOnlyList<string> Lines);
 
     private sealed record TargetRead(
         string Text,
@@ -1308,31 +1969,13 @@ public sealed class CanaryPatchImportService
         int End,
         IReadOnlyList<string> Lines)
     {
-        public IReadOnlyList<string> Body => Lines;
+        public IReadOnlyList<string> Body =>
+            Lines;
     }
 
     private sealed record AnchorEnt(
         string Name,
         IReadOnlyList<string> Lines);
-
-    private static string SafeMsg(Exception exception)
-    {
-        return string.IsNullOrWhiteSpace(exception.Message)
-            ? UiText.GetText("Patch.ImportCanaryInvalidYaml")
-            : exception.Message;
-    }
-
-    public static bool InDir(string path, string directory)
-    {
-        var normalizedPath = Path.GetFullPath(path);
-        var normalizedDirectory = Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
-
-        return normalizedPath.StartsWith(normalizedDirectory, StringComparison.OrdinalIgnoreCase) ||
-               string.Equals(
-                   normalizedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
-                   normalizedDirectory.TrimEnd(Path.DirectorySeparatorChar),
-                   StringComparison.OrdinalIgnoreCase);
-    }
 
     private sealed record BlkScan(
         bool HasBlock,

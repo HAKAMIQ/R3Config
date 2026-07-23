@@ -27,11 +27,11 @@ public sealed class UiLaySt
 
     public XmlLanguage XmlLang { get; }
 
-    // Shell geometry remains LTR in both languages. Only localized text uses
-    // the language-aware bidi flow exposed by TextFlow.
-    public FlowDirection WinFlow => FlowDirection.LeftToRight;
+    // Arabic follows the native Windows logical layout (RTL); English stays LTR.
+    // Caption buttons and technical values are handled by dedicated resources.
+    public FlowDirection WinFlow => TextFlow;
 
-    public FlowDirection ShFlow => FlowDirection.LeftToRight;
+    public FlowDirection ShFlow => TextFlow;
 
     public FlowDirection TextFlow => IsRtl
         ? FlowDirection.RightToLeft
@@ -40,17 +40,22 @@ public sealed class UiLaySt
     public FlowDirection TechFlow { get; } =
         FlowDirection.LeftToRight;
 
-    public TextAlignment TxtAlign { get; } =
-        TextAlignment.Left;
+    public TextAlignment TxtAlign => IsRtl
+        ? TextAlignment.Right
+        : TextAlignment.Left;
 
-    public TextAlignment SetAlign { get; } =
-        TextAlignment.Left;
+    public TextAlignment SetAlign => TxtAlign;
 
     public TextAlignment TechAlgn { get; } =
         TextAlignment.Left;
 
-    public HorizontalAlignment HorAlign { get; } =
-        HorizontalAlignment.Left;
+    public HorizontalAlignment HorAlign => IsRtl
+        ? HorizontalAlignment.Right
+        : HorizontalAlignment.Left;
+
+    public HorizontalAlignment TrailAlign => IsRtl
+        ? HorizontalAlignment.Left
+        : HorizontalAlignment.Right;
 
     public GridLength GameWide { get; }
 
@@ -91,7 +96,7 @@ public sealed class UiLaySt
                 UiText.ArabLang,
                 StringComparison.Ordinal),
             XmlLanguage.GetLanguage(normalized),
-            new GridLength(264, GridUnitType.Pixel),
+            new GridLength(360, GridUnitType.Pixel),
             new GridLength(1, GridUnitType.Star));
     }
 }
@@ -115,7 +120,7 @@ public static class UiLaySvc
             layout.ShFlow;
 
         app.Resources["App.CaptionButtonsFlowDirection"] =
-            FlowDirection.LeftToRight;
+            layout.ShFlow;
 
         app.Resources["App.DefaultTextAlignment"] =
             layout.TxtAlign;
@@ -125,6 +130,49 @@ public static class UiLaySvc
 
         app.Resources["App.HorizontalAlignment"] =
             layout.HorAlign;
+
+        app.Resources["App.TrailingHorizontalAlignment"] =
+            layout.TrailAlign;
+
+        app.Resources["App.After6Margin"] =
+            layout.IsRtl
+                ? new Thickness(6, 0, 0, 0)
+                : new Thickness(0, 0, 6, 0);
+
+        app.Resources["App.After8Margin"] =
+            layout.IsRtl
+                ? new Thickness(8, 0, 0, 0)
+                : new Thickness(0, 0, 8, 0);
+
+        app.Resources["App.After10Margin"] =
+            layout.IsRtl
+                ? new Thickness(10, 0, 0, 0)
+                : new Thickness(0, 0, 10, 0);
+
+        app.Resources["App.After12Margin"] =
+            layout.IsRtl
+                ? new Thickness(12, 0, 0, 0)
+                : new Thickness(0, 0, 12, 0);
+
+        app.Resources["App.Before8Margin"] =
+            layout.IsRtl
+                ? new Thickness(0, 0, 8, 0)
+                : new Thickness(8, 0, 0, 0);
+
+        app.Resources["App.Before10Margin"] =
+            layout.IsRtl
+                ? new Thickness(0, 0, 10, 0)
+                : new Thickness(10, 0, 0, 0);
+
+        app.Resources["App.Indent24Margin"] =
+            layout.IsRtl
+                ? new Thickness(0, 6, 24, 0)
+                : new Thickness(24, 6, 0, 0);
+
+        app.Resources["App.ScrollPadding4"] =
+            layout.IsRtl
+                ? new Thickness(4, 0, 0, 0)
+                : new Thickness(0, 0, 4, 0);
 
         app.Resources["App.XmlLanguage"] =
             layout.XmlLang;

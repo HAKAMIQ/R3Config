@@ -174,6 +174,7 @@ public static class WinTheme
         }
     }
 
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport(
         "dwmapi.dll",
         EntryPoint = "DwmSetWindowAttribute",

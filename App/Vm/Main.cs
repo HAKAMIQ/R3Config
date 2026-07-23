@@ -292,6 +292,10 @@ public sealed partial class MainVm : VmBase
 
     public TextAlignment GameAlgn => _layout.GameAlgn(GameList.SelGame is not null);
 
+    public XmlLanguage GameLang => GameList.SelGame is null
+        ? _layout.XmlLang
+        : XmlLanguage.GetLanguage(UiText.EnLang);
+
     public string GameSer => GameList.SelGame?.Serial ?? UiText.GetText("Shell.NoGameSerial");
 
     public bool HasGame => GameList.SelGame is not null;

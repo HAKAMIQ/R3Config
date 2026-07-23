@@ -124,7 +124,8 @@ public partial class MainWin : Window
         var root = new Grid
         {
             Width = 14,
-            Height = 14
+            Height = 14,
+            FlowDirection = FlowDirection.LeftToRight
         };
 
         var square = new Border
@@ -155,7 +156,8 @@ public partial class MainWin : Window
         var root = new Grid
         {
             Width = 14,
-            Height = 14
+            Height = 14,
+            FlowDirection = FlowDirection.LeftToRight
         };
 
         var back = new Border

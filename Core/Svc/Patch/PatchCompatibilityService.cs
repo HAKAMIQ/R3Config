@@ -7,12 +7,7 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-/// <summary>
-/// Canonical compatibility boundary for official, Canary, imported and cheat
-/// definitions.  It mirrors RPCS3's order: runtime key, title id, app version,
-/// enabled state.  Callers must consume the attached decision rather than
-/// inventing source-specific compatibility rules.
-/// </summary>
+
 public sealed class PatchCompatibilityService
 {
     public IReadOnlyList<Mdl.PatMatch> Evaluate(

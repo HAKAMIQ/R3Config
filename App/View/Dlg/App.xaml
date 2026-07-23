@@ -1,80 +1,59 @@
-<Window x:Class="R3Config.View.Dlg.AppDlg"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:lang="clr-namespace:R3Config.Lang"
-        Title="R3Config"
-        Width="440"
-        SizeToContent="Height"
-        MinWidth="380"
-        MaxWidth="520"
-        WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        WindowStyle="None"
-        AllowsTransparency="True"
-        ShowInTaskbar="False"
-        Background="Transparent"
-        FontFamily="{DynamicResource Type.Font.Body}"
-        Foreground="{DynamicResource Text.Primary}"
-        FlowDirection="{DynamicResource App.FlowDirection}"
-        Language="{DynamicResource App.XmlLanguage}">
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:lang="clr-namespace:R3Config.Lang" x:Class="R3Config.View.Dlg.AppDlg" Title="R3Config" Width="440" SizeToContent="Height" MinWidth="380" MaxWidth="520" WindowStartupLocation="CenterOwner" ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True" ShowInTaskbar="False" Background="Transparent" FontFamily="{DynamicResource Type.Font.Body}" Foreground="{DynamicResource Text.Primary}" Language="{DynamicResource App.XmlLanguage}" UseLayoutRounding="True" SnapsToDevicePixels="True" FlowDirection="{DynamicResource App.FlowDirection}">
+
+    <Window.Resources>
+        <Style x:Key="AppDlgLocalizedTitleText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource FluentDialog.Title}">
+
+            <Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}"/>
+            <Setter Property="TextAlignment" Value="{DynamicResource App.TextAlignment}"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+
+            </Style>
+
+        <Style x:Key="AppDlgLocalizedMessageText" TargetType="{x:Type TextBlock}" BasedOn="{StaticResource FluentDialog.Message}">
+
+            <Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}"/>
+            <Setter Property="TextAlignment" Value="{DynamicResource App.TextAlignment}"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+
+            </Style>
+    </Window.Resources>
 
     <Border Style="{StaticResource FluentSurface.Dialog}">
-        <Grid ClipToBounds="True">
+        <Grid ClipToBounds="True" Language="{DynamicResource App.XmlLanguage}" KeyboardNavigation.TabNavigation="Cycle">
+
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Grid x:Name="CntGrid"
-                  Grid.Row="0"
-                  Margin="16"
-                  Style="{StaticResource FluentDialog.Flow}">
+            <Grid x:Name="CntGrid" Grid.Row="0" Margin="16" Style="{StaticResource FluentDialog.Flow}" FlowDirection="{Binding FlowDirection,                                           RelativeSource={RelativeSource AncestorType={x:Type Window}}}">
+
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Border x:Name="IconBdg"
-                        Grid.Column="0"
-                        Width="28"
-                        Height="28"
-                        CornerRadius="{StaticResource Radius.Circle.28}"
-                        BorderThickness="1"
-                        VerticalAlignment="Top"
-                        Margin="0,2,0,0">
-                    <TextBlock x:Name="IconText"
-                               FlowDirection="LeftToRight"
-                               Language="{DynamicResource TechnicalText.Language}"
-                               FontSize="14"
-                               FontWeight="Bold"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
+                <Border x:Name="IconBdg" Grid.Column="0" Width="28" Height="28" CornerRadius="{StaticResource Radius.Circle.28}" BorderThickness="1" VerticalAlignment="Top" Margin="0,2,0,0">
+
+                    <TextBlock x:Name="IconText" FlowDirection="LeftToRight" Language="{DynamicResource TechnicalText.Language}" TextAlignment="{DynamicResource TechnicalText.TextAlignment}" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
 
-                <StackPanel Grid.Column="2"
-                            HorizontalAlignment="Stretch">
-                    <TextBlock x:Name="TitlTxt"
-                               Style="{StaticResource FluentDialog.Title}" />
+                <StackPanel Grid.Column="2" HorizontalAlignment="Stretch">
 
-                    <TextBlock x:Name="MsgText"
-                               Style="{StaticResource FluentDialog.Message}" />
+                    <TextBlock x:Name="TitlTxt" Style="{StaticResource AppDlgLocalizedTitleText}"/>
+
+                    <TextBlock x:Name="MsgText" Style="{StaticResource AppDlgLocalizedMessageText}"/>
                 </StackPanel>
             </Grid>
 
-            <Border Grid.Row="1"
-                    Style="{StaticResource R3DialogActionBar}"
-                    CornerRadius="{StaticResource Radius.Dialog.Bottom}">
-                <StackPanel x:Name="Btns"
-                            Style="{StaticResource FluentDialog.Buttons}">
-                    <Button x:Name="AltBtn"
-                            Style="{StaticResource FluentButton.Secondary}"
-                            Margin="4,0"
-                            Click="AltClick" />
-                    <Button x:Name="MainBtn"
-                            Style="{StaticResource FluentButton.Primary}"
-                            Margin="4,0"
-                            Click="MainClk" />
+            <Border Grid.Row="1" Style="{StaticResource R3DialogActionBar}" CornerRadius="{StaticResource Radius.Dialog.Bottom}">
+
+                <StackPanel x:Name="Btns" Style="{StaticResource FluentDialog.Buttons}" FlowDirection="{Binding FlowDirection,                                                   RelativeSource={RelativeSource AncestorType={x:Type Window}}}">
+
+                    <Button x:Name="AltBtn" Style="{StaticResource FluentButton.Secondary}" Margin="4,0" Click="AltClick"/>
+
+                    <Button x:Name="MainBtn" Style="{StaticResource FluentButton.Primary}" Margin="4,0" Click="MainClk"/>
                 </StackPanel>
             </Border>
         </Grid>

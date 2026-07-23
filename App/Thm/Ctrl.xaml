@@ -129,7 +129,7 @@
 		<Setter Property="Background" Value="{DynamicResource Status.WarningSurface}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource Status.Warning}" />
 		<Setter Property="BorderThickness" Value="1" />
-		<Setter Property="Margin" Value="0,4,10,0" />
+		<Setter Property="Margin" Value="{DynamicResource App.After10Margin}" />
 		<Setter Property="VerticalAlignment" Value="Top" />
 	</Style>
 
@@ -459,7 +459,7 @@
 		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
 		<Setter Property="Padding" Value="12,8" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 	</Style>
 
 	<Style TargetType="TextBox">
@@ -574,7 +574,7 @@
 								BorderBrush="{TemplateBinding BorderBrush}"
 								BorderThickness="{TemplateBinding BorderThickness}"
 								CornerRadius="{StaticResource Radius.Medium}">
-							<Grid FlowDirection="LeftToRight">
+							<Grid FlowDirection="{TemplateBinding FlowDirection}">
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="*" />
 									<ColumnDefinition Width="32" />
@@ -767,8 +767,8 @@
 	       BasedOn="{StaticResource {x:Type TextBox}}">
 		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 		<Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
-		<Setter Property="TextAlignment" Value="Left" />
-		<Setter Property="HorizontalContentAlignment" Value="Left" />
+		<Setter Property="TextAlignment" Value="{DynamicResource App.TextAlignment}" />
+		<Setter Property="HorizontalContentAlignment" Value="{DynamicResource App.HorizontalAlignment}" />
 	</Style>
 
 	<Style x:Key="TechnicalTextBox"
@@ -842,7 +842,7 @@
 
 						<ContentPresenter x:Name="ChkBody"
                                           Grid.Column="2"
-                                          Margin="8,0,0,0"
+                                          Margin="{DynamicResource App.Before8Margin}"
                                           VerticalAlignment="Center"
                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           FlowDirection="{DynamicResource App.TextFlowDirection}"
@@ -1109,7 +1109,7 @@
 		<Setter Property="Background" Value="Transparent" />
 		<Setter Property="BorderThickness" Value="0" />
 		<Setter Property="Padding" Value="0" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
 		<Setter Property="VerticalContentAlignment" Value="Stretch" />
 		<Setter Property="ItemsPanel">
@@ -1160,8 +1160,8 @@
 		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
 		<Setter Property="MaxHeight" Value="{StaticResource Control.Height.Standard}" />
 		<Setter Property="FontSize" Value="14" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
-		<Setter Property="HorizontalContentAlignment" Value="Left" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
+		<Setter Property="HorizontalContentAlignment" Value="{DynamicResource App.HorizontalAlignment}" />
 		<Setter Property="VerticalContentAlignment" Value="Center" />
 		<Setter Property="FocusVisualStyle" Value="{x:Null}" />
 		<Setter Property="Template">
@@ -1213,14 +1213,14 @@
 	<Style TargetType="TabControl">
 		<Setter Property="Background" Value="Transparent" />
 		<Setter Property="BorderThickness" Value="0" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 	</Style>
 
 	<Style TargetType="TabItem">
 		<Setter Property="Padding" Value="12,6" />
 		<Setter Property="FontSize" Value="12" />
 		<Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 	</Style>
 
 
@@ -1320,7 +1320,7 @@
 	       TargetType="TextBlock"
 	       BasedOn="{StaticResource Type.Body}">
 		<Setter Property="VerticalAlignment" Value="Center" />
-		<Setter Property="TextAlignment" Value="Left" />
+		<Setter Property="TextAlignment" Value="{DynamicResource App.TextAlignment}" />
 		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 		<Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
@@ -1339,7 +1339,7 @@
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="VerticalAlignment" Value="Center" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
 		<Style.Triggers>
 			<DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="Auto">
 				<Setter Property="Background" Value="{DynamicResource Status.SuccessSurface}" />
@@ -1382,7 +1382,7 @@
 
 	<Style x:Key="SemanticChipText" TargetType="TextBlock">
 		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
-		<Setter Property="TextAlignment" Value="Left" />
+		<Setter Property="TextAlignment" Value="{DynamicResource App.TextAlignment}" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="VerticalAlignment" Value="Center" />
 		<Setter Property="FontSize" Value="12" />
@@ -1393,7 +1393,7 @@
 	</Style>
 
 	<Style x:Key="GameHeaderStatusChip" TargetType="Border" BasedOn="{StaticResource SemanticChip}">
-		<Setter Property="HorizontalAlignment" Value="Left" />
+		<Setter Property="HorizontalAlignment" Value="{DynamicResource App.HorizontalAlignment}" />
 		<Setter Property="VerticalAlignment" Value="Center" />
 		<Setter Property="MinHeight" Value="28" />
 		<Setter Property="MaxWidth" Value="180" />
@@ -1401,8 +1401,8 @@
 	</Style>
 
 	<Style x:Key="GameHeaderStatusText" TargetType="TextBlock" BasedOn="{StaticResource SemanticChipText}">
-		<Setter Property="HorizontalAlignment" Value="Left" />
-		<Setter Property="TextAlignment" Value="Left" />
+		<Setter Property="HorizontalAlignment" Value="{DynamicResource App.HorizontalAlignment}" />
+		<Setter Property="TextAlignment" Value="{DynamicResource App.TextAlignment}" />
 		<Setter Property="TextWrapping" Value="NoWrap" />
 		<Setter Property="TextTrimming" Value="CharacterEllipsis" />
 	</Style>
@@ -1531,7 +1531,7 @@
 	<Style x:Key="HCanBox" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Type ComboBox}}">
 		<Setter Property="MinHeight" Value="{StaticResource Control.Height.Standard}" />
 		<Setter Property="Padding" Value="8,4" />
-		<Setter Property="HorizontalContentAlignment" Value="Left" />
+		<Setter Property="HorizontalContentAlignment" Value="{DynamicResource App.HorizontalAlignment}" />
 	</Style>
 
 	<Style x:Key="HCanList" TargetType="{x:Type ListBox}" BasedOn="{StaticResource {x:Type ListBox}}">
@@ -1543,7 +1543,7 @@
 		<Setter Property="Margin" Value="0,0,0,4" />
 		<Setter Property="VerticalAlignment" Value="Center" />
 		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
-		<Setter Property="TextAlignment" Value="Left" />
+		<Setter Property="TextAlignment" Value="{DynamicResource App.TextAlignment}" />
 		<Setter Property="TextWrapping" Value="Wrap" />
 	</Style>
 
@@ -1552,7 +1552,7 @@
 		<Setter Property="FontSize" Value="12" />
 		<Setter Property="Margin" Value="0,4,0,0" />
 		<Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
-		<Setter Property="TextAlignment" Value="Left" />
+		<Setter Property="TextAlignment" Value="{DynamicResource App.TextAlignment}" />
 	</Style>
 
 	<Style x:Key="FluentButton.Compact" TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
@@ -1565,7 +1565,7 @@
 	</Style>
 
 	<Style x:Key="FluentButton.Toolbar" TargetType="{x:Type Button}" BasedOn="{StaticResource FluentButton.Compact}">
-		<Setter Property="Margin" Value="0,0,8,0" />
+		<Setter Property="Margin" Value="{DynamicResource App.After8Margin}" />
 	</Style>
 
 	<Style x:Key="RecommendationInlineValueText" TargetType="TextBlock" BasedOn="{StaticResource TechText}">
@@ -1603,7 +1603,7 @@
 		<Setter Property="MinHeight" Value="20" />
 		<Setter Property="Padding" Value="7,1" />
 		<Setter Property="CornerRadius" Value="{StaticResource Radius.Large}" />
-		<Setter Property="HorizontalAlignment" Value="Left" />
+		<Setter Property="HorizontalAlignment" Value="{DynamicResource App.HorizontalAlignment}" />
 		<Setter Property="VerticalAlignment" Value="Center" />
 		<Setter Property="MaxWidth" Value="150" />
 	</Style>
@@ -1743,7 +1743,7 @@
 		<Setter Property="MinWidth" Value="160" />
 		<Setter Property="HorizontalAlignment" Value="Stretch" />
 		<Setter Property="VerticalAlignment" Value="Center" />
-		<Setter Property="FlowDirection" Value="LeftToRight" />
+		<Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
 		<Setter Property="SnapsToDevicePixels" Value="True" />
 	</Style>
 
@@ -1795,8 +1795,8 @@
            BasedOn="{StaticResource FluentTextBox}">
         <Setter Property="FlowDirection" Value="{DynamicResource App.TextFlowDirection}" />
         <Setter Property="Language" Value="{DynamicResource App.XmlLanguage}" />
-        <Setter Property="TextAlignment" Value="Left" />
-        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="TextAlignment" Value="{DynamicResource App.TextAlignment}" />
+        <Setter Property="HorizontalContentAlignment" Value="{DynamicResource App.HorizontalAlignment}" />
     </Style>
 
     <Style x:Key="FluentTextBox.Technical"
@@ -1867,7 +1867,7 @@
 
     <Style x:Key="FluentDialog.Buttons" TargetType="StackPanel">
         <Setter Property="Orientation" Value="Horizontal" />
-        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="HorizontalAlignment" Value="{DynamicResource App.TrailingHorizontalAlignment}" />
         <Setter Property="FlowDirection" Value="{DynamicResource App.ShellFlowDirection}" />
     </Style>
 

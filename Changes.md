@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-- Added Arabic and English support with direction-aware Arabic text while shell
-  geometry and physical text alignment remain left-to-right/left-aligned.
+- Completed the native Windows 11 bidirectional layout contract: Arabic now
+  mirrors window and control geometry with right-aligned localized text, English
+  remains left-to-right/left-aligned, caption controls stay on the physical
+  right, and technical values remain LTR/left-aligned.
 - Added local RPCS3 game detection and recommendation review.
 - Added support for Game, Canary, and Cheat patches.
 - Added patch matching by serial, game version, and executable hash.

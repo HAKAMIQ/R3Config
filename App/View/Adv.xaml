@@ -5,10 +5,10 @@
         xmlns:controls="clr-namespace:R3Config.Ctrl"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="{lang:TextExt Key=Adv.Title}"
-        Width="1080"
-        Height="700"
-        MinWidth="900"
-        MinHeight="600"
+        Width="780"
+        Height="420"
+        MinWidth="600"
+        MinHeight="480"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         ShowInTaskbar="False"
@@ -17,8 +17,57 @@
         Background="Transparent"
         Foreground="{DynamicResource Text.Primary}"
         FontFamily="{DynamicResource Type.Font.Body}"
-        FlowDirection="{DynamicResource App.FlowDirection}"
-        Language="{DynamicResource App.XmlLanguage}">
+        Language="{DynamicResource App.XmlLanguage}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        FlowDirection="{DynamicResource App.FlowDirection}">
+
+    <Window.Resources>
+        <Style x:Key="AdvLocalizedTitleText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource R3SettingsTitleText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+        </Style>
+
+        <Style x:Key="AdvLocalizedRowTitleText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource R3SettingsRowTitleText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+        </Style>
+
+        <Style x:Key="AdvLocalizedDescriptionText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource R3SettingsRowDescriptionText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+        </Style>
+
+        <Style x:Key="AdvLocalizedLabelText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource LabelText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+        </Style>
+
+        <Style x:Key="AdvLocalizedEmptyStateText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource ArabicEmptyStateText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+        </Style>
+    </Window.Resources>
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="40"
@@ -30,8 +79,9 @@
 
     <Border Style="{StaticResource FluentSurface.Dialog}">
         <Grid ClipToBounds="True"
-              FlowDirection="{DynamicResource App.FlowDirection}"
-              Language="{DynamicResource App.XmlLanguage}">
+              Language="{DynamicResource App.XmlLanguage}"
+              KeyboardNavigation.TabNavigation="Cycle">
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -40,29 +90,28 @@
             <Border Grid.Row="0"
                     Style="{StaticResource R3DialogTopBar}"
                     MouseLeftButtonDown="DragWin">
-                <Grid>
+
+                <Grid FlowDirection="LeftToRight">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0"
-                               Text="{lang:TextExt Key=Adv.Title}"
-                               Style="{StaticResource R3SettingsTitleText}"
-                               TextTrimming="CharacterEllipsis"
-                               TextWrapping="NoWrap"
-                               VerticalAlignment="Center" />
-
-                    <Button Grid.Column="1"
+                    <Button Grid.Column="0"
                             Style="{StaticResource FluentButton.Close}"
                             AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
                             ToolTip="{lang:TextExt Key=Window.CloseTip}"
                             Click="CloseWin"
                             VerticalAlignment="Center"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                        <Grid Width="14" Height="14">
+
+                        <Grid Width="14"
+                              Height="14"
+                              FlowDirection="LeftToRight">
+
                             <Path Data="M 3 3 L 11 11 M 11 3 L 3 11"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Stroke="{Binding Foreground,
+                                                   RelativeSource={RelativeSource AncestorType=Button}}"
                                   StrokeThickness="1.6"
                                   StrokeStartLineCap="Round"
                                   StrokeEndLineCap="Round"
@@ -70,11 +119,21 @@
                                   VerticalAlignment="Center" />
                         </Grid>
                     </Button>
+
+                    <TextBlock Grid.Column="1"
+                               Text="{lang:TextExt Key=Adv.Title}"
+                               Style="{StaticResource AdvLocalizedTitleText}"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               TextWrapping="NoWrap" />
                 </Grid>
             </Border>
 
             <Grid Grid.Row="1"
-                  Margin="12">
+                  Margin="12"
+                  FlowDirection="{DynamicResource App.FlowDirection}">
+
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="180" />
                     <ColumnDefinition Width="12" />
@@ -85,41 +144,51 @@
                         Style="{StaticResource FluentSurface.Subtle}"
                         Padding="8"
                         VerticalAlignment="Stretch">
+
                     <ListBox x:Name="AdvancedNavigation"
                              SelectedIndex="0"
                              SelectionChanged="AdvancedNavigationChanged"
                              AutomationProperties.Name="{lang:TextExt Key=Adv.Title}"
                              HorizontalAlignment="Stretch"
+                             HorizontalContentAlignment="Stretch"
                              VerticalAlignment="Top"
-                             FlowDirection="LeftToRight">
-                        <ListBoxItem>
+                             Language="{DynamicResource App.XmlLanguage}">
+
+                        <ListBoxItem HorizontalContentAlignment="Stretch">
                             <TextBlock Text="{lang:TextExt Key=HCanary.Title}"
-                                       Style="{StaticResource R3SettingsRowTitleText}"
+                                       Style="{StaticResource AdvLocalizedRowTitleText}"
                                        TextTrimming="CharacterEllipsis" />
                         </ListBoxItem>
-                        <ListBoxItem>
+
+                        <ListBoxItem HorizontalContentAlignment="Stretch">
                             <TextBlock Text="{lang:TextExt Key=Adv.Recovery}"
-                                       Style="{StaticResource R3SettingsRowTitleText}"
+                                       Style="{StaticResource AdvLocalizedRowTitleText}"
                                        TextTrimming="CharacterEllipsis" />
                         </ListBoxItem>
-                        <ListBoxItem>
+
+                        <ListBoxItem HorizontalContentAlignment="Stretch">
                             <TextBlock Text="{lang:TextExt Key=Adv.Diagnostics}"
-                                       Style="{StaticResource R3SettingsRowTitleText}"
+                                       Style="{StaticResource AdvLocalizedRowTitleText}"
                                        TextTrimming="CharacterEllipsis" />
                         </ListBoxItem>
                     </ListBox>
                 </Border>
 
-                <Grid Grid.Column="2"
-                      x:Name="AdvancedContentHost">
+                <Grid x:Name="AdvancedContentHost"
+                      Grid.Column="2">
+
                     <controls:HCanView x:Name="HCanaryWorkspace"
                                        HorizontalAlignment="Stretch"
-                                       VerticalAlignment="Stretch" />
+                                       VerticalAlignment="Stretch"
+                                       FlowDirection="{Binding FlowDirection,
+                                                               RelativeSource={RelativeSource AncestorType=Window}}"
+                                       Language="{DynamicResource App.XmlLanguage}"
+                                       Loaded="HCanaryWorkspace_Loaded" />
 
                     <Grid x:Name="RecoveryWorkspace"
                           Visibility="Collapsed"
-                          FlowDirection="{DynamicResource App.FlowDirection}"
                           Language="{DynamicResource App.XmlLanguage}">
+
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="8" />
@@ -130,6 +199,7 @@
                                 Style="{StaticResource R3SettingsSection}"
                                 Margin="0"
                                 Padding="12">
+
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -140,14 +210,13 @@
                                 <TextBlock Grid.Column="0"
                                            MinWidth="0"
                                            Text="{Binding BkpStat}"
-                                           Style="{StaticResource R3SettingsRowDescriptionText}"
+                                           Style="{StaticResource AdvLocalizedDescriptionText}"
                                            Margin="0"
                                            TextWrapping="Wrap"
                                            VerticalAlignment="Center" />
 
                                 <Button Grid.Column="2"
                                         Content="{lang:TextExt Key=Adv.RestoreSelected}"
-                                        HorizontalAlignment="Right"
                                         VerticalAlignment="Center"
                                         ToolTip="{lang:TextExt Key=Adv.RestoreTip}"
                                         Command="{Binding RstCmd}" />
@@ -163,15 +232,20 @@
                                       EnableColumnVirtualization="True"
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                      FlowDirection="LeftToRight"
+                                      Language="{DynamicResource App.XmlLanguage}"
                                       HorizontalAlignment="Stretch"
                                       VerticalAlignment="Stretch"
                                       ToolTip="{lang:TextExt Key=Adv.BackupsTip}">
+
                                 <DataGrid.Style>
-                                    <Style TargetType="DataGrid" BasedOn="{StaticResource FluentDataGrid}">
+                                    <Style TargetType="{x:Type DataGrid}"
+                                           BasedOn="{StaticResource FluentDataGrid}">
+
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Advanced.BkpEmpty}" Value="True">
-                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            <DataTrigger Binding="{Binding Advanced.BkpEmpty}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -180,11 +254,13 @@
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{lang:TextExt Key=Adv.Date}"
                                                         HeaderStyle="{StaticResource DataGridHeaderUi}"
-                                                        Binding="{Binding MadeAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                                                        Binding="{Binding MadeAt,
+                                                                          StringFormat={}{0:yyyy-MM-dd HH:mm}}"
                                                         Width="Auto"
                                                         MinWidth="140"
                                                         MaxWidth="170"
                                                         ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
                                     <DataGridTextColumn Header="{lang:TextExt Key=Adv.Files}"
                                                         HeaderStyle="{StaticResource DataGridHeaderUi}"
                                                         Binding="{Binding Files.Count}"
@@ -192,6 +268,7 @@
                                                         MinWidth="70"
                                                         MaxWidth="90"
                                                         ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
                                     <DataGridTextColumn Header="{lang:TextExt Key=Adv.Folder}"
                                                         HeaderStyle="{StaticResource DataGridHeaderUi}"
                                                         Binding="{Binding DirPath}"
@@ -202,13 +279,13 @@
                             </DataGrid>
 
                             <Border Style="{StaticResource EmptyStatePanel}"
-                                    Visibility="{Binding Advanced.BkpEmpty, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    Visibility="{Binding Advanced.BkpEmpty,
+                                                         Converter={StaticResource BoolToVisibilityConverter}}">
+
                                 <TextBlock Text="{Binding Advanced.BkpText}"
-                                           Style="{StaticResource ArabicEmptyStateText}"
+                                           Style="{StaticResource AdvLocalizedEmptyStateText}"
                                            HorizontalAlignment="Stretch"
-                                           VerticalAlignment="Center"
-                                           FlowDirection="{DynamicResource App.TextFlowDirection}"
-                                           TextAlignment="Left" />
+                                           VerticalAlignment="Center" />
                             </Border>
                         </Grid>
                     </Grid>
@@ -216,8 +293,8 @@
                     <Grid x:Name="DiagnosticsWorkspace"
                           Visibility="Collapsed"
                           Grid.IsSharedSizeScope="True"
-                          FlowDirection="LeftToRight"
                           Language="{DynamicResource App.XmlLanguage}">
+
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="8" />
@@ -228,11 +305,16 @@
                                 Style="{StaticResource R3SettingsSection}"
                                 Margin="0"
                                 Padding="12">
+
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" MaxWidth="160" SharedSizeGroup="DiagnosticsLabel" />
+                                    <ColumnDefinition Width="Auto"
+                                                      MaxWidth="160"
+                                                      SharedSizeGroup="DiagnosticsLabel" />
+                                    <ColumnDefinition Width="12" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
+
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="8" />
@@ -245,44 +327,82 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                                <TextBlock Grid.Row="0"
+                                           Grid.ColumnSpan="3"
                                            Text="{lang:TextExt Key=Adv.Rpcs3Connection}"
-                                           Style="{StaticResource R3SettingsRowTitleText}" />
+                                           Style="{StaticResource AdvLocalizedRowTitleText}" />
 
-                                <TextBlock Grid.Row="2" Grid.Column="0"
+                                <TextBlock Grid.Row="2"
+                                           Grid.Column="0"
                                            Text="{lang:TextExt Key=Adv.ConfigPath}"
-                                           Style="{StaticResource LabelText}"
+                                           Style="{StaticResource AdvLocalizedLabelText}"
                                            VerticalAlignment="Center" />
-                                <Border Grid.Row="2" Grid.Column="1" Margin="12,0,0,0" Style="{StaticResource R3ValuePill}">
-                                    <TextBlock Text="{Binding Advanced.CfgPath}" Style="{StaticResource R3TechnicalValueText}" />
+
+                                <Border Grid.Row="2"
+                                        Grid.Column="2"
+                                        Style="{StaticResource R3ValuePill}">
+
+                                    <TextBlock Text="{Binding Advanced.CfgPath}"
+                                               Style="{StaticResource R3TechnicalValueText}"
+                                               FlowDirection="LeftToRight"
+                                               TextAlignment="Left"
+                                               Language="en-US" />
                                 </Border>
 
-                                <TextBlock Grid.Row="4" Grid.Column="0"
+                                <TextBlock Grid.Row="4"
+                                           Grid.Column="0"
                                            Text="{lang:TextExt Key=Adv.PatchesPath}"
-                                           Style="{StaticResource LabelText}"
+                                           Style="{StaticResource AdvLocalizedLabelText}"
                                            VerticalAlignment="Center" />
-                                <Border Grid.Row="4" Grid.Column="1" Margin="12,0,0,0" Style="{StaticResource R3ValuePill}">
-                                    <TextBlock Text="{Binding Advanced.PatPath}" Style="{StaticResource R3TechnicalValueText}" />
+
+                                <Border Grid.Row="4"
+                                        Grid.Column="2"
+                                        Style="{StaticResource R3ValuePill}">
+
+                                    <TextBlock Text="{Binding Advanced.PatPath}"
+                                               Style="{StaticResource R3TechnicalValueText}"
+                                               FlowDirection="LeftToRight"
+                                               TextAlignment="Left"
+                                               Language="en-US" />
                                 </Border>
 
-                                <TextBlock Grid.Row="6" Grid.Column="0"
+                                <TextBlock Grid.Row="6"
+                                           Grid.Column="0"
                                            Text="{lang:TextExt Key=Adv.TargetCfg}"
-                                           Style="{StaticResource LabelText}"
+                                           Style="{StaticResource AdvLocalizedLabelText}"
                                            VerticalAlignment="Center" />
-                                <Border Grid.Row="6" Grid.Column="1" Margin="12,0,0,0" Style="{StaticResource R3ValuePill}">
-                                    <TextBlock Text="{Binding Advanced.TgtCfg}" Style="{StaticResource R3TechnicalValueText}" />
+
+                                <Border Grid.Row="6"
+                                        Grid.Column="2"
+                                        Style="{StaticResource R3ValuePill}">
+
+                                    <TextBlock Text="{Binding Advanced.TgtCfg}"
+                                               Style="{StaticResource R3TechnicalValueText}"
+                                               FlowDirection="LeftToRight"
+                                               TextAlignment="Left"
+                                               Language="en-US" />
                                 </Border>
 
-                                <TextBlock Grid.Row="8" Grid.Column="0"
+                                <TextBlock Grid.Row="8"
+                                           Grid.Column="0"
                                            Text="{lang:TextExt Key=Adv.CatVersion}"
-                                           Style="{StaticResource LabelText}"
+                                           Style="{StaticResource AdvLocalizedLabelText}"
                                            VerticalAlignment="Top" />
-                                <StackPanel Grid.Row="8" Grid.Column="1" Margin="12,0,0,0" MinWidth="0">
+
+                                <StackPanel Grid.Row="8"
+                                            Grid.Column="2"
+                                            MinWidth="0">
+
                                     <Border Style="{StaticResource R3ValuePill}">
-                                        <TextBlock Text="{Binding Advanced.CatVer}" Style="{StaticResource R3TechnicalValueText}" />
+                                        <TextBlock Text="{Binding Advanced.CatVer}"
+                                                   Style="{StaticResource R3TechnicalValueText}"
+                                                   FlowDirection="LeftToRight"
+                                                   TextAlignment="Left"
+                                                   Language="en-US" />
                                     </Border>
+
                                     <TextBlock Text="{Binding RecStat}"
-                                               Style="{StaticResource R3SettingsRowDescriptionText}"
+                                               Style="{StaticResource AdvLocalizedDescriptionText}"
                                                Margin="0,4,0,0"
                                                TextWrapping="Wrap" />
                                 </StackPanel>
@@ -293,6 +413,7 @@
                                 Style="{StaticResource R3SettingsSection}"
                                 Margin="0"
                                 Padding="12">
+
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -304,7 +425,7 @@
 
                                 <TextBlock Grid.Row="0"
                                            Text="{lang:TextExt Key=Adv.SessionLog}"
-                                           Style="{StaticResource R3SettingsRowTitleText}" />
+                                           Style="{StaticResource AdvLocalizedRowTitleText}" />
 
                                 <TextBox Grid.Row="2"
                                          Text="{Binding Advanced.LogText, Mode=OneWay}"
@@ -315,15 +436,24 @@
                                          TextWrapping="NoWrap"
                                          HorizontalScrollBarVisibility="Auto"
                                          VerticalScrollBarVisibility="Auto"
+                                         FlowDirection="LeftToRight"
+                                         TextAlignment="Left"
+                                         Language="en-US"
                                          FontFamily="Cascadia Mono, Consolas, Segoe UI Mono"
                                          FontSize="12" />
 
-                                <Button Grid.Row="4"
-                                        Content="{lang:TextExt Key=Adv.CopyLog}"
-                                        Style="{StaticResource FluentButton.Compact}"
-                                        HorizontalAlignment="Left"
-                                        ToolTip="{lang:TextExt Key=Adv.CopyLogTip}"
-                                        Command="{Binding CopyCmd}" />
+                                <Grid Grid.Row="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button Grid.Column="0"
+                                            Content="{lang:TextExt Key=Adv.CopyLog}"
+                                            Style="{StaticResource FluentButton.Compact}"
+                                            ToolTip="{lang:TextExt Key=Adv.CopyLogTip}"
+                                            Command="{Binding CopyCmd}" />
+                                </Grid>
                             </Grid>
                         </Border>
                     </Grid>

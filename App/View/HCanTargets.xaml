@@ -16,8 +16,122 @@
         Background="Transparent"
         Foreground="{DynamicResource Text.Primary}"
         FontFamily="{DynamicResource Type.Font.Body}"
-        FlowDirection="{DynamicResource App.FlowDirection}"
-        Language="{DynamicResource App.XmlLanguage}">
+        Language="{DynamicResource App.XmlLanguage}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        FlowDirection="{DynamicResource App.FlowDirection}">
+
+    <Window.Resources>
+        <Style x:Key="HCanTargetsLocalizedTitleText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource R3SettingsTitleText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+        </Style>
+
+        <Style x:Key="HCanTargetsLocalizedDescriptionText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource SectionCaptionText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+        </Style>
+
+        <Style x:Key="HCanTargetsLocalizedCellText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource DataGridCellLocalizedText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+        </Style>
+
+        <Style x:Key="HCanTargetsLocalizedCellEditor"
+               TargetType="{x:Type TextBox}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="{DynamicResource App.HorizontalAlignment}" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+        </Style>
+
+        <Style x:Key="HCanTargetsTechnicalCellText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource DataGridCellTextLeft}">
+            <Setter Property="FlowDirection"
+                    Value="LeftToRight" />
+            <Setter Property="TextAlignment"
+                    Value="Left" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="Language"
+                    Value="en-US" />
+        </Style>
+
+        <Style x:Key="HCanTargetsTechnicalCellEditor"
+               TargetType="{x:Type TextBox}">
+            <Setter Property="FlowDirection"
+                    Value="LeftToRight" />
+            <Setter Property="TextAlignment"
+                    Value="Left" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Left" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+            <Setter Property="Language"
+                    Value="en-US" />
+        </Style>
+
+        <Style x:Key="HCanTargetsCenteredHeader"
+               TargetType="{x:Type DataGridColumnHeader}"
+               BasedOn="{StaticResource DataGridHeaderUi}">
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+        </Style>
+
+        <Style x:Key="HCanTargetsActionButton"
+               TargetType="{x:Type Button}"
+               BasedOn="{StaticResource FluentButton.Compact}">
+            <Setter Property="MinWidth"
+                    Value="72" />
+            <Setter Property="MinHeight"
+                    Value="30" />
+            <Setter Property="Height"
+                    Value="30" />
+            <Setter Property="Padding"
+                    Value="10,3" />
+            <Setter Property="Margin"
+                    Value="4,0" />
+            <Setter Property="FontSize"
+                    Value="12" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+        </Style>
+    </Window.Resources>
 
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="40"
@@ -28,7 +142,10 @@
     </shell:WindowChrome.WindowChrome>
 
     <Border Style="{StaticResource FluentSurface.Dialog}">
-        <Grid ClipToBounds="True">
+        <Grid ClipToBounds="True"
+              Language="{DynamicResource App.XmlLanguage}"
+              KeyboardNavigation.TabNavigation="Cycle">
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -37,28 +154,28 @@
             <Border Grid.Row="0"
                     Style="{StaticResource R3DialogTopBar}"
                     MouseLeftButtonDown="DragWin">
-                <Grid>
+
+                <Grid FlowDirection="LeftToRight">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0"
-                               Text="{lang:TextExt Key=HCanary.Targets.Title}"
-                               Style="{StaticResource R3SettingsTitleText}"
-                               TextTrimming="CharacterEllipsis"
-                               VerticalAlignment="Center" />
-
-                    <Button Grid.Column="1"
+                    <Button Grid.Column="0"
                             Style="{StaticResource FluentButton.Close}"
                             AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
                             ToolTip="{lang:TextExt Key=Window.CloseTip}"
                             Click="CloseWin"
                             VerticalAlignment="Center"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                        <Grid Width="14" Height="14">
+
+                        <Grid Width="14"
+                              Height="14"
+                              FlowDirection="LeftToRight">
+
                             <Path Data="M 3 3 L 11 11 M 11 3 L 3 11"
-                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                  Stroke="{Binding Foreground,
+                                                   RelativeSource={RelativeSource AncestorType=Button}}"
                                   StrokeThickness="1.6"
                                   StrokeStartLineCap="Round"
                                   StrokeEndLineCap="Round"
@@ -66,11 +183,21 @@
                                   VerticalAlignment="Center" />
                         </Grid>
                     </Button>
+
+                    <TextBlock Grid.Column="1"
+                               Text="{lang:TextExt Key=HCanary.Targets.Title}"
+                               Style="{StaticResource HCanTargetsLocalizedTitleText}"
+                               HorizontalAlignment="Stretch"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               TextWrapping="NoWrap" />
                 </Grid>
             </Border>
 
             <Grid Grid.Row="1"
-                  Margin="16">
+                  Margin="16"
+                  FlowDirection="{DynamicResource App.FlowDirection}">
+
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="12" />
@@ -81,7 +208,7 @@
 
                 <TextBlock Grid.Row="0"
                            Text="{lang:TextExt Key=HCanary.Targets.Description}"
-                           Style="{StaticResource SectionCaptionText}"
+                           Style="{StaticResource HCanTargetsLocalizedDescriptionText}"
                            TextWrapping="Wrap" />
 
                 <DataGrid Grid.Row="2"
@@ -92,55 +219,74 @@
                           CanUserAddRows="False"
                           CanUserDeleteRows="False"
                           CanUserReorderColumns="False"
-                          FlowDirection="LeftToRight"
+                          CanUserResizeRows="False"
+                          HeadersVisibility="Column"
+                          RowHeaderWidth="0"
                           HorizontalAlignment="Stretch"
                           VerticalAlignment="Stretch"
+                          FlowDirection="{Binding FlowDirection,
+                                                  RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                          Language="{DynamicResource App.XmlLanguage}"
+                          ColumnHeaderStyle="{StaticResource HCanTargetsCenteredHeader}"
                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                           ScrollViewer.VerticalScrollBarVisibility="Auto">
+
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Field.GameName}"
-                                            Binding="{Binding GameName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            Binding="{Binding GameName,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
                                             Width="2*"
-                                            MinWidth="190" />
+                                            MinWidth="190"
+                                            ElementStyle="{StaticResource HCanTargetsLocalizedCellText}"
+                                            EditingElementStyle="{StaticResource HCanTargetsLocalizedCellEditor}" />
 
                         <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Field.GameId}"
-                                            Binding="{Binding GameId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            Binding="{Binding GameId,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
                                             Width="Auto"
                                             MinWidth="120"
-                                            MaxWidth="160" />
+                                            MaxWidth="160"
+                                            ElementStyle="{StaticResource HCanTargetsTechnicalCellText}"
+                                            EditingElementStyle="{StaticResource HCanTargetsTechnicalCellEditor}" />
 
                         <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Field.GameVersion}"
-                                            Binding="{Binding GameVer, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            Binding="{Binding GameVer,
+                                                              Mode=TwoWay,
+                                                              UpdateSourceTrigger=PropertyChanged}"
                                             Width="Auto"
                                             MinWidth="110"
-                                            MaxWidth="150" />
+                                            MaxWidth="150"
+                                            ElementStyle="{StaticResource HCanTargetsTechnicalCellText}"
+                                            EditingElementStyle="{StaticResource HCanTargetsTechnicalCellEditor}" />
 
                         <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Validation.Label}"
                                             Binding="{Binding Error}"
                                             IsReadOnly="True"
                                             Width="2*"
                                             MinWidth="210"
-                                            ElementStyle="{StaticResource DataGridCellLocalizedText}" />
+                                            ElementStyle="{StaticResource HCanTargetsLocalizedCellText}" />
                     </DataGrid.Columns>
                 </DataGrid>
 
-                <Grid Grid.Row="4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="8" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel Grid.Row="4"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            FlowDirection="{DynamicResource App.FlowDirection}">
 
-                    <Button Grid.Column="0"
-                            Content="{lang:TextExt Key=HCanary.Add}"
+                    <Button Content="{lang:TextExt Key=HCanary.Add}"
                             Command="{Binding HCanary.AddGmCmd}"
-                            Style="{StaticResource FluentButton.Toolbar}" />
+                            Style="{StaticResource HCanTargetsActionButton}"
+                            ToolTip="{lang:TextExt Key=HCanary.Add}"
+                            AutomationProperties.Name="{lang:TextExt Key=HCanary.Add}" />
 
-                    <Button Grid.Column="2"
-                            Content="{lang:TextExt Key=HCanary.Delete}"
+                    <Button Content="{lang:TextExt Key=HCanary.Delete}"
                             Command="{Binding HCanary.DelGmCmd}"
-                            Style="{StaticResource FluentButton.Compact}" />
-                </Grid>
+                            Style="{StaticResource HCanTargetsActionButton}"
+                            ToolTip="{lang:TextExt Key=HCanary.Delete}"
+                            AutomationProperties.Name="{lang:TextExt Key=HCanary.Delete}" />
+                </StackPanel>
             </Grid>
         </Grid>
     </Border>

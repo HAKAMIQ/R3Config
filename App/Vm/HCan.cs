@@ -197,11 +197,21 @@ public sealed partial class HCanVm : VmBase
     public ObservableCollection<AncVm> Anchors { get; } = [];
     public ObservableCollection<HCanStor> Patches { get; } = [];
 
-    public bool CanAdvanceTarget =>
-        !string.IsNullOrWhiteSpace(ExeHash) &&
-        string.IsNullOrWhiteSpace(HashErr) &&
+    public bool CanAdvanceGame =>
+        HasGame;
+
+    public bool CanAdvanceTargets =>
+        CanAdvanceGame &&
         Games.Count > 0 &&
         Games.All(item => string.IsNullOrWhiteSpace(item.Error));
+
+    public bool CanAdvanceFingerprint =>
+        CanAdvanceTargets &&
+        !string.IsNullOrWhiteSpace(ExeHash) &&
+        string.IsNullOrWhiteSpace(HashErr);
+
+    public bool CanAdvanceTarget =>
+        CanAdvanceFingerprint;
 
     public bool CanAdvanceDetails =>
         CanAdvanceTarget &&

@@ -80,13 +80,8 @@ public sealed class BundledCanaryPatchService
         string bundledText,
         IReadOnlyList<PatMatch> selectedMatches)
     {
-        // Compile the selection into a self-contained RPCS3 document. Merely
-        // copying the selected hash block leaves aliases such as Games/Notes
-        // pointing at the top-level Anchors section. The managed imported-file
-        // merger intentionally keeps only executable hash sections, so those
-        // aliases become dangling and RPCS3/YamlDotNet rejects the result.
-        // PatchSelectionCompiler clones the selected entries and expands every
-        // alias before the imported_patch.yml transaction is staged.
+        // Compile selected Canary patches into a self-contained YAML document
+        // by expanding all anchors and aliases before staging imported_patch.yml.
         var compiled = new PatchSelectionCompiler().Compile(
             bundledText,
             selectedMatches,

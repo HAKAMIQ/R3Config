@@ -157,30 +157,39 @@ FluentSurface.Dialog
 
 ## Direction and alignment
 
-تخطيط النافذة والحاويات يعمل دائمًا بهذه القيم:
+يتبع التخطيط عقد Windows 11 المنطقي بحسب لغة الواجهة:
 
 ```text
-Shell FlowDirection = LeftToRight
-TextAlignment = Left
-HorizontalContentAlignment = Left
+العربية:  Window/Shell FlowDirection = RightToLeft
+           localized TextAlignment = Right
+           leading edge = Right, trailing actions = Left
+
+الإنجليزية: Window/Shell FlowDirection = LeftToRight
+            localized TextAlignment = Left
+            leading edge = Left, trailing actions = Right
 ```
 
-داخل أسطح النص فقط، تستخدم العربية `RightToLeft` لمعالجة bidi الصحيحة مع بقاء
-`TextAlignment = Left`، بينما تستخدم الإنجليزية `LeftToRight`. المسارات
-والـhashes والقيم التقنية تبقى LTR وخطها تقني. تغيير اللغة لا يعكس الأعمدة أو
-ترتيب الأزرار، وأزرار نافذة Windows تبقى في الجهة اليمنى.
+أزرار عنوان نافذة Windows تبقى في الجهة الفيزيائية اليمنى في اللغتين، لذلك
+يظل شريط العنوان الداخلي `LeftToRight` مع تطبيق اتجاه النص المحلي على عنوانه.
+المسارات والـhashes والمعرّفات والإصدارات والكود وYAML والقيم التقنية تبقى
+`LeftToRight` ومحاذاتها إلى اليسار باستخدام أنماط Technical المخصصة.
 
-يمنع:
+تستخدم الحاويات `App.FlowDirection` أو `App.ShellFlowDirection`، والنصوص المحلية
+`App.TextFlowDirection` و`App.TextAlignment`، والطرف الابتدائي
+`App.HorizontalAlignment`، والطرف التنفيذي المقابل
+`App.TrailingHorizontalAlignment`. المسافات الأفقية المنطقية تستخدم موارد
+`App.After*Margin` و`App.Before*Margin` بدل هوامش يمين/يسار ثابتة.
+
+يمنع داخل ملفات View:
 
 ```xaml
-TextAlignment="Right"
-TextAlignment="Center"
-TextAlignment="Justify"
-FlowDirection="RightToLeft" <!-- على Window/Grid/Panel أو كقيمة صلبة في View -->
+FlowDirection="RightToLeft"  <!-- قيمة صلبة -->
+TextAlignment="Right"        <!-- قيمة صلبة -->
+HorizontalAlignment="Right"  <!-- للإجراءات المحلية بدل المورد المنطقي -->
 ```
 
-اتجاه النص المحلي يؤخذ من `App.TextFlowDirection`، واتجاه الحاويات من
-`App.ShellFlowDirection`. لا تستخدم قيمة RTL صلبة داخل ملفات View.
+القيم الصلبة `LeftToRight` و`TextAlignment="Left"` مسموحة فقط للعناصر التقنية
+ولشريط عنوان Windows والرسومات التي لا ينبغي قلبها.
 
 ## Data surfaces
 

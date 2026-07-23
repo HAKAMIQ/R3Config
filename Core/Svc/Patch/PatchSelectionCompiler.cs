@@ -123,13 +123,6 @@ public sealed partial class PatchSelectionCompiler
                 { "Version", PatVer }
             };
 
-            var clones = new Dictionary<YamlNode, YamlNode>(
-                ReferenceEqualityComparer.Instance);
-            AddAnchors(
-                root,
-                resolved.Select(item => item.Candidate.Details),
-                outputRoot,
-                clones);
 
             var outputHashes =
                 new Dictionary<string, YamlMappingNode>(
@@ -160,9 +153,10 @@ public sealed partial class PatchSelectionCompiler
 
                 outputPatchMap.Add(
                     new YamlScalarNode(match.Patch.Title),
-                    (YamlMappingNode)CloneNode(
+                    (YamlMappingNode)CloneExpandedNode(
                         item.Candidate.Details,
-                        clones));
+                        new HashSet<YamlNode>(
+                            ReferenceEqualityComparer.Instance)));
             }
 
             var compiledText = Save(outputRoot);
@@ -452,148 +446,69 @@ public sealed partial class PatchSelectionCompiler
         return candidates[0];
     }
 
-    private static void AddAnchors(
-        YamlMappingNode sourceRoot,
-        IEnumerable<YamlMappingNode> selectedDetails,
-        YamlMappingNode outputRoot,
-        IDictionary<YamlNode, YamlNode> clones)
-    {
-        var needed = new HashSet<string>(StringComparer.Ordinal);
-        var visited = new HashSet<YamlNode>(
-            ReferenceEqualityComparer.Instance);
-
-        foreach (var details in selectedDetails)
-        {
-            CollectAnchors(details, needed, visited);
-        }
-
-        if (needed.Count == 0)
-        {
-            return;
-        }
-
-        var outputAnchors = new YamlMappingNode();
-        foreach (var (key, value) in sourceRoot.Children)
-        {
-            if (!Scalar2(key).StartsWith(
-                    "Anchors",
-                    StringComparison.OrdinalIgnoreCase) ||
-                value is not YamlMappingNode anchorMap)
-            {
-                continue;
-            }
-
-            foreach (var (anchorKey, anchorValue) in anchorMap.Children)
-            {
-                if (anchorValue.Anchor.IsEmpty ||
-                    !needed.Contains(anchorValue.Anchor.Value))
-                {
-                    continue;
-                }
-
-                outputAnchors.Add(
-                    CloneNode(anchorKey, clones),
-                    CloneNode(anchorValue, clones));
-            }
-        }
-
-        var missing = needed
-            .Where(name => !outputAnchors.Children.Values.Any(node =>
-                !node.Anchor.IsEmpty &&
-                node.Anchor.Value.Equals(name, StringComparison.Ordinal)))
-            .Order(StringComparer.Ordinal)
-            .ToArray();
-        if (missing.Length > 0)
-        {
-            throw new InvalidDataException(
-                "Selected patch references missing YAML anchor(s): " +
-                string.Join(", ", missing));
-        }
-
-        outputRoot.Add("Anchors", outputAnchors);
-    }
-
-    private static void CollectAnchors(
+    private static YamlNode CloneExpandedNode(
         YamlNode node,
-        ISet<string> anchors,
-        ISet<YamlNode> visited)
+        ISet<YamlNode> activePath)
     {
-        if (!visited.Add(node))
+        if (!activePath.Add(node))
         {
-            return;
+            throw new InvalidOperationException(
+                "Selected patch contains a recursive YAML alias.");
         }
 
-        if (!node.Anchor.IsEmpty)
+        try
         {
-            anchors.Add(node.Anchor.Value);
-        }
-
-        switch (node)
-        {
-            case YamlSequenceNode sequence:
-                foreach (var child in sequence.Children)
-                {
-                    CollectAnchors(child, anchors, visited);
-                }
-                break;
-
-            case YamlMappingNode mapping:
-                foreach (var (key, value) in mapping.Children)
-                {
-                    CollectAnchors(key, anchors, visited);
-                    CollectAnchors(value, anchors, visited);
-                }
-                break;
-        }
-    }
-
-    private static YamlNode CloneNode(
-        YamlNode node,
-        IDictionary<YamlNode, YamlNode> clones)
-    {
-        if (clones.TryGetValue(node, out var existing))
-        {
-            return existing;
-        }
-
-        YamlNode clone = node switch
-        {
-            YamlScalarNode scalar => new YamlScalarNode(scalar.Value)
+            switch (node)
             {
-                Style = scalar.Style
-            },
-            YamlSequenceNode => new YamlSequenceNode(),
-            YamlMappingNode => new YamlMappingNode(),
-            _ => throw new InvalidOperationException(
-                "Unsupported YAML node in patch selection.")
-        };
+                case YamlScalarNode scalar:
+                    return new YamlScalarNode(scalar.Value)
+                    {
+                        Style = scalar.Style
+                    };
 
-        clone.Anchor = node.Anchor;
-        clones.Add(node, clone);
-
-        switch (node)
-        {
-            case YamlSequenceNode sequence:
-                foreach (var child in sequence.Children)
+                case YamlSequenceNode sequence:
                 {
-                    ((YamlSequenceNode)clone).Add(
-                        CloneNode(child, clones));
-                }
-                break;
+                    var clone = new YamlSequenceNode();
 
-            case YamlMappingNode mapping:
-                foreach (var (key, value) in mapping.Children)
-                {
-                    ((YamlMappingNode)clone).Add(
-                        CloneNode(key, clones),
-                        CloneNode(value, clones));
+                    foreach (var child in sequence.Children)
+                    {
+                        clone.Add(
+                            CloneExpandedNode(
+                                child,
+                                activePath));
+                    }
+
+                    return clone;
                 }
-                break;
+
+                case YamlMappingNode mapping:
+                {
+                    var clone = new YamlMappingNode();
+
+                    foreach (var (key, value) in mapping.Children)
+                    {
+                        clone.Add(
+                            CloneExpandedNode(
+                                key,
+                                activePath),
+                            CloneExpandedNode(
+                                value,
+                                activePath));
+                    }
+
+                    return clone;
+                }
+
+                default:
+                    throw new InvalidOperationException(
+                        "Unsupported YAML node in patch selection.");
+            }
         }
-
-        return clone;
+        finally
+        {
+            activePath.Remove(node);
+        }
     }
-
     private static string Save(
         YamlMappingNode root)
     {

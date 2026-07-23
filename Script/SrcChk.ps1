@@ -1,9 +1,13 @@
 param(
-    [string]$Path = '.',
+    [string]$Path,
     [switch]$StrictTree
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ([string]::IsNullOrWhiteSpace($Path)) {
+    $Path = Join-Path $PSScriptRoot '..'
+}
 
 function Get-Sha256Hex {
     param([Parameter(Mandatory = $true)][string]$LiteralPath)
@@ -75,22 +79,82 @@ function Test-SourceTree {
     )
 
     $root = (Resolve-Path -LiteralPath $RootPath).Path
-    $forbiddenDirectories = @('bin', 'obj', '.vs', 'artifacts', 'publish')
+    $forbiddenDirectories = @('.git', '.vs', 'bin', 'obj', 'artifacts', 'publish', 'r3configbackups')
+    $temporaryInspectionPattern = '^(?:Button-(?:Audit|Groups|Issues)|.+-Audit|.+-Ui-Structure)-\d{8}-\d{6}\.(?:csv|json|txt)$'
 
-    if ($Strict) {
+    $gitCommand = Get-Command git -ErrorAction SilentlyContinue
+    $gitRootOutput = @()
+    $gitRootExitCode = 1
+    if ($null -ne $gitCommand) {
+        $previousErrorAction = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = 'Continue'
+            $gitRootOutput = @(& $gitCommand.Source -C $root rev-parse --show-toplevel 2>$null)
+            $gitRootExitCode = $LASTEXITCODE
+        }
+        finally {
+            $ErrorActionPreference = $previousErrorAction
+        }
+    }
+
+    $isRepositoryRoot = $gitRootExitCode -eq 0 -and
+        $gitRootOutput.Count -gt 0 -and
+        [IO.Path]::GetFullPath($gitRootOutput[0].Trim()).TrimEnd('\') -ieq $root.TrimEnd('\')
+
+    if ($Strict -and -not $isRepositoryRoot) {
         $forbidden = Get-ChildItem -LiteralPath $root -Recurse -Directory -Force |
             Where-Object { $forbiddenDirectories -contains $_.Name.ToLowerInvariant() } |
             Select-Object -First 1
         if ($forbidden) {
             throw "Source tree contains forbidden directory: $($forbidden.FullName)"
         }
+
+        $temporaryInspectionFile = Get-ChildItem -LiteralPath $root -Recurse -File -Force |
+            Where-Object {
+                $_.Name -like '*.bak-*' -or
+                $_.Name -match $temporaryInspectionPattern
+            } |
+            Select-Object -First 1
+        if ($temporaryInspectionFile) {
+            throw "Source tree contains a temporary inspection file: $($temporaryInspectionFile.FullName)"
+        }
     }
 
-    $allFiles = Get-ChildItem -LiteralPath $root -Recurse -File -Force |
-        Where-Object {
-            $relative = $_.FullName.Substring($root.TrimEnd('\').Length + 1)
-            -not ($relative -split '[\\/]' | Where-Object { $forbiddenDirectories -contains $_.ToLowerInvariant() })
+    if ($isRepositoryRoot) {
+        $previousErrorAction = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = 'Continue'
+            $trackedPaths = @(& $gitCommand.Source -C $root -c core.quotepath=false ls-files --cached 2>$null)
+            $trackedPathExitCode = $LASTEXITCODE
         }
+        finally {
+            $ErrorActionPreference = $previousErrorAction
+        }
+
+        if ($trackedPathExitCode -ne 0) {
+            throw "git ls-files failed for source tree: $root"
+        }
+
+        $allFiles = @(
+            foreach ($relativePath in $trackedPaths) {
+                $fullPath = Join-Path $root ($relativePath.Replace('/', [IO.Path]::DirectorySeparatorChar))
+                if (Test-Path -LiteralPath $fullPath -PathType Leaf) {
+                    Get-Item -LiteralPath $fullPath -Force
+                }
+            }
+        )
+    }
+    else {
+        $allFiles = @(
+            Get-ChildItem -LiteralPath $root -Recurse -File -Force |
+                Where-Object {
+                    $relative = $_.FullName.Substring($root.TrimEnd('\').Length + 1)
+                    -not ($relative -split '[\\/]' | Where-Object { $forbiddenDirectories -contains $_.ToLowerInvariant() }) -and
+                    $_.Name -notlike '*.bak-*' -and
+                    $_.Name -notmatch $temporaryInspectionPattern
+                }
+        )
+    }
 
     $nestedZip = $allFiles | Where-Object { $_.Extension -ieq '.zip' } | Select-Object -First 1
     if ($nestedZip) {

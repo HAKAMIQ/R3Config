@@ -6,10 +6,10 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="{lang:TextExt Key=App.Title}"
         Icon="Data/Icon.ico"
-		Width="1080"
-		Height="680"
-		MinWidth="920"
-		MinHeight="580"
+        Width="1080"
+        Height="680"
+        MinWidth="920"
+        MinHeight="580"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
         WindowStyle="None"
@@ -22,207 +22,275 @@
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display"
         TextOptions.TextRenderingMode="ClearType">
+
     <shell:WindowChrome.WindowChrome>
-		<shell:WindowChrome CaptionHeight="40"
+        <shell:WindowChrome CaptionHeight="40"
                             CornerRadius="0"
                             GlassFrameThickness="0"
                             ResizeBorderThickness="6"
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
 
-	<Border Style="{StaticResource FluentSurface.Dialog}"
+    <Border Style="{StaticResource FluentSurface.Dialog}"
             Margin="0">
-		<Grid Style="{StaticResource ShellLayout}"
-              FlowDirection="LeftToRight"
+
+        <Grid Style="{StaticResource ShellLayout}"
+              FlowDirection="{DynamicResource App.FlowDirection}"
               Language="{DynamicResource App.XmlLanguage}">
-			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto" />
-				<RowDefinition Height="*" />
-				<RowDefinition Height="Auto" />
-			</Grid.RowDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
             <Border Grid.Row="0"
                     Style="{StaticResource R3ShellTopBar}"
                     MouseLeftButtonDown="DragWin">
+
                 <Grid FlowDirection="LeftToRight"
                       Language="{DynamicResource App.XmlLanguage}">
+
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0"
-                               Text="{lang:TextExt Key=App.Title}"
-                               Style="{StaticResource R3ShellTitleText}"
-                               FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
-                               TextAlignment="{DynamicResource TechnicalText.TextAlignment}" />
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                FlowDirection="LeftToRight"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True">
 
-                    <Button Grid.Column="2"
+                        <Button Style="{StaticResource FluentButton.Close}"
+                                AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
+                                ToolTip="{lang:TextExt Key=Window.CloseTip}"
+                                Click="CloseWin">
+
+                            <Grid Width="14"
+                                  Height="14"
+                                  FlowDirection="LeftToRight">
+
+                                <Path Data="M 3 3 L 11 11 M 11 3 L 3 11"
+                                      Stroke="{DynamicResource Text.Primary}"
+                                      StrokeThickness="1.6"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
+                        <Button Style="{StaticResource FluentButton.Icon}"
+                                AutomationProperties.Name="{lang:TextExt Key=Window.MinimizeTip}"
+                                ToolTip="{lang:TextExt Key=Window.MinimizeTip}"
+                                Click="MinWin">
+
+                            <Grid Width="14"
+                                  Height="14"
+                                  FlowDirection="LeftToRight">
+
+                                <Path Data="M 2 7 L 12 7"
+                                      Stroke="{DynamicResource Text.Primary}"
+                                      StrokeThickness="1.6"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
+                        <Button x:Name="MaxBtn"
+                                Style="{StaticResource FluentButton.Icon}"
+                                AutomationProperties.Name="{lang:TextExt Key=Window.MaximizeTip}"
+                                ToolTip="{lang:TextExt Key=Window.MaximizeTip}"
+                                Click="MaxWin">
+
+                            <Grid Width="14"
+                                  Height="14"
+                                  FlowDirection="LeftToRight">
+
+                                <Path Data="M 2.5 2.5 H 11.5 V 11.5 H 2.5 Z"
+                                      Stroke="{DynamicResource Text.Primary}"
+                                      StrokeThickness="1.4"
+                                      StrokeLineJoin="Round"
+                                      Fill="Transparent"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
                             Style="{StaticResource FluentButton.Toolbar}"
                             Command="{Binding LangCmd}"
                             ToolTip="{Binding ToolTip}"
                             AutomationProperties.Name="{Binding ToolTip}"
                             VerticalAlignment="Center"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
+
                         <Grid FlowDirection="LeftToRight">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="6" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
+
                             <Grid Grid.Column="0"
                                   Width="14"
                                   Height="14"
                                   VerticalAlignment="Center">
+
                                 <Ellipse Margin="1"
-                                         Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                         Stroke="{DynamicResource Text.Primary}"
                                          StrokeThickness="1.2" />
+
                                 <Path Data="M 7 1 C 4.5 3.5, 4.5 10.5, 7 13 M 7 1 C 9.5 3.5, 9.5 10.5, 7 13 M 1 7 L 13 7"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                      Stroke="{DynamicResource Text.Primary}"
                                       StrokeThickness="1.1"
                                       StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round" />
                             </Grid>
+
                             <TextBlock Grid.Column="2"
                                        Text="{Binding LangText}"
                                        FlowDirection="LeftToRight"
-                                       TextAlignment="Left"
+                                       Language="{DynamicResource TechnicalText.Language}"
+                                       TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
                                        VerticalAlignment="Center" />
                         </Grid>
                     </Button>
 
-                    <StackPanel Grid.Column="3"
-                                Orientation="Horizontal"
-                                FlowDirection="{DynamicResource App.CaptionButtonsFlowDirection}"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                        <Button Style="{StaticResource FluentButton.Icon}"
-                                AutomationProperties.Name="{lang:TextExt Key=Window.MinimizeTip}"
-                                ToolTip="{lang:TextExt Key=Window.MinimizeTip}"
-                                Click="MinWin">
-                            <Grid Width="14" Height="14">
-                                <Path Data="M 2 7 L 12 7"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      StrokeThickness="1.6"
-                                      StrokeStartLineCap="Round"
-                                      StrokeEndLineCap="Round"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-                        <Button x:Name="MaxBtn"
-                                Style="{StaticResource FluentButton.Icon}"
-                                AutomationProperties.Name="{lang:TextExt Key=Window.MaximizeTip}"
-                                ToolTip="{lang:TextExt Key=Window.MaximizeTip}"
-                                Click="MaxWin" />
-                        <Button Style="{StaticResource FluentButton.Close}"
-                                AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
-                                ToolTip="{lang:TextExt Key=Window.CloseTip}"
-                                Click="CloseWin">
-                            <Grid Width="14" Height="14">
-                                <Path Data="M 3 3 L 11 11 M 11 3 L 3 11"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      StrokeThickness="1.6"
-                                      StrokeStartLineCap="Round"
-                                      StrokeEndLineCap="Round"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-                    </StackPanel>
+                    <TextBlock Grid.Column="2"
+                               Text="{lang:TextExt Key=App.Title}"
+                               Style="{StaticResource R3ShellTitleText}"
+                               FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
+                               TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Center"
+                               Margin="0,0,14,0" />
                 </Grid>
             </Border>
 
-			<Grid Grid.Row="1"
-				  Margin="12,12,12,0"
-                  FlowDirection="LeftToRight"
+            <Grid Grid.Row="1"
+                  Margin="12,12,12,0"
+                  FlowDirection="{DynamicResource App.FlowDirection}"
                   Language="{DynamicResource App.XmlLanguage}">
-				<Grid HorizontalAlignment="Stretch"
-					  VerticalAlignment="Stretch"
-					  Background="Transparent">
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="{Binding LeftWide}" />
-						<ColumnDefinition Width="{Binding RghtWide}" />
-					</Grid.ColumnDefinitions>
 
-					<controls:GameList Grid.Column="{Binding GameCol}"
-											Margin="0,0,12,0" />
+                <Grid HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      Background="Transparent">
 
-					<Grid Grid.Column="{Binding DetCol}"
-						  HorizontalAlignment="Stretch"
-						  VerticalAlignment="Stretch"
-						  Background="Transparent">
-						<Grid>
-							<Grid.Style>
-								<Style TargetType="{x:Type Grid}">
-									<Setter Property="Visibility" Value="Visible" />
-									<Style.Triggers>
-										<DataTrigger Binding="{Binding HasGame}" Value="False">
-											<Setter Property="Visibility" Value="Collapsed" />
-										</DataTrigger>
-									</Style.Triggers>
-								</Style>
-							</Grid.Style>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="{Binding LeftWide}" MinWidth="320" />
+                        <ColumnDefinition Width="{Binding RghtWide}" MinWidth="320" />
+                    </Grid.ColumnDefinitions>
 
-							<Grid.RowDefinitions>
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="*" />
-							</Grid.RowDefinitions>
+                    <controls:GameList Grid.Column="{Binding GameCol}"
+                                       Margin="6,0"
+                                       MinWidth="320" />
 
-							<Border Grid.Row="0"
-									Style="{StaticResource GameHeaderCard}"
-									HorizontalAlignment="Stretch"
-									Margin="0,0,0,6">
-								<Grid FlowDirection="{DynamicResource App.FlowDirection}"
-									  Language="{DynamicResource App.XmlLanguage}"
-									  HorizontalAlignment="Stretch">
-									<Grid.ColumnDefinitions>
-										<ColumnDefinition Width="Auto" />
-										<ColumnDefinition Width="*" />
-										<ColumnDefinition Width="Auto" />
-									</Grid.ColumnDefinitions>
+                    <Grid Grid.Column="{Binding DetCol}"
+                          Margin="6,0"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="Transparent">
 
-									<Border Grid.Column="0"
-											Style="{StaticResource HeaderWarningBadge}"
-											Visibility="{Binding ShowWarn, Converter={StaticResource BoolToVisibilityConverter}}"
-											ToolTip="{lang:TextExt Key=Shell.GameAlertTip}"
-											Margin="0,0,10,0">
-										<TextBlock Text="!"
-												   FontSize="12"
-												   FontWeight="Bold"
-												   Foreground="{DynamicResource Status.Warning}"
-												   HorizontalAlignment="Center"
-												   VerticalAlignment="Center" />
-									</Border>
+                        <Grid>
+                            <Grid.Style>
+                                <Style TargetType="{x:Type Grid}">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
 
-									<TextBlock Grid.Column="1"
-											   Text="{Binding SelGame}"
-											   Style="{StaticResource HeroTitleText}"
-											   FlowDirection="{Binding GameFlow}"
-											   TextAlignment="{Binding GameAlgn}"
-											   HorizontalAlignment="Stretch"
-											   VerticalAlignment="Center" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasGame}"
+                                                     Value="False">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
 
-									<Border Grid.Column="2"
-											Style="{StaticResource GameHeaderStatusChip}"
-											Tag="{Binding ReadyTon}"
-											ToolTip="{Binding ReadyTip}"
-											HorizontalAlignment="Left"
-											VerticalAlignment="Center"
-											Margin="10,0,0,0">
-										<TextBlock Text="{Binding PatReady}"
-												   Style="{StaticResource GameHeaderStatusText}"
-												   FlowDirection="{DynamicResource App.TextFlowDirection}"
-												   TextAlignment="{DynamicResource App.DefaultTextAlignment}"
-												   Padding="4,2" />
-									</Border>
-								</Grid>
-							</Border>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
 
-							<TabControl x:Name="Tabs"
+                            <Border Grid.Row="0"
+                                    Style="{StaticResource GameHeaderCard}"
+                                    HorizontalAlignment="Stretch"
+                                    Margin="0,0,0,8">
+
+                                <Grid FlowDirection="LeftToRight"
+                                      Language="{DynamicResource App.XmlLanguage}"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Center">
+
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="12" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="12" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0"
+                                            Style="{StaticResource GameHeaderStatusChip}"
+                                            Tag="{Binding ReadyTon}"
+                                            ToolTip="{Binding ReadyTip}"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center"
+                                            Margin="0">
+
+                                        <TextBlock Text="{Binding PatReady}"
+                                                   Style="{StaticResource GameHeaderStatusText}"
+                                                   FlowDirection="{DynamicResource App.TextFlowDirection}"
+                                                   TextAlignment="{DynamicResource App.TextAlignment}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   TextWrapping="NoWrap"
+                                                   Padding="8,3" />
+                                    </Border>
+
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding SelGame}"
+                                               Style="{StaticResource HeroTitleText}"
+                                               FlowDirection="{Binding GameFlow}"
+                                               TextAlignment="{Binding GameAlgn}"
+                                               Language="{Binding GameLang}"
+                                               HorizontalAlignment="Stretch"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding SelGame}" />
+
+                                    <Border Grid.Column="4"
+                                            Style="{StaticResource HeaderWarningBadge}"
+                                            Visibility="{Binding ShowWarn,
+                                                                 Converter={StaticResource BoolToVisibilityConverter}}"
+                                            ToolTip="{lang:TextExt Key=Shell.GameAlertTip}"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Margin="0">
+
+                                        <TextBlock Text="!"
+                                                   Width="18"
+                                                   Height="18"
+                                                   FontSize="12"
+                                                   FontWeight="Bold"
+                                                   Foreground="{DynamicResource Status.Warning}"
+                                                   FlowDirection="LeftToRight"
+                                                   TextAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <TabControl x:Name="Tabs"
                                         Grid.Row="1"
                                         Style="{StaticResource FluentTabControl}"
                                         ItemContainerStyle="{StaticResource FluentTabItem}"
@@ -230,71 +298,83 @@
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Stretch"
                                         FlowDirection="{DynamicResource App.FlowDirection}">
+
                                 <TabItem Header="{lang:TextExt Key=Tab.Settings}">
                                     <controls:RecView HorizontalAlignment="Stretch"
-                                                          VerticalAlignment="Stretch" />
+                                                      VerticalAlignment="Stretch" />
                                 </TabItem>
+
                                 <TabItem x:Name="PatTab"
                                          Header="{lang:TextExt Key=Tab.Patches}">
                                     <controls:PatView Mode="Patches"
-                                                        HorizontalAlignment="Stretch"
-                                                        VerticalAlignment="Stretch" />
+                                                      HorizontalAlignment="Stretch"
+                                                      VerticalAlignment="Stretch" />
                                 </TabItem>
+
                                 <TabItem x:Name="CanTab"
                                          Header="{lang:TextExt Key=Tab.Canary}">
                                     <controls:PatView Mode="Canary"
-                                                        HorizontalAlignment="Stretch"
-                                                        VerticalAlignment="Stretch" />
+                                                      HorizontalAlignment="Stretch"
+                                                      VerticalAlignment="Stretch" />
                                 </TabItem>
+
                                 <TabItem x:Name="ChtTab"
                                          Header="{lang:TextExt Key=Tab.Cheats}">
                                     <controls:PatView Mode="Cheat"
-                                                        HorizontalAlignment="Stretch"
-                                                        VerticalAlignment="Stretch" />
+                                                      HorizontalAlignment="Stretch"
+                                                      VerticalAlignment="Stretch" />
                                 </TabItem>
                             </TabControl>
-						</Grid>
+                        </Grid>
 
-						<Border HorizontalAlignment="Stretch"
-								VerticalAlignment="Stretch">
-							<Border.Style>
-								<Style TargetType="{x:Type Border}" BasedOn="{StaticResource SectionCard}">
-									<Setter Property="Visibility" Value="Visible" />
-									<Style.Triggers>
-										<DataTrigger Binding="{Binding HasGame}" Value="True">
-											<Setter Property="Visibility" Value="Collapsed" />
-										</DataTrigger>
-									</Style.Triggers>
-								</Style>
-							</Border.Style>
+                        <Border HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch">
 
-							<Grid MaxWidth="560"
-								  HorizontalAlignment="Center"
-								  VerticalAlignment="Center"
-								  FlowDirection="{DynamicResource App.FlowDirection}">
-								<Grid.RowDefinitions>
-									<RowDefinition Height="Auto" />
-									<RowDefinition Height="8" />
-									<RowDefinition Height="Auto" />
-								</Grid.RowDefinitions>
+                            <Border.Style>
+                                <Style TargetType="{x:Type Border}"
+                                       BasedOn="{StaticResource SectionCard}">
 
-								<TextBlock Grid.Row="0"
-										   Text="{lang:TextExt Key=Shell.NoGameTitle}"
-										   Style="{StaticResource Type.Title}"
-										   TextAlignment="{DynamicResource App.DefaultTextAlignment}" />
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
 
-								<TextBlock Grid.Row="2"
-										   Text="{lang:TextExt Key=Shell.NoGameHint}"
-										   Style="{StaticResource SectionCaptionText}"
-										   TextAlignment="{DynamicResource App.DefaultTextAlignment}" />
-							</Grid>
-						</Border>
-					</Grid>
-				</Grid>
-			</Grid>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasGame}"
+                                                     Value="True">
+                                            <Setter Property="Visibility"
+                                                    Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
 
-			<controls:ActBar Grid.Row="2"
-									Margin="8" />
-		</Grid>
-	</Border>
+                            <Grid MaxWidth="560"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  FlowDirection="{DynamicResource App.FlowDirection}">
+                                <Grid.RenderTransform>
+                                    <TranslateTransform Y="-36" />
+                                </Grid.RenderTransform>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="8" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0"
+                                           Text="{lang:TextExt Key=Shell.NoGameTitle}"
+                                           Style="{StaticResource Type.Title}" TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                                <TextBlock Grid.Row="2"
+                                           Text="{lang:TextExt Key=Shell.NoGameHint}"
+                                           Style="{StaticResource SectionCaptionText}" TextAlignment="{DynamicResource App.TextAlignment}" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Grid>
+
+            <controls:ActBar Grid.Row="2"
+                             Margin="8" />
+        </Grid>
+    </Border>
 </Window>
