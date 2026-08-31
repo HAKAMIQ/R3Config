@@ -138,7 +138,8 @@ public sealed partial class PatchSelectionCompiler
 
                 var candidate = Select(
                     available,
-                    match.Patch.PatVer);
+                    match.Patch.PatVer,
+                    match.Patch.DefPrint);
 
                 if (TryGet(candidate.Details, "Patch") is not YamlSequenceNode)
                 {
@@ -525,13 +526,15 @@ public sealed partial class PatchSelectionCompiler
                     output.Add(key, list);
                 }
 
+                var patchNode = TryGet(details, "Patch");
                 list.Add(
                     new SrcCand(
                         details,
                         Scalar(
                             TryGet(
                                 details,
-                                "Patch Version"))));
+                                "Patch Version")),
+                        ReadSvc.CalcDef(patchNode)));
             }
         }
 
@@ -558,8 +561,31 @@ public sealed partial class PatchSelectionCompiler
 
     private static SrcCand Select(
         IReadOnlyList<SrcCand> candidates,
-        string? expectedPatchVersion)
+        string? expectedPatchVersion,
+        string? expectedDefPrint)
     {
+        if (!string.IsNullOrWhiteSpace(expectedDefPrint))
+        {
+            var exactDefinition = candidates.FirstOrDefault(candidate =>
+                string.Equals(
+                    candidate.DefPrint,
+                    expectedDefPrint,
+                    StringComparison.OrdinalIgnoreCase) &&
+                (string.IsNullOrWhiteSpace(expectedPatchVersion) ||
+                 string.Equals(
+                     candidate.PatVer,
+                     expectedPatchVersion,
+                     StringComparison.OrdinalIgnoreCase)));
+
+            if (exactDefinition is not null)
+            {
+                return exactDefinition;
+            }
+
+            throw new InvalidOperationException(
+                "The selected patch definition changed after preview and can no longer be prepared safely.");
+        }
+
         if (!string.IsNullOrWhiteSpace(expectedPatchVersion))
         {
             var exact = candidates.FirstOrDefault(candidate =>
@@ -769,7 +795,8 @@ public sealed partial class PatchSelectionCompiler
 
     private sealed record SrcCand(
         YamlMappingNode Details,
-        string? PatVer);
+        string? PatVer,
+        string? DefPrint);
 
     private sealed record Resolved(
         SelKey Key,

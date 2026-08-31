@@ -415,6 +415,26 @@ public sealed class BundledCheatPatchService
                 return Failure(targetPath, existing.Error ?? "Managed Artemis patch YAML is invalid.");
             }
 
+            foreach (var selection in selections.Where(selection =>
+                         !string.IsNullOrWhiteSpace(selection.Patch.DefPrint)))
+            {
+                var current = existing.Catalog.Entries.FirstOrDefault(entry =>
+                    GetId(Exact(entry)).Equals(
+                        GetId(selection),
+                        StringComparison.OrdinalIgnoreCase));
+
+                if (current is not null &&
+                    !string.Equals(
+                        current.DefPrint,
+                        selection.Patch.DefPrint,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return Failure(
+                        targetPath,
+                        $"Managed Artemis definition '{selection.Patch.Title}' changed after preview. Reload patches before removing it.");
+                }
+            }
+
             var remove = selections.Select(GetId)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var remaining = existing.Catalog.Entries

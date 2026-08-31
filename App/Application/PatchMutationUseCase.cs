@@ -15,24 +15,85 @@ public sealed class PatchMutationUseCase(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<PatMatch> matches,
         IReadOnlyList<PatMatch> enabledMatches,
-        bool expertMode)
+        bool expertMode,
+        IReadOnlyList<PatMatch>? allMatches = null)
     {
-        return planner.Build(
+        var (liveEnabled, state) = LiveEnabled(
+            install,
+            allMatches,
+            enabledMatches);
+        var plan = planner.Build(
             install,
             matches,
             expertMode,
-            enabledMatches);
+            liveEnabled);
+        return plan with
+        {
+            ExpectedPatCfgExists = state.Exists,
+            ExpectedPatCfgSha256 = state.Sha256
+        };
     }
 
     public Mdl.PatchApplyPlan BuildOff(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<PatMatch> matches,
-        IReadOnlyList<PatMatch>? enabledMatches = null)
+        IReadOnlyList<PatMatch>? enabledMatches = null,
+        IReadOnlyList<PatMatch>? allMatches = null)
     {
-        return planner.Build2(
+        var (liveEnabled, state) = LiveEnabled(
+            install,
+            allMatches,
+            enabledMatches ?? []);
+        var plan = planner.Build2(
             install,
             matches,
-            enabledMatches);
+            liveEnabled);
+        return plan with
+        {
+            ExpectedPatCfgExists = state.Exists,
+            ExpectedPatCfgSha256 = state.Sha256
+        };
+    }
+
+    private (IReadOnlyList<PatMatch> Enabled, PatchTargetState State) LiveEnabled(
+        Rpcs3InstallDescriptor install,
+        IReadOnlyList<PatMatch>? allMatches,
+        IReadOnlyList<PatMatch> fallbackEnabled)
+    {
+        var before = PatchFileTransactionService.CaptureExpectedState(
+            install.PatCfg,
+            R3Limits.PatCfgBy,
+            "patch_config.yml");
+
+        if (allMatches is null)
+        {
+            return (fallbackEnabled, before);
+        }
+
+        var snapshot = new CfgRead().ReadSnap(install.PatCfg);
+        var after = PatchFileTransactionService.CaptureExpectedState(
+            install.PatCfg,
+            R3Limits.PatCfgBy,
+            "patch_config.yml");
+        if (!Same(before, after))
+        {
+            throw new IOException(
+                "patch_config.yml changed while the patch plan was being built. Reload patches and try again.");
+        }
+
+        var enabled = allMatches
+            .Where(match => planner.Build3(match) is { } change && snapshot.IsOn(change))
+            .ToArray();
+        return (enabled, after);
+    }
+
+    private static bool Same(PatchTargetState left, PatchTargetState right)
+    {
+        return left.Exists == right.Exists &&
+               string.Equals(
+                   left.Sha256,
+                   right.Sha256,
+                   StringComparison.OrdinalIgnoreCase);
     }
 
     public PatChg? BuildChg(
@@ -48,6 +109,8 @@ public sealed class PatchMutationUseCase(
     {
         Check(plan, install);
         CheckSrc(selectedMatches);
+        VerifyReviewedDefinitions(selectedMatches);
+        VerifyRuntimeIdentityCollisions(install, selectedMatches, allowSelectedNewer: true);
         var backupRoot = Rpcs3AppPaths.BkpRoot(install);
         var declaredTargets = new List<string>
         {
@@ -133,9 +196,14 @@ public sealed class PatchMutationUseCase(
 
     public PatRes Disable(
         Mdl.PatchApplyPlan plan,
-        Rpcs3InstallDescriptor install)
+        Rpcs3InstallDescriptor install,
+        IReadOnlyList<PatMatch>? selectedMatches = null)
     {
         Check(plan, install);
+        if (selectedMatches is not null)
+        {
+            VerifyRuntimeIdentityCollisions(install, selectedMatches, allowSelectedNewer: false);
+        }
         var backupRoot = Rpcs3AppPaths.BkpRoot(install);
         var validator = VldFunc(install);
         validator(
@@ -160,6 +228,8 @@ public sealed class PatchMutationUseCase(
         {
             throw new InvalidOperationException("Only managed Artemis definitions can be removed here.");
         }
+
+        VerifyRuntimeIdentityCollisions(install, selectedMatches, allowSelectedNewer: false);
 
         var prepared = bundledCheats.PrepRemove(install.PatPath, selectedMatches);
         if (!prepared.IsOk)
@@ -275,6 +345,173 @@ public sealed class PatchMutationUseCase(
         if (!string.IsNullOrWhiteSpace(message))
         {
             messages.Add(message);
+        }
+    }
+
+    private static void VerifyRuntimeIdentityCollisions(
+        Rpcs3InstallDescriptor install,
+        IReadOnlyList<PatMatch> selectedMatches,
+        bool allowSelectedNewer)
+    {
+        var reader = new ReadSvc();
+        var resident = new List<Rpcs3PatchEntry>();
+        var officialPath = Path.Combine(install.PatPath, "patch.yml");
+        var importedPath = Rpcs3AppPaths.ImpPat(install);
+
+        ReadResident(officialPath, PatSrc.Official);
+        ReadResident(importedPath, PatSrc.Imported);
+
+        if (Directory.Exists(install.PatPath))
+        {
+            foreach (var path in Directory.EnumerateFiles(
+                         install.PatPath,
+                         "*_patch.yml",
+                         SearchOption.TopDirectoryOnly))
+            {
+                if (path.Equals(importedPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var source = BundledCheatPatchService.IsMan(path)
+                    ? PatSrc.ManagedArtemis
+                    : PatSrc.TitlePat;
+                ReadResident(path, source);
+            }
+        }
+
+        foreach (var selected in selectedMatches)
+        {
+            var selectedChannel = Channel(selected.Patch);
+            var collision = resident.FirstOrDefault(entry =>
+                entry.RunKey.Equals(selected.Patch.RunKey, StringComparison.OrdinalIgnoreCase) &&
+                entry.Title.Equals(selected.Patch.Title, StringComparison.OrdinalIgnoreCase) &&
+                Channel(entry) != selectedChannel &&
+                !string.Equals(entry.DefPrint, selected.Patch.DefPrint, StringComparison.OrdinalIgnoreCase) &&
+                (!allowSelectedNewer || CompareVersion(selected.Patch.PatVer, entry.PatVer) <= 0));
+
+            if (collision is not null)
+            {
+                throw new InvalidOperationException(
+                    $"RPCS3 runtime identity collision for '{selected.Patch.Title}' ({selected.Patch.RunKey}) between {selected.Patch.Source} and {collision.Source}. The definitions differ, so the requested source cannot be enabled or disabled safely.");
+            }
+        }
+
+        void ReadResident(string path, PatSrc source)
+        {
+            if (!File.Exists(path))
+            {
+                return;
+            }
+
+            var text = R3Bound.ReadUtf8(
+                path,
+                R3Limits.PatCatBy,
+                Path.GetFileName(path));
+            var read = reader.ReadText(text, source, path);
+            if (!read.IsOk)
+            {
+                throw new InvalidDataException(
+                    $"Resident RPCS3 patch source '{Path.GetFileName(path)}' is invalid: {read.Error}");
+            }
+
+            resident.AddRange(read.Catalog.Entries);
+        }
+    }
+
+    private static int CompareVersion(string? left, string? right)
+    {
+        if (Version.TryParse(left?.Trim(), out var leftVersion) &&
+            Version.TryParse(right?.Trim(), out var rightVersion))
+        {
+            return leftVersion.CompareTo(rightVersion);
+        }
+
+        return 0;
+    }
+
+    private static int Channel(Rpcs3PatchEntry entry)
+    {
+        if (entry.Source == PatSrc.Official)
+        {
+            return 0;
+        }
+
+        if (entry.Class == PatClass.Canary)
+        {
+            return 1;
+        }
+
+        if (entry.Source is PatSrc.Artemis or PatSrc.ManagedArtemis)
+        {
+            return 2;
+        }
+
+        return 3;
+    }
+
+    private static void VerifyReviewedDefinitions(
+        IReadOnlyList<PatMatch> selectedMatches)
+    {
+        var reader = new ReadSvc();
+
+        foreach (var group in selectedMatches
+                     .Where(match =>
+                         !string.IsNullOrWhiteSpace(match.Patch.DefPrint) &&
+                         !string.IsNullOrWhiteSpace(match.Patch.SrcPath) &&
+                         Path.IsPathRooted(match.Patch.SrcPath))
+                     .GroupBy(
+                         match => match.Patch.SrcPath!,
+                         StringComparer.OrdinalIgnoreCase))
+        {
+            var path = group.Key;
+            if (!File.Exists(path))
+            {
+                throw new IOException(
+                    $"Patch source changed after preview because '{path}' is no longer available.");
+            }
+
+            var source = group.First().Patch.Source;
+            var text = R3Bound.ReadUtf8(
+                path,
+                R3Limits.PatCatBy,
+                Path.GetFileName(path));
+            var read = reader.ReadText(
+                text,
+                source,
+                path);
+
+            if (!read.IsOk)
+            {
+                throw new InvalidDataException(
+                    "Patch source changed after preview and is no longer valid: " +
+                    (read.Error ?? path));
+            }
+
+            foreach (var match in group)
+            {
+                var current = read.Catalog.Entries.FirstOrDefault(entry =>
+                    entry.RunKey.Equals(
+                        match.Patch.RunKey,
+                        StringComparison.OrdinalIgnoreCase) &&
+                    entry.Title.Equals(
+                        match.Patch.Title,
+                        StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(
+                        entry.PatVer,
+                        match.Patch.PatVer,
+                        StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(
+                        entry.DefPrint,
+                        match.Patch.DefPrint,
+                        StringComparison.OrdinalIgnoreCase));
+
+                if (current is null)
+                {
+                    throw new IOException(
+                        $"Patch definition '{match.Patch.Title}' changed after preview. Reload patches before applying it.");
+                }
+            }
         }
     }
 

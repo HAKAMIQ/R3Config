@@ -353,6 +353,11 @@ public sealed class PatPrev : VmBase
             .ToArray();
     }
 
+    public IReadOnlyList<PatMatch> AllMatches()
+    {
+        return [.. _matches];
+    }
+
     public IReadOnlyList<PatMatch> SelCan()
     {
         return CanItems

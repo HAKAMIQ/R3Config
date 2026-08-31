@@ -1,4 +1,6 @@
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using R3Config.Mdl;
 using R3Config.Svc;
 
@@ -60,11 +62,30 @@ public sealed class GameSetupUseCase(
                 $"Recommendation source conflict for serial {game.Serial}.");
         }
 
+        var configStateBefore =
+            PatchFileTransactionService.CaptureExpectedState(
+                Path.Combine(
+                    install.CustPath,
+                    $"config_{game.Serial}.yml"),
+                R3Limits.CfgByte,
+                "RPCS3 custom config YAML");
+
         var configPlan = configPlanner.BuildCfg(
             install,
             game,
             recommendation,
             hardware);
+
+        var configState =
+            PatchFileTransactionService.CaptureExpectedState(
+                configPlan.CfgPath,
+                R3Limits.CfgByte,
+                "RPCS3 custom config YAML");
+        if (!SameTargetState(configStateBefore, configState))
+        {
+            throw new IOException(
+                "RPCS3 custom config changed while Game Setup was building its preview. Reopen Game Setup and try again.");
+        }
 
         var authoredRules = requirementRules?.ToList() ?? [];
 
@@ -91,6 +112,8 @@ public sealed class GameSetupUseCase(
 
         plan = plan with
         {
+            ExpectedCustomConfigExists = configState.Exists,
+            ExpectedCustomConfigSha256 = configState.Sha256,
             OfficialPatches = MarkEnabled(
                 plan.OfficialPatches,
                 enabled),
@@ -124,9 +147,71 @@ public sealed class GameSetupUseCase(
         GameSetupPlan plan,
         GameSetupSelection selection)
     {
-        return setupPlanner.Preview(
+        var preview = setupPlanner.Preview(
             plan,
             selection);
+
+        if (preview.EffectiveSettings.Count == 0)
+        {
+            return preview;
+        }
+
+        var customConfigPath = plan.Game.CustomConfigPath;
+        var currentState =
+            PatchFileTransactionService.CaptureExpectedState(
+                customConfigPath,
+                R3Limits.CfgByte,
+                "RPCS3 custom config YAML");
+        var reviewedState = new PatchTargetState(
+            plan.ExpectedCustomConfigExists ?? currentState.Exists,
+            plan.ExpectedCustomConfigSha256,
+            R3Limits.CfgByte,
+            "RPCS3 custom config YAML");
+
+        if (plan.ExpectedCustomConfigExists is not null &&
+            !SameTargetState(currentState, reviewedState))
+        {
+            throw new IOException(
+                "RPCS3 custom config changed before Game Setup preview was finalized. Rebuild the plan and try again.");
+        }
+
+        var pendingSettings = ChangedSettings(preview);
+        if (pendingSettings.Length == 0)
+        {
+            return preview with
+            {
+                ExpectedPreparedCustomConfigExists = currentState.Exists,
+                ExpectedPreparedCustomConfigSha256 = currentState.Sha256
+            };
+        }
+
+        if (!R3Yaml.CanRead(customConfigPath))
+        {
+            throw new InvalidDataException(
+                "The current RPCS3 custom config is invalid or unreadable.");
+        }
+
+        var preparedText = R3Yaml.Build(
+            customConfigPath,
+            pendingSettings);
+        R3Yaml.VldText(preparedText);
+
+        var verifiedState =
+            PatchFileTransactionService.CaptureExpectedState(
+                customConfigPath,
+                R3Limits.CfgByte,
+                "RPCS3 custom config YAML");
+        if (!SameTargetState(currentState, verifiedState))
+        {
+            throw new IOException(
+                "RPCS3 custom config changed while Game Setup was finalizing its preview. Rebuild the plan and try again.");
+        }
+
+        return preview with
+        {
+            ExpectedPreparedCustomConfigExists = true,
+            ExpectedPreparedCustomConfigSha256 = Sha256Utf8(preparedText)
+        };
     }
 
     public GameSetupResult Apply(
@@ -150,6 +235,11 @@ public sealed class GameSetupUseCase(
         ValidateInstallIdentity(
             install,
             preview.Plan.Game);
+
+        VerifyReviewedDefinitions(
+            preview.SelectedPatches
+                .Select(candidate => candidate.Match)
+                .ToArray());
 
         var backupRoot = Rpcs3AppPaths.BkpRoot(install);
         var officialPath = Path.Combine(
@@ -176,29 +266,88 @@ public sealed class GameSetupUseCase(
             officialState);
 
         var preparedFiles = new List<PatchPreparedFile>();
-        var settings = ChangedSettings(preview);
+        var customConfigPath = preview.Plan.Game.CustomConfigPath;
+        var currentConfigState =
+            PatchFileTransactionService.CaptureExpectedState(
+                customConfigPath,
+                R3Limits.CfgByte,
+                "RPCS3 custom config YAML");
+        var reviewedConfigState = new PatchTargetState(
+            preview.Plan.ExpectedCustomConfigExists ??
+                currentConfigState.Exists,
+            preview.Plan.ExpectedCustomConfigSha256,
+            R3Limits.CfgByte,
+            "RPCS3 custom config YAML");
+        var preparedConfigState = new PatchTargetState(
+            preview.ExpectedPreparedCustomConfigExists ?? false,
+            preview.ExpectedPreparedCustomConfigSha256,
+            R3Limits.CfgByte,
+            "RPCS3 custom config YAML");
+        var configMatchesReview =
+            preview.Plan.ExpectedCustomConfigExists is null ||
+            SameTargetState(
+                currentConfigState,
+                reviewedConfigState);
+        var configMatchesPrepared =
+            preview.ExpectedPreparedCustomConfigExists is not null &&
+            SameTargetState(
+                currentConfigState,
+                preparedConfigState);
+
+        if (!configMatchesReview && !configMatchesPrepared)
+        {
+            throw new IOException(
+                "RPCS3 custom config changed after Game Setup preview. Reopen the preview and try again.");
+        }
+
+        var settings = configMatchesPrepared
+            ? []
+            : ChangedSettings(preview);
+
+        var verifiedConfigState =
+            PatchFileTransactionService.CaptureExpectedState(
+                customConfigPath,
+                R3Limits.CfgByte,
+                "RPCS3 custom config YAML");
+        if (!SameTargetState(
+                currentConfigState,
+                verifiedConfigState))
+        {
+            throw new IOException(
+                "RPCS3 custom config changed while Game Setup was validating its reviewed state. Reopen the preview and try again.");
+        }
 
         if (settings.Length > 0)
         {
-            if (!R3Yaml.CanRead(
-                    preview.Plan.Game.CustomConfigPath))
+            if (!R3Yaml.CanRead(customConfigPath))
             {
                 throw new InvalidDataException(
                     "The current RPCS3 custom config is invalid or unreadable.");
             }
 
             var content = R3Yaml.Build(
-                preview.Plan.Game.CustomConfigPath,
+                customConfigPath,
                 settings);
 
             R3Yaml.VldText(content);
 
+            if (preview.ExpectedPreparedCustomConfigExists == true &&
+                !string.Equals(
+                    Sha256Utf8(content),
+                    preview.ExpectedPreparedCustomConfigSha256,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                throw new IOException(
+                    "Game Setup custom config output no longer matches the reviewed preview.");
+            }
+
             preparedFiles.Add(
-                PatchFileTransactionService.CaptureExpectedState(
-                    new PatchPreparedFile(
-                        preview.Plan.Game.CustomConfigPath,
-                        content,
-                        PrepKind.CustomCfg)));
+                new PatchPreparedFile(
+                    customConfigPath,
+                    content,
+                    PrepKind.CustomCfg,
+                    ExpectedExists: currentConfigState.Exists,
+                    ExpectedSha256: currentConfigState.Sha256));
         }
 
         var selectedMatches = preview.SelectedPatches
@@ -221,8 +370,25 @@ public sealed class GameSetupUseCase(
             selectedMatches,
             preparedFiles);
 
+        var patchConfigStateBefore =
+            PatchFileTransactionService.CaptureExpectedState(
+                install.PatCfg,
+                R3Limits.PatCfgBy,
+                "patch_config.yml");
         var patchSnapshot =
             patchConfigReader.ReadSnap(install.PatCfg);
+        var patchConfigState =
+            PatchFileTransactionService.CaptureExpectedState(
+                install.PatCfg,
+                R3Limits.PatCfgBy,
+                "patch_config.yml");
+        if (!SameTargetState(
+                patchConfigStateBefore,
+                patchConfigState))
+        {
+            throw new IOException(
+                "patch_config.yml changed while Game Setup was rebuilding live patch state. Reopen the preview and try again.");
+        }
 
         var enabledMatches = preview.Plan.Patches
             .Select(candidate => candidate.Match)
@@ -239,7 +405,11 @@ public sealed class GameSetupUseCase(
             install,
             selectedMatches,
             expertMode: false,
-            enabledMatches);
+            enabledMatches) with
+        {
+            ExpectedPatCfgExists = patchConfigState.Exists,
+            ExpectedPatCfgSha256 = patchConfigState.Sha256
+        };
 
         var patchChanges = patchPlan.Changes
             .Where(change => !patchSnapshot.IsOn(change))
@@ -247,6 +417,9 @@ public sealed class GameSetupUseCase(
 
         if (patchChanges.Length > 0)
         {
+            PatchFileTransactionService.ValidateExpectedState(
+                install.PatCfg,
+                patchConfigState);
             var patchConfigText = patchConfigWriter.Build(
                 install.PatCfg,
                 patchChanges);
@@ -254,11 +427,12 @@ public sealed class GameSetupUseCase(
             CfgWrite.VldText(patchConfigText);
 
             preparedFiles.Add(
-                PatchFileTransactionService.CaptureExpectedState(
-                    new PatchPreparedFile(
-                        install.PatCfg,
-                        patchConfigText,
-                        PrepKind.PatCfg)));
+                new PatchPreparedFile(
+                    install.PatCfg,
+                    patchConfigText,
+                    PrepKind.PatCfg,
+                    ExpectedExists: patchConfigState.Exists,
+                    ExpectedSha256: patchConfigState.Sha256));
         }
 
         preparedFiles =
@@ -680,6 +854,12 @@ public sealed class GameSetupUseCase(
         ];
     }
 
+    private static string Sha256Utf8(string text)
+    {
+        return Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes(text)));
+    }
+
     private static CfgChg[] ChangedSettings(
         GameSetupPreview preview)
     {
@@ -757,6 +937,66 @@ public sealed class GameSetupUseCase(
             !Contains(
                 beforeManaged,
                 candidate.Match.Patch));
+    }
+
+    private static void VerifyReviewedDefinitions(
+        IReadOnlyList<PatMatch> selectedMatches)
+    {
+        var reader = new ReadSvc();
+
+        foreach (var group in selectedMatches
+                     .Where(match =>
+                         !string.IsNullOrWhiteSpace(match.Patch.DefPrint) &&
+                         !string.IsNullOrWhiteSpace(match.Patch.SrcPath) &&
+                         Path.IsPathRooted(match.Patch.SrcPath))
+                     .GroupBy(
+                         match => match.Patch.SrcPath!,
+                         StringComparer.OrdinalIgnoreCase))
+        {
+            var path = group.Key;
+            if (!File.Exists(path))
+            {
+                throw new IOException(
+                    $"Patch source changed after Game Setup preview because '{path}' is no longer available.");
+            }
+
+            var source = group.First().Patch.Source;
+            var text = R3Bound.ReadUtf8(
+                path,
+                R3Limits.PatCatBy,
+                Path.GetFileName(path));
+            var read = reader.ReadText(text, source, path);
+            if (!read.IsOk)
+            {
+                throw new InvalidDataException(
+                    "Patch source changed after Game Setup preview and is no longer valid: " +
+                    (read.Error ?? path));
+            }
+
+            foreach (var match in group)
+            {
+                if (!read.Catalog.Entries.Any(entry =>
+                        entry.RunKey.Equals(match.Patch.RunKey, StringComparison.OrdinalIgnoreCase) &&
+                        entry.Title.Equals(match.Patch.Title, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(entry.PatVer, match.Patch.PatVer, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(entry.DefPrint, match.Patch.DefPrint, StringComparison.OrdinalIgnoreCase)))
+                {
+                    throw new IOException(
+                        $"Patch definition '{match.Patch.Title}' changed after Game Setup preview. Reopen Game Setup before applying it.");
+                }
+            }
+        }
+    }
+
+    private static bool SameTargetState(
+        PatchTargetState left,
+        PatchTargetState right)
+    {
+        return left.Exists == right.Exists &&
+               string.Equals(
+                   left.Sha256,
+                   right.Sha256,
+                   StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool Same(

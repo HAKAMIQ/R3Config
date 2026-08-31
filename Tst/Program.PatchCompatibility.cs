@@ -219,6 +219,124 @@ internal static partial class Program
             new BundledCanaryPatchService(),
             new BundledCheatPatchService(),
             new Rpcs3MutationGuard(() => false));
+        Directory.CreateDirectory(separationConfig);
+        Directory.CreateDirectory(separationPatches);
+        var liveGroupA = compatibility.Evaluate(
+            NewPatch(
+                "Live group A",
+                HashKind.Ppu,
+                exactHash,
+                target,
+                PatSrc.Official) with { Group = "FPS" },
+            [exactGame]);
+        var liveGroupB = compatibility.Evaluate(
+            NewPatch(
+                "Live group B",
+                HashKind.Ppu,
+                exactHash,
+                target,
+                PatSrc.Official) with { Group = "FPS" },
+            [exactGame]);
+        var liveGroupBChange = separationMutation.BuildChg(liveGroupB)
+            ?? throw new InvalidOperationException("Expected a live group peer change.");
+        File.WriteAllText(
+            separationPatchConfig,
+            new CfgWrite().Build(
+                separationPatchConfig,
+                [liveGroupBChange]));
+        try
+        {
+            _ = separationMutation.BuildOn(
+                separationInstall,
+                [liveGroupA],
+                enabledMatches: [],
+                expertMode: false,
+                allMatches: [liveGroupA, liveGroupB]);
+            throw new InvalidOperationException(
+                "Expected live patch_config.yml state to override stale preview enabled state for group validation.");
+        }
+        catch (PatchGroupConflictException ex)
+        {
+            Assert(ex.HasEnabledPeer &&
+                   ex.SelectedTitle == liveGroupA.Patch.Title &&
+                   ex.EnabledTitle == liveGroupB.Patch.Title,
+                "Expected plan construction to detect the live enabled peer rather than stale Preview.Enabled state.");
+        }
+        File.Delete(separationPatchConfig);
+
+        var collisionOfficialPath = Path.Combine(separationPatches, "patch.yml");
+        var collisionManagedPath = Path.Combine(separationPatches, serial + "_patch.yml");
+        var collisionOfficialText =
+            "Version: 1.2\n" +
+            $"PPU-{exactHash}:\n" +
+            "  \"Runtime Collision\":\n" +
+            "    Games:\n" +
+            "      \"Compatibility Game\":\n" +
+            $"        {serial}: [ {version} ]\n" +
+            "    Patch Version: 1.0\n" +
+            "    Patch:\n" +
+            "      - [ be32, 0x00001000, 0x11111111 ]\n";
+        var collisionManagedText =
+            BundledCheatPatchService.ManMark + "\r\n" +
+            collisionOfficialText.Replace(
+                "0x11111111",
+                "0x22222222",
+                StringComparison.Ordinal);
+        File.WriteAllText(collisionOfficialPath, collisionOfficialText);
+        File.WriteAllText(collisionManagedPath, collisionManagedText);
+        var collisionRead = new ReadSvc().Read(
+            collisionOfficialPath,
+            PatSrc.Official);
+        Assert(collisionRead.IsOk && collisionRead.Catalog.Entries.Count == 1,
+            "Expected the official runtime-collision fixture to parse.");
+        var collisionSelected = compatibility.Evaluate(
+            collisionRead.Catalog.Entries.Single(),
+            [exactGame]);
+        var collisionPlan = separationMutation.BuildOn(
+            separationInstall,
+            [collisionSelected],
+            enabledMatches: [],
+            expertMode: false,
+            allMatches: [collisionSelected]);
+        try
+        {
+            separationMutation.ApplyTxn(
+                collisionPlan,
+                separationInstall,
+                [collisionSelected]);
+            throw new InvalidOperationException(
+                "Expected a different-body Artemis/Official runtime identity collision to fail closed.");
+        }
+        catch (InvalidOperationException ex) when (
+            ex.Message.Contains(
+                "runtime identity collision",
+                StringComparison.OrdinalIgnoreCase))
+        {
+        }
+        File.Delete(collisionManagedPath);
+        File.WriteAllText(
+            collisionOfficialPath,
+            collisionOfficialText.Replace(
+                "0x11111111",
+                "0x33333333",
+                StringComparison.Ordinal));
+        try
+        {
+            separationMutation.ApplyTxn(
+                collisionPlan,
+                separationInstall,
+                [collisionSelected]);
+            throw new InvalidOperationException(
+                "Expected an official patch body changed after preview to fail before mutation.");
+        }
+        catch (IOException ex) when (
+            ex.Message.Contains(
+                "changed after preview",
+                StringComparison.OrdinalIgnoreCase))
+        {
+        }
+        File.Delete(collisionOfficialPath);
+
         try
         {
             separationMutation.ApplyTxn(

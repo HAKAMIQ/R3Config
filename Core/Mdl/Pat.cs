@@ -367,7 +367,9 @@ public sealed record PatChg(
 
 public sealed record PatchApplyPlan(
     string PatCfg,
-    IReadOnlyList<PatChg> Changes)
+    IReadOnlyList<PatChg> Changes,
+    bool? ExpectedPatCfgExists = null,
+    string? ExpectedPatCfgSha256 = null)
 {
     public bool HasChg => Changes.Count > 0;
 }

@@ -124,6 +124,10 @@ public sealed class GameSetupPlanningService(
             selectedPatches,
             plan.Patches,
             conflicts);
+        ValidateRuntimeIdentities(
+            selectedPatches,
+            plan.Patches,
+            conflicts);
 
         var requirements = selectedPatches
             .SelectMany(candidate => candidate.RequiredSettings)
@@ -211,6 +215,69 @@ public sealed class GameSetupPlanningService(
         return Convert.ToHexString(
                 SHA256.HashData(Encoding.UTF8.GetBytes(canonical)))
             .ToLowerInvariant();
+    }
+
+    private static void ValidateRuntimeIdentities(
+        IReadOnlyList<SetupPatchCandidate> selected,
+        IReadOnlyList<SetupPatchCandidate> all,
+        List<string> conflicts)
+    {
+        var selectedIds = selected
+            .Select(candidate => candidate.Identity)
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var candidate in selected)
+        {
+            var patch = candidate.Match.Patch;
+            var channel = Channel(patch);
+            var collision = all.FirstOrDefault(other =>
+                other.Identity != candidate.Identity &&
+                other.Match.Patch.RunKey.Equals(
+                    patch.RunKey,
+                    StringComparison.OrdinalIgnoreCase) &&
+                other.Match.Patch.Title.Equals(
+                    patch.Title,
+                    StringComparison.OrdinalIgnoreCase) &&
+                Channel(other.Match.Patch) != channel &&
+                (selectedIds.Contains(other.Identity) ||
+                 IsResident(other.Match.Patch) &&
+                 CompareVersion(patch.PatVer, other.Match.Patch.PatVer) <= 0) &&
+                !string.Equals(
+                    other.Match.Patch.DefPrint,
+                    patch.DefPrint,
+                    StringComparison.OrdinalIgnoreCase));
+
+            if (collision is not null)
+            {
+                conflicts.Add(
+                    $"Patch '{patch.Title}' has an RPCS3 runtime identity collision between {patch.Source} and {collision.Match.Patch.Source}; the executable patch bodies differ.");
+            }
+        }
+    }
+
+    private static bool IsResident(Rpcs3PatchEntry patch)
+    {
+        return patch.Source is not PatSrc.Can and not PatSrc.Artemis;
+    }
+
+    private static int Channel(Rpcs3PatchEntry patch)
+    {
+        if (patch.Source == PatSrc.Official)
+        {
+            return 0;
+        }
+
+        if (patch.Class == PatClass.Canary)
+        {
+            return 1;
+        }
+
+        if (patch.Source is PatSrc.Artemis or PatSrc.ManagedArtemis)
+        {
+            return 2;
+        }
+
+        return 3;
     }
 
     public static SetupDuplicateStatus ClassifyDuplicate(

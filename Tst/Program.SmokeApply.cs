@@ -77,6 +77,24 @@ internal static partial class Program
         Assert(existingCustomPlan.Items.Single(item => item.Key == "Write Color Buffers").CurVal == "false",
             "Expected existing custom config value to be detected.");
         var originalCustomConfigText = File.ReadAllText(plan.CfgPath);
+
+        const string changedAfterPreview =
+            "Video:\r\n  Write Color Buffers: external-before-confirm\r\n";
+        File.WriteAllText(plan.CfgPath, changedAfterPreview, Encoding.UTF8);
+        var staleBackupCount = new BackupService()
+            .ListBkp(Rpcs3AppPaths.BkpRoot(install))
+            .Count;
+        MustFail<IOException>(
+            () => new ConfigApplyService().Apply(
+                existingCustomPlan,
+                selectedChanges,
+                Rpcs3AppPaths.BkpRoot(install)),
+            "Expected a config value changed after preview to reject apply before backup or mutation.");
+        Assert(File.ReadAllText(plan.CfgPath, Encoding.UTF8) == changedAfterPreview &&
+               new BackupService().ListBkp(Rpcs3AppPaths.BkpRoot(install)).Count == staleBackupCount,
+            "Expected stale config-plan rejection to preserve the external edit and create no backup.");
+        File.WriteAllText(plan.CfgPath, originalCustomConfigText, Encoding.UTF8);
+
         R3Yaml.Del(plan.CfgPath, []);
         Assert(File.ReadAllText(plan.CfgPath) == originalCustomConfigText,
             "Expected an empty config removal request to remain a no-op.");

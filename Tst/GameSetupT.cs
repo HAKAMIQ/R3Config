@@ -154,6 +154,39 @@ public static class GameSetupT
                SetupDuplicateStatus.SameHashDifferentVersion,
             "Same-hash/different-version patches were not distinguished.");
 
+        var collisionOfficial = canary with
+        {
+            Title = "Runtime identity collision",
+            Source = PatSrc.Official,
+            Class = PatClass.Main,
+            Risk = PatRisk.SafeFix,
+            DefPrint = "official-body"
+        };
+        var collisionCanary = canary with
+        {
+            Title = collisionOfficial.Title,
+            Source = PatSrc.Can,
+            Class = PatClass.Canary,
+            Risk = PatRisk.Canary,
+            DefPrint = "canary-body"
+        };
+        var collisionSetup = useCase.Build(
+            env.Install,
+            game,
+            catalog,
+            new PatCat("1.2", [collisionOfficial, collisionCanary]));
+        var collisionPreview = useCase.Preview(
+            collisionSetup,
+            new GameSetupSelection(
+                [],
+                [GameSetupPlanningService.PatchIdentity(collisionCanary)]));
+        Assert(!collisionPreview.CanApply &&
+               collisionPreview.Conflicts.Any(conflict =>
+                   conflict.Contains(
+                       "runtime identity collision",
+                       StringComparison.OrdinalIgnoreCase)),
+            "Game Setup must fail closed when a selected Canary/Artemis source collides with a different resident RPCS3 body under the same runtime identity.");
+
         Console.WriteLine("Game Setup identity and compatibility PASS.");
     }
 
@@ -1052,8 +1085,12 @@ public static class GameSetupT
                 official.Group!,
                 "1.0"),
             new UTF8Encoding(false));
-        var officialBefore = File.ReadAllBytes(
-            Path.Combine(env.Install.PatPath, "patch.yml"));
+        var officialPath = Path.Combine(env.Install.PatPath, "patch.yml");
+        var officialBefore = File.ReadAllBytes(officialPath);
+        var parsedOfficial = new ReadSvc().Read(officialPath, PatSrc.Official);
+        Assert(parsedOfficial.IsOk && parsedOfficial.Catalog.Entries.Count == 1,
+            "The end-to-end official fixture did not retain a reviewable source definition.");
+        official = parsedOfficial.Catalog.Entries.Single();
         var artemis = canary with
         {
             Title = "Artemis Collection Setup Fixture",
@@ -1160,6 +1197,31 @@ public static class GameSetupT
                ]),
             "Game Setup preview did not expose the complete configuration/patch file plan.");
 
+        var reviewedCustomConfig = File.ReadAllBytes(customPath);
+        File.AppendAllText(
+            customPath,
+            "# external edit after preview\r\n",
+            new UTF8Encoding(false));
+        var externallyEditedConfig = File.ReadAllBytes(customPath);
+        ExpectFailure<IOException>(() => useCase.Apply(env.Install, preview));
+        Assert(File.ReadAllBytes(customPath).SequenceEqual(externallyEditedConfig),
+            "Game Setup stale-config rejection modified the external edit.");
+        File.WriteAllBytes(customPath, reviewedCustomConfig);
+
+        var reviewedOfficial = File.ReadAllBytes(officialPath);
+        File.WriteAllText(
+            officialPath,
+            File.ReadAllText(officialPath, Encoding.UTF8).Replace(
+                "0x60000000",
+                "0x60000001",
+                StringComparison.Ordinal),
+            new UTF8Encoding(false));
+        var externallyEditedOfficial = File.ReadAllBytes(officialPath);
+        ExpectFailure<IOException>(() => useCase.Apply(env.Install, preview));
+        Assert(File.ReadAllBytes(officialPath).SequenceEqual(externallyEditedOfficial),
+            "Game Setup stale official-definition rejection modified RPCS3-owned patch.yml.");
+        File.WriteAllBytes(officialPath, reviewedOfficial);
+
         var result = useCase.Apply(env.Install, preview);
         Assert(result.IsGameReady &&
                !result.AlreadyPrepared &&
@@ -1208,6 +1270,17 @@ public static class GameSetupT
                        "patch.yml",
                        StringComparison.OrdinalIgnoreCase)),
             "RPCS3-owned patch.yml was modified or included as a restore target.");
+
+        var preparedCustomConfig = File.ReadAllBytes(customPath);
+        File.AppendAllText(
+            customPath,
+            "# external edit after successful prepare\r\n",
+            new UTF8Encoding(false));
+        var externallyEditedPreparedConfig = File.ReadAllBytes(customPath);
+        ExpectFailure<IOException>(() => useCase.Apply(env.Install, preview));
+        Assert(File.ReadAllBytes(customPath).SequenceEqual(externallyEditedPreparedConfig),
+            "Game Setup accepted an externally edited prepared custom config that only preserved the desired values.");
+        File.WriteAllBytes(customPath, preparedCustomConfig);
 
         var second = useCase.Apply(env.Install, preview);
         Assert(second.IsGameReady &&

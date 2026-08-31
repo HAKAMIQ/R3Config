@@ -418,20 +418,31 @@ internal static partial class Program
             "Write Color Buffers",
             null,
             R3Config.Mdl.RecRisk.Required);
+        var configOnlyState = new RecItem(
+            "TEST00002",
+            configOnlyChange.Path,
+            null,
+            configOnlyChange.Value,
+            configOnlyChange.Risk,
+            RecState.Pending,
+            IsDiff: true,
+            IsAction: true,
+            IsSel: true,
+            Notes: string.Empty);
         var configOnlyPlan = new CfgPlan(
             "TEST00002",
             "Config Only Game",
             configOnlyTarget,
-            [],
+            [new CfgEntry(configOnlyChange, null, configOnlyState)],
             new RecSum(
                 "TEST00002",
+                1,
+                0,
+                1,
                 0,
                 0,
                 0,
-                0,
-                0,
-                0,
-                []),
+                [configOnlyState]),
             NeedBkp: true);
         new ConfigUseCase(
                 new PlanService(),

@@ -55,7 +55,8 @@ public sealed partial class MainVm : VmBase
                 _install,
                 selectedMatches,
                 Preview.Enabled(),
-                Preview.ShowExp);
+                Preview.ShowExp,
+                Preview.AllMatches());
             if (!plan.HasChg)
             {
                 UiDlg.Info(UiText.GetText("Msg.NoSafePatchApply"), UiText.GetText("Dialog.NothingToApply"));
@@ -181,7 +182,8 @@ public sealed partial class MainVm : VmBase
             var plan = _flow.OffPlan(
                 _install,
                 selectedMatches,
-                Preview.Enabled());
+                Preview.Enabled(),
+                Preview.AllMatches());
             if (!plan.HasChg)
             {
                 UiDlg.Info(UiText.GetText("Msg.NoPatchDisable"), UiText.GetText("Dialog.NothingToApply"));
@@ -197,7 +199,10 @@ public sealed partial class MainVm : VmBase
                 return;
             }
 
-            var result = _flow.OffPat(plan, _install);
+            var result = _flow.OffPat(
+                plan,
+                _install,
+                selectedMatches);
 
             Log(UiText.Fmt("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
 
@@ -250,7 +255,8 @@ public sealed partial class MainVm : VmBase
             var plan = _flow.OffPlan(
                 _install,
                 selected,
-                Preview.Enabled());
+                Preview.Enabled(),
+                Preview.AllMatches());
             var result = _flow.RemoveArtemis(plan, _install, selected);
             Log(UiText.Fmt("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
             LoadBkp();

@@ -123,7 +123,9 @@ public sealed record GameSetupPlan(
     IReadOnlyList<SetupPatchCandidate> CanaryPatches,
     IReadOnlyList<SetupPatchCandidate> ArtemisPatches,
     IReadOnlyList<SetupPatchCandidate> CustomPatches,
-    IReadOnlyList<string> Warnings)
+    IReadOnlyList<string> Warnings,
+    bool? ExpectedCustomConfigExists = null,
+    string? ExpectedCustomConfigSha256 = null)
 {
     public IReadOnlyList<SetupPatchCandidate> Patches =>
     [
@@ -151,7 +153,9 @@ public sealed record GameSetupPreview(
     IReadOnlyList<CfgChg> EffectiveSettings,
     IReadOnlyList<SetupFileChange> Files,
     IReadOnlyList<string> Warnings,
-    IReadOnlyList<string> Conflicts)
+    IReadOnlyList<string> Conflicts,
+    bool? ExpectedPreparedCustomConfigExists = null,
+    string? ExpectedPreparedCustomConfigSha256 = null)
 {
     public bool CanApply =>
         Conflicts.Count == 0 &&

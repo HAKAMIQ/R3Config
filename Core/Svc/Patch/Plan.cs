@@ -100,9 +100,16 @@ public sealed class PatPlnr
             .Select(group => group.First())
             .ToArray();
 
+        var state = PatchFileTransactionService.CaptureExpectedState(
+            install.PatCfg,
+            R3Limits.PatCfgBy,
+            "patch_config.yml");
+
         return new Mdl.PatchApplyPlan(
             install.PatCfg,
-            changes);
+            changes,
+            state.Exists,
+            state.Sha256);
     }
 
     public Mdl.PatchApplyPlan Build2(
@@ -131,9 +138,16 @@ public sealed class PatPlnr
             .Select(group => group.First())
             .ToArray();
 
+        var state = PatchFileTransactionService.CaptureExpectedState(
+            install.PatCfg,
+            R3Limits.PatCfgBy,
+            "patch_config.yml");
+
         return new Mdl.PatchApplyPlan(
             install.PatCfg,
-            changes);
+            changes,
+            state.Exists,
+            state.Sha256);
     }
 
     public PatChg? Build3(

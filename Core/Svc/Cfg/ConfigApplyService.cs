@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using R3Config.Mdl;
@@ -42,6 +43,10 @@ public sealed class ConfigApplyService
             throw new InvalidDataException(
                 "The current RPCS3 custom config is invalid or unreadable.");
         }
+        PatchFileTransactionService.ValidateExpectedState(
+            plan.CfgPath,
+            expectedState);
+        ValidateReviewedValues(plan, changes);
         PatchFileTransactionService.ValidateExpectedState(
             plan.CfgPath,
             expectedState);
@@ -130,6 +135,10 @@ public sealed class ConfigApplyService
         PatchFileTransactionService.ValidateExpectedState(
             plan.CfgPath,
             expectedState);
+        ValidateReviewedValues(plan, changes);
+        PatchFileTransactionService.ValidateExpectedState(
+            plan.CfgPath,
+            expectedState);
         var preparedText = R3Yaml.BuildDel(
             plan.CfgPath,
             changes);
@@ -187,6 +196,38 @@ public sealed class ConfigApplyService
             }
 
             throw;
+        }
+    }
+
+    private static void ValidateReviewedValues(
+        CfgPlan plan,
+        IReadOnlyList<CfgChg> changes)
+    {
+        foreach (var change in changes)
+        {
+            var reviewed = plan.Items.FirstOrDefault(item =>
+                item.Section.Equals(change.Section, StringComparison.Ordinal) &&
+                item.Key.Equals(change.Key, StringComparison.Ordinal));
+
+            if (reviewed is null)
+            {
+                throw new InvalidOperationException(
+                    $"Config change '{change.Section}/{change.Key}' was not part of the reviewed plan.");
+            }
+
+            var current = R3Yaml.ReadVal(
+                plan.CfgPath,
+                change.Section,
+                change.Key);
+
+            if (!string.Equals(
+                    current,
+                    reviewed.CurVal,
+                    StringComparison.Ordinal))
+            {
+                throw new IOException(
+                    $"RPCS3 config changed after preview at '{change.Section}/{change.Key}'. Rebuild the plan before applying changes.");
+            }
         }
     }
 

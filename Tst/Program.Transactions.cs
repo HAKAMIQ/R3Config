@@ -75,6 +75,81 @@ internal static partial class Program
         File.WriteAllText(cheatPath, originalCheat, Encoding.UTF8);
         File.WriteAllText(patchConfigPath, originalPatchConfig, Encoding.UTF8);
 
+        var reviewedPatchConfigState =
+            PatchFileTransactionService.CaptureExpectedState(
+                patchConfigPath,
+                R3Limits.PatCfgBy,
+                "patch_config.yml");
+        var reviewedChange = new PatChg(
+            "PPU-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "Reviewed Patch",
+            "Transaction Game",
+            "BLUS20000",
+            "01.00",
+            PatRisk.SafeFix);
+        var reviewedPlan = new PatchApplyPlan(
+            patchConfigPath,
+            [reviewedChange],
+            reviewedPatchConfigState.Exists,
+            reviewedPatchConfigState.Sha256);
+        const string changedAfterPatchPreview =
+            "PPU-external:\r\n  External Patch:\r\n    External Game:\r\n      BLUS99999:\r\n        01.00:\r\n          Enabled: true\r\n";
+        File.WriteAllText(
+            patchConfigPath,
+            changedAfterPatchPreview,
+            Encoding.UTF8);
+        var stalePatchBackupCount = Directory.Exists(backupRoot)
+            ? Directory.GetDirectories(backupRoot).Length
+            : 0;
+        MustFail<IOException>(
+            () => new PatchApplyService().Apply(
+                reviewedPlan,
+                backupRoot),
+            "Expected patch_config.yml changed after preview to reject apply instead of adopting a new baseline.");
+        Assert(File.ReadAllText(patchConfigPath, Encoding.UTF8) == changedAfterPatchPreview &&
+               (!Directory.Exists(backupRoot) ||
+                Directory.GetDirectories(backupRoot).Length == stalePatchBackupCount),
+            "Expected stale patch-plan rejection to preserve the external patch_config.yml edit without backup side effects.");
+        File.WriteAllText(patchConfigPath, originalPatchConfig, Encoding.UTF8);
+
+        const string malformedAfterPatchPreview = "PPU-invalid: [broken";
+        File.WriteAllText(
+            patchConfigPath,
+            malformedAfterPatchPreview,
+            Encoding.UTF8);
+        var malformedPatchBackupCount = Directory.Exists(backupRoot)
+            ? Directory.GetDirectories(backupRoot).Length
+            : 0;
+
+        var malformedPatchService = new PatchApplyService();
+        MustFail<InvalidDataException>(
+            () => malformedPatchService.Apply(
+                reviewedPlan,
+                backupRoot),
+            "Expected malformed patch_config.yml to retain its bounded-input error during apply even when the reviewed snapshot is stale.");
+        MustFail<InvalidDataException>(
+            () => malformedPatchService.Disable(
+                reviewedPlan,
+                backupRoot),
+            "Expected malformed patch_config.yml to retain its bounded-input error during disable even when the reviewed snapshot is stale.");
+        MustFail<InvalidDataException>(
+            () => malformedPatchService.ApplyTxn(
+                reviewedPlan,
+                backupRoot,
+                []),
+            "Expected malformed patch_config.yml to retain its bounded-input error during transactional apply even when the reviewed snapshot is stale.");
+        MustFail<InvalidDataException>(
+            () => malformedPatchService.RemoveTxn(
+                reviewedPlan,
+                backupRoot,
+                []),
+            "Expected malformed patch_config.yml to retain its bounded-input error during transactional remove even when the reviewed snapshot is stale.");
+        Assert(File.ReadAllText(patchConfigPath, Encoding.UTF8) == malformedAfterPatchPreview &&
+               (!Directory.Exists(backupRoot) ||
+                Directory.GetDirectories(backupRoot).Length == malformedPatchBackupCount),
+            "Expected malformed patch-config rejection to preserve the invalid input without backup side effects across all mutation paths.");
+        File.WriteAllText(patchConfigPath, originalPatchConfig, Encoding.UTF8);
+
         var canaryText = TxnCat(
             hash,
             "Transaction Canary",

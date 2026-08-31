@@ -126,24 +126,28 @@ public sealed class AppFlow
         Rpcs3InstallDescriptor install,
         IReadOnlyList<PatMatch> matches,
         IReadOnlyList<PatMatch> enabledMatches,
-        bool expertMode)
+        bool expertMode,
+        IReadOnlyList<PatMatch>? allMatches = null)
     {
         return _cases.PatchMutation.BuildOn(
             install,
             matches,
             enabledMatches,
-            expertMode);
+            expertMode,
+            allMatches);
     }
 
     public PatchApplyPlan OffPlan(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<PatMatch> matches,
-        IReadOnlyList<PatMatch>? enabledMatches = null)
+        IReadOnlyList<PatMatch>? enabledMatches = null,
+        IReadOnlyList<PatMatch>? allMatches = null)
     {
         return _cases.PatchMutation.BuildOff(
             install,
             matches,
-            enabledMatches);
+            enabledMatches,
+            allMatches);
     }
 
     public PatChg? PatChg(
@@ -172,12 +176,15 @@ public sealed class AppFlow
             install);
     }
 
-    public PatRes OffPat(PatchApplyPlan plan,
-        Rpcs3InstallDescriptor install)
+    public PatRes OffPat(
+        PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install,
+        IReadOnlyList<PatMatch>? selectedMatches = null)
     {
         return _cases.PatchMutation.Disable(
             plan,
-            install);
+            install,
+            selectedMatches);
     }
 
     public PatRes RemoveArtemis(

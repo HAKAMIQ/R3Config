@@ -43,16 +43,10 @@ public sealed class PatchApplyService
                 "Patch apply plan is empty.");
         }
 
-        var patchConfigState =
-            PatchFileTransactionService.CaptureExpectedState(
-                plan.PatCfg,
-                R3Limits.PatCfgBy,
-                "patch_config.yml");
-        var patchConfigText = _writer.Build(
-            plan.PatCfg,
-            plan.Changes);
-
-        CfgWrite.VldText(patchConfigText);
+        var (patchConfigState, patchConfigText) =
+            BuildReviewedPatchConfig(
+                plan,
+                enabled: true);
 
         var transactionFiles = preparedFiles
             .Append(new PatchPreparedFile(
@@ -99,12 +93,9 @@ public sealed class PatchApplyService
         var transactionFiles = preparedFiles.ToList();
         if (plan.HasChg)
         {
-            var state = PatchFileTransactionService.CaptureExpectedState(
-                plan.PatCfg,
-                R3Limits.PatCfgBy,
-                "patch_config.yml");
-            var text = _writer.Build(plan.PatCfg, plan.Changes, enabled: false);
-            CfgWrite.VldText(text);
+            var (state, text) = BuildReviewedPatchConfig(
+                plan,
+                enabled: false);
             transactionFiles.Add(new PatchPreparedFile(
                 plan.PatCfg,
                 text,
@@ -115,6 +106,48 @@ public sealed class PatchApplyService
 
         var backup = _Txn.Commit(backupRootPath, transactionFiles, validatePaths);
         return new PatRes(backup, plan.Changes);
+    }
+
+    private (PatchTargetState State, string Text) BuildReviewedPatchConfig(
+        Mdl.PatchApplyPlan plan,
+        bool enabled)
+    {
+        var state = ExpectedState(plan);
+
+        // Parse and build from the live source before classifying reviewed-state
+        // drift. Malformed/oversized patch_config.yml must retain its bounded
+        // input error; a valid source that changed after preview is stale.
+        var text = _writer.Build(
+            plan.PatCfg,
+            plan.Changes,
+            enabled);
+        CfgWrite.VldText(text);
+
+        // Catch a valid external edit, including one that races the read/build
+        // above. PatchFileTransactionService repeats this same expected-state
+        // contract through stage, backup, and commit.
+        PatchFileTransactionService.ValidateExpectedState(
+            plan.PatCfg,
+            state);
+
+        return (state, text);
+    }
+
+    private static PatchTargetState ExpectedState(Mdl.PatchApplyPlan plan)
+    {
+        if (plan.ExpectedPatCfgExists is bool expectedExists)
+        {
+            return new PatchTargetState(
+                expectedExists,
+                plan.ExpectedPatCfgSha256,
+                R3Limits.PatCfgBy,
+                "patch_config.yml");
+        }
+
+        return PatchFileTransactionService.CaptureExpectedState(
+            plan.PatCfg,
+            R3Limits.PatCfgBy,
+            "patch_config.yml");
     }
 
     private PatRes Apply(
@@ -129,16 +162,10 @@ public sealed class PatchApplyService
                 "Patch apply plan is empty.");
         }
 
-        var patchConfigState =
-            PatchFileTransactionService.CaptureExpectedState(
-                plan.PatCfg,
-                R3Limits.PatCfgBy,
-                "patch_config.yml");
-        var patchConfigText = _writer.Build(
-            plan.PatCfg,
-            plan.Changes,
-            enabled);
-        CfgWrite.VldText(patchConfigText);
+        var (patchConfigState, patchConfigText) =
+            BuildReviewedPatchConfig(
+                plan,
+                enabled);
 
         var backup = _Txn.Commit(
             backupRootPath,

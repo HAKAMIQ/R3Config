@@ -94,6 +94,43 @@ internal static partial class Program
         Assert(compiled.PatText.Contains("0x60000000", StringComparison.OrdinalIgnoreCase),
             "Expected the compiler to select the newer duplicate patch body.");
 
+        var sameVersionOld =
+            "Version: 1.2\n" +
+            $"PPU-{hash}:\n" +
+            "  \"Stable Version Cheat\":\n" +
+            "    Games:\n" +
+            "      \"Compiler Game\":\n" +
+            "        BLUS00001: [ 01.01 ]\n" +
+            "    Patch Version: 1.0\n" +
+            "    Patch:\n" +
+            "      - [ be32, 0x00100030, 0x11111111 ]\n";
+        var sameVersionNew = sameVersionOld.Replace(
+            "0x11111111",
+            "0x22222222",
+            StringComparison.Ordinal);
+        var sameVersionNewRead = reader.ReadText(
+            sameVersionNew,
+            PatSrc.Artemis,
+            "art.yml");
+        Assert(sameVersionNewRead.IsOk && sameVersionNewRead.Catalog.Entries.Count == 1,
+            "Expected the reviewed same-version Artemis definition to parse.");
+        var sameVersionMatch = new PatchMatchService().Match(
+            sameVersionNewRead.Catalog.Entries.Single(),
+            [game]);
+        var sameVersionCompile = compiler.Compile(
+            [sameVersionOld, sameVersionNew],
+            [sameVersionMatch]);
+        Assert(sameVersionCompile.IsOk &&
+               sameVersionCompile.PatText.Contains("0x22222222", StringComparison.OrdinalIgnoreCase) &&
+               !sameVersionCompile.PatText.Contains("0x11111111", StringComparison.OrdinalIgnoreCase),
+            "Expected Artemis compilation to bind to the reviewed DefPrint instead of the first same-version body.");
+        var missingReviewedDefinition = compiler.Compile(
+            [sameVersionOld],
+            [sameVersionMatch]);
+        Assert(!missingReviewedDefinition.IsOk &&
+               missingReviewedDefinition.Error?.Contains("changed after preview", StringComparison.OrdinalIgnoreCase) == true,
+            "Expected Artemis compilation to reject a source set that no longer contains the reviewed definition body.");
+
         var runtimeGuardedGame = game with
         {
             PpuHash = null,
@@ -400,6 +437,31 @@ internal static partial class Program
         Assert(managedRead.IsOk, "Expected managed cheat file to read back: " + managedRead.Error);
         Assert(managedRead.Catalog.Entries.Count == 2,
             "Expected adding a second cheat to preserve the first managed definition.");
+
+        var reviewedManagedMatch = new PatchMatchService().Match(
+            managedRead.Catalog.Entries.Single(entry =>
+                entry.Title == "Infinite Health"),
+            [game]);
+        var reviewedManagedText = File.ReadAllText(managedPath, Encoding.UTF8);
+        File.WriteAllText(
+            managedPath,
+            reviewedManagedText.Replace(
+                "0x60000000",
+                "0x33333333",
+                StringComparison.OrdinalIgnoreCase),
+            Encoding.UTF8);
+        var staleRemove = service.PrepRemove(
+            patchesPath,
+            [reviewedManagedMatch]);
+        Assert(!staleRemove.IsOk &&
+               staleRemove.Error?.Contains(
+                   "changed after preview",
+                   StringComparison.OrdinalIgnoreCase) == true,
+            "Expected Artemis removal to reject a managed definition whose Patch body changed after preview.");
+        File.WriteAllText(
+            managedPath,
+            reviewedManagedText,
+            Encoding.UTF8);
 
         const string residentOnlyHash =
             "cccccccccccccccccccccccccccccccccccccccc";

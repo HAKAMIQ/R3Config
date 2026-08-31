@@ -390,7 +390,7 @@ public sealed class ReadSvc
         return true;
     }
 
-    private static string? CalcDef(YamlNode? patchNode)
+    internal static string? CalcDef(YamlNode? patchNode)
     {
         if (patchNode is null)
         {
