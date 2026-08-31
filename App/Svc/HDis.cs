@@ -53,9 +53,6 @@ public sealed class Rpcs3ProcessProbe : IRpcs3ProcessProbe
                 using var expected = Process.GetProcessById(
                     expectedProcessId.Value);
 
-                // A remembered PID is treated conservatively when Windows
-                // denies executable-path inspection. A false positive blocks
-                // mutation; a false negative could allow mutation while RPCS3 runs.
                 if (Matches(
                         expected,
                         expectedPath,

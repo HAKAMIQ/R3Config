@@ -73,7 +73,6 @@ public static class Rpcs3InstallService
 
     private static string GetData(string rootPath)
     {
-        // RPCS3 checks <exe>/portable before RPCS3_CONFIG_DIR.
         var portablePath = Path.Combine(rootPath, "portable");
         if (Directory.Exists(portablePath))
         {

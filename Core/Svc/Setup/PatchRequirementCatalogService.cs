@@ -8,7 +8,6 @@ namespace R3Config.Svc;
 
 #pragma warning disable CA1822
 
-/// <summary>Loads only authored, exact patch-to-setting rules.</summary>
 public sealed class PatchRequirementCatalogService
 {
     private const int MaxRules = 2048;

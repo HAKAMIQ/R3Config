@@ -12,7 +12,6 @@ using R3Config.Vm;
 
 namespace R3Config.Tests;
 
-/// <summary>Real WPF/UIAutomation workflow against an isolated RPCS3 root.</summary>
 public static class InteractiveUiT
 {
     public static void Run(string tempRoot)

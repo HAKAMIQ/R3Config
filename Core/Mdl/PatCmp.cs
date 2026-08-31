@@ -6,11 +6,6 @@ using System.Text.RegularExpressions;
 
 namespace R3Config.Mdl;
 
-/// <summary>
-/// The final compatibility outcome consumed by every patch source.  Risk and
-/// compatibility intentionally remain separate: a cheat can be compatible,
-/// but it still requires an explicit user choice.
-/// </summary>
 public enum PatchCompatibilityVerdict
 {
     Compat,
@@ -48,11 +43,6 @@ public sealed record KeyInf(
     string NormHash,
     string? SerScope);
 
-/// <summary>
-/// Mirrors the names passed by RPCS3 to patch_engine::apply:
-/// PPU/SPU/OVL use a 40-hex SHA-1, while PRX uses RPCS3 Base57 plus a segment
-/// ordinal.  RPCS3 also accepts a TITLE_ID-prefixed alternative key.
-/// </summary>
 public static partial class RunKey
 {
     public static bool TryParse(

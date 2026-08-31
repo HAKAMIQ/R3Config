@@ -14,7 +14,6 @@ using R3Config.Svc;
 
 namespace R3Config.Tests;
 
-/// <summary>Click-driven Windows UI Automation against a separately launched R3Config process.</summary>
 public static class OutOfProcessUiT
 {
     public static void Run(string root, string language)

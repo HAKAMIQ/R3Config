@@ -84,8 +84,6 @@ public sealed class BundledCanaryPatchService
         string bundledText,
         IReadOnlyList<PatMatch> selectedMatches)
     {
-        // Compile selected Canary patches into a self-contained YAML document
-        // by expanding all anchors and aliases before staging imported_patch.yml.
         var compiled = new PatchSelectionCompiler().Compile(
             bundledText,
             selectedMatches,

@@ -49,8 +49,6 @@ public static partial class NoteSvc
             ["Be careful when going into water, some of it has no bottom so you will fall forever unless you quit or use the code to fly"] =
                 "احذر عند دخول الماء؛ بعض المناطق بلا قاع، وقد تستمر في السقوط بلا نهاية ما لم تخرج من اللعبة أو تستخدم شفرة الطيران.",
 
-            // High-frequency RPCS3 Wiki recommendation notes. These are exact
-            // source-text translations used across the whole bundled catalog.
             ["Anything other than auto can cause visual issues"] =
                 "أي خيار غير Auto قد يسبب مشكلات رسومية.",
             ["Improves overly bright lighting"] =
@@ -172,8 +170,6 @@ public static partial class NoteSvc
             ["Required to get ingame"] =
                 "مطلوب للدخول إلى اللعبة.",
 
-            // Complete bundled Canary Notes coverage. Titles remain canonical;
-            // these entries localize the explanatory Notes field only.
             ["Fixes annoying non-working effect"] =
                 "يصلح تأثيرا مزعجا لا يعمل بصورة صحيحة.",
             ["Fixes Memory Access Violation error when trying to play certain stages or going into certain areas of the maps"] =
@@ -233,7 +229,6 @@ public static partial class NoteSvc
             ["WARNING: Causes physics issues with harpies, you will need to disable this patch to get past some sections of the game. Unlocks internal timestep calculation and fixes IGC timing issues at 60 FPS and above. Increase vblank to match your desired framerate"] =
                 "تحذير: يسبب مشكلات في الفيزياء مع Harpies، وستحتاج إلى تعطيل الباتش لتجاوز بعض أقسام اللعبة. يفتح حساب Timestep الداخلي ويصلح توقيت IGC عند 60 FPS فما فوق. ارفع VBlank ليتوافق مع معدل الإطارات المطلوب.",
 
-            // Common Artemis note semantics shared across many games.
             ["(L3 = Restore Power)"] =
                 "L3 = استعادة الطاقة.",
             ["(Must Be On)"] =
@@ -278,8 +273,6 @@ public static partial class NoteSvc
                 "لا تعمل حاليا (WIP).",
             ["testing"] =
                 "قيد الاختبار.",
-            // Artemis corpus translations: exact Notes mappings covering every
-            // bundled game entry. Canonical patch titles remain untouched.
             ["("] =
                 "ملاحظة المصدر غير مكتملة.",
             ["(Hold Select And Damage It, Press Select + L3 To Unmark)"] =

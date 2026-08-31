@@ -196,8 +196,6 @@ public sealed class PlanVm : VmBase
             return false;
         }
 
-        // When every recommendation is already configured, keep the rows visible.
-        // The final user needs proof of what was applied instead of an empty panel.
         var state = _plan.RecState;
         return state.Pending == 0
             && state.Manual == 0

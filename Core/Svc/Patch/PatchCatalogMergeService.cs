@@ -104,8 +104,6 @@ public sealed class PatchCatalogMergeService
 
     private static bool Should(Rpcs3PatchEntry existing, Rpcs3PatchEntry candidate)
     {
-        // Bundled catalogs are preview sources. An entry already present in an
-        // RPCS3 file is authoritative because that is what RPCS3 will load.
         if (Is(candidate.Source) &&
             !Is(existing.Source))
         {
@@ -201,11 +199,6 @@ public sealed class PatchCatalogMergeService
 
     private static string Def(Rpcs3PatchEntry entry)
     {
-        // Source ownership defines the catalog channel. A patch's risk or
-        // title must never move an official Patch Manager entry into Artemis,
-        // nor merge an official entry with a Canary/local definition that
-        // happens to share the same runtime key and title. Resident and bundled
-        // copies continue to merge only inside their own source channel.
         if (entry.Source == PatSrc.Official)
         {
             return "Official";

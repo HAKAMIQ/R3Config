@@ -32,7 +32,6 @@ public partial class AdvDlg : Window
         }
         catch (InvalidOperationException)
         {
-            // DragMove can throw if the mouse button is released before WPF starts the drag.
         }
     }
 

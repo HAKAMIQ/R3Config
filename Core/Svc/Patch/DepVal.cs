@@ -227,10 +227,6 @@ public static class PatDepVal
 
     private static string Channel(Rpcs3PatchEntry entry)
     {
-        // Keep dependency identity aligned with PatchCatalogMergeService: a
-        // prerequisite must come from the same catalog ownership channel as
-        // its dependent. Managed Artemis is the installed form of Artemis and
-        // intentionally remains in the same channel.
         if (entry.Source == PatSrc.Official)
         {
             return "Official";

@@ -109,11 +109,6 @@ public interface IRpcs3OwnedProcessController
         CancellationToken cancellationToken);
 }
 
-/// <summary>
-/// Owns one immutable Canary fingerprint acquisition for one RPCS3 install
-/// and one selected game. The RPCS3 log is parsed exactly once and only after
-/// the owned emulator process has exited.
-/// </summary>
 public sealed class GameFingerprintCaptureUseCase
 {
     private readonly HashEvidenceUseCase _hashEvidence;

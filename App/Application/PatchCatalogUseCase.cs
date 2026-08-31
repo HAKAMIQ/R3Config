@@ -46,10 +46,6 @@ public sealed class PatchCatalogUseCase(
                 .Where(path => !Path.GetFileName(path).Equals(
                     Svc.CanaryPatchImportService.ImpName,
                     StringComparison.OrdinalIgnoreCase))
-                // Legacy R3Config builds wrote this arbitrary wildcard name.
-                // RPCS3's boot path never loads it, so do not present it as a
-                // resident definition. The cheat service reads it only while
-                // migrating entries into <TITLE_ID>_patch.yml.
                 .Where(path => !Path.GetFileName(path).Equals(
                     BundledCheatPatchService.ManName,
                     StringComparison.OrdinalIgnoreCase))

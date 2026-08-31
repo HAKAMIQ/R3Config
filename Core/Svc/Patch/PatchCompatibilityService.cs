@@ -106,10 +106,6 @@ public sealed class PatchCompatibilityService
     public PatchCompatibilityDecision Decide(
         Mdl.PatMatch match)
     {
-        // Re-evaluate from immutable match facts instead of trusting a copied
-        // decision. Record `with` expressions are used by merge/migration code
-        // and can otherwise leave a stale verdict attached to changed source
-        // or runtime-key metadata.
         return Build(
             match.Patch,
             match.Status,
@@ -205,11 +201,6 @@ public sealed class PatchCompatibilityService
             return MatStat.Unknown;
         }
 
-        // Official patch.yml remains visible by serial/version and RPCS3 is
-        // still the runtime authority. A reliable current main-PPU mismatch,
-        // however, is contradictory local evidence and must block activation.
-        // SPU/PRX/OVL absence or a different historical module remains partial
-        // evidence because RPCS3 may load another module later.
         if (patch.Source == PatSrc.Official)
         {
             if (game.GetHash(patch.HashKind).Any(hash => hash.Equals(
@@ -284,8 +275,6 @@ public sealed class PatchCompatibilityService
         HashKind kind,
         Rpcs3GameDescriptor game)
     {
-        // Outside the H-Canary discovery contract, only the current main PPU
-        // executable is authoritative enough to prove a negative match.
         return kind == HashKind.Ppu &&
                game.PpuList.Count > 0;
     }
@@ -300,10 +289,6 @@ public sealed class PatchCompatibilityService
         bool runtimeKeySerialMismatch)
     {
         var runtimeKey = patch.RunKey;
-        // Compatibility blocks activation, never cleanup. If the catalog still
-        // resolves a concrete patch_config.yml identity, an already-enabled
-        // entry must remain removable after a game update changes its version
-        // or main executable hash.
         var canDisable = runtimeKeyValid &&
                          !runtimeKeySerialMismatch &&
                          status is not MatStat.NoMeta and

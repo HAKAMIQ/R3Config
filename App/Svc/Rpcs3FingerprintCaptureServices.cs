@@ -6,10 +6,6 @@ using R3Config.Application;
 
 namespace R3Config.Svc;
 
-/// <summary>
-/// Controls only the exact RPCS3 process started by the capture workflow.
-/// It never closes another RPCS3 instance found by name.
-/// </summary>
 public sealed class Rpcs3OwnedProcessController
     : IRpcs3OwnedProcessController
 {
@@ -333,8 +329,6 @@ public sealed class Rpcs3OwnedProcessController
             NotSupportedException or
             ArgumentException)
         {
-            // Process.Start returned this PID directly. On access-denied
-            // systems the exact captured creation time is the second guard.
             return true;
         }
     }

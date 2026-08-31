@@ -4,10 +4,6 @@ using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
-/// <summary>
-/// Compatibility facade kept for existing callers.  All decisions are owned
-/// by <see cref="PatchCompatibilityService"/>.
-/// </summary>
 public sealed class PatchMatchService(
     PatchCompatibilityService? compatibility = null)
 {

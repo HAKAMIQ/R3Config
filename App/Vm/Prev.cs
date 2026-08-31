@@ -165,10 +165,6 @@ public sealed class PatPrev : VmBase
 
         if (_state == PatSurf.Loaded)
         {
-            // WPF can retain the old FlowDirection inside already-materialized
-            // DataTemplate containers after a live Arabic/English switch. Rebuild
-            // the item containers under the new application resources while
-            // preserving every explicit checkbox state.
             var selection = Items.ToDictionary(
                 SelId,
                 item => item.IsSel,
@@ -454,10 +450,6 @@ public sealed class PatPrev : VmBase
             if (PatVer.IsAll(match.TgtSer) &&
                 match.Status != MatStat.Match)
             {
-                // RPCS3 uses All/All/All for hash-scoped modules shared by many
-                // games. Enabled state in patch_config.yml is global too, so it
-                // cannot prove that the patch belongs to the selected game.
-                // Only exact local runtime evidence may place it on a game page.
                 continue;
             }
 
@@ -477,9 +469,6 @@ public sealed class PatPrev : VmBase
             }
             else
             {
-                // Local non-Canary definitions are not official RPCS3
-                // patch.yml entries. Keep them out of the official surface
-                // until a dedicated local-patch surface exists.
                 continue;
             }
 

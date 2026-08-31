@@ -125,11 +125,6 @@ public static class ExeHash
 
                 if (outputLength < blockBytes.Length)
                 {
-                    // RPCS3 right-pads a partial 8-byte block with zeroes
-                    // before encoding it, then omits the low Base57 digits.
-                    // Decoding those retained digits therefore yields the
-                    // lower edge of a range. Recover the only value in that
-                    // range whose omitted bytes are all zero.
                     var paddingBits =
                         (blockBytes.Length - outputLength) * 8;
                     var paddingMask =
@@ -200,11 +195,6 @@ public enum PatRisk
     Unknown
 }
 
-/// <summary>
-/// Describes the distribution/stability channel of a patch definition. This
-/// is intentionally independent from <see cref="HashKind"/>: both Main and
-/// Canary definitions can target PPU, SPU, PRX, or OVL runtime keys.
-/// </summary>
 public enum PatClass
 {
     Main,

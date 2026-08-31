@@ -88,10 +88,6 @@ public static class PatText
             RawKey(raw));
     }
 
-    // RPCS3 treats the YAML patch key as the patch description/identity label.
-    // Keep that upstream label canonical in every UI language; localize Notes
-    // and other explanatory text instead. This also prevents mixed/partial
-    // Arabic-English patch titles.
     public static string DspTitle(string? raw)
     {
         return string.IsNullOrWhiteSpace(raw)

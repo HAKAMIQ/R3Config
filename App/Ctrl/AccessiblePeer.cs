@@ -6,7 +6,6 @@ using System.Windows.Media;
 
 namespace R3Config.Ctrl;
 
-/// <summary>Exposes realized control descendants of composed UserControls to UIA.</summary>
 internal sealed class AccessibleUserControlPeer : FrameworkElementAutomationPeer
 {
     private readonly FrameworkElement _owner;

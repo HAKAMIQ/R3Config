@@ -182,7 +182,6 @@ public sealed record SfoInfo(
     string? AppVer,
     string? DiscVer = null)
 {
-    // RPCS3 uses APP_VER when present and falls back to VERSION.
     public string? EffectiveVersion =>
         !string.IsNullOrWhiteSpace(AppVer) &&
         !string.Equals(

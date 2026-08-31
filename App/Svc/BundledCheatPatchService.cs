@@ -20,7 +20,6 @@ public sealed class BundledCheatPatchService
 {
     public const string BndlName = "art.yml";
 
-    // Runtime cheat patches use the title-specific *_patch.yml file.
     public const string ManName = "r3cht.yml";
     public const string OldName = "r3config_cheats_patch.yml";
 
@@ -209,7 +208,6 @@ public sealed class BundledCheatPatchService
                 sourceTexts.Add(existingText);
             }
 
-            // Reuse matching managed entries and migrate the legacy library when needed.
             var targetSerial = GetSer(bundledSelections[0])!;
             var libraryPath = GetPath(patchesPath);
             var legacyPath = OldPath(patchesPath);

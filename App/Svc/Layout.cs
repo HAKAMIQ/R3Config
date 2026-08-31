@@ -27,8 +27,6 @@ public sealed class UiLaySt
 
     public XmlLanguage XmlLang { get; }
 
-    // Arabic follows the native Windows logical layout (RTL); English stays LTR.
-    // Caption buttons and technical values are handled by dedicated resources.
     public FlowDirection WinFlow => TextFlow;
 
     public FlowDirection ShFlow => TextFlow;

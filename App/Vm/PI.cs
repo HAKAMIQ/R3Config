@@ -100,9 +100,6 @@ public sealed class PlanItVm : VmBase
 
     public bool IsApply => Entry.State == Mdl.RecState.Applied;
 
-    // Selection means "apply this pending change". An already-applied
-    // recommendation must stay non-selectable, but the UI still needs a
-    // distinct visual state instead of showing an empty disabled checkbox.
     public bool ShowSelection => !IsApply && IsAction;
 
     public bool ShowNonActionState => !IsApply && !IsAction;

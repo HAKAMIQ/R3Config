@@ -5,11 +5,6 @@ using R3Config.Svc;
 
 namespace R3Config;
 
-
-/// <summary>
-/// Compatibility facade for the WPF layer. Business workflows live in
-/// Application use cases and are composed in <see cref="AppComposition"/>.
-/// </summary>
 public sealed class AppFlow
 {
     private readonly AppUseCases _cases;
@@ -121,7 +116,6 @@ public sealed class AppFlow
             game);
     }
 
-
     public PatchApplyPlan BuildPatchPlan(
         Rpcs3InstallDescriptor install,
         IReadOnlyList<PatMatch> matches,
@@ -207,7 +201,7 @@ public sealed class AppFlow
         return _cases.PatchCatalog.ReadCfg(install);
     }
 
-#pragma warning disable CA1822 // Compatibility facade method remains instance based.
+#pragma warning disable CA1822
     public RecSvc BuildCat(string xmlPath)
     {
         return RecommendationCatalogUseCase.Rebuild(xmlPath);
@@ -219,7 +213,7 @@ public sealed class AppFlow
         return _cases.Recommendations.FmtInf(info);
     }
 
-#pragma warning disable CA1822 // Compatibility facade method remains instance based.
+#pragma warning disable CA1822
     public void ExpCat(
         RecSvc cat,
         string path)

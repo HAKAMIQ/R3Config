@@ -114,18 +114,12 @@ public sealed class PatchApplyService
     {
         var state = ExpectedState(plan);
 
-        // Parse and build from the live source before classifying reviewed-state
-        // drift. Malformed/oversized patch_config.yml must retain its bounded
-        // input error; a valid source that changed after preview is stale.
         var text = _writer.Build(
             plan.PatCfg,
             plan.Changes,
             enabled);
         CfgWrite.VldText(text);
 
-        // Catch a valid external edit, including one that races the read/build
-        // above. PatchFileTransactionService repeats this same expected-state
-        // contract through stage, backup, and commit.
         PatchFileTransactionService.ValidateExpectedState(
             plan.PatCfg,
             state);

@@ -960,10 +960,6 @@ public sealed class ReadSvc
                    Pattern.IsMatch(key);
         }
 
-        // Community patch expansions are commonly assembled by concatenating
-        // sources. Some contain the same patch title twice inside one hash
-        // section. YamlDotNet must be allowed to load the document so the merge
-        // policy can keep one deterministically and report the duplicate.
         if (allowDuplicatePatchTitles &&
             indent == 2 &&
             scope.Count > 0 &&

@@ -10,7 +10,6 @@ using R3Config.Svc;
 
 namespace R3Config.Tests;
 
-/// <summary>External, hash-pinned regression for a real RPCS3 official catalog.</summary>
 public static class OfficialCorpusT
 {
     private static readonly JsonSerializerOptions ReportOptions = new() { WriteIndented = true };
