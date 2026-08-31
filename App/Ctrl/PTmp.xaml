@@ -1,0 +1,323 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:lang="clr-namespace:R3Config.Lang">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="PSty.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <DataTemplate x:Key="PatItem">
+        <Border Style="{StaticResource PatCompactItemRow}"
+                FlowDirection="{DynamicResource App.FlowDirection}"
+                ToolTip="{Binding DirStat}">
+
+            <Grid FlowDirection="{DynamicResource App.FlowDirection}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Center">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="124" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="4"
+                            Orientation="Vertical"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+
+                    <StackPanel Orientation="Horizontal"
+                                FlowDirection="LeftToRight"
+                                HorizontalAlignment="Center">
+                        <TextBlock Text="✓"
+                                   Style="{StaticResource PatEnabledGlyph}"
+                                   Margin="0,0,5,0"
+                                   Visibility="{Binding IsOn,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <TextBlock Text="{Binding StateDsp}"
+                                   Tag="{Binding StateTon}"
+                                   Style="{StaticResource PatStateText}" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding PendingDsp}"
+                               Tag="{Binding PendingTone}"
+                               Style="{StaticResource PatPendingText}"
+                               Margin="0,2,0,0"
+                               HorizontalAlignment="Center"
+                               Visibility="{Binding HasPendingAction,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2"
+                            Orientation="Vertical"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center">
+
+                    <TextBlock Text="{Binding DspTitle}"
+                               Style="{StaticResource PatPatchTitleText}"
+                               FlowDirection="{Binding TitleFlow}"
+                               TextAlignment="Left"
+                               NumberSubstitution.Substitution="European" />
+
+                    <TextBlock Text="{Binding InsText}"
+                               Style="{StaticResource PatLocalizedSubtitleText}"
+                               FlowDirection="{Binding NoteFlow}"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               NumberSubstitution.Substitution="European"
+                               Margin="0,3,0,0"
+                               Visibility="{Binding HasIns,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+
+                <CheckBox Grid.Column="0"
+                          Style="{StaticResource IconCheckBox}"
+                          IsChecked="{Binding IsSel,
+                                              Mode=TwoWay,
+                                              UpdateSourceTrigger=PropertyChanged}"
+                          IsEnabled="{Binding CanSel}"
+                          ToolTip="{lang:TextExt Key=Patch.SelectTip}"
+                          AutomationProperties.Name="{Binding DspTitle}"
+                          Padding="0"
+                          Margin="0"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center" />
+            </Grid>
+        </Border>
+    </DataTemplate>
+
+    <DataTemplate x:Key="ArtemisPatItem">
+        <Border Style="{StaticResource PatCompactItemRow}"
+                FlowDirection="{DynamicResource App.FlowDirection}"
+                ToolTip="{Binding DirStat}">
+
+            <Grid FlowDirection="{DynamicResource App.FlowDirection}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Center">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="124" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="4"
+                            Orientation="Vertical"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal"
+                                FlowDirection="LeftToRight"
+                                HorizontalAlignment="Center">
+                        <TextBlock Text="✓"
+                                   Style="{StaticResource PatEnabledGlyph}"
+                                   Margin="0,0,5,0"
+                                   Visibility="{Binding IsOn,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <TextBlock Text="{Binding StateDsp}"
+                                   Tag="{Binding StateTon}"
+                                   Style="{StaticResource PatStateText}" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding PendingDsp}"
+                               Tag="{Binding PendingTone}"
+                               Style="{StaticResource PatPendingText}"
+                               Margin="0,2,0,0"
+                               HorizontalAlignment="Center"
+                               Visibility="{Binding HasPendingAction,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2"
+                            Orientation="Vertical"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding DspTitle}"
+                               Style="{StaticResource PatPatchTitleText}"
+                               FlowDirection="{Binding TitleFlow}"
+                               TextAlignment="Left"
+                               NumberSubstitution.Substitution="European" />
+
+                    <TextBlock Text="{Binding NoteBody}"
+                               Style="{StaticResource PatLocalizedSubtitleText}"
+                               FlowDirection="{Binding NoteFlow}"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               NumberSubstitution.Substitution="European"
+                               Margin="0,3,0,0"
+                               Visibility="{Binding HasDesc,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <ItemsControl ItemsSource="{Binding Dependencies}"
+                                  Margin="0,3,0,0"
+                                  Visibility="{Binding HasDependencies,
+                                                       Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid HorizontalAlignment="Stretch">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="6" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Label}"
+                                               Style="{StaticResource PatLocalizedSubtitleText}"
+                                               FlowDirection="{Binding LabelFlow}"
+                                               TextAlignment="{Binding LabelAlignment}" />
+
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Titles}"
+                                               Style="{StaticResource PatLocalizedSubtitleText}"
+                                               FlowDirection="{Binding TechnicalFlow}"
+                                               TextAlignment="Left"
+                                               NumberSubstitution.Substitution="European" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <CheckBox Grid.Column="0"
+                          Style="{StaticResource IconCheckBox}"
+                          IsChecked="{Binding IsSel,
+                                              Mode=TwoWay,
+                                              UpdateSourceTrigger=PropertyChanged}"
+                          IsEnabled="{Binding CanSel}"
+                          ToolTip="{lang:TextExt Key=Patch.SelectTip}"
+                          AutomationProperties.Name="{Binding DspTitle}"
+                          Padding="0"
+                          Margin="0"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center" />
+            </Grid>
+        </Border>
+    </DataTemplate>
+
+    <DataTemplate x:Key="ArtemisTgtHead">
+        <Border Style="{StaticResource PatCompactGroupRow}"
+                FlowDirection="{DynamicResource App.FlowDirection}">
+            <Grid HorizontalAlignment="Stretch"
+                  FlowDirection="{DynamicResource App.FlowDirection}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Path Grid.Column="0"
+                      Style="{StaticResource PatDisclosureChevron}" />
+
+                <StackPanel Grid.Column="2"
+                            Orientation="Vertical"
+                            HorizontalAlignment="Stretch">
+                    <TextBlock Text="{Binding ArtemisHeader}"
+                               Style="{StaticResource PatGroupTitleText}"
+                               NumberSubstitution.Substitution="European" />
+
+                    <TextBlock Text="{Binding ArtemisMeta}"
+                               Style="{StaticResource PatLocalizedSubtitleText}"
+                               FlowDirection="{Binding TextFlow}"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               NumberSubstitution.Substitution="European"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </DataTemplate>
+
+    <DataTemplate x:Key="ArtemisTgtGrp">
+        <Expander Style="{StaticResource PatDisclosureExpander}"
+                  IsExpanded="{Binding IsOpen,
+                                      Mode=TwoWay}"
+                  FlowDirection="{DynamicResource App.FlowDirection}"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch"
+                  Margin="0,0,0,6"
+                  Padding="0">
+
+            <Expander.Header>
+                <ContentControl Content="{Binding}"
+                                ContentTemplate="{StaticResource ArtemisTgtHead}"
+                                FlowDirection="{DynamicResource App.FlowDirection}"
+                                HorizontalContentAlignment="Stretch" />
+            </Expander.Header>
+
+            <ItemsControl ItemsSource="{Binding Items}"
+                          ItemTemplate="{StaticResource ArtemisPatItem}"
+                          Style="{DynamicResource PatNestedItemsControl}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical"
+                                    FlowDirection="{DynamicResource App.FlowDirection}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </Expander>
+    </DataTemplate>
+
+    <DataTemplate x:Key="TgtHead">
+        <Border Style="{StaticResource PatCompactGroupRow}"
+                FlowDirection="{DynamicResource App.FlowDirection}">
+            <Grid HorizontalAlignment="Stretch"
+                  FlowDirection="{DynamicResource App.FlowDirection}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Path Grid.Column="0"
+                      Style="{StaticResource PatDisclosureChevron}" />
+
+                <StackPanel Grid.Column="2"
+                            Orientation="Vertical"
+                            HorizontalAlignment="Stretch">
+                    <TextBlock Text="{Binding Header}"
+                               Style="{StaticResource PatGroupTitleText}"
+                               NumberSubstitution.Substitution="European" />
+
+                    <TextBlock Text="{Binding Details}"
+                               Style="{StaticResource PatLocalizedSubtitleText}"
+                               FlowDirection="{Binding TextFlow}"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               NumberSubstitution.Substitution="European"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </DataTemplate>
+
+    <DataTemplate x:Key="TgtGrp">
+        <Expander Style="{StaticResource PatDisclosureExpander}"
+                  IsExpanded="{Binding IsOpen,
+                                      Mode=TwoWay}"
+                  FlowDirection="{DynamicResource App.FlowDirection}"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch"
+                  Margin="0,0,0,6"
+                  Padding="0">
+
+            <Expander.Header>
+                <ContentControl Content="{Binding}"
+                                ContentTemplate="{StaticResource TgtHead}"
+                                FlowDirection="{DynamicResource App.FlowDirection}"
+                                HorizontalContentAlignment="Stretch" />
+            </Expander.Header>
+
+            <ItemsControl ItemsSource="{Binding Items}"
+                          ItemTemplate="{StaticResource PatItem}"
+                          Style="{DynamicResource PatNestedItemsControl}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical"
+                                    FlowDirection="{DynamicResource App.FlowDirection}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </Expander>
+    </DataTemplate>
+
+</ResourceDictionary>

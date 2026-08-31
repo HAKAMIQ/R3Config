@@ -1,0 +1,1094 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style x:Key="HCanLocalizedSectionTitleText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource SectionTitleText}">
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+
+        <Setter Property="FontSize"
+                Value="14" />
+
+        <Setter Property="FontWeight"
+                Value="SemiBold" />
+    </Style>
+
+    <Style x:Key="HCanLocalizedSectionCaptionText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource SectionCaptionText}">
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+    </Style>
+
+    <Style x:Key="HCanLocalizedMetaText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource RecommendationMicroMetaText}">
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+
+        <Setter Property="TextTrimming"
+                Value="None" />
+    </Style>
+
+    <Style x:Key="HCanLocalizedLabelText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource HCanLbl}">
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+    </Style>
+
+    <Style x:Key="HCanLocalizedErrorText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource HCanErr}">
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+    </Style>
+
+    <Style x:Key="HCanLocalizedInlineValueText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource RecommendationInlineValueText}">
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+    </Style>
+
+    <Style x:Key="HCanLocalizedTextBox"
+           TargetType="{x:Type TextBox}"
+           BasedOn="{StaticResource LocalizedTextBox}">
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="12,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="{DynamicResource App.HorizontalAlignment}" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanLocalizedComboBox"
+           TargetType="{x:Type ComboBox}"
+           BasedOn="{StaticResource HCanBox}">
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="12,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="{DynamicResource App.HorizontalAlignment}" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanLocalizedTabItem"
+           TargetType="{x:Type TabItem}"
+           BasedOn="{StaticResource FluentTabItem}">
+
+        <Setter Property="MinHeight"
+                Value="40" />
+
+        <Setter Property="Padding"
+                Value="8,10" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="{DynamicResource App.HorizontalAlignment}" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanLocalizedDataGridCellText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource DataGridCellLocalizedText}">
+
+        <Setter Property="Padding"
+                Value="8,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanLocalizedDataGridCellEditor"
+           TargetType="{x:Type TextBox}"
+           BasedOn="{StaticResource LocalizedTextBox}">
+
+        <Setter Property="Padding"
+                Value="8,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="{DynamicResource App.HorizontalAlignment}" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanTechnicalTextBlock"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource TechnicalTextBlock}">
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource TechnicalText.FlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource TechnicalText.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+
+        <Setter Property="Language"
+                Value="{DynamicResource TechnicalText.Language}" />
+    </Style>
+
+    <Style x:Key="HCanTechnicalTextBox"
+           TargetType="{x:Type TextBox}"
+           BasedOn="{StaticResource TechnicalTextBox}">
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="12,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource TechnicalText.FlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource TechnicalText.TextAlignment}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Left" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="Language"
+                Value="{DynamicResource TechnicalText.Language}" />
+    </Style>
+
+    <Style x:Key="HCanTechnicalComboBox"
+           TargetType="{x:Type ComboBox}"
+           BasedOn="{StaticResource HCanBox}">
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="12,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource TechnicalText.FlowDirection}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Left" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="Language"
+                Value="{DynamicResource TechnicalText.Language}" />
+    </Style>
+
+    <Style x:Key="HCanTechnicalDataGridCellText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource DataGridCellTextLeft}">
+
+        <Setter Property="Padding"
+                Value="8,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource TechnicalText.FlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource TechnicalText.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+
+        <Setter Property="Language"
+                Value="{DynamicResource TechnicalText.Language}" />
+    </Style>
+
+    <Style x:Key="HCanTechnicalDataGridCellEditor"
+           TargetType="{x:Type TextBox}"
+           BasedOn="{StaticResource TechnicalTextBox}">
+
+        <Setter Property="Padding"
+                Value="8,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource TechnicalText.FlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource TechnicalText.TextAlignment}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Left" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="Language"
+                Value="{DynamicResource TechnicalText.Language}" />
+    </Style>
+
+    <Style x:Key="HCanDataGridHeader"
+           TargetType="{x:Type DataGridColumnHeader}"
+           BasedOn="{StaticResource DataGridHeaderUi}">
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="8,0" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanPrimaryActionButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Primary}">
+
+        <Setter Property="MinWidth"
+                Value="96" />
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="12,5" />
+
+        <Setter Property="Margin"
+                Value="4,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanSecondaryActionButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Secondary}">
+
+        <Setter Property="MinWidth"
+                Value="96" />
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="12,5" />
+
+        <Setter Property="Margin"
+                Value="4,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanDangerActionButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Danger}">
+
+        <Setter Property="MinWidth"
+                Value="96" />
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="12,5" />
+
+        <Setter Property="Margin"
+                Value="4,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanToolbarActionButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Toolbar}">
+
+        <Setter Property="MinWidth"
+                Value="64" />
+
+        <Setter Property="Height"
+                Value="24" />
+
+        <Setter Property="MinHeight"
+                Value="24" />
+
+        <Setter Property="Padding"
+                Value="8,3" />
+
+        <Setter Property="Margin"
+                Value="4,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanCompactActionButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Compact}">
+
+        <Setter Property="MinWidth"
+                Value="64" />
+
+        <Setter Property="Height"
+                Value="24" />
+
+        <Setter Property="MinHeight"
+                Value="24" />
+
+        <Setter Property="Padding"
+                Value="8,3" />
+
+        <Setter Property="Margin"
+                Value="4,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanLeadingWrapPanel"
+           TargetType="{x:Type WrapPanel}">
+
+        <Setter Property="FlowDirection"
+                Value="LeftToRight" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Left" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanTrailingWrapPanel"
+           TargetType="{x:Type WrapPanel}">
+
+        <Setter Property="FlowDirection"
+                Value="LeftToRight" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Right" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanSavedDrawer"
+           TargetType="{x:Type Border}"
+           BasedOn="{StaticResource FluentSurface.Dialog}">
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.FlowDirection}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Right" />
+
+        <Setter Property="CornerRadius"
+                Value="0" />
+    </Style>
+
+    <Style x:Key="HCanDrawerPrimaryButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource HCanPrimaryActionButton}">
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Right" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanWorkflowTitleText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource Type.Title}">
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+    </Style>
+
+    <Style x:Key="HCanHeaderSurface"
+           TargetType="{x:Type Border}">
+
+        <Setter Property="Background"
+                Value="{DynamicResource Surface.Subtle}" />
+
+        <Setter Property="BorderBrush"
+                Value="{DynamicResource Stroke.Subtle}" />
+
+        <Setter Property="BorderThickness"
+                Value="{StaticResource Stroke.Thickness.Default}" />
+
+        <Setter Property="CornerRadius"
+                Value="0" />
+
+        <Setter Property="Padding"
+                Value="16,12" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.FlowDirection}" />
+
+        <Setter Property="SnapsToDevicePixels"
+                Value="True" />
+
+        <Setter Property="UseLayoutRounding"
+                Value="True" />
+    </Style>
+
+    <Style x:Key="HCanSectionSurface"
+           TargetType="{x:Type Border}"
+           BasedOn="{StaticResource FluentSurface.Subtle}">
+
+        <Setter Property="Padding"
+                Value="12" />
+
+        <Setter Property="CornerRadius"
+                Value="0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.FlowDirection}" />
+    </Style>
+
+    <Style x:Key="HCanSummaryStrip"
+           TargetType="{x:Type Border}">
+
+        <Setter Property="Background"
+                Value="Transparent" />
+
+        <Setter Property="BorderBrush"
+                Value="{DynamicResource Stroke.Subtle}" />
+
+        <Setter Property="BorderThickness"
+                Value="0,1,0,1" />
+
+        <Setter Property="CornerRadius"
+                Value="0" />
+
+        <Setter Property="Padding"
+                Value="0,8" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.FlowDirection}" />
+    </Style>
+
+    <Style x:Key="HCanInlineInfoPanel"
+           TargetType="{x:Type Border}">
+
+        <Setter Property="Background"
+                Value="Transparent" />
+
+        <Setter Property="BorderBrush"
+                Value="{DynamicResource Stroke.Subtle}" />
+
+        <Setter Property="BorderThickness"
+                Value="0,1,0,0" />
+
+        <Setter Property="CornerRadius"
+                Value="0" />
+
+        <Setter Property="Padding"
+                Value="0,12,0,0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.FlowDirection}" />
+    </Style>
+
+    <Style x:Key="HCanSavedItem"
+           TargetType="{x:Type Border}"
+           BasedOn="{StaticResource ChecklistOptionRow}">
+
+        <Setter Property="Margin"
+                Value="0,0,0,8" />
+
+        <Setter Property="Padding"
+                Value="12,8" />
+
+        <Setter Property="CornerRadius"
+                Value="0" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.FlowDirection}" />
+    </Style>
+
+    <Style x:Key="HCanSavedCloseButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Compact}">
+
+        <Setter Property="Width"
+                Value="32" />
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinWidth"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="0" />
+
+        <Setter Property="FlowDirection"
+                Value="LeftToRight" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HCanMoreActionButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Compact}">
+
+        <Setter Property="Width"
+                Value="32" />
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinWidth"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="0" />
+
+        <Setter Property="Margin"
+                Value="0" />
+
+        <Setter Property="FlowDirection"
+                Value="LeftToRight" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HInsDataGridHeader"
+           TargetType="{x:Type DataGridColumnHeader}"
+           BasedOn="{StaticResource HCanDataGridHeader}">
+
+        <Setter Property="Height"
+                Value="36" />
+
+        <Setter Property="MinHeight"
+                Value="36" />
+
+        <Setter Property="Padding"
+                Value="0" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Stretch" />
+    </Style>
+
+    <Style x:Key="HInsDataGridHeaderText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource HCanLocalizedLabelText}">
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+
+        <Setter Property="TextTrimming"
+                Value="CharacterEllipsis" />
+    </Style>
+
+    <Style x:Key="HInsTechnicalDataGridCellText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource HCanTechnicalDataGridCellText}">
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TechnicalTextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HInsTechnicalDataGridCellEditor"
+           TargetType="{x:Type TextBox}"
+           BasedOn="{StaticResource HCanTechnicalDataGridCellEditor}">
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TechnicalTextAlignment}" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HInsLocalizedDataGridCellText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource HCanLocalizedDataGridCellText}">
+
+        <Setter Property="TextAlignment"
+                Value="{DynamicResource App.TextAlignment}" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+    </Style>
+
+    <Style x:Key="HInsTechnicalComboBox"
+           TargetType="{x:Type ComboBox}"
+           BasedOn="{StaticResource HCanTechnicalComboBox}">
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HInsCommandBar"
+           TargetType="{x:Type Grid}">
+
+        <Setter Property="FlowDirection"
+                Value="LeftToRight" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Left" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HInsTextActionButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Toolbar}">
+
+        <Setter Property="MinWidth"
+                Value="80" />
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="12,0" />
+
+        <Setter Property="Margin"
+                Value="0" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HInsIconActionButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Icon}">
+
+        <Setter Property="Width"
+                Value="32" />
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinWidth"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="0" />
+
+        <Setter Property="Margin"
+                Value="0" />
+
+        <Setter Property="FlowDirection"
+                Value="LeftToRight" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HInsInfoButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Icon}">
+
+        <Setter Property="Width"
+                Value="32" />
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinWidth"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="0" />
+
+        <Setter Property="Margin"
+                Value="0" />
+
+        <Setter Property="FlowDirection"
+                Value="LeftToRight" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+    </Style>
+
+    <Style x:Key="HInsCommandGlyph"
+           TargetType="{x:Type TextBlock}">
+
+        <Setter Property="FontFamily"
+                Value="Segoe Fluent Icons" />
+
+        <Setter Property="FontSize"
+                Value="20" />
+
+        <Setter Property="FlowDirection"
+                Value="LeftToRight" />
+
+        <Setter Property="TextAlignment"
+                Value="Center" />
+
+        <Setter Property="HorizontalAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalAlignment"
+                Value="Center" />
+
+        <Setter Property="IsHitTestVisible"
+                Value="False" />
+    </Style>
+
+    <Style x:Key="HInsInfoGlyph"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource HInsCommandGlyph}">
+
+        <Setter Property="FontSize"
+                Value="16" />
+    </Style>
+
+    <Style x:Key="HInsMoveGlyph"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource HInsCommandGlyph}">
+
+        <Setter Property="FontSize"
+                Value="20" />
+    </Style>
+
+    <Style x:Key="HInsHelpMenu"
+           TargetType="{x:Type ContextMenu}"
+           BasedOn="{StaticResource {x:Type ContextMenu}}">
+
+        <Setter Property="Placement"
+                Value="Bottom" />
+
+        <Setter Property="MinWidth"
+                Value="280" />
+
+        <Setter Property="MaxWidth"
+                Value="360" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.FlowDirection}" />
+    </Style>
+
+    <Style x:Key="HInsHelpMenuItem"
+           TargetType="{x:Type MenuItem}"
+           BasedOn="{StaticResource {x:Type MenuItem}}">
+
+        <Setter Property="MinWidth"
+                Value="280" />
+
+        <Setter Property="MaxWidth"
+                Value="360" />
+
+        <Setter Property="Padding"
+                Value="12,8" />
+
+        <Setter Property="Focusable"
+                Value="False" />
+
+        <Setter Property="IsHitTestVisible"
+                Value="False" />
+
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource App.TextFlowDirection}" />
+
+        <Setter Property="HeaderTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}"
+                               MaxWidth="320"
+                               FlowDirection="{DynamicResource App.TextFlowDirection}"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               HorizontalAlignment="Stretch"
+                               TextWrapping="Wrap" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HInsAnchorUseButton"
+           TargetType="{x:Type Button}"
+           BasedOn="{StaticResource FluentButton.Secondary}">
+
+        <Setter Property="MinWidth"
+                Value="160" />
+
+        <Setter Property="Height"
+                Value="32" />
+
+        <Setter Property="MinHeight"
+                Value="32" />
+
+        <Setter Property="Padding"
+                Value="12,0" />
+
+        <Setter Property="Margin"
+                Value="0" />
+
+        <Setter Property="HorizontalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="VerticalContentAlignment"
+                Value="Center" />
+
+        <Setter Property="TextBlock.TextAlignment"
+                Value="Center" />
+    </Style>
+
+</ResourceDictionary>

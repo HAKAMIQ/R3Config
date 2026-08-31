@@ -1,0 +1,12 @@
+Version: 1.2
+PPU-4d5c51503a81a327c2a99427390a395b8dcb3767:
+  "Unlock FPS (official fixture)":
+    Games:
+      "God of War 3 (God of War III)":
+        BCUS98111: [ 01.03 ]
+    Author: "RPCS3"
+    Notes: "Pinned official patch.yml contract fixture."
+    Group: "Frame rate"
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x00000010, 0x60000000 ]

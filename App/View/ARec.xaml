@@ -1,0 +1,154 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             x:Class="R3Config.View.ARecView"
+             mc:Ignorable="d"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ASty.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid x:Name="RecoveryWorkspace"
+          FlowDirection="{DynamicResource App.FlowDirection}"
+          Language="{DynamicResource App.XmlLanguage}">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Style="{StaticResource R3SettingsSection}"
+                Margin="0"
+                Padding="16"
+                CornerRadius="{StaticResource Radius.None}"
+                FlowDirection="{DynamicResource App.FlowDirection}">
+
+            <Grid FlowDirection="{DynamicResource App.FlowDirection}">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           MinWidth="0"
+                           Text="{Binding BkpStat}"
+                           Style="{StaticResource AdvLocalizedDescriptionText}"
+                           Margin="0"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center" />
+
+                <WrapPanel Grid.Column="2"
+                           Orientation="Horizontal"
+                           FlowDirection="LeftToRight"
+                           VerticalAlignment="Center">
+
+                    <Button Content="{lang:TextExt Key=Adv.RestoreSelected}"
+                            Style="{StaticResource AdvStandardActionButton}"
+                            ToolTip="{lang:TextExt Key=Adv.RestoreTip}"
+                            Command="{Binding RstCmd}"
+                            Margin="4,0"
+                            TextBlock.TextAlignment="Center" />
+
+                    <Button Content="{lang:TextExt Key=Adv.DeleteSelectedBackup}"
+                            Style="{StaticResource AdvDangerActionButton}"
+                            ToolTip="{lang:TextExt Key=Adv.DeleteSelectedBackupTip}"
+                            Command="{Binding DelBkpCmd}"
+                            Margin="4,0"
+                            TextBlock.TextAlignment="Center" />
+
+                    <Button Content="{lang:TextExt Key=Adv.DeleteOldBackups}"
+                            Style="{StaticResource AdvDangerActionButton}"
+                            ToolTip="{lang:TextExt Key=Adv.DeleteOldBackupsTip}"
+                            Command="{Binding CleanBkpCmd}"
+                            Margin="4,0"
+                            TextBlock.TextAlignment="Center" />
+                </WrapPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2"
+              FlowDirection="{DynamicResource App.FlowDirection}">
+
+            <DataGrid ItemsSource="{Binding Advanced.Backups}"
+                      SelectedItem="{Binding Advanced.SelBkp, Mode=TwoWay}"
+                      IsReadOnly="True"
+                      AutoGenerateColumns="False"
+                      CanUserResizeColumns="True"
+                      EnableColumnVirtualization="True"
+                      RowHeight="40"
+                      MinRowHeight="40"
+                      ColumnHeaderHeight="32"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      Language="{DynamicResource App.XmlLanguage}"
+                      FlowDirection="{DynamicResource App.FlowDirection}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+
+                <DataGrid.Style>
+                    <Style TargetType="{x:Type DataGrid}"
+                           BasedOn="{StaticResource FluentDataGrid}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Advanced.BkpEmpty}"
+                                         Value="True">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Style>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{lang:TextExt Key=Adv.Date}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding MadeAt,
+                                                          StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                                        Width="Auto"
+                                        MinWidth="140"
+                                        MaxWidth="170"
+                                        ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
+                    <DataGridTextColumn Header="{lang:TextExt Key=Adv.Files}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding Files.Count}"
+                                        Width="Auto"
+                                        MinWidth="70"
+                                        MaxWidth="90"
+                                        ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
+                    <DataGridTextColumn Header="{lang:TextExt Key=Adv.Folder}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding DirPath}"
+                                        Width="*"
+                                        MinWidth="240"
+                                        ElementStyle="{StaticResource DataGridCellPathText}" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Border Style="{StaticResource EmptyStatePanel}"
+                    CornerRadius="{StaticResource Radius.None}"
+                    FlowDirection="{DynamicResource App.FlowDirection}"
+                    Visibility="{Binding Advanced.BkpEmpty,
+                                         Converter={StaticResource BoolToVisibilityConverter}}">
+
+                <TextBlock Text="{Binding Advanced.BkpText}"
+                           Style="{StaticResource AdvLocalizedEmptyStateText}"
+                           VerticalAlignment="Center" />
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

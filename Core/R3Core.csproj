@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>R3Core</AssemblyName>
+    <RootNamespace>R3Config</RootNamespace>
+    <Version>1.0.1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Keep the mutation boundary explicit so Visual Studio design-time
+         builds reload the Core reference when this architecture file changes. -->
+    <Compile Remove="Svc\Mutation\Rpcs3MutationGuard.cs" />
+    <Compile Include="Svc\Mutation\Rpcs3MutationGuard.cs" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,79 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             x:Class="R3Config.Ctrl.HRevView"
+             mc:Ignorable="d"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="HSty.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="{lang:TextExt Key=HCanary.Review.Description}"
+                   Style="{StaticResource HCanLocalizedSectionCaptionText}"
+                   TextWrapping="Wrap" />
+
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="8" />
+                <RowDefinition Height="3*"
+                               MinHeight="150" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="8" />
+                <RowDefinition Height="2*"
+                               MinHeight="110" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Text="{lang:TextExt Key=HCanary.Review.PreviewTitle}"
+                       Style="{StaticResource HCanLocalizedSectionTitleText}" />
+
+            <TextBox Grid.Row="2"
+                     Text="{Binding HCanary.Preview,
+                                    Mode=OneWay}"
+                     Style="{StaticResource HCanTechnicalTextBox}"
+                     IsReadOnly="True"
+                     AcceptsReturn="True"
+                     Padding="12,8"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     TextWrapping="NoWrap"
+                     VerticalContentAlignment="Top" />
+
+            <TextBlock Grid.Row="4"
+                       Text="{lang:TextExt Key=HCanary.Review.ValidationTitle}"
+                       Style="{StaticResource HCanLocalizedSectionTitleText}" />
+
+            <TextBox Grid.Row="6"
+                     Text="{Binding HCanary.VldSum,
+                                    Mode=OneWay}"
+                     Style="{StaticResource HCanLocalizedTextBox}"
+                     IsReadOnly="True"
+                     AcceptsReturn="True"
+                     Padding="12,8"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Disabled"
+                     VerticalContentAlignment="Top" />
+        </Grid>
+    </Grid>
+</UserControl>

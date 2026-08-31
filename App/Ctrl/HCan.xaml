@@ -1,0 +1,103 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             xmlns:local="clr-namespace:R3Config.Ctrl"
+             x:Class="R3Config.Ctrl.HCanView"
+             mc:Ignorable="d"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="HSty.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Language="{DynamicResource App.XmlLanguage}"
+          KeyboardNavigation.TabNavigation="Cycle"
+          ClipToBounds="True">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <local:HLchView x:Name="WorkflowActions"
+                        Grid.Row="0"
+                        Grid.RowSpan="3"
+                        Panel.ZIndex="10"
+                        StartRequested="StartDraft"
+                        SavedRequested="ShowSaved" />
+
+        <TabControl x:Name="Steps"
+                    Grid.Row="0"
+                    SelectedIndex="0"
+                    SelectionChanged="StepChanged"
+                    Style="{StaticResource FluentTabControl}"
+                    ItemContainerStyle="{StaticResource HCanLocalizedTabItem}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    VerticalContentAlignment="Stretch"
+                    Visibility="Collapsed">
+
+            <TabItem x:Name="GameStep"
+                     Header="{lang:TextExt Key=HCanary.Step.Game}"
+                     TextBlock.TextAlignment="{DynamicResource App.TextAlignment}">
+                <local:HGamView />
+            </TabItem>
+
+            <TabItem x:Name="TargetsStep"
+                     Header="{lang:TextExt Key=HCanary.Step.Targets}"
+                     TextBlock.TextAlignment="{DynamicResource App.TextAlignment}">
+                <local:HTgtView />
+            </TabItem>
+
+            <TabItem x:Name="FingerprintStep"
+                     Header="{lang:TextExt Key=HCanary.Step.Target}"
+                     TextBlock.TextAlignment="{DynamicResource App.TextAlignment}">
+                <local:HHshView />
+            </TabItem>
+
+            <TabItem x:Name="DetailsStep"
+                     Header="{lang:TextExt Key=HCanary.Step.Details}"
+                     TextBlock.TextAlignment="{DynamicResource App.TextAlignment}">
+                <local:HDetView />
+            </TabItem>
+
+            <TabItem x:Name="InstructionsStep"
+                     Header="{lang:TextExt Key=HCanary.Step.Instructions}"
+                     TextBlock.TextAlignment="{DynamicResource App.TextAlignment}">
+                <local:HInsView x:Name="InstructionsView" />
+            </TabItem>
+
+            <TabItem x:Name="ReviewStep"
+                     Header="{lang:TextExt Key=HCanary.Step.Review}"
+                     TextBlock.TextAlignment="{DynamicResource App.TextAlignment}">
+                <local:HRevView />
+            </TabItem>
+        </TabControl>
+
+        <local:HBarView x:Name="WorkflowBottomBar"
+                        Grid.Row="2"
+                        Visibility="Collapsed"
+                        SelectedIndex="{Binding SelectedIndex, ElementName=Steps}"
+                        PreviousRequested="PreviousStep"
+                        NextRequested="NextStep" />
+
+        <local:HSavView x:Name="SavedDrawer"
+                        Grid.Row="0"
+                        Grid.RowSpan="3"
+                        Panel.ZIndex="20"
+                        Visibility="Collapsed"
+                        CloseRequested="CloseSaved"
+                        OpenRequested="OpenStoredPatch" />
+    </Grid>
+</UserControl>

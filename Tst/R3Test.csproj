@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>R3Test</AssemblyName>
+    <RootNamespace>R3Config.Tests</RootNamespace>
+    <Version>1.0.1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\App\R3App.csproj" />
+    <ProjectReference Include="..\Core\R3Core.csproj" />
+    <ProjectReference Include="..\Script\ArtImport\R3ArtImport.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Fixtures\Official\patch.yml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fixtures\Official\NOTICE.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

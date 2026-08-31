@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "sourceIdentity": "RPCS3 Wiki Help:Game_Patches/Canary; bundled can.yml",
+  "snapshotDate": "2026-06-13",
+  "rules": [
+    {
+      "patchTitle": "Unlock FPS",
+      "serial": "BCUS98111",
+      "version": "01.00",
+      "hash": "4d5c51503a81a327c2a99427390a395b8dcb3767",
+      "source": "Can",
+      "evidenceStatus": "UNPROVEN_VALUE",
+      "evidenceSource": "RPCS3 Wiki Help:Game_Patches/Canary (pinned local snapshot)",
+      "evidenceRevision": "2026-06-13 snapshot",
+      "notes": "The source says to increase VBlank to the desired framerate, but does not state 120 for this patch.",
+      "requirements": [
+        {
+          "section": "Video",
+          "key": "VBlank Rate",
+          "value": "120",
+          "evidence": "The exact patch note says only: Increase vblank to match your desired framerate. No exact value 120 is stated."
+        }
+      ]
+    },
+    {
+      "patchTitle": "Unlock FPS",
+      "serial": "BCUS98111",
+      "version": "01.03",
+      "hash": "19724fde16a5b111b7b4d2a065f5dccaf8e01962",
+      "source": "Can",
+      "evidenceStatus": "UNPROVEN_VALUE",
+      "evidenceSource": "RPCS3 Wiki Help:Game_Patches/Canary (pinned local snapshot)",
+      "evidenceRevision": "2026-06-13 snapshot",
+      "notes": "The source says to increase VBlank to the desired framerate, but does not state 120 for this patch.",
+      "requirements": [
+        {
+          "section": "Video",
+          "key": "VBlank Rate",
+          "value": "120",
+          "evidence": "The exact patch note says only: Increase vblank to match your desired framerate. No exact value 120 is stated."
+        }
+      ]
+    }
+  ]
+}

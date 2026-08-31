@@ -1,0 +1,19 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio / .NET local state
+.vs/
+*.user
+*.suo
+*.rsuser
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Publish artifacts
+artifacts/
+publish/
+*.zip

@@ -1,0 +1,69 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:lang="clr-namespace:R3Config.Lang" x:Class="R3Config.Ctrl.HTgtView" mc:Ignorable="d" FlowDirection="{DynamicResource App.FlowDirection}" Language="{DynamicResource App.XmlLanguage}" UseLayoutRounding="True" SnapsToDevicePixels="True">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="HSty.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Border Margin="0" Style="{StaticResource HCanSectionSurface}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="8"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="8"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="{lang:TextExt Key=HCanary.Targets.Description}" Style="{StaticResource HCanLocalizedSectionCaptionText}" TextWrapping="Wrap"/>
+                <DataGrid Grid.Row="2" MaxHeight="240" Style="{StaticResource FluentDataGrid}" ItemsSource="{Binding HCanary.Games}" SelectedItem="{Binding HCanary.GameTgt}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" Language="{DynamicResource App.XmlLanguage}" HorizontalAlignment="Stretch" VerticalAlignment="Top" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" RowHeight="44" MinRowHeight="44" ColumnHeaderHeight="32" ColumnHeaderStyle="{StaticResource HCanDataGridHeader}" HeadersVisibility="Column" RowHeaderWidth="0" CanUserResizeRows="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Field.GameName}" Binding="{Binding GameName,                                                                           Mode=TwoWay,                                                                           UpdateSourceTrigger=PropertyChanged}" Width="*" MinWidth="360">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource HCanLocalizedDataGridCellText}">
+                                    <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                    <Setter Property="TextWrapping" Value="NoWrap"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                            <DataGridTextColumn.EditingElementStyle>
+                                <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource HCanLocalizedDataGridCellEditor}"/>
+                            </DataGridTextColumn.EditingElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Targets.GameId}" Binding="{Binding GameId,                                                                           Mode=TwoWay,                                                                           UpdateSourceTrigger=PropertyChanged}" Width="150" MinWidth="150" MaxWidth="150">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource HCanTechnicalDataGridCellText}">
+                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="TextWrapping" Value="NoWrap"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                            <DataGridTextColumn.EditingElementStyle>
+                                <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource HCanTechnicalDataGridCellEditor}">
+                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                </Style>
+                            </DataGridTextColumn.EditingElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="{lang:TextExt Key=HCanary.Field.GameVersion}" Binding="{Binding GameVer,                                                                           Mode=TwoWay,                                                                           UpdateSourceTrigger=PropertyChanged}" Width="110" MinWidth="110" MaxWidth="110">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="{x:Type TextBlock}" BasedOn="{StaticResource HCanTechnicalDataGridCellText}">
+                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                    <Setter Property="TextWrapping" Value="NoWrap"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                            <DataGridTextColumn.EditingElementStyle>
+                                <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource HCanTechnicalDataGridCellEditor}">
+                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                </Style>
+                            </DataGridTextColumn.EditingElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <WrapPanel Grid.Row="4" Style="{StaticResource HCanLeadingWrapPanel}">
+                    <Button Content="{lang:TextExt Key=HCanary.Add}" Command="{Binding HCanary.AddGmCmd}" Style="{StaticResource HCanToolbarActionButton}" TextBlock.TextAlignment="Left"/>
+                    <Button Content="{lang:TextExt Key=HCanary.Delete}" Command="{Binding HCanary.DelGmCmd}" Style="{StaticResource HCanCompactActionButton}" TextBlock.TextAlignment="Left"/>
+                </WrapPanel>
+            </Grid>
+        </Border>
+    </ScrollViewer>
+</UserControl>

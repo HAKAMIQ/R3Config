@@ -1,0 +1,120 @@
+R3Config Proprietary Software License
+Copyright (c) 2026 HAKAMIQ. All rights reserved.
+
+1. Ownership
+
+R3Config, including its source code, compiled executable files, user
+interface, documentation, designs, resources, scripts, configuration formats,
+build materials, and associated technical materials, is proprietary software
+owned exclusively by HAKAMIQ.
+
+2. No License Granted
+
+This file does not grant any person or organization permission to use, run,
+copy, reproduce, modify, publish, distribute, disclose, sublicense, sell,
+lease, transfer, host, repackage, or create derivative works from R3Config.
+
+Possession of the software, access to its source code, access to a private
+repository, or receipt of a compiled build does not constitute a license.
+
+The official compiled version may not be used or operated by another person
+or organization unless HAKAMIQ has issued explicit prior written permission
+or a separate valid license.
+
+3. Written Authorization Required
+
+Any authorization to use R3Config must be issued directly by HAKAMIQ in
+writing.
+
+An authorization may be restricted by:
+
+- Named user or organization.
+- Device or number of devices.
+- Version or edition.
+- Enabled features.
+- Duration or expiration date.
+- Personal or commercial purpose.
+- Geographic territory.
+- Other conditions specified by HAKAMIQ.
+
+No verbal statement, repository access, download, possession, delivery, or
+technical ability to run the software constitutes authorization.
+
+4. Prohibited Activities
+
+Without explicit prior written authorization from HAKAMIQ, no person or
+organization may:
+
+- Install, run, or otherwise use R3Config.
+- Copy or redistribute the software or its source code.
+- Publish the software, source code, builds, patches, or documentation.
+- Modify, adapt, translate, port, or create derivative works.
+- Sell, rent, sublicense, transfer, host, or commercially exploit it.
+- Repackage R3Config with another product, installer, archive, or service.
+- Claim ownership or authorship of R3Config or any part of it.
+- Remove, hide, alter, or misrepresent copyright, ownership, attribution,
+  license, signature, or security notices.
+- Bypass, disable, remove, or interfere with license validation, activation,
+  device restrictions, expiration controls, integrity checks, or digital
+  signatures.
+- Reverse engineer, decompile, disassemble, or attempt to derive protected
+  implementation details, except where such a restriction is expressly
+  prohibited by applicable law.
+- Use R3Config or its source code to develop a competing or substantially
+  similar product.
+
+5. Confidentiality
+
+Non-public source code, signing materials, credentials, private builds,
+internal documentation, technical information, and other non-public R3Config
+materials must be treated as confidential.
+
+Access to a private repository or receipt of a private copy does not authorize
+disclosure to any third party.
+
+6. Third-Party Components
+
+Third-party libraries, tools, patch definitions, cheat definitions, emulator
+components, and other third-party materials remain subject to their respective
+licenses and ownership rights.
+
+This license applies only to the original R3Config materials owned by HAKAMIQ
+and does not claim ownership of third-party materials.
+
+R3Config does not include or grant rights to RPCS3, PlayStation firmware, game
+files, copyrighted game data, or third-party emulator binaries.
+
+7. Termination
+
+Any authorization issued by HAKAMIQ terminates automatically when its
+conditions are violated.
+
+Following termination, the user must stop using R3Config and delete all
+unauthorized copies, subject to applicable law and any written instructions
+issued by HAKAMIQ.
+
+8. No Warranty
+
+R3Config is provided "AS IS", without warranties of any kind, express or
+implied, including warranties of merchantability, fitness for a particular
+purpose, availability, accuracy, security, and non-infringement.
+
+9. Limitation of Liability
+
+To the maximum extent permitted by applicable law, HAKAMIQ shall not be liable
+for any direct, indirect, incidental, special, consequential, or other damages
+arising from possession, access, installation, use, inability to use,
+modification, or distribution of R3Config.
+
+10. Reservation of Rights
+
+All rights not expressly granted through a separate written authorization or
+license issued by HAKAMIQ remain reserved exclusively by HAKAMIQ.
+
+No open-source license and no general end-user license are granted by this
+file.
+
+Licensing authorization:
+
+GitHub: HAKAMIQ
+Email: almanestra@gmail.com

@@ -1,0 +1,344 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             x:Class="R3Config.Ctrl.HBarView"
+             mc:Ignorable="d"
+             x:Name="Root"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="HSty.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Border x:Name="WorkflowBottomBar"
+            Style="{StaticResource BottomBarBorder}"
+            CornerRadius="{StaticResource Radius.None}">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="8" />
+                <RowDefinition Height="32" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Text="{lang:TextExt Key=HCanary.StepHint.Game}"
+                       TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}"
+                           BasedOn="{StaticResource HCanLocalizedSectionCaptionText}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding SelectedIndex, ElementName=Root}"
+                                               Value="0" />
+                                    <Condition Binding="{Binding IsEnabled, ElementName=NextButton}"
+                                               Value="False" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock Grid.Row="0"
+                       Text="{lang:TextExt Key=HCanary.StepHint.Targets}"
+                       TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}"
+                           BasedOn="{StaticResource HCanLocalizedSectionCaptionText}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding SelectedIndex, ElementName=Root}"
+                                               Value="1" />
+                                    <Condition Binding="{Binding IsEnabled, ElementName=NextButton}"
+                                               Value="False" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock Grid.Row="0"
+                       Text="{lang:TextExt Key=HCanary.StepHint.Target}"
+                       TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}"
+                           BasedOn="{StaticResource HCanLocalizedSectionCaptionText}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding SelectedIndex, ElementName=Root}"
+                                               Value="2" />
+                                    <Condition Binding="{Binding IsEnabled, ElementName=NextButton}"
+                                               Value="False" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock Grid.Row="0"
+                       Text="{lang:TextExt Key=HCanary.StepHint.Details}"
+                       TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}"
+                           BasedOn="{StaticResource HCanLocalizedSectionCaptionText}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding SelectedIndex, ElementName=Root}"
+                                               Value="3" />
+                                    <Condition Binding="{Binding IsEnabled, ElementName=NextButton}"
+                                               Value="False" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock Grid.Row="0"
+                       Text="{lang:TextExt Key=HCanary.StepHint.Instructions}"
+                       TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}"
+                           BasedOn="{StaticResource HCanLocalizedSectionCaptionText}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding SelectedIndex, ElementName=Root}"
+                                               Value="4" />
+                                    <Condition Binding="{Binding IsEnabled, ElementName=NextButton}"
+                                               Value="False" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock Grid.Row="0"
+                       Text="{Binding HCanary.SaveHint}"
+                       TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}"
+                           BasedOn="{StaticResource HCanLocalizedSectionCaptionText}">
+                        <Setter Property="Visibility"
+                                Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedIndex, ElementName=Root}"
+                                         Value="5">
+                                <Setter Property="Visibility"
+                                        Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <Grid Grid.Row="2"
+                  FlowDirection="LeftToRight">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="96" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="MoreButton"
+                        Grid.Column="0"
+                        Style="{StaticResource HCanMoreActionButton}"
+                        Click="OpenMore"
+                        ToolTip="{lang:TextExt Key=HCanary.FilesAndTools}"
+                        AutomationProperties.Name="{lang:TextExt Key=HCanary.FilesAndTools}">
+
+                    <Button.ContextMenu>
+                        <ContextMenu Placement="Top"
+                                     FlowDirection="{DynamicResource App.FlowDirection}">
+
+                            <MenuItem Header="{lang:TextExt Key=HCanary.OpenFolder}"
+                                      Command="{Binding HCanary.PatDir}"
+                                      TextBlock.TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                            <MenuItem Command="{Binding HCanary.ImpFile}">
+                                <MenuItem.Header>
+                                    <TextBlock Text="imported_patch.yml"
+                                               Style="{StaticResource HCanTechnicalTextBlock}" />
+                                </MenuItem.Header>
+                            </MenuItem>
+
+                            <MenuItem Command="{Binding HCanary.R3Cmd}">
+                                <MenuItem.Header>
+                                    <TextBlock Text="RPCS3"
+                                               Style="{StaticResource HCanTechnicalTextBlock}" />
+                                </MenuItem.Header>
+                            </MenuItem>
+
+                            <Separator />
+
+                            <MenuItem Header="{lang:TextExt Key=HCanary.CopyYaml}"
+                                      Command="{Binding HCanary.CopyCmd}"
+                                      TextBlock.TextAlignment="{DynamicResource App.TextAlignment}" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+
+                    <TextBlock Text="&#xE712;"
+                               FontFamily="Segoe Fluent Icons"
+                               FontSize="14"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextAlignment="Center"
+                               FlowDirection="LeftToRight" />
+                </Button>
+
+                <Button Grid.Column="2"
+                        Width="96"
+                        Margin="0"
+                        Content="{lang:TextExt Key=HCanary.Back}"
+                        Click="ReturnToGames"
+                        FlowDirection="{DynamicResource App.TextFlowDirection}"
+                        TextBlock.TextAlignment="Center">
+
+                    <Button.Style>
+                        <Style TargetType="{x:Type Button}"
+                               BasedOn="{StaticResource HCanSecondaryActionButton}">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=Root}"
+                                             Value="0">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <Button Grid.Column="2"
+                        Width="96"
+                        Margin="0"
+                        Content="{lang:TextExt Key=HCanary.Back}"
+                        Click="RaisePreviousRequested"
+                        FlowDirection="{DynamicResource App.TextFlowDirection}"
+                        TextBlock.TextAlignment="Center">
+
+                    <Button.Style>
+                        <Style TargetType="{x:Type Button}"
+                               BasedOn="{StaticResource HCanSecondaryActionButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=Root}"
+                                             Value="0">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <Button x:Name="NextButton"
+                        Grid.Column="4"
+                        Width="96"
+                        Margin="0"
+                        Content="{lang:TextExt Key=HCanary.Next}"
+                        Click="RaiseNextRequested"
+                        FlowDirection="{DynamicResource App.TextFlowDirection}"
+                        TextBlock.TextAlignment="Center">
+
+                    <Button.Style>
+                        <Style TargetType="{x:Type Button}"
+                               BasedOn="{StaticResource HCanPrimaryActionButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=Root}"
+                                             Value="5">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <WrapPanel Grid.Column="4"
+                           FlowDirection="LeftToRight">
+
+                    <WrapPanel.Style>
+                        <Style TargetType="{x:Type WrapPanel}"
+                               BasedOn="{StaticResource HCanTrailingWrapPanel}">
+                            <Setter Property="Visibility"
+                                    Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=Root}"
+                                             Value="5">
+                                    <Setter Property="Visibility"
+                                            Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </WrapPanel.Style>
+
+                    <Button Content="{lang:TextExt Key=HCanary.DeletePatch}"
+                            Command="{Binding HCanary.DelCmd}"
+                            Visibility="{Binding HCanary.HasStoredPatch,
+                                                 Converter={StaticResource BoolToVisibilityConverter}}"
+                            Style="{StaticResource HCanDangerActionButton}"
+                            Margin="4,0"
+                            FlowDirection="{DynamicResource App.TextFlowDirection}"
+                            TextBlock.TextAlignment="Center" />
+
+                    <Button Content="{lang:TextExt Key=HCanary.SaveAs}"
+                            Command="{Binding HCanary.SaveAs}"
+                            Visibility="{Binding HCanary.HasStoredPatch,
+                                                 Converter={StaticResource BoolToVisibilityConverter}}"
+                            Style="{StaticResource HCanSecondaryActionButton}"
+                            Margin="4,0"
+                            FlowDirection="{DynamicResource App.TextFlowDirection}"
+                            TextBlock.TextAlignment="Center" />
+
+                    <Button Content="{lang:TextExt Key=HCanary.Save}"
+                            Command="{Binding HCanary.SaveCmd}"
+                            Style="{StaticResource HCanPrimaryActionButton}"
+                            Margin="4,0"
+                            FlowDirection="{DynamicResource App.TextFlowDirection}"
+                            TextBlock.TextAlignment="Center" />
+                </WrapPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

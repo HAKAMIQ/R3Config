@@ -1,0 +1,132 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             x:Class="R3Config.Ctrl.HSavView"
+             mc:Ignorable="d"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="HSty.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Border x:Name="SavedDrawer"
+            Width="360"
+            Margin="0"
+            Padding="16"
+            VerticalAlignment="Stretch"
+            Style="{StaticResource HCanSavedDrawer}"
+            CornerRadius="{StaticResource Radius.None}">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="8" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0"
+                  FlowDirection="LeftToRight"
+                  HorizontalAlignment="Stretch">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0"
+                        Content=""
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="10"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        ToolTip="{lang:TextExt Key=HCanary.Stored.Close}"
+                        AutomationProperties.Name="{lang:TextExt Key=HCanary.Stored.Close}"
+                        Style="{StaticResource HCanSavedCloseButton}"
+                        Click="RaiseCloseRequested"
+                        FlowDirection="LeftToRight"
+                        TextBlock.TextAlignment="Center" />
+
+                <TextBlock Grid.Column="2"
+                           Text="{lang:TextExt Key=HCanary.Stored.Title}"
+                           Style="{StaticResource HCanLocalizedSectionTitleText}"
+                           FlowDirection="{DynamicResource App.TextFlowDirection}"
+                           TextAlignment="{DynamicResource App.TextAlignment}"
+                           HorizontalAlignment="Stretch"
+                           VerticalAlignment="Center" />
+            </Grid>
+
+            <TextBlock Grid.Row="2"
+                       Text="{lang:TextExt Key=HCanary.Stored.Description}"
+                       Style="{StaticResource HCanLocalizedSectionCaptionText}"
+                       TextWrapping="Wrap" />
+
+            <Grid Grid.Row="4">
+
+                <ListBox ItemsSource="{Binding HCanary.Patches}"
+                         SelectedItem="{Binding HCanary.SelPat}"
+                         Style="{StaticResource HCanList}"
+                         Padding="0"
+                         HorizontalContentAlignment="Stretch"
+                         Language="{DynamicResource App.XmlLanguage}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource HCanSavedItem}"
+                                    CornerRadius="{StaticResource Radius.None}">
+
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Draft.PatName}"
+                                               Style="{StaticResource HCanLocalizedSectionTitleText}"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Draft.PatName}" />
+
+                                    <TextBlock Text="{Binding Draft.ExeHash}"
+                                               Margin="0,4,0,0"
+                                               Style="{StaticResource HCanTechnicalTextBlock}"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Draft.ExeHash}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Border Style="{StaticResource EmptyStatePanel}"
+                        Padding="24"
+                        CornerRadius="{StaticResource Radius.None}"
+                        Visibility="{Binding HCanary.IsStoredEmpty,
+                                             Converter={StaticResource BoolToVisibilityConverter}}">
+
+                    <TextBlock Text="{lang:TextExt Key=HCanary.Stored.Empty}"
+                               Style="{StaticResource HCanLocalizedSectionCaptionText}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center" />
+                </Border>
+            </Grid>
+
+            <Button Grid.Row="6"
+                    Content="{lang:TextExt Key=HCanary.Open}"
+                    Command="{Binding HCanary.OpenCmd}"
+                    Style="{StaticResource HCanDrawerPrimaryButton}"
+                    Click="RaiseOpenRequested"
+                    FlowDirection="{DynamicResource App.TextFlowDirection}"
+                    TextBlock.TextAlignment="Center" />
+        </Grid>
+    </Border>
+</UserControl>

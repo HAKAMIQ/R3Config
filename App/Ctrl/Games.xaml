@@ -1,0 +1,217 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             xmlns:local="clr-namespace:R3Config.Ctrl"
+             x:Class="R3Config.Ctrl.GameList"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <Style x:Key="GameListLocalizedTitleText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource RailTitleText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+        </Style>
+
+        <Style x:Key="GameListLocalizedCaptionText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource RailCaptionText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+        </Style>
+
+        <Style x:Key="GameListLocalizedSearchTextBox"
+               TargetType="{x:Type TextBox}"
+               BasedOn="{StaticResource FluentTextBox.Localized}">
+            <Setter Property="Height"
+                    Value="32" />
+            <Setter Property="MinHeight"
+                    Value="32" />
+            <Setter Property="Padding"
+                    Value="12,0" />
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="{DynamicResource App.HorizontalAlignment}" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+        </Style>
+
+        <Style x:Key="GameListLocalizedFilterCheckBox"
+               TargetType="{x:Type CheckBox}"
+               BasedOn="{StaticResource GameFilterCheckBox}">
+            <Setter Property="MinHeight"
+                    Value="32" />
+            <Setter Property="Margin"
+                    Value="0" />
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="{DynamicResource App.HorizontalAlignment}" />
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+            <Setter Property="TextBlock.TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+        </Style>
+
+        <Style x:Key="GameListLocalizedEmptyText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource ArabicEmptyStateText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource App.TextAlignment}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+        </Style>
+
+        <Style x:Key="GameListTechnicalTitleText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource GameRailTitleText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource TechnicalText.FlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource TechnicalText.TextAlignment}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+            <Setter Property="Language"
+                    Value="{DynamicResource TechnicalText.Language}" />
+        </Style>
+
+        <Style x:Key="GameListTechnicalSerialText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource GameRailSerialText}">
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource TechnicalText.FlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource TechnicalText.TextAlignment}" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+            <Setter Property="Language"
+                    Value="{DynamicResource TechnicalText.Language}" />
+        </Style>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource LeftRailBorder}"
+            Padding="{StaticResource Space.16.All}"
+            FlowDirection="{DynamicResource App.FlowDirection}"
+            HorizontalAlignment="Stretch">
+
+        <Grid FlowDirection="{DynamicResource App.FlowDirection}"
+              HorizontalAlignment="Stretch">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="8" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Text="{lang:TextExt Key=Games.Title}"
+                       Style="{StaticResource GameListLocalizedTitleText}" />
+
+            <Grid Grid.Row="2"
+                  Height="32"
+                  FlowDirection="{DynamicResource App.FlowDirection}">
+
+                <TextBox Height="32"
+                         MinHeight="32"
+                         Style="{StaticResource GameListLocalizedSearchTextBox}"
+                         Text="{Binding GameList.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="{lang:TextExt Key=Games.SearchTip}" />
+
+                <TextBlock Text="{lang:TextExt Key=Games.SearchPlaceholder}"
+                           Style="{StaticResource GameListLocalizedCaptionText}"
+                           Foreground="{DynamicResource Text.Disabled}"
+                           Margin="12,0"
+                           VerticalAlignment="Center"
+                           IsHitTestVisible="False"
+                           Visibility="{Binding GameList.IsSearch, Converter={StaticResource BoolToVisibilityConverter}}" />
+            </Grid>
+
+            <CheckBox Grid.Row="4"
+                      MinHeight="32"
+                      Content="{lang:TextExt Key=Games.FilterDetectedOnly}"
+                      Style="{StaticResource GameListLocalizedFilterCheckBox}"
+                      IsChecked="{Binding GameList.InR3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      ToolTip="{Binding GameList.Tip}" HorizontalAlignment="Left" />
+
+            <Grid Grid.Row="6"
+                  FlowDirection="{DynamicResource App.FlowDirection}"
+                  HorizontalAlignment="Stretch">
+
+                <ListBox x:Name="GamesList"
+                         AutomationProperties.AutomationId="Game.List"
+                         ItemsSource="{Binding GameList.Games}"
+                         SelectedItem="{Binding GameList.SelGame, Mode=TwoWay}"
+                         IsEnabled="{Binding CanSelectGame}"
+                         ItemContainerStyle="{StaticResource GameRailItem}"
+                         Padding="0"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         FlowDirection="{DynamicResource App.FlowDirection}"
+                         Language="{DynamicResource App.XmlLanguage}"
+                         HorizontalAlignment="Stretch"
+                         HorizontalContentAlignment="Stretch"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.CanContentScroll="True"
+                         ScrollViewer.IsDeferredScrollingEnabled="False"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         VirtualizingPanel.ScrollUnit="Item">
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid MinHeight="28"
+                                  Margin="0"
+                                  FlowDirection="{DynamicResource TechnicalText.FlowDirection}">
+
+                                <StackPanel MinWidth="0"
+                                            VerticalAlignment="Center"
+                                            FlowDirection="{DynamicResource TechnicalText.FlowDirection}">
+
+                                    <TextBlock Text="{Binding Title}"
+                                               Style="{StaticResource GameListTechnicalTitleText}" />
+
+                                    <TextBlock Text="{Binding Serial}"
+                                               Style="{StaticResource GameListTechnicalSerialText}"
+                                               Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock Text="{Binding GameList.EmptyTxt}"
+                           Style="{StaticResource GameListLocalizedEmptyText}"
+                           VerticalAlignment="Top"
+                           Visibility="{Binding GameList.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}"
+                           IsHitTestVisible="False"
+                           Margin="0,16,0,0"
+                           TextWrapping="Wrap" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

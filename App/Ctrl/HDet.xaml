@@ -1,0 +1,181 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             x:Class="R3Config.Ctrl.HDetView"
+             mc:Ignorable="d"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="HSty.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+
+        <Border Style="{StaticResource HCanSectionSurface}"
+                CornerRadius="{StaticResource Radius.None}">
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"
+                                      MinWidth="220" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*"
+                                      MinWidth="220" />
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0"
+                            Grid.Column="0">
+
+                    <TextBlock Text="{lang:TextExt Key=HCanary.Field.PatchName}"
+                               Style="{StaticResource HCanLocalizedLabelText}" />
+
+                    <TextBox Text="{Binding HCanary.PatName,
+                                            Mode=TwoWay,
+                                            UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource HCanLocalizedTextBox}" />
+
+                    <TextBlock Text="{Binding HCanary.NameErr}"
+                               Style="{StaticResource HCanLocalizedErrorText}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="0"
+                            Grid.Column="2">
+
+                    <TextBlock Text="{lang:TextExt Key=HCanary.Field.PatchVersion}"
+                               Style="{StaticResource HCanLocalizedLabelText}" />
+
+                    <TextBox Text="{Binding HCanary.PatVer,
+                                            Mode=TwoWay,
+                                            UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource HCanTechnicalTextBox}" />
+
+                    <TextBlock Text="{Binding HCanary.VerErr}"
+                               Style="{StaticResource HCanLocalizedErrorText}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="2"
+                            Grid.Column="0">
+
+                    <TextBlock Text="{lang:TextExt Key=HCanary.Field.Author}"
+                               Style="{StaticResource HCanLocalizedLabelText}" />
+
+                    <TextBox Text="{Binding HCanary.Author,
+                                            Mode=TwoWay,
+                                            UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource HCanLocalizedTextBox}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="2"
+                            Grid.Column="2">
+
+                    <TextBlock Text="{lang:TextExt Key=HCanary.Field.Group}"
+                               Style="{StaticResource HCanLocalizedLabelText}"
+                               ToolTip="{lang:TextExt Key=HCanary.Tooltip.Group}" />
+
+                    <TextBox Text="{Binding HCanary.Group,
+                                            Mode=TwoWay,
+                                            UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource HCanTechnicalTextBox}"
+                             ToolTip="{lang:TextExt Key=HCanary.Tooltip.Group}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="4"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="3">
+
+                    <TextBlock Text="{lang:TextExt Key=HCanary.Field.Notes}"
+                               Style="{StaticResource HCanLocalizedLabelText}" />
+
+                    <TextBox Text="{Binding HCanary.Notes,
+                                            Mode=TwoWay,
+                                            UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource HCanLocalizedTextBox}"
+                             AcceptsReturn="True"
+                             Padding="12,8"
+                             TextWrapping="Wrap"
+                             VerticalContentAlignment="Top"
+                             MinHeight="72" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="6"
+                            Grid.Column="0">
+
+                    <TextBlock Text="{lang:TextExt Key=HCanary.Field.Category}"
+                               Style="{StaticResource HCanLocalizedLabelText}" />
+
+                    <ComboBox SelectedValue="{Binding HCanary.Category,
+                                                      Mode=TwoWay,
+                                                      UpdateSourceTrigger=PropertyChanged}"
+                              SelectedValuePath="Tag"
+                              ToolTip="{lang:TextExt Key=HCanary.Tooltip.Experimental}"
+                              Style="{StaticResource HCanLocalizedComboBox}">
+
+                        <ComboBoxItem Tag="Regular">
+                            <TextBlock Text="{lang:TextExt Key=HCanary.Category.Regular}"
+                                       Style="{StaticResource HCanLocalizedSectionCaptionText}" />
+                        </ComboBoxItem>
+
+                        <ComboBoxItem Tag="Experimental">
+                            <TextBlock Text="{lang:TextExt Key=HCanary.Field.Experimental}"
+                                       Style="{StaticResource HCanLocalizedSectionCaptionText}" />
+                        </ComboBoxItem>
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Grid.Row="6"
+                            Grid.Column="2">
+
+                    <TextBlock Text="{lang:TextExt Key=HCanary.Field.Status}"
+                               Style="{StaticResource HCanLocalizedLabelText}" />
+
+                    <ComboBox ItemsSource="{Binding HCanary.Statuses}"
+                              SelectedValue="{Binding HCanary.Status,
+                                                      Mode=TwoWay}"
+                              SelectedValuePath="Value"
+                              Style="{StaticResource HCanLocalizedComboBox}">
+
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}"
+                                           Style="{StaticResource HCanLocalizedSectionCaptionText}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <Border Grid.Row="8"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="3"
+                        Style="{StaticResource HCanInlineInfoPanel}"
+                        CornerRadius="{StaticResource Radius.None}">
+
+                    <TextBlock Text="{lang:TextExt Key=HCanary.LocalOptions.Description}"
+                               Style="{StaticResource HCanLocalizedSectionCaptionText}"
+                               TextWrapping="Wrap" />
+                </Border>
+            </Grid>
+        </Border>
+    </ScrollViewer>
+</UserControl>

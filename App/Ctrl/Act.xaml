@@ -1,0 +1,126 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             x:Class="R3Config.Ctrl.ActBar"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <Style x:Key="ActBarTechnicalTextBox"
+               TargetType="{x:Type TextBox}"
+               BasedOn="{StaticResource FluentTextBox.Technical}">
+            <Setter Property="Height"
+                    Value="{StaticResource Control.Height.Standard}" />
+            <Setter Property="MinHeight"
+                    Value="{StaticResource Control.Height.Standard}" />
+            <Setter Property="Padding"
+                    Value="12,0" />
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource TechnicalText.FlowDirection}" />
+            <Setter Property="TextAlignment"
+                    Value="{DynamicResource TechnicalText.TextAlignment}" />
+            <Setter Property="Language"
+                    Value="{DynamicResource TechnicalText.Language}" />
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+        </Style>
+
+        <Style x:Key="ActBarSecondaryActionButton"
+               TargetType="{x:Type Button}"
+               BasedOn="{StaticResource FluentButton.Secondary}">
+            <Setter Property="MinWidth"
+                    Value="{StaticResource Button.MinWidth.Standard}" />
+            <Setter Property="Height"
+                    Value="{StaticResource Control.Height.Standard}" />
+            <Setter Property="MinHeight"
+                    Value="{StaticResource Control.Height.Standard}" />
+            <Setter Property="Padding"
+                    Value="{StaticResource Button.Padding.Standard}" />
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+            <Setter Property="TextBlock.TextAlignment"
+                    Value="Center" />
+        </Style>
+
+        <Style x:Key="ActBarPrimaryActionButton"
+               TargetType="{x:Type Button}"
+               BasedOn="{StaticResource FluentButton.Primary}">
+            <Setter Property="MinWidth"
+                    Value="{StaticResource Button.MinWidth.Standard}" />
+            <Setter Property="Height"
+                    Value="{StaticResource Control.Height.Standard}" />
+            <Setter Property="MinHeight"
+                    Value="{StaticResource Control.Height.Standard}" />
+            <Setter Property="Padding"
+                    Value="{StaticResource Button.Padding.Standard}" />
+            <Setter Property="FlowDirection"
+                    Value="{DynamicResource App.TextFlowDirection}" />
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+            <Setter Property="TextBlock.TextAlignment"
+                    Value="Center" />
+        </Style>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource BottomBarBorder}">
+        <Grid MinHeight="{StaticResource Control.Height.Standard}"
+              FlowDirection="LeftToRight"
+              Language="{DynamicResource App.XmlLanguage}"
+              VerticalAlignment="Center">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0"
+                       Text="RPCS3"
+                       Style="{StaticResource BottomBarLabelText}"
+                       FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
+                       TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
+                       Language="{DynamicResource TechnicalText.Language}"
+                       VerticalAlignment="Center" />
+
+            <TextBox Grid.Column="2"
+                     AutomationProperties.AutomationId="App.Rpcs3Path"
+                     Style="{StaticResource ActBarTechnicalTextBox}"
+                     Text="{Binding ExePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     IsReadOnly="False"
+                     MinWidth="180"
+                     ToolTip="{lang:TextExt Key=Top.Rpcs3Tip}" />
+
+            <Button Grid.Column="4"
+                    AutomationProperties.AutomationId="App.Rpcs3BrowseButton"
+                    Style="{StaticResource ActBarSecondaryActionButton}"
+                    Content="{lang:TextExt Key=Btn.Browse}"
+                    ToolTip="{lang:TextExt Key=Btn.BrowseTip}"
+                    Command="{Binding R3Cmd}" />
+
+            <Button Grid.Column="6"
+                    AutomationProperties.AutomationId="App.AnalyzeButton"
+                    Style="{StaticResource ActBarPrimaryActionButton}"
+                    Content="{lang:TextExt Key=Btn.Analyze}"
+                    ToolTip="{lang:TextExt Key=Btn.AnalyzeTip}"
+                    Command="{Binding AnlzCmd}" />
+        </Grid>
+    </Border>
+</UserControl>

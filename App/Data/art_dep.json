@@ -1,0 +1,215 @@
+{
+  "schemaVersion": "1",
+  "sourceIdentity": "Artemis-Patch-Collection-RPCS3",
+  "sourceRevision": "2b981063a6e53cdb5dc8fefda4b19c74903a138c",
+  "artemisSha256": "710c26be3b185e69f741e03dc8555fc3813c55919348d675e9d496aed7a6d1b3",
+  "rules": [
+    {
+      "runKey": "PPU-087937163dc1accb85f7302401f62f0f0a93b9e8",
+      "serial": "BLUS30089",
+      "version": "01.00",
+      "patchTitle": "Press L3 To Stop Pursuit",
+      "mode": "All",
+      "requires": ["Button Enable Code"],
+      "evidence": "The source note requires Button Enable Code first and warns that omission freezes the game."
+    },
+    {
+      "runKey": "PPU-64a581133b349f908360c17973841ba8846b9576",
+      "serial": "NPUB31240",
+      "version": "01.01",
+      "patchTitle": "Hold L3 To Move Up (Requires Master Code + Joker pad)",
+      "mode": "All",
+      "requires": ["Master Codes (Must Be On)", "Joker Pad (Must Be On)"],
+      "evidence": "The canonical title requires both Master Code and Joker Pad."
+    },
+    {
+      "runKey": "PPU-cd1eced9b38a25ebce7b86d818dbe65df815859e",
+      "serial": "BLUS31045",
+      "version": "01.00",
+      "patchTitle": "Invincibility For Things Raiden Controls",
+      "mode": "Any",
+      "requires": ["Marker For The Dwarf Gekko That Raiden Controls In Chapter 2", "Marker For The Turrets That Raiden Can Control In Chapter 4"],
+      "evidence": "The source note requires either marker code."
+    },
+    {
+      "runKey": "PPU-cd1eced9b38a25ebce7b86d818dbe65df815859e",
+      "serial": "BLUS31045",
+      "version": "01.00",
+      "patchTitle": "Damage Fully Refills Health For Things Raiden Controls",
+      "mode": "Any",
+      "requires": ["Marker For The Dwarf Gekko That Raiden Controls In Chapter 2", "Marker For The Turrets That Raiden Can Control In Chapter 4"],
+      "evidence": "The source note requires either marker code."
+    },
+    {
+      "runKey": "PPU-93a545fee68108c289cc5b4e7cc4d9588b4fa1b1",
+      "serial": "BLUS30160",
+      "version": "01.03",
+      "patchTitle": "Kills CPU Anytimes (Press L3 + X)",
+      "mode": "All",
+      "requires": ["Button Enable Codes [Must Be On]"],
+      "evidence": "The source note explicitly requires Button Enable Codes."
+    },
+    {
+      "runKey": "PPU-06a41e923a3b04beac5121d0174c82bfffb8bd2a",
+      "serial": "MRTC00005",
+      "version": "01.00",
+      "patchTitle": "Full Health + Full Musou + Full Rages + Speed Hack (Requires Enable Codes )",
+      "mode": "All",
+      "requires": ["Enable Codes (Must Be On)"],
+      "evidence": "The canonical title explicitly requires Enable Codes."
+    },
+    {
+      "runKey": "PPU-06a41e923a3b04beac5121d0174c82bfffb8bd2a",
+      "serial": "MRTC00005",
+      "version": "01.00",
+      "patchTitle": "Invincibility (Requires Enable Codes )",
+      "mode": "All",
+      "requires": ["Enable Codes (Must Be On)"],
+      "evidence": "The canonical title explicitly requires Enable Codes."
+    },
+    {
+      "runKey": "PPU-337df400e4ec631d1b4789ee2c2d7d91496e8ca7",
+      "serial": "NPEB02082",
+      "version": "01.00",
+      "patchTitle": "(M) Hold X To Moon Jump (Requires Joker Pad)",
+      "mode": "All",
+      "requires": ["(M) Joker Pad (Must Be On)"],
+      "evidence": "The canonical title explicitly requires Joker Pad."
+    },
+    {
+      "runKey": "PPU-a31b54c21682252c501ba388ddcf8ae64ed1f5a3",
+      "serial": "NPUB31483",
+      "version": "01.00",
+      "patchTitle": "Infinite Health",
+      "mode": "All",
+      "requires": ["Enable Codes"],
+      "evidence": "The source note explicitly requires Enable Codes."
+    },
+    {
+      "runKey": "PPU-a31b54c21682252c501ba388ddcf8ae64ed1f5a3",
+      "serial": "NPUB31483",
+      "version": "01.00",
+      "patchTitle": "Invincible",
+      "mode": "All",
+      "requires": ["Enable Codes"],
+      "evidence": "The source note explicitly requires Enable Codes."
+    },
+    {
+      "runKey": "PPU-38656a143a665d48c38ae914e7c826d059efd291",
+      "serial": "BLUS30145",
+      "version": "01.00",
+      "patchTitle": "Everything Dies From Any Damage (Turn On Health Never Decreases)",
+      "mode": "All",
+      "requires": ["Health Never Decreases"],
+      "evidence": "The canonical title instructs the user to turn on Health Never Decreases."
+    },
+    {
+      "runKey": "PPU-ad7bfe5eb63563703c893ab10930c35cf80e8d0e",
+      "serial": "BCUS98125",
+      "version": "01.00",
+      "patchTitle": "Hold L2 + X To Fly",
+      "mode": "All",
+      "requires": ["Button Enable Code"],
+      "evidence": "The source note explicitly requires Button Enable Code first."
+    },
+    {
+      "runKey": "PPU-ad7bfe5eb63563703c893ab10930c35cf80e8d0e",
+      "serial": "BCUS98125",
+      "version": "01.00",
+      "patchTitle": "Press L2 + L3 To Toggle Or Disable AI Movement",
+      "mode": "All",
+      "requires": ["Button Enable Code"],
+      "evidence": "Button Enable Code states it must be turned on before every other button code."
+    },
+    {
+      "runKey": "PPU-ad7bfe5eb63563703c893ab10930c35cf80e8d0e",
+      "serial": "BCUS98125",
+      "version": "01.00",
+      "patchTitle": "Hold Select While Damaging A Vehicle Or Object To Mark It For Invincibility, Select + L3 To Unmark",
+      "mode": "All",
+      "requires": ["Button Enable Code"],
+      "evidence": "Button Enable Code states it must be turned on before every other button code."
+    },
+    {
+      "runKey": "PPU-d0c3e2a107c47d20d3316325ce6f75464a8f4f1d",
+      "serial": "BCUS98119",
+      "version": "01.00",
+      "patchTitle": "(b) Hold L2 + X To Fly",
+      "mode": "All",
+      "requires": ["(b) Button Enable Code"],
+      "evidence": "Button Enable Code explicitly lists flying among the dependent button operations."
+    },
+    {
+      "runKey": "PPU-d0c3e2a107c47d20d3316325ce6f75464a8f4f1d",
+      "serial": "BCUS98119",
+      "version": "01.00",
+      "patchTitle": "(b) Toggle Between Arc Lightning And Overload Burst With L1 + L2",
+      "mode": "All",
+      "requires": ["(b) Button Enable Code"],
+      "evidence": "Button Enable Code explicitly lists the L1 and L2 toggle among its dependents."
+    },
+    {
+      "runKey": "PPU-d0c3e2a107c47d20d3316325ce6f75464a8f4f1d",
+      "serial": "BCUS98119",
+      "version": "01.00",
+      "patchTitle": "(b) Toggle AI Movement With L2 + L3",
+      "mode": "All",
+      "requires": ["(b) Button Enable Code"],
+      "evidence": "Button Enable Code explicitly lists the AI movement toggle among its dependents."
+    },
+    {
+      "runKey": "PPU-d0c3e2a107c47d20d3316325ce6f75464a8f4f1d",
+      "serial": "BCUS98119",
+      "version": "01.00",
+      "patchTitle": "(b) Can Mark Certain Objects For Invincibility (Hold Select And Damage It, Press Select + L3 To Unmark)",
+      "mode": "All",
+      "requires": ["(b) Button Enable Code"],
+      "evidence": "Button Enable Code explicitly lists marking objects for invincibility among its dependents."
+    },
+    {
+      "runKey": "PPU-412a9bf323b4743de21658a286f71dbe82cad807",
+      "serial": "BCUS98119",
+      "version": "01.00",
+      "patchTitle": "Hold L2 + X To Fly",
+      "mode": "All",
+      "requires": ["{M)Button Enable Code"],
+      "evidence": "The source note explicitly requires Button Enable Code first."
+    },
+    {
+      "runKey": "PPU-412a9bf323b4743de21658a286f71dbe82cad807",
+      "serial": "BCUS98119",
+      "version": "01.00",
+      "patchTitle": "Toggle Between Arc Lightning And Overload Burst With L1 + L2",
+      "mode": "All",
+      "requires": ["{M)Button Enable Code"],
+      "evidence": "The source note explicitly requires Button Enable Code first."
+    },
+    {
+      "runKey": "PPU-412a9bf323b4743de21658a286f71dbe82cad807",
+      "serial": "BCUS98119",
+      "version": "01.00",
+      "patchTitle": "Toggle AI Movement With L2 + L3",
+      "mode": "All",
+      "requires": ["{M)Button Enable Code"],
+      "evidence": "The source note explicitly requires Button Enable Code first."
+    },
+    {
+      "runKey": "PPU-412a9bf323b4743de21658a286f71dbe82cad807",
+      "serial": "BCUS98119",
+      "version": "01.00",
+      "patchTitle": "Can Mark Certain Objects For Invincibility",
+      "mode": "All",
+      "requires": ["{M)Button Enable Code"],
+      "evidence": "The counterpart source explicitly lists object invincibility under the same button-enable mechanism."
+    },
+    {
+      "runKey": "PPU-3a0b43e4a5f4bfea64f53612ee7c5d990f88129c",
+      "serial": "BCUS98232",
+      "version": "01.12",
+      "patchTitle": "(B) Toggle Animation Speed Increase With R3 + \\\/",
+      "mode": "All",
+      "requires": ["(B) Button Enable Code"],
+      "evidence": "The button patch reads the state initialized by the adjacent Button Enable Code in the reviewed source."
+    }
+  ]
+}
