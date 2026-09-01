@@ -214,7 +214,7 @@ public sealed partial class MainVm
             var separator = trimmed.IndexOf(':');
             if (separator <= 0)
             {
-                visible.Add(trimmed);
+                visible.Add(PatText.SurfMsg(trimmed).Body);
                 continue;
             }
 
@@ -233,6 +233,34 @@ public sealed partial class MainVm
                 continue;
             }
 
+            if (token.Equals(
+                    "PATCH_BOOT_RECOMMENDED",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                visible.Add(UiText.GetText("Setup.Warning.PatchBoot"));
+                continue;
+            }
+
+            if (token.Equals(
+                    "PATCH_SAFETY_HIGH",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                visible.Add(UiText.Fmt(
+                    "Setup.Warning.PatchSafetyHigh",
+                    detail));
+                continue;
+            }
+
+            if (token.Equals(
+                    "PATCH_SAFETY_CAUTION",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                visible.Add(UiText.Fmt(
+                    "Setup.Warning.PatchSafetyCaution",
+                    detail));
+                continue;
+            }
+
             if (LooksLikeDiagnosticToken(token))
             {
                 if (!string.IsNullOrWhiteSpace(detail))
@@ -242,7 +270,7 @@ public sealed partial class MainVm
                 continue;
             }
 
-            visible.Add(trimmed);
+            visible.Add(PatText.SurfMsg(trimmed).Body);
         }
 
         if (hashMismatchCount > 0)

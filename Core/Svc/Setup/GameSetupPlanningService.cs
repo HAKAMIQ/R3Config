@@ -10,6 +10,11 @@ public sealed class GameSetupPlanningService(
     GameIdentityService? identityService = null,
     PatchCompatibilityService? compatibilityService = null)
 {
+    private static readonly string[] PatchLaunchWarnings =
+    [
+        "PATCH_BOOT_RECOMMENDED: start patched games with Boot Game; save-state startup may not reapply patches."
+    ];
+
     private readonly GameIdentityService _identity =
         identityService ?? new GameIdentityService();
     private readonly PatchCompatibilityService _compatibility =
@@ -175,6 +180,13 @@ public sealed class GameSetupPlanningService(
         }
 
         var warnings = plan.Warnings
+            .Concat(selectedPatches.Count > 0
+                ? PatchLaunchWarnings
+                : Array.Empty<string>())
+            .Concat(selectedPatches
+                .Select(SafetyWarning)
+                .Where(warning => !string.IsNullOrWhiteSpace(warning))
+                .Select(warning => warning!))
             .Concat(selectedPatches
                 .Select(candidate => candidate.Match.Patch.Notes)
                 .Where(note => !string.IsNullOrWhiteSpace(note))
@@ -191,6 +203,19 @@ public sealed class GameSetupPlanningService(
             files,
             warnings,
             conflicts.Distinct(StringComparer.Ordinal).ToArray());
+    }
+
+    private static string? SafetyWarning(SetupPatchCandidate candidate)
+    {
+        var safety = PatSafe.Eval(candidate.Match.Patch.Notes);
+        return safety.Severity switch
+        {
+            PatSafetySeverity.High =>
+                $"PATCH_SAFETY_HIGH: {candidate.Match.Patch.Title}",
+            PatSafetySeverity.Caution =>
+                $"PATCH_SAFETY_CAUTION: {candidate.Match.Patch.Title}",
+            _ => null
+        };
     }
 
     public static string PatchIdentity(Rpcs3PatchEntry patch)

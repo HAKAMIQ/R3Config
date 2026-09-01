@@ -69,6 +69,18 @@
                                Margin="0,3,0,0"
                                Visibility="{Binding HasIns,
                                                     Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBlock Text="{Binding SafetyText}"
+                               Style="{StaticResource PatLocalizedSubtitleText}"
+                               Foreground="{DynamicResource Status.Warning}"
+                               FontWeight="SemiBold"
+                               FlowDirection="{Binding NoteFlow}"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               NumberSubstitution.Substitution="European"
+                               Margin="0,3,0,0"
+                               TextWrapping="Wrap"
+                               Visibility="{Binding HasSafety,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
                 </StackPanel>
 
                 <CheckBox Grid.Column="0"
@@ -147,6 +159,18 @@
                                NumberSubstitution.Substitution="European"
                                Margin="0,3,0,0"
                                Visibility="{Binding HasDesc,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBlock Text="{Binding SafetyText}"
+                               Style="{StaticResource PatLocalizedSubtitleText}"
+                               Foreground="{DynamicResource Status.Warning}"
+                               FontWeight="SemiBold"
+                               FlowDirection="{Binding NoteFlow}"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               NumberSubstitution.Substitution="European"
+                               Margin="0,3,0,0"
+                               TextWrapping="Wrap"
+                               Visibility="{Binding HasSafety,
                                                     Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <ItemsControl ItemsSource="{Binding Dependencies}"

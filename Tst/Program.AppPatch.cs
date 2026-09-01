@@ -140,6 +140,7 @@ internal static partial class Program
                 entry.Source == PatSrc.Artemis &&
                 entry.Risk == PatRisk.Cheat),
             "Expected the retained Artemis patch collection to produce exactly 1023 source-identified cheat-risk entries.");
+        PatSafetyT.Run(repoRoot);
         Assert(!bundledCheatText.Contains("Anchors:", StringComparison.Ordinal) &&
                !bundledCheatText.Contains("&WOFreedom", StringComparison.Ordinal),
             "Expected art.yml to contain expanded definitions without source anchors.");

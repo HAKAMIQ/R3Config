@@ -95,6 +95,52 @@ public static class PatText
             : raw.Trim();
     }
 
+    public static string SafetyLabel(PatSafetyAssessment safety)
+    {
+        return safety.Severity switch
+        {
+            PatSafetySeverity.High =>
+                UiText.GetText("Patch.Safety.High.Label"),
+            PatSafetySeverity.Caution =>
+                UiText.GetText("Patch.Safety.Caution.Label"),
+            _ => string.Empty
+        };
+    }
+
+    public static string SafetyText(PatSafetyAssessment safety)
+    {
+        if (!safety.HasRisk)
+        {
+            return string.Empty;
+        }
+
+        var parts = new List<string>();
+        if (safety.CrashOrFreezeRisk)
+        {
+            parts.Add(UiText.GetText("Patch.Safety.CrashFreeze"));
+        }
+
+        if (safety.ProgressionRisk)
+        {
+            parts.Add(UiText.GetText("Patch.Safety.Progression"));
+        }
+
+        if (safety.DisableAndRetry)
+        {
+            parts.Add(UiText.GetText("Patch.Safety.DisableRetry"));
+        }
+
+        if (parts.Count == 0)
+        {
+            parts.Add(UiText.GetText("Patch.Safety.GenericCaution"));
+        }
+
+        return UiText.Fmt(
+            "Patch.Safety.Message",
+            SafetyLabel(safety),
+            string.Join(" ", parts));
+    }
+
     private static NoteText Localize(
         string? raw,
         string title,

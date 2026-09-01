@@ -828,9 +828,9 @@ internal static class UiGate
         string appDir,
         List<string> errs)
     {
-        const int expectedCount = 811;
+        const int expectedCount = 817;
         const string expectedSha256 =
-            "bdf03b120b769d0c3a6bc2f340d1da59a9d9ca70b129d07e303fa83cd8aa07d4";
+            "eed61ba311ba44c6391a74f4519e843dc71b48efa2d2ce0a99a1d0d559eb6a60";
         var propertyNames = new HashSet<string>(
             [
                 "FlowDirection",

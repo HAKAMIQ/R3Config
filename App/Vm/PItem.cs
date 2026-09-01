@@ -104,6 +104,15 @@ public sealed class PatItVm : VmBase
 
     public bool HasDependencies => Dependencies.Count > 0;
 
+    public PatSafetyAssessment Safety =>
+        PatSafe.Eval(Match.Patch.Notes);
+
+    public bool HasSafety => Safety.HasRisk;
+
+    public string SafetyLabel => PatText.SafetyLabel(Safety);
+
+    public string SafetyText => PatText.SafetyText(Safety);
+
     public PatSrcKd PatSrcKd => InferSrc(Match.Patch);
 
     public string SrcDsp => UiText.GetText(SrcKey(PatSrcKd));
@@ -573,6 +582,10 @@ public sealed class PatItVm : VmBase
         OnChange(nameof(HasDesc));
         OnChange(nameof(Dependencies));
         OnChange(nameof(HasDependencies));
+        OnChange(nameof(Safety));
+        OnChange(nameof(HasSafety));
+        OnChange(nameof(SafetyLabel));
+        OnChange(nameof(SafetyText));
         OnChange(nameof(PatSrcKd));
         OnChange(nameof(SrcDsp));
         OnChange(nameof(SrcTip));

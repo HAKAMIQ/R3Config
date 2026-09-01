@@ -960,5 +960,16 @@
   "Patch.CheatEmptyHint": "No Artemis codes match this game and its current version.",
   "Patch.Text.WarningUnavailable": "A warning is available for this option, but its English translation is currently unavailable.",
   "Patch.Text.EnableCodeBeforeRelated": "Enable this code before using the related codes.",
-  "Patch.Text.HoldSelectToMark": "Hold Select, then damage the object you want to mark so its health does not decrease."
+  "Patch.Text.HoldSelectToMark": "Hold Select, then damage the object you want to mark so its health does not decrease.",
+  "Patch.Safety.Caution.Label": "Caution",
+  "Patch.Safety.High.Label": "High risk",
+  "Patch.Safety.CrashFreeze": "This patch may cause the game to crash, freeze, or fail to start correctly.",
+  "Patch.Safety.Progression": "This patch may break game logic, missions, or story progression.",
+  "Patch.Safety.DisableRetry": "If a problem occurs, disable this patch and start the game again with Boot Game.",
+  "Patch.Safety.GenericCaution": "This patch has a source warning. Review its note before enabling it.",
+  "Patch.Launch.BootRecommended": "Boot Game is recommended when patches are enabled. Starting directly from a Save State may not reapply every patch correctly. If a patch does not work or the game behaves incorrectly, use Boot Game, then load your normal in-game save.",
+  "Setup.Warning.PatchBoot": "Patches are selected: start the game with Boot Game. Starting directly from a Save State may not reapply every patch correctly; if a problem occurs, boot the game normally and then load the in-game save.",
+  "Patch.Safety.Message": "{0}: {1}",
+  "Setup.Warning.PatchSafetyHigh": "High-risk patch selected: {0}. Review its source note before applying it.",
+  "Setup.Warning.PatchSafetyCaution": "Patch caution: {0}. Review its source note before applying it."
 }
