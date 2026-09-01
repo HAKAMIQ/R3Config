@@ -277,6 +277,9 @@ internal static partial class Program
             Assert(en.TryGetValue(key, out var enValue) && !string.IsNullOrWhiteSpace(enValue), "Required English language value is empty: " + key);
         }
 
+        Assert(ar["Btn.Analyze"] == "تحليل بيانات RPCS3" &&
+               en["Btn.Analyze"] == "Analyze RPCS3 data",
+            "Expected the shared analysis action to describe the full RPCS3 analysis rather than game-library discovery alone.");
         Assert(ar["Plan.ApplySection"] == "تطبيق الإعدادات",
             "Expected the Arabic settings action to describe an explicit apply operation.");
         Assert(ar["Patch.ApplyOfficialSection"] == "تفعيل" &&
@@ -295,9 +298,18 @@ internal static partial class Program
                !en.ContainsKey("Games.NeedTip"),
             "Expected the ambiguous per-game settings counter language contract to be removed.");
         Assert(ar["Tab.Setup"] == "ملخص التعديلات" &&
-               ar["Setup.PrepareAction"] == "تطبيق التعديلات" &&
-               ar["Setup.AppliedCount"].StartsWith("مضبوط ", StringComparison.Ordinal),
-            "Expected the final game workflow surface to use concise change-summary terminology.");
+               ar["Setup.PrepareAction"] == "تطبيق الإعدادات وتفعيل الباتشات" &&
+               en["Setup.PrepareAction"] == "Apply settings and enable patches" &&
+               ar["Setup.PrepareTip"].Contains("زر تعطيل", StringComparison.Ordinal) &&
+               en["Setup.PrepareTip"].Contains("Use Disable", StringComparison.Ordinal) &&
+               ar["Setup.AppliedCount"] == "المضبوطة: {0} / {1}" &&
+               ar["Setup.ActivationCount"] == "المفعلة: {0} / {1}",
+            "Expected Game Setup to describe its settings-plus-enable scope, direct disables back to the patch tab, and use natural contextual Arabic counts.");
+        Assert(ar["PatchReadiness.HashReadyCount"] ==
+                   "بصمات: PPU {0} • SPU {1}" &&
+               en["PatchReadiness.HashReadyCount"] ==
+                   "Hashes: PPU {0} • SPU {1}",
+            "Expected the game header badge to identify executable fingerprint counts in a compact form.");
         Assert(!ar.Keys.Any(key => key.StartsWith(
                    "Patch.Text.Title.",
                    StringComparison.Ordinal)) &&

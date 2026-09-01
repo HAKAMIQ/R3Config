@@ -1,4 +1,5 @@
 using System.IO;
+using System.Reflection;
 using R3Config.Application;
 using R3Config.Composition;
 using R3Config.Lang;
@@ -14,6 +15,7 @@ internal static class Rpcs3GameLibraryT
     {
         FirstRunWithoutPathRequiresRpcs3Path(tempRoot);
         await SavedPathScansLibraryAtStartup(tempRoot);
+        await AnalysisRefreshPreservesSelectedGame(tempRoot);
         await PathReplacementDropsStaleLibraryScan(tempRoot);
 
         Console.WriteLine(
@@ -91,6 +93,65 @@ internal static class Rpcs3GameLibraryT
                 "Startup Library Game" &&
             !viewModel.CanMut,
             "Startup game-library scan must populate detected games without creating an analyzed or mutable RPCS3 context.");
+    }
+
+    private static async Task AnalysisRefreshPreservesSelectedGame(
+        string tempRoot)
+    {
+        var root = Path.Combine(
+            tempRoot,
+            "analysis-preserves-game-selection");
+        var exePath = CreateRpcs3WithGame(
+            root,
+            "BLUS90004",
+            "Alpha Library Game");
+        AddGame(
+            root,
+            "BLUS90005",
+            "Zulu Library Game");
+        var settings = new SetSvc(Path.Combine(
+            root,
+            "settings",
+            "settings.json"));
+        settings.Save(new AppSet(exePath));
+
+        var services = new AppRuntimeServices(
+            new AppFlow(AppComposition.Build(
+                new Rpcs3MutationGuard(() => false))),
+            settings);
+
+        using var viewModel = new MainVm(
+            services,
+            isRpcs3Running: () => false,
+            confirm: (_, _) => true,
+            info: (_, _) => { });
+
+        await WaitUntilAsync(
+            () => viewModel.GameList.LibraryScanState ==
+                      GameLibraryScanState.Completed &&
+                  viewModel.GameList.Games.Count == 2,
+            "Startup RPCS3 game-library scan did not expose both controlled games.");
+
+        viewModel.GameList.SelGame = viewModel.GameList.Games.Single(game =>
+            game.Serial.Equals(
+                "BLUS90005",
+                StringComparison.OrdinalIgnoreCase));
+
+        var analyze = typeof(MainVm).GetMethod(
+            "DoAsync",
+            BindingFlags.Instance | BindingFlags.NonPublic) ??
+            throw new InvalidOperationException(
+                "MainVm.DoAsync was not found.");
+        var task = (Task)(analyze.Invoke(viewModel, null) ??
+            throw new InvalidOperationException(
+                "MainVm.DoAsync did not return a Task."));
+        await task;
+
+        TestAssert.Assert(
+            viewModel.GameList.SelGame?.Serial.Equals(
+                "BLUS90005",
+                StringComparison.OrdinalIgnoreCase) == true,
+            "Refreshing full RPCS3 analysis must preserve the user's selected game when that game still exists in the refreshed library.");
     }
 
     private static async Task PathReplacementDropsStaleLibraryScan(
@@ -185,8 +246,28 @@ internal static class Rpcs3GameLibraryT
         Directory.CreateDirectory(Path.Combine(
             dataRoot,
             "patches"));
+        AddGame(
+            root,
+            serial,
+            title);
+
+        var exePath = Path.Combine(
+            root,
+            "rpcs3.exe");
+        File.WriteAllBytes(
+            exePath,
+            []);
+        return exePath;
+    }
+
+    private static void AddGame(
+        string root,
+        string serial,
+        string title)
+    {
         var gamePath = Path.Combine(
-            dataRoot,
+            root,
+            "portable",
             "dev_hdd0",
             "game",
             serial);
@@ -202,14 +283,6 @@ internal static class Rpcs3GameLibraryT
                 ["TITLE_ID"] = serial,
                 ["APP_VER"] = "01.00"
             });
-
-        var exePath = Path.Combine(
-            root,
-            "rpcs3.exe");
-        File.WriteAllBytes(
-            exePath,
-            []);
-        return exePath;
     }
 
     private static async Task WaitUntilAsync(

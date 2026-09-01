@@ -278,9 +278,8 @@ public sealed partial class MainVm : VmBase
                     isDetectedInRpcs3: row.InR3))
                 .ToArray();
 
-            GameList.SelGame = null;
             GameList.Load(gameItems);
-            GameList.SelGame = GameList.Games.FirstOrDefault();
+            GameList.SelGame ??= GameList.Games.FirstOrDefault();
 
             LoadSrc();
 

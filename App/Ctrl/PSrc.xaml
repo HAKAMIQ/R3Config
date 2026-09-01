@@ -74,6 +74,8 @@
 
                     <Button Command="{Binding AnlzCmd}"
                             Style="{StaticResource PatSourcePrimaryActionButton}"
+                            ToolTip="{lang:TextExt Key=Btn.AnalyzeTip}"
+                            AutomationProperties.Name="{lang:TextExt Key=Btn.Analyze}"
                             Margin="0">
 
                         <StackPanel Orientation="Horizontal"

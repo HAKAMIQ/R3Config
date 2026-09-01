@@ -60,6 +60,8 @@ internal static partial class Program
         var mainWindowPath = Path.Combine(appRoot, "Main.xaml.cs");
         var mainWindowXamlPath = Path.Combine(appRoot, "Main.xaml");
         var gamesViewPath = Path.Combine(appRoot, "Ctrl", "Games.xaml");
+        var actionBarViewPath = Path.Combine(appRoot, "Ctrl", "Act.xaml");
+        var hCanaryGameViewPath = Path.Combine(appRoot, "Ctrl", "HGam.xaml");
         var configViewPath = Path.Combine(appRoot, "Ctrl", "Rec.xaml");
         var configViewPaths = new[]
         {
@@ -343,8 +345,11 @@ internal static partial class Program
         Assert(
             enabledImportedCanaryItem.DefState == UiText.GetText("Patch.Definition.Merged") &&
             enabledImportedCanaryItem.StateDsp == UiText.GetText("Patch.State.Enabled") &&
+            enabledImportedCanaryItem.CurrentStateDsp == UiText.Fmt(
+                "Patch.State.Current",
+                UiText.GetText("Patch.State.Enabled")) &&
             !enabledImportedCanaryItem.IsSel,
-            "Expected Canary merge state and enable state to remain independently visible without retaining an action checkmark.");
+            "Expected Canary merge state, explicitly labelled current state, and action selection to remain independent.");
         importedCanaryItem.IsSel = true;
         Assert(
             importedCanaryItem.HasPendingAction &&
@@ -558,6 +563,8 @@ internal static partial class Program
             Path.Combine(appRoot, "Ctrl", "PCht.xaml"));
         var patchSourceView = File.ReadAllText(
             Path.Combine(appRoot, "Ctrl", "PSrc.xaml"));
+        var actionBarView = File.ReadAllText(actionBarViewPath);
+        var hCanaryGameView = File.ReadAllText(hCanaryGameViewPath);
         var setupView = File.ReadAllText(
             Path.Combine(appRoot, "Ctrl", "Setup.xaml"));
         var mainSetupVm = File.ReadAllText(
@@ -642,6 +649,14 @@ internal static partial class Program
         Assert(!patchSourceView.Contains("PatCanaryInfoHost", StringComparison.Ordinal) &&
                !patchSourceView.Contains("Text=\"i\"", StringComparison.Ordinal),
             "Expected the official patch toolbar to avoid a floating information-only glyph.");
+        Assert(actionBarView.Contains("Command=\"{Binding AnlzCmd}\"", StringComparison.Ordinal) &&
+               actionBarView.Contains("Key=Btn.Analyze", StringComparison.Ordinal) &&
+               patchSourceView.Contains("Command=\"{Binding AnlzCmd}\"", StringComparison.Ordinal) &&
+               patchSourceView.Contains("Key=Btn.Analyze", StringComparison.Ordinal) &&
+               hCanaryGameView.Contains("Command=\"{Binding AnlzCmd}\"", StringComparison.Ordinal) &&
+               hCanaryGameView.Contains("Key=Btn.Analyze", StringComparison.Ordinal) &&
+               !hCanaryGameView.Contains("HCanary.Start.Game.Scan", StringComparison.Ordinal),
+            "Expected every AnlzCmd button to expose the same full-analysis label instead of claiming a library-only scan.");
         Assert(mainSetupVm.Contains("Setup.Warning.HashMismatchCount", StringComparison.Ordinal) &&
                mainSetupVm.Contains("LooksLikeDiagnosticToken", StringComparison.Ordinal) &&
                !setupView.Contains("HASHMISMATCH", StringComparison.Ordinal),
@@ -670,7 +685,7 @@ internal static partial class Program
             canaryView.Contains("x:Key=\"CanHead\"", StringComparison.Ordinal) &&
             canaryView.Contains("Text=\"{Binding CanNote}\"", StringComparison.Ordinal) &&
             canaryView.Contains("Text=\"{Binding CanMeta}\"", StringComparison.Ordinal) &&
-            canaryView.Contains("Text=\"{Binding StateDsp}\"", StringComparison.Ordinal) &&
+            canaryView.Contains("Text=\"{Binding CurrentStateDsp}\"", StringComparison.Ordinal) &&
             canaryView.Contains("Text=\"{Binding PendingDsp}\"", StringComparison.Ordinal) &&
             canaryView.Contains("Style=\"{StaticResource PatCompactItemRow}\"", StringComparison.Ordinal) &&
             canaryView.Contains("Style=\"{StaticResource PatCanaryNoteToolTip}\"", StringComparison.Ordinal) &&

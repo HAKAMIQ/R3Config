@@ -410,6 +410,10 @@ public sealed class PatItVm : VmBase
                 : "Patch.State.Ready")
             : UiText.GetText("Patch.State.Blocked");
 
+    public string CurrentStateDsp => UiText.Fmt(
+        "Patch.State.Current",
+        StateDsp);
+
     public string StateTon => IsOn
         ? "Game"
         : CanOn
@@ -635,6 +639,7 @@ public sealed class PatItVm : VmBase
         OnChange(nameof(TgtLine));
         OnChange(nameof(DirStat));
         OnChange(nameof(StateDsp));
+        OnChange(nameof(CurrentStateDsp));
         OnChange(nameof(StateTon));
         OnChange(nameof(HasPendingAction));
         OnChange(nameof(PendingDsp));

@@ -212,8 +212,9 @@
                                        Style="{StaticResource HCanLocalizedSectionCaptionText}"
                                        TextWrapping="Wrap" />
 
-                            <Button Content="{lang:TextExt Key=HCanary.Start.Game.Scan}"
+                            <Button Content="{lang:TextExt Key=Btn.Analyze}"
                                     Command="{Binding AnlzCmd}"
+                                    ToolTip="{lang:TextExt Key=Btn.AnalyzeTip}"
                                     Margin="0,12,0,0"
                                     HorizontalAlignment="Left"
                                     Style="{StaticResource HCanPrimaryActionButton}"

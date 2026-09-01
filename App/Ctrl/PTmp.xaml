@@ -36,7 +36,7 @@
                                    Margin="0,0,5,0"
                                    Visibility="{Binding IsOn,
                                                         Converter={StaticResource BoolToVisibilityConverter}}" />
-                        <TextBlock Text="{Binding StateDsp}"
+                        <TextBlock Text="{Binding CurrentStateDsp}"
                                    Tag="{Binding StateTon}"
                                    Style="{StaticResource PatStateText}" />
                     </StackPanel>
@@ -91,6 +91,7 @@
                           IsEnabled="{Binding CanSel}"
                           ToolTip="{lang:TextExt Key=Patch.SelectTip}"
                           AutomationProperties.Name="{Binding DspTitle}"
+                          AutomationProperties.HelpText="{lang:TextExt Key=Patch.SelectTip}"
                           Padding="0"
                           Margin="0"
                           VerticalAlignment="Center"
@@ -128,7 +129,7 @@
                                    Margin="0,0,5,0"
                                    Visibility="{Binding IsOn,
                                                         Converter={StaticResource BoolToVisibilityConverter}}" />
-                        <TextBlock Text="{Binding StateDsp}"
+                        <TextBlock Text="{Binding CurrentStateDsp}"
                                    Tag="{Binding StateTon}"
                                    Style="{StaticResource PatStateText}" />
                     </StackPanel>
@@ -212,6 +213,7 @@
                           IsEnabled="{Binding CanSel}"
                           ToolTip="{lang:TextExt Key=Patch.SelectTip}"
                           AutomationProperties.Name="{Binding DspTitle}"
+                          AutomationProperties.HelpText="{lang:TextExt Key=Patch.SelectTip}"
                           Padding="0"
                           Margin="0"
                           VerticalAlignment="Center"
