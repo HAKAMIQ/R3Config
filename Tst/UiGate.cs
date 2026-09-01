@@ -15,6 +15,7 @@ using System.Windows.Threading;
 using System.Xml.Linq;
 using R3Config;
 using R3Config.Lang;
+using R3Config.Mdl;
 using R3Config.Svc;
 using R3Config.View;
 using R3Config.View.Dlg;
@@ -828,9 +829,9 @@ internal static class UiGate
         string appDir,
         List<string> errs)
     {
-        const int expectedCount = 817;
+        const int expectedCount = 819;
         const string expectedSha256 =
-            "eed61ba311ba44c6391a74f4519e843dc71b48efa2d2ce0a99a1d0d559eb6a60";
+            "ab2c42cd597c931ff662a08f9c7face868714c8febc1f8d7681c8fe65381d871";
         var propertyNames = new HashSet<string>(
             [
                 "FlowDirection",
@@ -1926,6 +1927,7 @@ internal static class UiGate
                 {
                     UiText.SetLang(lang);
                     UiLaySvc.Apply();
+                    VerifyGameDataTextDirections();
 
                     var wins = Make();
 
@@ -2049,8 +2051,112 @@ internal static class UiGate
                 exception.Message,
                 probeMessage,
                 StringComparison.Ordinal),
-            "The runtime UI gate did not capture its dispatcher failure probe.");
+            "The runtime UI gate did not capture its dispatcher failure probe. " +
+            $"Captured {dispatcherErrors.Count}: " +
+            string.Join(
+                " | ",
+                dispatcherErrors.Select(error =>
+                    $"{error.GetType().Name}: {error.Message}")));
         dispatcherErrors.Clear();
+    }
+
+    private static void VerifyGameDataTextDirections()
+    {
+        const string latinTitle =
+            "Assassin's Creed® Rogue";
+        const string arabicTitle =
+            "لعبة عربية";
+        const string serial =
+            "BLUS31465";
+
+        var gameList = new ListVm();
+        gameList.Load(
+        [
+            MakeGameRow(serial, latinTitle),
+            MakeGameRow("BLES00000", arabicTitle)
+        ]);
+
+        var view = new R3Config.Ctrl.GameList
+        {
+            DataContext = new GameListDirectionContext(
+                gameList)
+        };
+        var size = new Size(360, 480);
+        view.Measure(size);
+        view.Arrange(new Rect(size));
+        view.UpdateLayout();
+
+        var textBlocks =
+            Walk<TextBlock>(view).ToArray();
+        var latin = textBlocks.Single(text =>
+            string.Equals(
+                text.Text,
+                latinTitle,
+                StringComparison.Ordinal));
+        var arabic = textBlocks.Single(text =>
+            string.Equals(
+                text.Text,
+                arabicTitle,
+                StringComparison.Ordinal));
+        var technical = textBlocks.Single(text =>
+            string.Equals(
+                text.Text,
+                serial,
+                StringComparison.Ordinal));
+
+        Check(
+            latin.FlowDirection ==
+                FlowDirection.LeftToRight &&
+            string.Equals(
+                latin.Language.IetfLanguageTag,
+                UiText.EnLang,
+                StringComparison.OrdinalIgnoreCase),
+            "A Latin game title must remain LTR with Latin language metadata.");
+        Check(
+            arabic.FlowDirection ==
+                FlowDirection.RightToLeft &&
+            string.Equals(
+                arabic.Language.IetfLanguageTag,
+                UiText.ArabLang,
+                StringComparison.OrdinalIgnoreCase),
+            "An Arabic game title must remain RTL with Arabic language metadata.");
+        Check(
+            technical.FlowDirection ==
+                FlowDirection.LeftToRight &&
+            technical.TextAlignment ==
+                TextAlignment.Left,
+            "An RPCS3 serial must remain LTR and left-aligned.");
+
+        Align(view);
+    }
+
+    private static GameVm MakeGameRow(
+        string serial,
+        string title)
+    {
+        var game = new Rpcs3GameDescriptor(
+            Serial: serial,
+            Title: title,
+            InstPath: string.Empty,
+            Version: "01.00",
+            PpuHash: null,
+            SpuHash: null);
+
+        return new GameVm(
+            game,
+            recommendation: null,
+            new RecSum(
+                serial,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                []),
+            serial,
+            title,
+            isDetectedInRpcs3: true);
     }
 
     private static void DrainDispatcher(Dispatcher dispatcher)
@@ -2378,7 +2484,9 @@ internal static class UiGate
         string? text,
         string label)
     {
-        var expected = ExpectedFlow(element);
+        var expected = ExpectedFlow(
+            element,
+            text);
 
         Check(
             element.FlowDirection == expected,
@@ -2386,13 +2494,29 @@ internal static class UiGate
     }
 
     private static FlowDirection ExpectedFlow(
-        FrameworkElement element)
+        FrameworkElement element,
+        string? text = null)
     {
+        if (UsesContentFlowConverter(element))
+        {
+            return UiLaySvc.ResolveContentFlow(text);
+        }
+
         return IsIconText(element) ||
                UsesTechnicalStyle(element) ||
                IsTechnical(element)
             ? FlowDirection.LeftToRight
             : UiLaySvc.Current.TextFlow;
+    }
+
+    private static bool UsesContentFlowConverter(
+        FrameworkElement element)
+    {
+        return element
+            .GetBindingExpression(
+                FrameworkElement.FlowDirectionProperty)
+            ?.ParentBinding
+            .Converter is ContentTextFlowConverter;
     }
 
     private static TextAlignment ExpectedTextAlignment(
@@ -2571,6 +2695,12 @@ internal static class UiGate
             element.Language.IetfLanguageTag,
             UiText.EnLang,
             StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed record GameListDirectionContext(
+        ListVm GameList)
+    {
+        public bool CanSelectGame { get; } = true;
     }
 
     private static void Bounds(

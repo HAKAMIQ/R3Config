@@ -25,6 +25,30 @@ internal static partial class Program
 {
     static void ListFind()
     {
+        var empty = new ListVm();
+        Assert(
+            empty.LibraryScanState == GameLibraryScanState.NotStarted &&
+            empty.EmptyTxt == UiText.GetText("Games.LibraryPathRequired"),
+            "Expected a fresh game list to report that the game-library scan has not started instead of claiming that no games exist.");
+
+        empty.BeginLibraryScan();
+        Assert(
+            empty.LibraryScanState == GameLibraryScanState.Scanning &&
+            empty.EmptyTxt == UiText.GetText("Games.LibraryScanning"),
+            "Expected an active automatic game-library scan to expose a scanning state.");
+
+        empty.FailLibraryScan();
+        Assert(
+            empty.LibraryScanState == GameLibraryScanState.Failed &&
+            empty.EmptyTxt == UiText.GetText("Games.LibraryScanFailed"),
+            "Expected a failed game-library scan to remain distinct from a completed empty scan.");
+
+        empty.Load([]);
+        Assert(
+            empty.LibraryScanState == GameLibraryScanState.Completed &&
+            empty.EmptyTxt == UiText.GetText("Games.EmptyInstalled"),
+            "Expected the no-games message only after the game-library scan completed with zero detected games.");
+
         var list = new ListVm();
         var collectionChanges = 0;
         NotifyCollectionChangedAction? lastCollectionAction = null;

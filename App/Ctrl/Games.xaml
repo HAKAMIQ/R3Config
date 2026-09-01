@@ -82,7 +82,7 @@
                     Value="Stretch" />
         </Style>
 
-        <Style x:Key="GameListTechnicalTitleText"
+        <Style x:Key="GameListContentTitleText"
                TargetType="{x:Type TextBlock}"
                BasedOn="{StaticResource GameRailTitleText}">
             <Setter Property="FlowDirection"
@@ -193,7 +193,9 @@
                                             FlowDirection="{DynamicResource TechnicalText.FlowDirection}">
 
                                     <TextBlock Text="{Binding Title}"
-                                               Style="{StaticResource GameListTechnicalTitleText}" />
+                                               Style="{StaticResource GameListContentTitleText}"
+                                               FlowDirection="{Binding Title, Converter={StaticResource ContentTextFlowConverter}}"
+                                               Language="{Binding Title, Converter={StaticResource ContentTextLanguageConverter}, ConverterCulture=en-US}" />
 
                                     <TextBlock Text="{Binding Serial}"
                                                Style="{StaticResource GameListTechnicalSerialText}"

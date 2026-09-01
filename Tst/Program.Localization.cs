@@ -56,6 +56,23 @@ internal static partial class Program
                 $"Expected literal English Artemis label for {key}.");
         }
 
+        var gameLibraryLabels = new Dictionary<string, (string Arabic, string English)>
+        {
+            ["Games.LibraryPathRequired"] = ("حدد مسار محاكي RPCS3 لعرض مكتبة الألعاب.", "Select the RPCS3 emulator path to display the game library."),
+            ["Games.LibraryScanning"] = ("جاري فحص مكتبة ألعاب RPCS3...", "Scanning the RPCS3 game library..."),
+            ["Games.LibraryScanFailed"] = ("تعذر فحص مكتبة ألعاب RPCS3. تحقق من مسار المحاكي ثم أعد المحاولة.", "Could not scan the RPCS3 game library. Check the emulator path and try again."),
+            ["Games.EmptyInstalled"] = ("لم يتم العثور على ألعاب في مكتبة ألعاب RPCS3.", "No games were found in the RPCS3 game library."),
+            ["Btn.BrowseTip"] = ("حدد ملف تشغيل محاكي RPCS3 (rpcs3.exe).", "Select the RPCS3 emulator executable (rpcs3.exe)."),
+            ["Picker.Rpcs3Title"] = ("حدد ملف تشغيل محاكي RPCS3", "Select the RPCS3 emulator executable")
+        };
+        foreach (var (key, expected) in gameLibraryLabels)
+        {
+            Assert(ar[key] == expected.Arabic,
+                $"Expected literal Arabic RPCS3 game-library label for {key}.");
+            Assert(en[key] == expected.English,
+                $"Expected literal English RPCS3 game-library label for {key}.");
+        }
+
         var requiredKeys = new[]
         {
             "App.Title",
@@ -64,6 +81,10 @@ internal static partial class Program
             "Lang.ToggleTip",
             "Games.Title",
             "Games.Empty",
+            "Games.LibraryPathRequired",
+            "Games.LibraryScanning",
+            "Games.LibraryScanFailed",
+            "Msg.GameLibraryScanFailed",
             "Games.FilterAll",
             "Games.FilterInstalled",
             "Games.FilterDetectedOnly",

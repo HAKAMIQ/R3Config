@@ -38,10 +38,6 @@ internal static partial class Program
                arabic.HorAlign == HorizontalAlignment.Right &&
                arabic.TrailAlign == HorizontalAlignment.Left,
             "Expected Arabic layout to be RTL while localized and technical text remain left-aligned, with actions trailing on the left.");
-        Assert(arabic.GameFlow(hasSelectedGame: true) == FlowDirection.LeftToRight &&
-               arabic.GameFlow(hasSelectedGame: false) == FlowDirection.RightToLeft,
-            "Expected selected game identities to stay technical while localized empty text follows Arabic.");
-
         var english = UiLaySt.FromLang(UiText.EnLang);
         Assert(!english.IsRtl &&
                english.WinFlow == FlowDirection.LeftToRight &&
@@ -53,6 +49,63 @@ internal static partial class Program
                english.HorAlign == HorizontalAlignment.Left &&
                english.TrailAlign == HorizontalAlignment.Right,
             "Expected English shell and text to remain LTR, with actions trailing on the right.");
+    }
+
+    static void Ui_GameDataTextDirection()
+    {
+        const string latinTitle =
+            "Assassin's Creed® Rogue";
+        const string arabicTitle =
+            "لعبة عربية";
+        const string serial =
+            "BLUS31465";
+
+        Assert(
+            UiLaySvc.ResolveContentFlow(latinTitle) ==
+                FlowDirection.LeftToRight,
+            "Expected a Latin game title to remain LTR.");
+        Assert(
+            UiLaySvc.ResolveContentFlow(arabicTitle) ==
+                FlowDirection.RightToLeft,
+            "Expected an Arabic game title to remain RTL.");
+        Assert(
+            UiLaySvc.ResolveContentFlow(serial) ==
+                FlowDirection.LeftToRight,
+            "Expected an RPCS3 serial to remain LTR.");
+
+        var flowConverter =
+            new ContentTextFlowConverter();
+        var languageConverter =
+            new ContentTextLanguageConverter();
+
+        Assert(
+            Equals(
+                flowConverter.Convert(
+                    latinTitle,
+                    typeof(FlowDirection),
+                    null,
+                    CultureInfo.InvariantCulture),
+                FlowDirection.LeftToRight) &&
+            Equals(
+                flowConverter.Convert(
+                    arabicTitle,
+                    typeof(FlowDirection),
+                    null,
+                    CultureInfo.InvariantCulture),
+                FlowDirection.RightToLeft),
+            "Expected the WPF content-flow converter to preserve Latin and Arabic title direction.");
+        Assert(
+            string.Equals(
+                ((System.Windows.Markup.XmlLanguage)
+                    languageConverter.Convert(
+                        arabicTitle,
+                        typeof(System.Windows.Markup.XmlLanguage),
+                        null,
+                        CultureInfo.InvariantCulture))
+                    .IetfLanguageTag,
+                UiText.ArabLang,
+                StringComparison.OrdinalIgnoreCase),
+            "Expected the WPF content-language converter to preserve Arabic shaping metadata.");
     }
 
 }

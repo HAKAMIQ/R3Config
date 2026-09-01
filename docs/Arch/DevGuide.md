@@ -89,6 +89,7 @@ filesystem/process/JSON logic ولا policy جديدة داخله. تحذير `C
 
 | Use case | الوظيفة | قراءة/تعديل |
 |---|---|---|
+| `Rpcs3GameLibraryUseCase` | فحص مكتبة ألعاب RPCS3 وإرجاع `GameScanResult` فقط دون إنشاء سياق تحليل أو تعديل | قراءة |
 | `AnalysisUseCase` | التثبيت، hardware، scan، hash enrichment، الخطط | قراءة |
 | `ConfigUseCase` | بناء plan وتطبيق/إزالة التغييرات | مختلط؛ apply/remove محروس |
 | `PatchCatalogUseCase` | تحميل المصادر ودمجها وبناء preview | قراءة |
@@ -112,6 +113,7 @@ Application use case يجوز له تنسيق أكثر من خدمة، لكنه 
 |---|---|
 | `Main.cs` | fields، properties، commands، wiring، constructor injection |
 | `Main.Shell.cs` | shell actions، اللغة، اختيار RPCS3، التحليل، Canary dialog |
+| `Main.GameLibrary.cs` | الفحص التلقائي لمكتبة ألعاب RPCS3، cancellation، ومنع stale completion |
 | `Main.Config.cs` | apply/remove config وبناء الخطة الحالية |
 | `Main.Patches.cs` | preview، enable/disable، patch warnings وcommand policy |
 | `Main.Advanced.cs` | restore، backups، catalog developer tools، diagnostics |

@@ -317,6 +317,9 @@ internal static partial class Program
                 nameof(ArtemisDependencyT),
                 () => ArtemisDependencyT.Run(smokeRoot));
             runner.RunCase(nameof(Ui_Layout), Ui_Layout);
+            runner.RunCase(
+                nameof(Ui_GameDataTextDirection),
+                Ui_GameDataTextDirection);
             runner.RunCase(nameof(Arch_Svc), Arch_Svc);
             runner.RunCase(nameof(Security_Hardening), () => Security_Hardening(smokeRoot));
             runner.RunCase(nameof(SetSvcT), () => SetSvcT.Run(smokeRoot));

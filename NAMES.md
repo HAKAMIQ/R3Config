@@ -9,6 +9,7 @@ unambiguous local name.
 ## Current architecture
 
 - Application orchestration: `App/Application/` in `R3Config.Application`.
+- RPCS3 game-library orchestration: `Rpcs3GameLibraryUseCase`; Core scanning remains `GameScanner`.
 - Dependency composition: `App/Composition/AppComposition.cs` in
   `R3Config.Composition`.
 - Core models: `Core/Mdl/` in `R3Config.Mdl`.

@@ -21,6 +21,7 @@ internal static class ApplicationRuntimeT
         RelayCommandExecutionHonorsRuntimeGuard();
         await AsyncCommandDoubleExecutionIsBlocked();
         MainVmPathReplacementInvalidatesAnalyzedContext(tempRoot);
+        await Rpcs3GameLibraryT.RunAsync(tempRoot);
         GameSetupContextChangeClearsPriorResult(tempRoot);
         await AnalysisCancellationPropagates(tempRoot);
         await MainVmReplacedAnalysisDropsStaleCompletion(tempRoot);

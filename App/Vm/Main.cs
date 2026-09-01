@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using System.Windows.Markup;
 using R3Config;
 using R3Config.Application;
 using R3Config.Composition;
@@ -196,14 +195,8 @@ public sealed partial class MainVm : VmBase, IDisposable
         };
         HCanary.HashChg += OnHCanaryHashChanged;
 
-        var settings = _setSvc.Load();
-        if (!string.IsNullOrWhiteSpace(settings.LastExe) && File.Exists(settings.LastExe))
-        {
-            ExePath = settings.LastExe;
-            R3Status = UiText.GetText("Status.Rpcs3Ready");
-        }
-
         LoadCat();
+        InitializeGameLibrary();
         HCanary.Load(AppContext.BaseDirectory);
         Log(UiText.GetText("Msg.Ready"));
     }
@@ -320,14 +313,6 @@ public sealed partial class MainVm : VmBase, IDisposable
         : string.IsNullOrWhiteSpace(GameList.SelGame.Game.Version)
             ? $"{GameList.SelGame.Title} | {GameList.SelGame.Serial}"
             : $"{GameList.SelGame.Title} | {GameList.SelGame.Serial} | v{PatVer.Norm(GameList.SelGame.Game.Version)}";
-
-    public FlowDirection GameFlow => _layout.GameFlow(GameList.SelGame is not null);
-
-    public TextAlignment GameAlgn => _layout.GameAlgn(GameList.SelGame is not null);
-
-    public XmlLanguage GameLang => GameList.SelGame is null
-        ? _layout.XmlLang
-        : XmlLanguage.GetLanguage(UiText.EnLang);
 
     public string GameSer => GameList.SelGame?.Serial ?? UiText.GetText("Shell.NoGameSerial");
 

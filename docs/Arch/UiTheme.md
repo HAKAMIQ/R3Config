@@ -199,6 +199,10 @@ ShowOnDisabled = true
 بالعربية واليمنى بالإنجليزية، مع بقاء رموز الأزرار نفسها `LeftToRight`.
 المسارات والـhashes والمعرّفات والإصدارات والكود وYAML والقيم التقنية تبقى
 `LeftToRight` ومحاذاتها إلى اليسار باستخدام أنماط Technical المخصصة.
+أسماء الألعاب بيانات محتوى وليست نصوص واجهة: يحدد
+`ContentTextFlowConverter` اتجاه الاسم من محتواه، فيبقى الاسم اللاتيني
+`LeftToRight` والاسم العربي `RightToLeft` في اللغتين، بينما تبقى serials
+والإصدارات في أسطح Technical مستقلة `LeftToRight`.
 
 تستخدم الحاويات `App.FlowDirection` أو `App.ShellFlowDirection`، والنصوص المحلية
 `App.TextFlowDirection` و`App.TextAlignment`، والطرف الابتدائي

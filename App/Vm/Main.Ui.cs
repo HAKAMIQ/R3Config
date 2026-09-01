@@ -96,9 +96,6 @@ public sealed partial class MainVm : VmBase
     private void LoadGame()
     {
         OnChange(nameof(SelGame));
-        OnChange(nameof(GameFlow));
-        OnChange(nameof(GameAlgn));
-        OnChange(nameof(GameLang));
         OnChange(nameof(GameSer));
         OnChange(nameof(PatReady));
         OnChange(nameof(ReadyTip));
@@ -307,11 +304,18 @@ public sealed partial class MainVm : VmBase
     private void HandleExePathChanged(string value)
     {
         CancelAnalysis();
+        CancelGameLibraryScan();
         CancelFingerprintCapture();
         InvalidateAnalyzedContext();
         R3Status = File.Exists(value)
             ? UiText.GetText("Status.Rpcs3Ready")
             : UiText.GetText("Status.Rpcs3Missing");
+
+        if (File.Exists(value))
+        {
+            ScheduleGameLibraryScan(value);
+        }
+
         AnlzCmd.RaiseCan();
     }
 

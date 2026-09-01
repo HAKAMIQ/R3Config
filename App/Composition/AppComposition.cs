@@ -19,6 +19,7 @@ public static class AppComposition
         var backup = new BackupService();
         mutationGuard ??= new Rpcs3MutationGuard();
         var plan = new PlanService();
+        var gameScanner = new GameScanner();
         var patchReader = new ReadSvc();
         var patchConfigReader = new CfgRead();
 
@@ -67,13 +68,15 @@ public static class AppComposition
 
         return new AppUseCases(
             new AnalysisUseCase(
-                new GameScanner(),
+                gameScanner,
                 plan,
                 new HwProbe(),
                 patchHashProbe,
                 bindingEvidence,
                 patchCatalog,
                 backupUseCase),
+            new Rpcs3GameLibraryUseCase(
+                gameScanner),
             new ConfigUseCase(
                 plan,
                 new ConfigApplyService(backup),

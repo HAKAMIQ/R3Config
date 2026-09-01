@@ -83,7 +83,7 @@
                 Value="Stretch" />
     </Style>
 
-    <Style x:Key="HCanLocalizedInlineValueText"
+    <Style x:Key="HCanContentTitleText"
            TargetType="{x:Type TextBlock}"
            BasedOn="{StaticResource RecommendationInlineValueText}">
 

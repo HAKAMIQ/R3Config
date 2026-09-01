@@ -216,6 +216,8 @@ public sealed partial class MainVm : VmBase
     private async Task DoAsync()
     {
         var exePath = ExePath;
+        CancelGameLibraryScan();
+        GameList.BeginLibraryScan();
         var operation = BeginAnalysis();
         try
         {
@@ -304,6 +306,15 @@ public sealed partial class MainVm : VmBase
             R3Status = File.Exists(ExePath)
                 ? UiText.GetText("Status.Rpcs3Ready")
                 : UiText.GetText("Status.Rpcs3Missing");
+
+            if (File.Exists(exePath) &&
+                string.Equals(
+                    ExePath,
+                    exePath,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                ScheduleGameLibraryScan(exePath);
+            }
 
             Log(UiText.Fmt("Msg.AnalyzeFailed", ex.Message));
             Preview.LoadErr(ex.Message);

@@ -8,8 +8,10 @@ public sealed partial class MainVm
     private readonly object _operationSync = new();
     private CancellationTokenSource? _analysisCancellation;
     private CancellationTokenSource? _fingerprintCancellation;
+    private CancellationTokenSource? _gameLibraryScanCancellation;
     private long _analysisVersion;
     private long _fingerprintVersion;
+    private long _gameLibraryScanVersion;
     private bool _disposed;
 
     public void Dispose()
@@ -24,10 +26,13 @@ public sealed partial class MainVm
             _disposed = true;
             _analysisVersion++;
             _fingerprintVersion++;
+            _gameLibraryScanVersion++;
             _analysisCancellation?.Cancel();
             _fingerprintCancellation?.Cancel();
+            _gameLibraryScanCancellation?.Cancel();
             _analysisCancellation = null;
             _fingerprintCancellation = null;
+            _gameLibraryScanCancellation = null;
         }
 
         HCanary.HashChg -= OnHCanaryHashChanged;

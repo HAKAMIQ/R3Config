@@ -2,6 +2,7 @@ namespace R3Config.Application;
 
 public sealed record AppUseCases(
     AnalysisUseCase Analysis,
+    Rpcs3GameLibraryUseCase GameLibrary,
     ConfigUseCase Config,
     PatchCatalogUseCase PatchCatalog,
     PatchMutationUseCase PatchMutation,

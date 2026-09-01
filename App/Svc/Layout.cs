@@ -1,5 +1,7 @@
 using System;
+using System.Globalization;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Markup;
 using R3Config.Lang;
 
@@ -66,22 +68,6 @@ public sealed class UiLaySt
 
     public GridLength RghtWide => DetWide;
 
-    public FlowDirection GameFlow(
-        bool hasSelectedGame)
-    {
-        return hasSelectedGame
-            ? TechFlow
-            : TextFlow;
-    }
-
-    public TextAlignment GameAlgn(
-        bool hasSelectedGame)
-    {
-        return hasSelectedGame
-            ? TechAlgn
-            : TxtAlign;
-    }
-
     public static UiLaySt FromLang(string? language)
     {
         var normalized = UiText.NormLang(language);
@@ -102,6 +88,25 @@ public static class UiLaySvc
 {
     public static UiLaySt Current =>
         UiLaySt.FromLang(UiText.CurLang);
+
+    public static FlowDirection ResolveContentFlow(
+        string? text)
+    {
+        return !string.IsNullOrEmpty(text) &&
+               NoteSvc.ContainsArabic(text)
+            ? FlowDirection.RightToLeft
+            : FlowDirection.LeftToRight;
+    }
+
+    public static XmlLanguage ResolveContentLanguage(
+        string? text)
+    {
+        return XmlLanguage.GetLanguage(
+            ResolveContentFlow(text) ==
+                FlowDirection.RightToLeft
+                ? UiText.ArabLang
+                : UiText.EnLang);
+    }
 
     public static void Apply()
     {
@@ -200,5 +205,49 @@ public static class UiLaySvc
 
         app.Resources["App.TechnicalTextAlignment"] =
             layout.TechAlgn;
+    }
+}
+
+public sealed class ContentTextFlowConverter : IValueConverter
+{
+    public object Convert(
+        object? value,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture)
+    {
+        return UiLaySvc.ResolveContentFlow(
+            value as string);
+    }
+
+    public object ConvertBack(
+        object? value,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture)
+    {
+        throw new NotSupportedException();
+    }
+}
+
+public sealed class ContentTextLanguageConverter : IValueConverter
+{
+    public object Convert(
+        object? value,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture)
+    {
+        return UiLaySvc.ResolveContentLanguage(
+            value as string);
+    }
+
+    public object ConvertBack(
+        object? value,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture)
+    {
+        throw new NotSupportedException();
     }
 }

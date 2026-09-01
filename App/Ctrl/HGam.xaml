@@ -158,7 +158,9 @@
 
                                         <TextBlock Grid.Column="0"
                                                    Text="{Binding Title}"
-                                                   Style="{StaticResource HCanLocalizedInlineValueText}"
+                                                   Style="{StaticResource HCanContentTitleText}"
+                                                   FlowDirection="{Binding Title, Converter={StaticResource ContentTextFlowConverter}}"
+                                                   Language="{Binding Title, Converter={StaticResource ContentTextLanguageConverter}, ConverterCulture=en-US}"
                                                    VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis"
                                                    ToolTip="{Binding Title}" />

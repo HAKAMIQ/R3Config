@@ -36,7 +36,7 @@ var retiredNames = new HashSet<string>(StringComparer.Ordinal)
 
 var requiredTypes = new HashSet<string>(StringComparer.Ordinal)
 {
-    "AnalysisUseCase", "AppUseCases", "BackupUseCase", "CanaryImportUseCase",
+    "AnalysisUseCase", "Rpcs3GameLibraryUseCase", "AppUseCases", "BackupUseCase", "CanaryImportUseCase",
     "ConfigUseCase", "HCanaryUseCase", "PatchCatalogUseCase",
     "PatchMutationUseCase", "RecommendationCatalogUseCase", "AppComposition",
     "PatchCompatibilityService", "PatchFileTransactionService",

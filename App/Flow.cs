@@ -38,6 +38,15 @@ public sealed class AppFlow
             cancellationToken);
     }
 
+    public Task<GameScanResult> ScanGameLibraryAsync(
+        string rpcs3ExePath,
+        CancellationToken cancellationToken = default)
+    {
+        return _cases.GameLibrary.ScanAsync(
+            rpcs3ExePath,
+            cancellationToken);
+    }
+
     public CfgPlan CfgPlan(
         Rpcs3InstallDescriptor install,
         Rpcs3GameDescriptor game,

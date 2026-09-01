@@ -10,6 +10,14 @@ namespace R3Config.Vm;
 
 #pragma warning disable CA1822
 
+public enum GameLibraryScanState
+{
+    NotStarted,
+    Scanning,
+    Completed,
+    Failed
+}
+
 public sealed class ListVm : VmBase
 {
     private readonly List<GameVm> _allGame = [];
@@ -17,6 +25,8 @@ public sealed class ListVm : VmBase
     private GameVm? _selGame;
     private bool _inR3 = true;
     private string _text = string.Empty;
+    private GameLibraryScanState _libraryScanState =
+        GameLibraryScanState.NotStarted;
 
     public ListVm()
     {
@@ -34,6 +44,9 @@ public sealed class ListVm : VmBase
     public bool HasGames => Games.Count > 0;
 
     public bool IsSearch => string.IsNullOrWhiteSpace(Text);
+
+    public GameLibraryScanState LibraryScanState =>
+        _libraryScanState;
 
     public bool InR3
     {
@@ -63,11 +76,29 @@ public sealed class ListVm : VmBase
         }
     }
 
-    public string EmptyTxt => !IsSearch
-        ? UiText.GetText("Games.EmptySearch")
-        : InR3
-            ? UiText.GetText("Games.EmptyInstalled")
-            : UiText.GetText("Games.Empty");
+    public string EmptyTxt
+    {
+        get
+        {
+            if (!IsSearch)
+            {
+                return UiText.GetText("Games.EmptySearch");
+            }
+
+            return _libraryScanState switch
+            {
+                GameLibraryScanState.NotStarted =>
+                    UiText.GetText("Games.LibraryPathRequired"),
+                GameLibraryScanState.Scanning =>
+                    UiText.GetText("Games.LibraryScanning"),
+                GameLibraryScanState.Failed =>
+                    UiText.GetText("Games.LibraryScanFailed"),
+                _ => InR3
+                    ? UiText.GetText("Games.EmptyInstalled")
+                    : UiText.GetText("Games.Empty")
+            };
+        }
+    }
 
     public string Tip => UiText.GetText("Games.FilterDetectedOnlyTip");
 
@@ -85,7 +116,18 @@ public sealed class ListVm : VmBase
                 .OrderBy(game => game.Title)
                 .ThenBy(game => game.Serial));
 
+        SetLibraryScanState(GameLibraryScanState.Completed);
         ApplySel();
+    }
+
+    public void BeginLibraryScan()
+    {
+        SetLibraryScanState(GameLibraryScanState.Scanning);
+    }
+
+    public void FailLibraryScan()
+    {
+        SetLibraryScanState(GameLibraryScanState.Failed);
     }
 
     public void Clear()
@@ -94,6 +136,7 @@ public sealed class ListVm : VmBase
         _games.Replace([]);
         SelGame = null;
         Text = string.Empty;
+        SetLibraryScanState(GameLibraryScanState.NotStarted);
 
         OnChange(nameof(IsEmpty));
         OnChange(nameof(HasGames));
@@ -105,6 +148,20 @@ public sealed class ListVm : VmBase
         OnChange(nameof(EmptyTxt));
         OnChange(nameof(Tip));
         OnChange(nameof(IsSearch));
+    }
+
+
+    private void SetLibraryScanState(
+        GameLibraryScanState state)
+    {
+        if (_libraryScanState == state)
+        {
+            return;
+        }
+
+        _libraryScanState = state;
+        OnChange(nameof(LibraryScanState));
+        OnChange(nameof(EmptyTxt));
     }
 
     private void ApplySel()
