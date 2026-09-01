@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using R3Config.Application;
 using R3Config.Composition;
+using R3Config.Lang;
 using R3Config.Mdl;
 using R3Config.Svc;
 using R3Config.Vm;
@@ -20,6 +21,8 @@ internal static class ApplicationRuntimeT
     {
         RelayCommandExecutionHonorsRuntimeGuard();
         await AsyncCommandDoubleExecutionIsBlocked();
+        PlanSelectionNotificationsAreCoalesced();
+        PlanLoadReplacementPublishesOneConsistentState();
         MainVmPathReplacementInvalidatesAnalyzedContext(tempRoot);
         await Rpcs3GameLibraryT.RunAsync(tempRoot);
         GameSetupContextChangeClearsPriorResult(tempRoot);
@@ -99,6 +102,183 @@ internal static class ApplicationRuntimeT
 
         Console.WriteLine(
             "ApplicationRuntimeT.AsyncCommandDoubleExecutionIsBlocked PASS");
+    }
+
+    private static void PlanSelectionNotificationsAreCoalesced()
+    {
+        var viewModel = new PlanVm();
+        viewModel.Load(CompositePlan("Composite plan"));
+        var notifications = 0;
+        var exposedPartialCompositeSelection = false;
+        viewModel.SelState += (_, _) =>
+        {
+            notifications++;
+            var selectedStates = viewModel.Items
+                .Where(item => item.Change.WikiKey.Equals(
+                    "composite recommendation",
+                    StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.IsSel)
+                .Distinct()
+                .Count();
+            exposedPartialCompositeSelection |= selectedStates > 1;
+        };
+
+        viewModel.Items.First(item =>
+            item.Change.WikiKey == "composite recommendation").IsSel = true;
+        TestAssert.Assert(
+            notifications == 1 &&
+            !exposedPartialCompositeSelection &&
+            viewModel.Items
+                .Where(item => item.Change.WikiKey ==
+                    "composite recommendation")
+                .All(item => item.IsSel),
+            "One composite selection change must synchronize every backing setting before publishing one final SelState notification.");
+
+        notifications = 0;
+        exposedPartialCompositeSelection = false;
+        viewModel.ClearSel();
+        TestAssert.Assert(
+            notifications == 1 &&
+            !exposedPartialCompositeSelection &&
+            viewModel.Items.All(item => !item.IsSel),
+            "ClearSel must publish one final selection-state refresh without exposing a partially cleared composite recommendation.");
+
+        notifications = 0;
+        exposedPartialCompositeSelection = false;
+        viewModel.Select();
+        TestAssert.Assert(
+            notifications == 1 &&
+            !exposedPartialCompositeSelection &&
+            viewModel.Items.All(item => item.IsSel),
+            "Select must publish one final selection-state refresh after all eligible recommendations are selected.");
+
+        Console.WriteLine(
+            "ApplicationRuntimeT.PlanSelectionNotificationsAreCoalesced PASS");
+    }
+
+    private static void PlanLoadReplacementPublishesOneConsistentState()
+    {
+        var viewModel = new PlanVm();
+        viewModel.Load(CompositePlan(
+            "Old plan",
+            serial: "BLUS90000",
+            configPath: "config_BLUS90000.yml",
+            currentValue: null,
+            applied: 3,
+            pending: 0));
+        viewModel.ShowDone = false;
+        viewModel.Items.First().IsSel = true;
+        var notifications = 0;
+        var exposedTransientState = false;
+        var expectedSummary = UiText.Fmt(
+            "Plan.SummaryPendingOnlyFormat",
+            3,
+            3);
+        viewModel.SelState += (_, _) =>
+        {
+            notifications++;
+            exposedTransientState |=
+                viewModel.HasChg ||
+                !viewModel.CanDel ||
+                viewModel.IsEmpty ||
+                viewModel.ShowDone ||
+                viewModel.Title != "Replacement plan" ||
+                viewModel.Serial != "BLUS91000" ||
+                viewModel.Summary != expectedSummary ||
+                viewModel.EmptyTxt != string.Empty ||
+                viewModel.TgtCfg != "config_BLUS91000.yml" ||
+                viewModel.Items.Count != 3 ||
+                viewModel.Items.Any(item => item.IsSel);
+        };
+
+        viewModel.Load(CompositePlan("Replacement plan"));
+
+        TestAssert.Assert(
+            notifications == 1 &&
+            !exposedTransientState &&
+            !viewModel.HasChg &&
+            viewModel.CanDel &&
+            !viewModel.IsEmpty &&
+            !viewModel.ShowDone &&
+            viewModel.Title == "Replacement plan" &&
+            viewModel.Serial == "BLUS91000" &&
+            viewModel.Summary == expectedSummary &&
+            viewModel.EmptyTxt == string.Empty &&
+            viewModel.TgtCfg == "config_BLUS91000.yml" &&
+            viewModel.Items.Count == 3 &&
+            viewModel.Items.All(item => !item.IsSel),
+            "Replacing a PlanVm plan must publish one final internally consistent property, selection, and command-predicate state without an observable no-plan transition.");
+
+        Console.WriteLine(
+            "ApplicationRuntimeT.PlanLoadReplacementPublishesOneConsistentState PASS");
+    }
+
+    private static CfgPlan CompositePlan(
+        string title,
+        string serial = "BLUS91000",
+        string configPath = "config_BLUS91000.yml",
+        string? currentValue = "false",
+        int applied = 0,
+        int pending = 3)
+    {
+        var changes = new[]
+        {
+            new CfgChg(
+                "Video",
+                "Composite A",
+                "true",
+                "composite recommendation",
+                null,
+                RecRisk.Rec),
+            new CfgChg(
+                "Video",
+                "Composite B",
+                "true",
+                "composite recommendation",
+                null,
+                RecRisk.Rec),
+            new CfgChg(
+                "Core",
+                "Independent",
+                "true",
+                "independent recommendation",
+                null,
+                RecRisk.Rec)
+        };
+        var items = changes.Select(change =>
+        {
+            var state = new RecItem(
+                serial,
+                change.Path,
+                currentValue,
+                change.Value,
+                change.Risk,
+                RecState.Pending,
+                IsDiff: true,
+                IsAction: true,
+                IsSel: true,
+                Notes: string.Empty);
+            return new CfgEntry(
+                change,
+                currentValue,
+                state);
+        }).ToArray();
+
+        return new CfgPlan(
+            serial,
+            title,
+            configPath,
+            items,
+            new RecSum(
+                serial,
+                items.Length,
+                Applied: applied,
+                Pending: pending,
+                Manual: 0,
+                Blocked: 0,
+                Unknown: 0,
+                items.Select(item => item.StateIt).ToArray()),
+            NeedBkp: true);
     }
 
     private static void MainVmPathReplacementInvalidatesAnalyzedContext(

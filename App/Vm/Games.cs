@@ -167,7 +167,6 @@ public sealed class ListVm : VmBase
     private void ApplySel()
     {
         var selectedSerial = SelGame?.Serial;
-        var selectedTitle = SelGame?.Title;
 
         var search = Text.Trim();
 
@@ -196,10 +195,6 @@ public sealed class ListVm : VmBase
                 string.Equals(
                     game.Serial,
                     selectedSerial,
-                    StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(
-                    game.Title,
-                    selectedTitle,
                     StringComparison.OrdinalIgnoreCase));
 
         SelGame = selected;

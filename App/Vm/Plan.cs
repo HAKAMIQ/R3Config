@@ -17,6 +17,7 @@ public sealed class PlanVm : VmBase
     private string _tgtCfg = "-";
     private bool _applied = true;
     private bool _syncingSelection;
+    private bool _batchingSelection;
     private CfgPlan? _plan;
 
     public event EventHandler? SelState;
@@ -110,7 +111,8 @@ public sealed class PlanVm : VmBase
 
     public void Load(CfgPlan plan)
     {
-        Clear();
+        Unsub();
+        Items.Clear();
 
         _plan = plan;
         Title = plan.GameName;
@@ -122,9 +124,17 @@ public sealed class PlanVm : VmBase
 
     public void Select()
     {
-        foreach (var item in Items)
+        _batchingSelection = true;
+        try
         {
-            item.IsSel = item.AutoSel && item.IsDiff && item.IsAction;
+            foreach (var item in Items)
+            {
+                item.IsSel = item.AutoSel && item.IsDiff && item.IsAction;
+            }
+        }
+        finally
+        {
+            _batchingSelection = false;
         }
 
         SetSum();
@@ -133,9 +143,17 @@ public sealed class PlanVm : VmBase
 
     public void ClearSel()
     {
-        foreach (var item in Items)
+        _batchingSelection = true;
+        try
         {
-            item.IsSel = false;
+            foreach (var item in Items)
+            {
+                item.IsSel = false;
+            }
+        }
+        finally
+        {
+            _batchingSelection = false;
         }
 
         SetSum();
@@ -223,7 +241,12 @@ public sealed class PlanVm : VmBase
     {
         if (e.PropertyName == nameof(PlanItVm.IsSel))
         {
-            if (!_syncingSelection && sender is PlanItVm changed)
+            if (_syncingSelection)
+            {
+                return;
+            }
+
+            if (sender is PlanItVm changed)
             {
                 _syncingSelection = true;
                 try
@@ -244,8 +267,11 @@ public sealed class PlanVm : VmBase
                 }
             }
 
-            SetSum();
-            RaiseSel();
+            if (!_batchingSelection)
+            {
+                SetSum();
+                RaiseSel();
+            }
         }
     }
 

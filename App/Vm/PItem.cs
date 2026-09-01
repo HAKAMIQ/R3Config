@@ -412,13 +412,13 @@ public sealed class PatItVm : VmBase
 
     public string CurrentStateDsp => UiText.Fmt(
         "Patch.State.Current",
-        StateDsp);
+        UiText.GetText(IsOn
+            ? "Patch.State.Enabled"
+            : "Patch.State.Disabled"));
 
     public string StateTon => IsOn
         ? "Game"
-        : CanOn
-            ? IsOfcl || IsDef ? "Muted" : "Auto"
-            : "Warning";
+        : "Muted";
 
     public bool HasPendingAction => IsSel && CanSel;
 

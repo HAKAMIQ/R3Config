@@ -16,6 +16,7 @@ internal static class Rpcs3GameLibraryT
         FirstRunWithoutPathRequiresRpcs3Path(tempRoot);
         await SavedPathScansLibraryAtStartup(tempRoot);
         await AnalysisRefreshPreservesSelectedGame(tempRoot);
+        await AnalysisRefreshPreservesSelectedGameWhenTitleChanges(tempRoot);
         await PathReplacementDropsStaleLibraryScan(tempRoot);
 
         Console.WriteLine(
@@ -152,6 +153,72 @@ internal static class Rpcs3GameLibraryT
                 "BLUS90005",
                 StringComparison.OrdinalIgnoreCase) == true,
             "Refreshing full RPCS3 analysis must preserve the user's selected game when that game still exists in the refreshed library.");
+    }
+
+    private static async Task AnalysisRefreshPreservesSelectedGameWhenTitleChanges(
+        string tempRoot)
+    {
+        var root = Path.Combine(
+            tempRoot,
+            "analysis-preserves-game-selection-after-title-refresh");
+        var exePath = CreateRpcs3WithGame(
+            root,
+            "BLUS90006",
+            "Alpha Library Game");
+        AddGame(
+            root,
+            "BLUS90007",
+            "Original Zulu Title");
+        var settings = new SetSvc(Path.Combine(
+            root,
+            "settings",
+            "settings.json"));
+        settings.Save(new AppSet(exePath));
+
+        var services = new AppRuntimeServices(
+            new AppFlow(AppComposition.Build(
+                new Rpcs3MutationGuard(() => false))),
+            settings);
+
+        using var viewModel = new MainVm(
+            services,
+            isRpcs3Running: () => false,
+            confirm: (_, _) => true,
+            info: (_, _) => { });
+
+        await WaitUntilAsync(
+            () => viewModel.GameList.LibraryScanState ==
+                      GameLibraryScanState.Completed &&
+                  viewModel.GameList.Games.Count == 2,
+            "Startup RPCS3 game-library scan did not expose both controlled games before the title refresh.");
+
+        viewModel.GameList.SelGame = viewModel.GameList.Games.Single(game =>
+            game.Serial.Equals(
+                "BLUS90007",
+                StringComparison.OrdinalIgnoreCase));
+
+        AddGame(
+            root,
+            "BLUS90007",
+            "Updated Zulu Title");
+
+        var analyze = typeof(MainVm).GetMethod(
+            "DoAsync",
+            BindingFlags.Instance | BindingFlags.NonPublic) ??
+            throw new InvalidOperationException(
+                "MainVm.DoAsync was not found.");
+        var task = (Task)(analyze.Invoke(viewModel, null) ??
+            throw new InvalidOperationException(
+                "MainVm.DoAsync did not return a Task."));
+        await task;
+
+        TestAssert.Assert(
+            viewModel.GameList.SelGame is
+            {
+                Serial: "BLUS90007",
+                Title: "Updated Zulu Title"
+            },
+            "Refreshing analysis must preserve the selected game by its normalized serial even when refreshed metadata changes the display title.");
     }
 
     private static async Task PathReplacementDropsStaleLibraryScan(

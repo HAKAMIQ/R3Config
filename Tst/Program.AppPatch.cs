@@ -324,8 +324,12 @@ internal static partial class Program
             !bundledCanaryItem.IsDef &&
             bundledCanaryItem.DefState == UiText.GetText("Patch.Definition.NotMerged") &&
             bundledCanaryItem.StateDsp == UiText.GetText("Patch.State.Ready") &&
+            bundledCanaryItem.CurrentStateDsp == UiText.Fmt(
+                "Patch.State.Current",
+                UiText.GetText("Patch.State.Disabled")) &&
+            bundledCanaryItem.StateTon == "Muted" &&
             !bundledCanaryItem.IsSel,
-            "Expected a bundled Canary option to remain explicitly not merged and never preselected.");
+            "Expected a bundled Canary option to remain explicitly not merged, report its actual disabled current state separately from readiness, and never start selected.");
         var importedCanaryMatch = new R3Config.Svc.PatchMatchService().Match(
             gowAscensionCanary with { Source = PatSrc.Imported },
             [gowAscensionGame]);
@@ -353,13 +357,19 @@ internal static partial class Program
         importedCanaryItem.IsSel = true;
         Assert(
             importedCanaryItem.HasPendingAction &&
-            importedCanaryItem.PendingDsp == UiText.GetText("Patch.Pending.Enable"),
+            importedCanaryItem.PendingDsp == UiText.GetText("Patch.Pending.Enable") &&
+            importedCanaryItem.CurrentStateDsp == UiText.Fmt(
+                "Patch.State.Current",
+                UiText.GetText("Patch.State.Disabled")),
             "Expected a selected disabled patch to expose a pending-enable presentation state without changing its actual enabled state.");
         enabledImportedCanaryItem.IsSel = true;
         Assert(
             enabledImportedCanaryItem.HasPendingAction &&
             enabledImportedCanaryItem.PendingDsp == UiText.GetText("Patch.Pending.Disable") &&
-            enabledImportedCanaryItem.IsOn,
+            enabledImportedCanaryItem.IsOn &&
+            enabledImportedCanaryItem.CurrentStateDsp == UiText.Fmt(
+                "Patch.State.Current",
+                UiText.GetText("Patch.State.Enabled")),
             "Expected a selected enabled patch to expose pending-disable separately while preserving the current enabled state.");
 
         var gowAscensionCheat = bundledCheatStrictRead.Catalog.Entries.Single(entry =>
