@@ -829,9 +829,9 @@ internal static class UiGate
         string appDir,
         List<string> errs)
     {
-        const int expectedCount = 819;
+        const int expectedCount = 810;
         const string expectedSha256 =
-            "ab2c42cd597c931ff662a08f9c7face868714c8febc1f8d7681c8fe65381d871";
+            "7c7bd9cd491af5d22f24eac1730320c460de61fb94e368b94aca56e2bc5ea0ba";
         var propertyNames = new HashSet<string>(
             [
                 "FlowDirection",
@@ -1369,6 +1369,80 @@ internal static class UiGate
         {
             errs.Add(
                 "Recommendation notes must use vertical current/proposed sections followed by a dedicated Wiki instructions section.");
+        }
+
+        if (!recommendationView.Contains(
+                "Visibility=\"{Binding Plan.HasChg,",
+                StringComparison.Ordinal))
+        {
+            errs.Add(
+                "The settings Apply action must stay hidden until the user selects a real settings change.");
+        }
+
+        var setupView = File.ReadAllText(Path.Combine(
+            appDir,
+            "Ctrl",
+            "Setup.xaml"));
+        if (!setupView.Contains(
+                "Visibility=\"{Binding SetupCanApply,",
+                StringComparison.Ordinal))
+        {
+            errs.Add(
+                "The change-summary Apply action must stay hidden until an applyable delta exists.");
+        }
+
+        var patchShell = File.ReadAllText(Path.Combine(
+            appDir,
+            "Ctrl",
+            "Pat.xaml"));
+        var officialPatchView = File.ReadAllText(Path.Combine(
+            appDir,
+            "Ctrl",
+            "POff.xaml"));
+        var canaryPatchView = File.ReadAllText(Path.Combine(
+            appDir,
+            "Ctrl",
+            "PCan.xaml"));
+        var patchTemplates = File.ReadAllText(Path.Combine(
+            appDir,
+            "Ctrl",
+            "PTmp.xaml"));
+
+        if (patchShell.Contains("FingerprintCaptureStatus", StringComparison.Ordinal) ||
+            patchShell.Contains("FingerprintCaptureCmd", StringComparison.Ordinal) ||
+            patchShell.Contains("Patch.Launch.BootRecommended", StringComparison.Ordinal))
+        {
+            errs.Add(
+                "The shared patch shell must not expose verification controls or persistent Boot Game guidance; both belong to the action that actually needs them.");
+        }
+
+        if (!canaryPatchView.Contains("ShowCanaryVerificationPanel", StringComparison.Ordinal) ||
+            !canaryPatchView.Contains("PatchReadiness.VerifyAction", StringComparison.Ordinal) ||
+            !officialPatchView.Contains("Preview.OfclEmptyText", StringComparison.Ordinal) ||
+            !canaryPatchView.Contains("Preview.CanEmptyText", StringComparison.Ordinal))
+        {
+            errs.Add(
+                "Patch compatibility guidance must be contextual: precise empty states on official/Canary pages and verification only on Canary.");
+        }
+
+        if (!patchTemplates.Contains("Text=\"{Binding ArtemisTitle}\"", StringComparison.Ordinal) ||
+            !patchTemplates.Contains("Text=\"{Binding NoteBody}\"", StringComparison.Ordinal) ||
+            !patchTemplates.Contains("Visibility=\"{Binding HasDesc,", StringComparison.Ordinal) ||
+            !patchTemplates.Contains("ToolTip=\"{Binding ArtemisTip}\"", StringComparison.Ordinal))
+        {
+            errs.Add(
+                "Artemis rows must keep cleaned titles separate from localized Notes, suppress technical prose in the primary list, and preserve details in the row ToolTip.");
+        }
+
+        var mainView = File.ReadAllText(Path.Combine(appDir, "Main.xaml"));
+        var cheatPatchView = File.ReadAllText(Path.Combine(appDir, "Ctrl", "PCht.xaml"));
+        if (mainView.Contains("PatReady", StringComparison.Ordinal) ||
+            mainView.Contains("ReadyTip", StringComparison.Ordinal) ||
+            mainView.Contains("ReadyTon", StringComparison.Ordinal) ||
+            !cheatPatchView.Contains("Preview.ChtEmptyText", StringComparison.Ordinal))
+        {
+            errs.Add(
+                "Compatibility state must stay inside patch surfaces, and Artemis must use one precise dynamic empty-state sentence.");
         }
 
         if (recommendationView.Contains(

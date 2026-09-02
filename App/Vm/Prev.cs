@@ -74,16 +74,27 @@ public sealed class PatPrev : VmBase
 
     public bool HasChtActions => SelChtOn || ChtOff;
 
-    public string OfclSum => SubSum(
-        OfclList,
-        "Patch.OfficialSummary",
-        "Patch.OfficialSummaryPending",
-        "Patch.OfficialSummaryNone",
-        "Patch.OfficialSummaryPendingOnly");
+    public bool HasEnableSelection => OfclOn || SelCanOn || SelChtOn;
+
+    public string OfclSum => NeedsOfficialVerification
+        ? UiText.GetText("PatchReadiness.OfficialVerifyNeeded")
+        : SimpleSum(
+            OfclList,
+            "Patch.OfficialSummaryAvailable",
+            "Patch.OfficialSummaryPendingSimple");
 
     public string CanSum => CanarySum();
 
     public string ChtSum => ArtemisSum();
+
+    public bool HasOfclSummary =>
+        !string.IsNullOrWhiteSpace(OfclSum);
+
+    public bool HasCanSummary =>
+        !string.IsNullOrWhiteSpace(CanSum);
+
+    public bool HasChtSummary =>
+        !string.IsNullOrWhiteSpace(ChtSum);
 
     public string OfclHint => ActHint(OfclList);
 
@@ -105,7 +116,42 @@ public sealed class PatPrev : VmBase
 
     public bool CanEmpty => CanItems.Count == 0;
 
+    public string OfclEmptyText => SectionEmptyText(
+        _matches.Where(IsOfficial),
+        "Patch.Empty.Official.None",
+        "Patch.Empty.OtherVersions",
+        "Patch.Empty.HashMismatch",
+        "Patch.Empty.NeedsVerification",
+        "Patch.Empty.Filtered");
+
+    public string CanEmptyText => SectionEmptyText(
+        _matches.Where(match => match.Patch.Class == PatClass.Canary),
+        "Patch.Empty.Canary.None",
+        "Patch.Empty.OtherVersions",
+        "Patch.Empty.HashMismatch",
+        "Patch.Empty.NeedsVerification",
+        "Patch.Empty.Filtered");
+
     public bool ChtEmpty => ChtItems.Count == 0;
+
+    public bool NeedsOfficialVerification =>
+        OfclList.Count > 0 &&
+        !OfclList.Any(IsSummaryRelevant) &&
+        OfclList.Any(item => item.NeedsLocalVerification);
+
+    public bool NeedsCanaryVerification =>
+        CanItems.Any(item => item.NeedsLocalVerification);
+
+    public bool HasCanaryHashMismatch =>
+        CanItems.Any(item => item.HasHashMismatch);
+
+    public string ChtEmptyText => SectionEmptyText(
+        _matches.Where(match => match.Patch.Source is PatSrc.Artemis or PatSrc.ManagedArtemis),
+        "Patch.Empty.Artemis.None",
+        "Patch.Empty.Artemis.OtherVersions",
+        "Patch.Empty.Artemis.HashMismatch",
+        "Patch.Empty.Artemis.NeedsVerification",
+        "Patch.Empty.Artemis.Filtered");
 
     public bool HasWarn => !string.IsNullOrWhiteSpace(WarnText);
 
@@ -656,6 +702,9 @@ public sealed class PatPrev : VmBase
         OnChange(nameof(OfclSum));
         OnChange(nameof(CanSum));
         OnChange(nameof(ChtSum));
+        OnChange(nameof(HasOfclSummary));
+        OnChange(nameof(HasCanSummary));
+        OnChange(nameof(HasChtSummary));
         OnChange(nameof(OfclHint));
         OnChange(nameof(CanHint));
         OnChange(nameof(ChtHint));
@@ -671,6 +720,13 @@ public sealed class PatPrev : VmBase
         OnChange(nameof(SelChtOn));
         OnChange(nameof(ChtOff));
         OnChange(nameof(HasChtActions));
+        OnChange(nameof(HasEnableSelection));
+        OnChange(nameof(OfclEmptyText));
+        OnChange(nameof(CanEmptyText));
+        OnChange(nameof(ChtEmptyText));
+        OnChange(nameof(NeedsOfficialVerification));
+        OnChange(nameof(NeedsCanaryVerification));
+        OnChange(nameof(HasCanaryHashMismatch));
         OnChange(nameof(HasLocal));
         SelState?.Invoke(this, EventArgs.Empty);
     }
@@ -682,36 +738,10 @@ public sealed class PatPrev : VmBase
             return string.Empty;
         }
 
-        var enabledCount = CanItems.Count(item => item.IsOn);
-        var selectedCount = CanItems.Count(item => item.IsSel);
-
-        if (enabledCount == 0 &&
-            selectedCount == 0 &&
-            CanItems.All(item => !item.CanOn && !item.IsOn))
-        {
-            return UiText.GetText("Patch.CanarySummaryAllIncompatible");
-        }
-
-        if (enabledCount == 0)
-        {
-            return selectedCount == 0
-                ? UiText.Fmt("Patch.CanarySummaryNone", CanItems.Count)
-                : UiText.Fmt(
-                    "Patch.CanarySummaryPendingOnly",
-                    CanItems.Count,
-                    selectedCount);
-        }
-
-        return selectedCount == 0
-            ? UiText.Fmt(
-                "Patch.CanarySummary",
-                CanItems.Count,
-                enabledCount)
-            : UiText.Fmt(
-                "Patch.CanarySummaryPending",
-                CanItems.Count,
-                enabledCount,
-                selectedCount);
+        return SimpleSum(
+            CanItems,
+            "Patch.CanarySummaryAvailable",
+            "Patch.CanarySummaryPendingSimple");
     }
 
     private string ArtemisSum()
@@ -721,57 +751,41 @@ public sealed class PatPrev : VmBase
             return string.Empty;
         }
 
-        var enabledCount = ChtItems.Count(item => item.IsOn);
-        var selectedCount = ChtItems.Count(item => item.IsSel);
-
-        if (enabledCount == 0)
-        {
-            return selectedCount == 0
-                ? UiText.Fmt("Patch.Artemis.SummaryNone", ChtItems.Count)
-                : UiText.Fmt(
-                    "Patch.Artemis.SummaryPendingOnly",
-                    ChtItems.Count,
-                    selectedCount);
-        }
-
-        return selectedCount == 0
-            ? UiText.Fmt(
-                "Patch.Artemis.Summary",
-                ChtItems.Count,
-                enabledCount)
-            : UiText.Fmt(
-                "Patch.Artemis.SummaryPending",
-                ChtItems.Count,
-                enabledCount,
-                selectedCount);
+        return SimpleSum(
+            ChtItems,
+            "Patch.Artemis.SummaryAvailable",
+            "Patch.Artemis.SummaryPendingSimple");
     }
 
-    private static string SubSum(
+    private static string SimpleSum(
         ObservableCollection<PatItVm> items,
-        string key,
-        string pendingKey,
-        string noneKey,
-        string pendingOnlyKey)
+        string availableKey,
+        string pendingKey)
     {
         if (items.Count == 0)
         {
             return string.Empty;
         }
 
-        var enabledCount = items.Count(item => item.IsOn);
-        var selectedCount = items.Count(item => item.IsSel);
-
-        if (enabledCount == 0)
+        var relevant = items
+            .Where(IsSummaryRelevant)
+            .ToArray();
+        if (relevant.Length == 0)
         {
-            return selectedCount == 0
-                ? UiText.Fmt(noneKey, items.Count)
-                : UiText.Fmt(pendingOnlyKey, items.Count, selectedCount);
+            return string.Empty;
         }
 
+        var selectedCount = relevant.Count(item => item.IsSel);
         return selectedCount == 0
-            ? UiText.Fmt(key, items.Count, enabledCount)
-            : UiText.Fmt(pendingKey, items.Count, enabledCount, selectedCount);
+            ? UiText.Fmt(availableKey, relevant.Length)
+            : UiText.Fmt(
+                pendingKey,
+                relevant.Length,
+                selectedCount);
     }
+
+    private static bool IsSummaryRelevant(PatItVm item) =>
+        item.IsOn || item.CanSel;
 
     private static string ActHint(IReadOnlyCollection<PatItVm> items)
     {
@@ -817,6 +831,59 @@ public sealed class PatPrev : VmBase
         return localized.HasOrig
             ? $"{localized.Body}{Environment.NewLine}{UiText.GetText("Note.OriginalTextLabel")}{Environment.NewLine}{localized.OrigBody}"
             : localized.Body;
+    }
+
+    private static bool IsOfficial(PatMatch match)
+    {
+        return match.Patch.Class != PatClass.Canary &&
+               match.Patch.Source == PatSrc.Official;
+    }
+
+    private static string SectionEmptyText(
+        IEnumerable<PatMatch> source,
+        string noneKey,
+        string otherVersionsKey,
+        string hashMismatchKey,
+        string needsVerificationKey,
+        string filteredKey)
+    {
+        var matches = source.ToArray();
+        if (matches.Length == 0)
+        {
+            return UiText.GetText(noneKey);
+        }
+
+        if (matches.All(match => match.Status == MatStat.VerBad))
+        {
+            var versions = matches
+                .SelectMany(match =>
+                    !string.IsNullOrWhiteSpace(match.TgtVer)
+                        ? [match.TgtVer!]
+                        : match.Patch.GameVer)
+                .Where(version => !string.IsNullOrWhiteSpace(version))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Order(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (versions.Length > 0)
+            {
+                return UiText.Fmt(
+                    otherVersionsKey,
+                    string.Join(", ", versions));
+            }
+        }
+
+        if (matches.Any(match => match.Status is MatStat.Unknown or MatStat.VerUnk))
+        {
+            return UiText.GetText(needsVerificationKey);
+        }
+
+        if (matches.Any(match => match.Status == MatStat.HashBad))
+        {
+            return UiText.GetText(hashMismatchKey);
+        }
+
+        return UiText.GetText(filteredKey);
     }
 
     private enum PatSurf
@@ -918,22 +985,16 @@ public sealed class TgtGrpVm : VmBase
     public int EnabledCount => Items.Count(item => item.IsOn);
 
     public string Details => UiText.Fmt(
-        "Patch.GroupMeta",
-        FmtTech(InstVer),
-        Items.Count,
-        EnabledCount);
+        "Patch.OfficialGroupVersion",
+        FmtTech(InstVer));
 
     public string CanMeta => UiText.Fmt(
-        "Patch.CanaryGroupMeta",
-        FmtTech(InstVer),
-        Items.Count,
-        EnabledCount);
+        "Patch.CanaryGroupVersion",
+        FmtTech(InstVer));
 
     public string ArtemisMeta => UiText.Fmt(
-        "Patch.Artemis.GroupMeta",
-        FmtTech(InstVer),
-        Items.Count,
-        EnabledCount);
+        "Patch.Artemis.GroupVersion",
+        FmtTech(InstVer));
 
     public string CanNote => UiText.Fmt(
         "Patch.CanaryGroupNote",

@@ -187,16 +187,33 @@ internal static partial class Program
             "App",
             "Lang",
             "UiText.cs"));
+        var languageReaderSource = File.ReadAllText(Path.Combine(
+            repoRoot,
+            "App",
+            "Lang",
+            "R3LangReader.cs"));
         Assert(!uiTextSource.Contains(
                    "Environment.CurrentDirectory",
                    StringComparison.Ordinal) &&
                uiTextSource.Contains(
-                   "MaxLanguageBytes",
+                   "AppContext.BaseDirectory",
                    StringComparison.Ordinal) &&
                uiTextSource.Contains(
+                   "R3LangManifest.TryResolve",
+                   StringComparison.Ordinal) &&
+               languageReaderSource.Contains(
+                   "MaxPackBytes",
+                   StringComparison.Ordinal) &&
+               languageReaderSource.Contains(
+                   "MaxPayloadBytes",
+                   StringComparison.Ordinal) &&
+               languageReaderSource.Contains(
+                   "SHA256.HashData",
+                   StringComparison.Ordinal) &&
+               languageReaderSource.Contains(
                    "duplicate key",
                    StringComparison.OrdinalIgnoreCase),
-            "Expected UI languages to load only from the application directory with bounded duplicate-key validation.");
+            "Expected UI languages to load only compiled, integrity-checked, bounded packages from the application directory.");
 
         var appSource = File.ReadAllText(Path.Combine(
             repoRoot,

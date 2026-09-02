@@ -565,6 +565,7 @@ internal static partial class Program
             "Expected the redundant suggested-settings heading to be removed from the settings tab.");
 
         var patchView = ReadSources(patchViewPaths);
+        var patchShellView = File.ReadAllText(patchViewPath);
         var officialView = File.ReadAllText(
             Path.Combine(appRoot, "Ctrl", "POff.xaml"));
         var canaryView = File.ReadAllText(
@@ -631,7 +632,7 @@ internal static partial class Program
                officialView.Contains("x:Name=\"OfclActions\"", StringComparison.Ordinal) &&
                officialView.Contains("Grid.Row=\"2\"", StringComparison.Ordinal) &&
                canaryView.Contains("x:Name=\"CanActions\"", StringComparison.Ordinal) &&
-               canaryView.Contains("Grid.Row=\"2\"", StringComparison.Ordinal) &&
+               canaryView.Contains("Grid.Row=\"3\"", StringComparison.Ordinal) &&
                cheatView.Contains("x:Name=\"ChtActions\"", StringComparison.Ordinal) &&
                cheatView.Contains("Grid.Row=\"2\"", StringComparison.Ordinal) &&
                officialView.Contains("Text=\"{Binding Preview.OfclSum}\"", StringComparison.Ordinal) &&
@@ -661,19 +662,19 @@ internal static partial class Program
             "Expected the official patch toolbar to avoid a floating information-only glyph.");
         Assert(actionBarView.Contains("Command=\"{Binding AnlzCmd}\"", StringComparison.Ordinal) &&
                actionBarView.Contains("Key=Btn.Analyze", StringComparison.Ordinal) &&
-               patchSourceView.Contains("Command=\"{Binding AnlzCmd}\"", StringComparison.Ordinal) &&
-               patchSourceView.Contains("Key=Btn.Analyze", StringComparison.Ordinal) &&
+               !patchSourceView.Contains("Command=\"{Binding AnlzCmd}\"", StringComparison.Ordinal) && !patchSourceView.Contains("Key=Btn.Analyze", StringComparison.Ordinal) &&
+               patchSourceView.Contains("Patch.SourceStatus.UpdateOfficial", StringComparison.Ordinal) &&
                hCanaryGameView.Contains("Command=\"{Binding AnlzCmd}\"", StringComparison.Ordinal) &&
                hCanaryGameView.Contains("Key=Btn.Analyze", StringComparison.Ordinal) &&
                !hCanaryGameView.Contains("HCanary.Start.Game.Scan", StringComparison.Ordinal),
-            "Expected every AnlzCmd button to expose the same full-analysis label instead of claiming a library-only scan.");
-        Assert(mainSetupVm.Contains("Setup.Warning.HashMismatchCount", StringComparison.Ordinal) &&
+            "Expected the patch source toolbar to avoid duplicating the global RPCS3 analysis action.");
+        Assert(!mainSetupVm.Contains("Setup.Warning.HashMismatchCount", StringComparison.Ordinal) &&
+               mainSetupVm.Contains("token.Equals(\"HASHMISMATCH\"", StringComparison.Ordinal) &&
                mainSetupVm.Contains("LooksLikeDiagnosticToken", StringComparison.Ordinal) &&
-               !setupView.Contains("HASHMISMATCH", StringComparison.Ordinal),
-            "Expected internal setup diagnostic tokens to be normalized before reaching the player-facing summary.");
-        Assert(mainSetupVm.Contains("Setup.CanaryAllIncompatible", StringComparison.Ordinal) &&
-               mainSetupVm.Contains("CountSetupWarnings(\"HASHMISMATCH\") == available", StringComparison.Ordinal),
-            "Expected the setup summary to match the Canary tab when every Canary option is incompatible.");
+               !setupView.Contains("HASHMISMATCH", StringComparison.Ordinal) &&
+               mainSetupVm.Contains("SetupCanaryChangeCount", StringComparison.Ordinal) &&
+               setupView.Contains("SetupHasCanaryChanges", StringComparison.Ordinal) &&
+               !mainSetupVm.Contains("Setup.CanaryAllIncompatible", StringComparison.Ordinal), "Expected selected deltas only in the change summary.");
         Assert(patchView.Contains("x:Key=\"PatDisclosureExpander\"", StringComparison.Ordinal) &&
                patchView.Contains("x:Key=\"PatDisclosureChevron\"", StringComparison.Ordinal) &&
                patchView.Contains("Value=\"M 1,1 L 5,5 L 9,1\"", StringComparison.Ordinal) &&
@@ -704,25 +705,32 @@ internal static partial class Program
             !canaryView.Contains("Text=\"{Binding SrcDsp}\"", StringComparison.Ordinal),
             "Expected compact Canary rows to expose actual enabled state and pending action separately while keeping technical/source details out of the primary row.");
         Assert(
-            !canaryView.Contains(
+            canaryView.Contains(
                 "Command=\"{Binding FingerprintCaptureCmd}\"",
                 StringComparison.Ordinal) &&
-            patchView.Contains(
+            canaryView.Contains(
+                "Text=\"{Binding CanaryVerificationText}\"",
+                StringComparison.Ordinal) &&
+            canaryView.Contains(
+                "ShowCanaryVerificationPanel",
+                StringComparison.Ordinal) &&
+            !patchShellView.Contains(
                 "Command=\"{Binding FingerprintCaptureCmd}\"",
                 StringComparison.Ordinal) &&
-            !canaryView.Contains(
-                "Text=\"{Binding FingerprintCaptureStatus}\"",
+            !patchShellView.Contains(
+                "FingerprintCaptureStatus",
                 StringComparison.Ordinal) &&
-            canaryView.Contains(
-                "Style=\"{StaticResource PatCompactItemRow}\"",
+            !officialView.Contains(
+                "FingerprintCaptureCmd",
                 StringComparison.Ordinal) &&
-            canaryView.Contains(
-                "VerticalAlignment=\"Stretch\"",
-                StringComparison.Ordinal) &&
-            !canaryView.Contains(
-                "MaxHeight=\"360\"",
+            !mainWindowXaml.Contains(
+                "FingerprintCaptureCmd",
                 StringComparison.Ordinal),
-            "Expected the one-time fingerprint capture workflow to remain in the readiness warning without being duplicated in the Canary action toolbar.");
+            "Expected Canary verification to appear only inside the Canary surface when Canary entries actually require it, without a global fingerprint control.");
+        Assert(
+            cheatView.Contains("Preview.ChtEmptyText", StringComparison.Ordinal) &&
+            !patchView.Contains("Patch.Launch.BootRecommended", StringComparison.Ordinal),
+            "Expected Artemis to use one precise dynamic empty state and Boot Game guidance to appear only at the actual apply confirmation, not persistently in the patch shell.");
         Assert(
             fingerprintCaptureCode.Contains(
                 "CanaryExpectation()",
@@ -968,7 +976,7 @@ internal static partial class Program
         Assert(mainVm.Contains("LangChg?.Invoke", StringComparison.Ordinal) &&
                mainWindow.Contains("BuildPat", StringComparison.Ordinal),
             "Expected a live language switch to recreate patch visuals after preserving their view-model state.");
-        Assert(patchView.Contains("DirStat", StringComparison.Ordinal) &&
+        Assert(patchView.Contains("CompatibilityTip", StringComparison.Ordinal) && patchView.Contains("ArtemisTip", StringComparison.Ordinal) &&
                patchView.Contains("InsText", StringComparison.Ordinal) &&
                !patchView.Contains("EviSum", StringComparison.Ordinal) &&
                !patchView.Contains("TechTgt", StringComparison.Ordinal) &&

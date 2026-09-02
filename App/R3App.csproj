@@ -21,10 +21,15 @@
     <Description>Offline Windows companion for safe RPCS3 per-game configuration and patch management.</Description>
     <Copyright>Copyright © 2026 HAKAMIQ. All rights reserved.</Copyright>
     <ApplicationIcon>Data\Icon.ico</ApplicationIcon>
+    <R3LangCompilerDll>$(MSBuildProjectDirectory)\..\Script\LangPack\bin\$(Configuration)\net8.0\R3LangPack.dll</R3LangCompilerDll>
+    <R3LangIntermediateDir>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\r3lang</R3LangIntermediateDir>
+    <R3LangGeneratedDir>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\generated</R3LangGeneratedDir>
+    <R3LangGeneratedManifest>$(R3LangGeneratedDir)\R3LangManifest.g.cs</R3LangGeneratedManifest>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Core\R3Core.csproj" />
+    <ProjectReference Include="..\Script\LangPack\R3LangPack.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,8 +38,9 @@
     <Content Include="Data\patch_requirements.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Data\art.yml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Data\art_dep.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="Lang\ar-SA.json" CopyToOutputDirectory="Always" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="Lang\en-US.json" CopyToOutputDirectory="Always" CopyToPublishDirectory="PreserveNewest" />
+    <Compile Include="$(R3LangGeneratedManifest)" Visible="false" />
+    <Content Include="$(R3LangIntermediateDir)\ar-SA.r3lang" Link="Lang\ar-SA.r3lang" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="$(R3LangIntermediateDir)\en-US.r3lang" Link="Lang\en-US.r3lang" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Resource Include="Data\Icon.ico" />
   </ItemGroup>
 
@@ -47,5 +53,12 @@
     <None Include="..\CHEATS.md" Link="CHEATS.md" CopyToPublishDirectory="Always" />
     <None Include="..\CANARY.md" Link="CANARY.md" CopyToPublishDirectory="Always" />
   </ItemGroup>
+
+  <Target Name="CompileR3LanguagePacks"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="ResolveProjectReferences">
+    <MakeDir Directories="$(R3LangIntermediateDir);$(R3LangGeneratedDir)" />
+    <Exec Command="dotnet &quot;$(R3LangCompilerDll)&quot; &quot;$(MSBuildProjectDirectory)\Lang&quot; &quot;$(R3LangIntermediateDir)&quot; &quot;$(R3LangGeneratedManifest)&quot;" />
+  </Target>
 
 </Project>

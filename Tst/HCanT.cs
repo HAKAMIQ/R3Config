@@ -2446,12 +2446,27 @@ internal static class HCanTst
 
         Assert(
             project.Contains(
-                "Lang\\ar-SA.json\" CopyToOutputDirectory=\"Always\"",
+                "Script\\LangPack\\R3LangPack.csproj",
                 StringComparison.Ordinal) &&
             project.Contains(
-                "Lang\\en-US.json\" CopyToOutputDirectory=\"Always\"",
+                "CompileR3LanguagePacks",
+                StringComparison.Ordinal) &&
+            project.Contains(
+                "ar-SA.r3lang",
+                StringComparison.Ordinal) &&
+            project.Contains(
+                "en-US.r3lang",
+                StringComparison.Ordinal) &&
+            project.Split(
+                "ExcludeFromSingleFile=\"true\"",
+                StringSplitOptions.None).Length - 1 >= 2 &&
+            !project.Contains(
+                "Lang\\ar-SA.json\" CopyToOutputDirectory",
+                StringComparison.Ordinal) &&
+            !project.Contains(
+                "Lang\\en-US.json\" CopyToOutputDirectory",
                 StringComparison.Ordinal),
-            "Language resources must always refresh the build output so stale JSON cannot expose raw keys.");
+            "Language sources must stay editable in source while build output ships compiled .r3lang packs only.");
 
         var xaml = ReadSources(
             Path.Combine(appRoot, "Ctrl", "HCan.xaml"),

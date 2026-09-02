@@ -3,4 +3,5 @@
   <Project Path="App/R3App.csproj" />
   <Project Path="Core/R3Core.csproj" />
   <Project Path="Script/ArtImport/R3ArtImport.csproj" />
+  <Project Path="Script/LangPack/R3LangPack.csproj" />
 </Solution>

@@ -143,6 +143,7 @@ public sealed partial class MainVm : VmBase
         GameList.SetLang();
         Plan.SetLang();
         Preview.SetLang();
+        OnPatchPresentationChanged();
         RefreshGameSetupPresentation();
         LoadSrc();
         Advanced.SetLang();

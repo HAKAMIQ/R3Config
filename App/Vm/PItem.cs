@@ -29,7 +29,9 @@ public sealed class PatDepVm(PatDepGroup dependency)
             ? "Patch.Dependency.All"
             : "Patch.Dependency.Any");
 
-    public string Titles => string.Join(", ", dependency.Titles);
+    public string Titles => string.Join(
+        ", ",
+        dependency.Titles);
 
     public FlowDirection LabelFlow => UiLaySvc.Current.TextFlow;
 
@@ -64,9 +66,14 @@ public sealed class PatItVm : VmBase
         get
         {
             var localized = PatText.DspTitle(Title);
-            return _duplicateCount > 1
-                ? $"{localized} ({_duplicateOrdinal:00})"
+            var presented = IsArtemis
+                ? PatText.ArtemisTitle(
+                    localized,
+                    Match.Patch.Dependencies.Count > 0)
                 : localized;
+            return _duplicateCount > 1
+                ? $"{presented} ({_duplicateOrdinal:00})"
+                : presented;
         }
     }
 
@@ -94,7 +101,8 @@ public sealed class PatItVm : VmBase
         ? UiText.GetText("Patch.NoShortDescription")
         : LocMsg;
 
-    public bool HasDesc => !string.IsNullOrWhiteSpace(LocMsg);
+    public bool HasDesc =>
+        !string.IsNullOrWhiteSpace(NoteBody);
 
     public IReadOnlyList<PatDepVm> Dependencies =>
     [
@@ -402,6 +410,26 @@ public sealed class PatItVm : VmBase
         }
     }
 
+    public string CompatibilityTip =>
+        IsOn ||
+        NeedsLocalVerification ||
+        (CanOn && IsDef && !IsGuard)
+            ? string.Empty
+            : DirStat;
+
+    public bool HasCompatibilityTip =>
+        !string.IsNullOrWhiteSpace(CompatibilityTip);
+
+    public bool NeedsLocalVerification =>
+        !IsOn &&
+        !CanOn &&
+        MatStat == MatStat.Unknown &&
+        Decision.Code == PatchCompatibilityReasonCode.Hash;
+
+    public bool HasHashMismatch =>
+        !IsOn &&
+        MatStat == MatStat.HashBad;
+
     public string StateDsp => IsOn
         ? UiText.GetText("Patch.State.Enabled")
         : CanOn
@@ -436,8 +464,7 @@ public sealed class PatItVm : VmBase
         {
             if (IsOn)
             {
-                return UiText.GetText(
-                    "Patch.CanaryNote.Enabled");
+                return string.Empty;
             }
 
             if (CanOn && IsDef)
@@ -454,9 +481,7 @@ public sealed class PatItVm : VmBase
 
             return MatStat switch
             {
-                MatStat.HashBad =>
-                    UiText.GetText(
-                        "Patch.CanaryNote.HashMismatch"),
+                MatStat.HashBad => string.Empty,
                 MatStat.VerBad =>
                     UiText.Fmt(
                         "Patch.CanaryNote.VersionMismatch",
@@ -468,13 +493,15 @@ public sealed class PatItVm : VmBase
                         ReqVer),
                 MatStat.Unknown when Decision.Code ==
                     PatchCompatibilityReasonCode.Hash =>
-                    UiText.GetText(
-                        "Patch.CanaryNote.NeedsHash"),
+                    string.Empty,
                 _ => UiText.GetText(
                     "Patch.CanaryNote.Unavailable")
             };
         }
     }
+
+    public bool HasCanNote =>
+        !string.IsNullOrWhiteSpace(CanNote);
 
     public string DetLine => UiText.Fmt(
         "Patch.DetailsLine",
@@ -513,7 +540,59 @@ public sealed class PatItVm : VmBase
 
     public string NoteOrig => UiText.GetText("Note.OriginalTextLabel");
 
-    public string NoteBody => LocMsg;
+    public string NoteBody
+    {
+        get
+        {
+            if (!IsArtemis)
+            {
+                return LocMsg;
+            }
+
+            var raw = Match.Patch.Notes;
+            if (PatText.IsEmptyDescription(raw) ||
+                HasSafety ||
+                PatText.IsTechnicalArtemisNote(raw) ||
+                PatText.SameMeaning(raw, Title) ||
+                PatText.SameMeaning(LocMsg, ArtemisTitle) ||
+                PatText.RepeatsDependency(
+                    raw,
+                    Match.Patch.Dependencies.SelectMany(
+                        dependency => dependency.Titles)))
+            {
+                return string.Empty;
+            }
+
+            return LocMsg;
+        }
+    }
+
+    public string ArtemisTitle => DspTitle;
+
+    public string ArtemisTip
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(CompatibilityTip))
+            {
+                parts.Add(CompatibilityTip);
+            }
+
+            if (PatText.IsTechnicalArtemisNote(Match.Patch.Notes))
+            {
+                parts.Add(Match.Patch.Notes!.Trim());
+            }
+
+            return string.Join(
+                Environment.NewLine,
+                parts.Where(part => !string.IsNullOrWhiteSpace(part))
+                    .Distinct(StringComparer.Ordinal));
+        }
+    }
+
+    public bool HasArtemisTip =>
+        !string.IsNullOrWhiteSpace(ArtemisTip);
 
     public string LocNote => PatText.PatMsg(Match.Patch.Notes).Title;
 
@@ -638,6 +717,10 @@ public sealed class PatItVm : VmBase
         OnChange(nameof(GroupDsp));
         OnChange(nameof(TgtLine));
         OnChange(nameof(DirStat));
+        OnChange(nameof(CompatibilityTip));
+        OnChange(nameof(HasCompatibilityTip));
+        OnChange(nameof(NeedsLocalVerification));
+        OnChange(nameof(HasHashMismatch));
         OnChange(nameof(StateDsp));
         OnChange(nameof(CurrentStateDsp));
         OnChange(nameof(StateTon));
@@ -645,6 +728,7 @@ public sealed class PatItVm : VmBase
         OnChange(nameof(PendingDsp));
         OnChange(nameof(PendingTone));
         OnChange(nameof(CanNote));
+        OnChange(nameof(HasCanNote));
         OnChange(nameof(DetLine));
         OnChange(nameof(IsOn));
         OnChange(nameof(Status));
@@ -656,6 +740,9 @@ public sealed class PatItVm : VmBase
         OnChange(nameof(TypeLine));
         OnChange(nameof(NoteOrig));
         OnChange(nameof(NoteBody));
+        OnChange(nameof(ArtemisTitle));
+        OnChange(nameof(ArtemisTip));
+        OnChange(nameof(HasArtemisTip));
         OnChange(nameof(LocNote));
         OnChange(nameof(MsgType));
         OnChange(nameof(LocMsg));
@@ -674,6 +761,8 @@ public sealed class PatItVm : VmBase
             _duplicateOrdinal = ordinal;
             _duplicateCount = count;
             OnChange(nameof(DspTitle));
+            OnChange(nameof(ArtemisTitle));
+            OnChange(nameof(NoteBody));
         }
     }
 

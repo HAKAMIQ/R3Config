@@ -24,9 +24,8 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
@@ -41,79 +40,18 @@
                 Visibility="{Binding Preview.HasWarn,
                                      Converter={StaticResource BoolToVisibilityConverter}}">
 
-            <Grid FlowDirection="{DynamicResource App.FlowDirection}"
-                  HorizontalAlignment="Stretch">
-
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="16" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0"
-                            Orientation="Vertical"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Center">
-
-                    <TextBlock Text="{Binding Preview.WarnText}"
-                               Style="{StaticResource Type.BodyStrong}"
-                               Foreground="{DynamicResource Text.Primary}"
-                               FlowDirection="{Binding Preview.TextFlow}"
-                               TextAlignment="{DynamicResource App.TextAlignment}"
-                               HorizontalAlignment="Stretch"
-                               NumberSubstitution.Substitution="European"
-                               TextWrapping="Wrap" />
-
-                    <TextBlock Text="{Binding FingerprintCaptureStatus}"
-                               Style="{StaticResource PatLocalizedSubtitleText}"
-                               FlowDirection="{Binding Preview.TextFlow}"
-                               TextAlignment="{DynamicResource App.TextAlignment}"
-                               HorizontalAlignment="Stretch"
-                               Margin="0,4,0,0"
-                               TextWrapping="Wrap"
-                               Visibility="{Binding ShowFingerprintCaptureStatus,
-                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
-                </StackPanel>
-
-                <Button Grid.Column="2"
-                        Content="{lang:TextExt Key=PatchReadiness.CaptureAction}"
-                        Style="{StaticResource PatReadinessPrimaryButton}"
-                        Command="{Binding FingerprintCaptureCmd}"
-                        VerticalAlignment="Center"
-                        TextBlock.TextAlignment="{DynamicResource App.TextAlignment}"
-                        Visibility="{Binding ShowFingerprintCaptureAction,
-                                             Converter={StaticResource BoolToVisibilityConverter}}" />
-            </Grid>
-        </Border>
-
-        <local:PSrcView x:Name="SourceArea"
-                        Grid.Row="1"
-                        Margin="0,0,0,12"
-                        FlowDirection="{DynamicResource App.FlowDirection}"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Top" />
-
-        <Border Grid.Row="2"
-                Background="{DynamicResource Status.WarningSurface}"
-                BorderBrush="{DynamicResource Status.Warning}"
-                BorderThickness="{StaticResource Stroke.Thickness.Default}"
-                CornerRadius="{StaticResource Radius.Medium}"
-                Padding="10,7"
-                Margin="0,0,0,10"
-                FlowDirection="{DynamicResource App.FlowDirection}"
-                HorizontalAlignment="Stretch"
-                Visibility="{Binding Preview.HasItems,
-                                     Converter={StaticResource BoolToVisibilityConverter}}">
-            <TextBlock Text="{lang:TextExt Key=Patch.Launch.BootRecommended}"
-                       Style="{StaticResource PatLocalizedSubtitleText}"
+            <TextBlock Text="{Binding Preview.WarnText}"
+                       Style="{StaticResource Type.BodyStrong}"
                        Foreground="{DynamicResource Text.Primary}"
+                       FlowDirection="{Binding Preview.TextFlow}"
                        TextAlignment="{DynamicResource App.TextAlignment}"
-                       TextWrapping="Wrap"
-                       HorizontalAlignment="Stretch" />
+                       HorizontalAlignment="Stretch"
+                       NumberSubstitution.Substitution="European"
+                       TextWrapping="Wrap" />
         </Border>
 
         <Grid x:Name="PatRoot"
-              Grid.Row="3"
+              Grid.Row="1"
               FlowDirection="{DynamicResource App.FlowDirection}"
               HorizontalAlignment="Stretch"
               VerticalAlignment="Stretch">
@@ -132,5 +70,12 @@
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch" />
         </Grid>
+
+        <local:PSrcView x:Name="SourceArea"
+                        Grid.Row="2"
+                        Margin="0,12,0,0"
+                        FlowDirection="{DynamicResource App.FlowDirection}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Bottom" />
     </Grid>
 </UserControl>

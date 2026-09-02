@@ -47,13 +47,28 @@
 
                 <TextBlock Grid.Column="0"
                            Text="{Binding Plan.Summary}"
-                           Style="{StaticResource RecLocalizedSubtitleText}"
                            Margin="0"
                            ToolTip="{Binding Plan.TgtCfg}"
                            TextAlignment="{DynamicResource App.TextAlignment}"
                            HorizontalAlignment="Stretch"
                            VerticalAlignment="Center"
-                           TextWrapping="Wrap" />
+                           TextWrapping="Wrap">
+
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock"
+                               BasedOn="{StaticResource RecLocalizedSubtitleText}">
+                            <Setter Property="Visibility"
+                                    Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Plan.IsEmpty}"
+                                             Value="True">
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
 
                 <Button Grid.Column="2"
                         Content="{lang:TextExt Key=Plan.RemoveWikiSettings}"
@@ -70,6 +85,8 @@
                         ToolTip="{lang:TextExt Key=Plan.ApplySectionTip}"
                         Command="{Binding ApplyCmd}"
                         Style="{StaticResource RecPrimaryActionButton}"
+                        Visibility="{Binding Plan.HasChg,
+                                             Converter={StaticResource BoolToVisibilityConverter}}"
                         FlowDirection="{DynamicResource App.TextFlowDirection}"
                         TextBlock.TextAlignment="Center" />
             </Grid>
@@ -273,6 +290,8 @@
                                Style="{StaticResource RecLocalizedEmptyText}"
                                MaxWidth="460"
                                Margin="0"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
                                TextAlignment="{DynamicResource App.TextAlignment}"
                                TextWrapping="Wrap" />
                 </Border>

@@ -69,7 +69,7 @@ public partial class App : System.Windows.Application
             UiPrefsLang = UiPrefs.LoadLang(),
             AppBase = AppContext.BaseDirectory,
             CurrentDirectory = Environment.CurrentDirectory,
-            ResolvedLanguagePath = Path.Combine(AppContext.BaseDirectory, "Lang", UiText.CurLang + ".json"),
+            ResolvedLanguagePath = Path.Combine(AppContext.BaseDirectory, "Lang", UiText.CurLang + ".r3lang"),
             Values = values
         };
         File.WriteAllText(resultPath, JsonSerializer.Serialize(payload));

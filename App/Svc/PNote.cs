@@ -34,28 +34,38 @@ public sealed record NoteRes(
 
 public static partial class NoteSvc
 {
+    public static int ReviewedPatchArabicTranslationCount =>
+        ArByEn.Count;
+
+    public static int ReviewedWikiArabicTranslationCount =>
+        WikiArByEn.Count;
+
+    public static IReadOnlyList<string> ProtectedRpcS3Terms { get; } =
+    [
+        .. WikiSvc.CanonicalConfigSettingNames
+            .Concat(
+            [
+                "VBlank Frequency",
+                "Clock Scale",
+                "Accurate RSX Reservations",
+                "Resolution Scale Threshold",
+                "Approximate ZCull",
+                "Precise ZCull",
+                "ZCull Accuracy",
+                "Frame Limit",
+                "Write Depth Buffers",
+                "Read Depth Buffers"
+            ])
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+    ];
+
+    public static IReadOnlyList<string> ProtectedRpcS3Values { get; } =
+    [
+        .. WikiSvc.CanonicalConfigValues
+    ];
+
     private static readonly Dictionary<string, string> ProtectedTargets =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["Write Color Buffers"] = "Write Color Buffers",
-            ["Read Color Buffers"] = "Read Color Buffers",
-            ["Write Depth Buffers"] = "Write Depth Buffers",
-            ["Read Depth Buffers"] = "Read Depth Buffers",
-            ["Disable ZCull Occlusion Queries"] =
-                "Disable ZCull Occlusion Queries",
-            ["Accurate RSX reservation access"] =
-                "Accurate RSX reservation access",
-            ["Stretch To Display Area"] = "Stretch To Display Area",
-            ["PPU Decoder"] = "PPU Decoder",
-            ["SPU Decoder"] = "SPU Decoder",
-            ["Approximate ZCull"] = "Approximate ZCull",
-            ["Precise ZCull"] = "Precise ZCull",
-            ["VBlank"] = "VBlank",
-            ["Enable Codes"] = "Enable Codes",
-            ["Button Enable Code"] = "Button Enable Code",
-            ["Button Enable Codes"] = "Button Enable Codes",
-            ["Joker Pad"] = "Joker Pad"
-        };
+        BuildProtectedTargets();
 
     private static readonly Dictionary<string, string> ActionKeys =
         new(StringComparer.OrdinalIgnoreCase)
@@ -87,7 +97,7 @@ public static partial class NoteSvc
         if (string.IsNullOrWhiteSpace(raw))
         {
             return new NoteRes(
-                UiText.GetText("Ui.EmptyValue"),
+                string.Empty,
                 string.Empty,
                 false,
                 NoteQual.Original,
@@ -120,8 +130,9 @@ public static partial class NoteSvc
                 kind);
         }
 
-        if (ArByEn.TryGetValue(
+        if (TryExactArabic(
                 lookupText,
+                original,
                 out var exact))
         {
             return new NoteRes(
@@ -315,14 +326,19 @@ public static partial class NoteSvc
 
     private static string FallbackBody(NoteKind kind)
     {
-        return kind switch
-        {
-            NoteKind.Instruction or NoteKind.Requirement =>
-                UiText.GetText("Patch.Text.RequiredInstructionUnavailable"),
-            NoteKind.Warning =>
-                UiText.GetText("Patch.Text.WarningUnavailable"),
-            _ => string.Empty
-        };
+        _ = kind;
+        return string.Empty;
+    }
+
+    private static bool TryExactArabic(
+        string normalized,
+        string original,
+        out string localized)
+    {
+        return ArByEn.TryGetValue(normalized, out localized!) ||
+               ArByEn.TryGetValue(original, out localized!) ||
+               WikiArByEn.TryGetValue(normalized, out localized!) ||
+               WikiArByEn.TryGetValue(original, out localized!);
     }
 
     private static bool StartsWithAny(
@@ -613,6 +629,28 @@ public static partial class NoteSvc
         return ProtectedTargets.TryGetValue(
             candidate,
             out target!);
+    }
+
+    private static Dictionary<string, string> BuildProtectedTargets()
+    {
+        var targets = ProtectedRpcS3Terms.ToDictionary(
+            value => value,
+            value => value,
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (var value in new[]
+                 {
+                     "VBlank",
+                     "Enable Codes",
+                     "Button Enable Code",
+                     "Button Enable Codes",
+                     "Joker Pad"
+                 })
+        {
+            targets[value] = value;
+        }
+
+        return targets;
     }
 
     private static bool TryPrefix(

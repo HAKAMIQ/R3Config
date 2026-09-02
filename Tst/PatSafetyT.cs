@@ -101,6 +101,7 @@ internal static class PatSafetyT
 
         var patchView = File.ReadAllText(Path.Combine(appRoot, "Ctrl", "Pat.xaml"));
         var patchTemplate = File.ReadAllText(Path.Combine(appRoot, "Ctrl", "PTmp.xaml"));
+        var patchVm = File.ReadAllText(Path.Combine(appRoot, "Vm", "Main.Pat.cs"));
         var setupVm = File.ReadAllText(Path.Combine(appRoot, "Vm", "Main.Setup.cs"));
         var setupPlanner = File.ReadAllText(Path.Combine(
             repoRoot,
@@ -109,16 +110,18 @@ internal static class PatSafetyT
             "Setup",
             "GameSetupPlanningService.cs"));
         TestAssert.Assert(
-            patchView.Contains("Patch.Launch.BootRecommended", StringComparison.Ordinal) &&
+            !patchView.Contains("Patch.Launch.BootRecommended", StringComparison.Ordinal) &&
+            patchVm.Contains("Msg.ApplyPatchConfirm", StringComparison.Ordinal) &&
+            patchVm.Contains("Msg.ApplyCanaryConfirm", StringComparison.Ordinal) &&
             patchTemplate.Contains("SafetyText", StringComparison.Ordinal) &&
             patchTemplate.Contains("HasSafety", StringComparison.Ordinal),
-            "Expected patch UI to expose boot/save-state guidance and per-patch safety warnings.");
+            "Expected boot/save-state guidance to stay in the actual apply confirmation while per-patch safety warnings remain visible in patch rows.");
         TestAssert.Assert(
             setupPlanner.Contains("PATCH_BOOT_RECOMMENDED", StringComparison.Ordinal) &&
             setupPlanner.Contains("PATCH_SAFETY_HIGH", StringComparison.Ordinal) &&
-            setupVm.Contains("Setup.Warning.PatchBoot", StringComparison.Ordinal) &&
+            !setupVm.Contains("Setup.Warning.PatchBoot", StringComparison.Ordinal) &&
             setupVm.Contains("Setup.Warning.PatchSafetyHigh", StringComparison.Ordinal),
-            "Expected Game Setup to retain boot guidance and selected-patch safety diagnostics through presentation.");
+            "Expected Game Setup to keep the boot diagnostic internally, show Boot guidance only at apply confirmation, and retain selected-patch safety diagnostics.");
 
         Console.WriteLine("Patch safety, recovery guidance, and boot-path regressions PASS.");
     }

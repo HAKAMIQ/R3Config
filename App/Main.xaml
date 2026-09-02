@@ -189,9 +189,9 @@
                                   Padding="0"
                                   HorizontalAlignment="Stretch"
                                   VerticalAlignment="Stretch"
-                                  ToolTip="Light / Dark"
+                                  ToolTip="{lang:TextExt Key=App.ThemeToggleTip}"
                                   ToolTipService.Placement="Bottom"
-                                  AutomationProperties.Name="Light / Dark"
+                                  AutomationProperties.Name="{lang:TextExt Key=App.ThemeToggleTip}"
                                   AutomationProperties.AutomationId="App.ThemeToggle"
                                   Click="ToggleTheme"
                                   Panel.ZIndex="20"
@@ -410,29 +410,10 @@
                                       VerticalAlignment="Center">
 
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="8" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
-                                    <Border Grid.Column="0"
-                                            Style="{StaticResource GameHeaderStatusChip}"
-                                            Tag="{Binding ReadyTon}"
-                                            ToolTip="{Binding ReadyTip}"
-                                            VerticalAlignment="Center"
-                                            Margin="0">
-
-                                        <TextBlock Text="{Binding PatReady}"
-                                                   Style="{StaticResource GameHeaderStatusText}"
-                                                   FlowDirection="{DynamicResource App.TextFlowDirection}"
-                                                   TextAlignment="Left"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   TextWrapping="NoWrap"
-                                                   Padding="8,3" />
-                                    </Border>
-
-                                    <TextBlock Grid.Column="2"
+                                    <TextBlock Grid.Column="0"
                                                Text="{Binding SelGame}"
                                                Style="{StaticResource HeroTitleText}"
                                                FlowDirection="{Binding SelGame, Converter={StaticResource ContentTextFlowConverter}}"

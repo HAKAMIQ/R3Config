@@ -15,8 +15,14 @@ namespace R3Config.Tests;
 
 internal static class WikiCorpusT
 {
-    private const string ExpectedZipHash =
-        "CF42617F57C76BB17DCAB8859141ACBF5C446A0A7D1B7114C60E3C596AA0BC61";
+    private static readonly HashSet<string> ExpectedZipHashes =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "CF42617F57C76BB17DCAB8859141ACBF5C446A0A7D1B7114C60E3C596AA0BC61",
+            "C8DF0F2998310104DD3B30ED115D7A41CE1BDA7C1B594B2C4B5DA684BD1E36A1"
+        };
+    private const string ExpectedXmlHash =
+        "254A0A41870C54048C94F61B2FF5AE9CEEFE7CC55F246C331DF9382B564BE452";
     private const string EntryName = "RPCS3+Wiki-20260613075133.xml";
     private const long MaxEntryBytes = 128L * 1024 * 1024;
 
@@ -113,8 +119,8 @@ internal static class WikiCorpusT
         Assert(File.Exists(oldCatalogPath), $"Old recommendation catalog does not exist: {oldCatalogPath}");
 
         var zipHash = HashFile(zipPath);
-        Assert(zipHash == ExpectedZipHash,
-            $"Wiki snapshot ZIP hash mismatch. Expected {ExpectedZipHash}, actual {zipHash}.");
+        Assert(ExpectedZipHashes.Contains(zipHash),
+            $"Wiki snapshot ZIP hash mismatch. Actual {zipHash} is not an approved packaging identity.");
 
         var tempRoot = Path.Combine(
             Path.GetTempPath(),
@@ -126,6 +132,9 @@ internal static class WikiCorpusT
         {
             var xmlPath = Path.Combine(tempRoot, EntryName);
             ExtractBounded(zipPath, xmlPath);
+            var xmlHash = HashFile(xmlPath);
+            Assert(xmlHash == ExpectedXmlHash,
+                $"Wiki snapshot XML hash mismatch. Expected {ExpectedXmlHash}, actual {xmlHash}.");
             var analysis = WikiSvc.Analyze(xmlPath);
             var oldCatalog = RecSvc.Load(oldCatalogPath);
             var comparison = WikiSvc.Compare(oldCatalog, analysis);

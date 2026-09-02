@@ -72,36 +72,6 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Command="{Binding AnlzCmd}"
-                            Style="{StaticResource PatSourcePrimaryActionButton}"
-                            ToolTip="{lang:TextExt Key=Btn.AnalyzeTip}"
-                            AutomationProperties.Name="{lang:TextExt Key=Btn.Analyze}"
-                            Margin="0">
-
-                        <StackPanel Orientation="Horizontal"
-                                    FlowDirection="{DynamicResource App.FlowDirection}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    IsHitTestVisible="False">
-
-                            <TextBlock Text=""
-                                       FontFamily="Segoe Fluent Icons"
-                                       FontSize="13"
-                                       Width="16"
-                                       Height="16"
-                                       FlowDirection="LeftToRight"
-                                       TextAlignment="Center"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       IsHitTestVisible="False" />
-
-                            <TextBlock Text="{lang:TextExt Key=Btn.Analyze}"
-                                       Margin="{DynamicResource App.After6Margin}"
-                                       VerticalAlignment="Center"
-                                       FlowDirection="{DynamicResource App.TextFlowDirection}"
-                                       TextAlignment="{DynamicResource App.TextAlignment}" />
-                        </StackPanel>
-                    </Button>
                 </WrapPanel>
 
             </Grid>

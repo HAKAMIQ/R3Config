@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Text.Json;
 using R3Config.Mdl;
 using R3Config.Svc;
 
@@ -12,9 +11,6 @@ namespace R3Config.Lang;
 
 public sealed class UiText : INotifyPropertyChanged
 {
-    private const long MaxLanguageBytes = 1024L * 1024;
-    private const int MaxLanguageDepth = 16;
-
     public const string ArabLang = "ar-SA";
     public const string EnLang = "en-US";
 
@@ -109,12 +105,12 @@ public sealed class UiText : INotifyPropertyChanged
 
     public static string RecRisk(RecRisk risk)
     {
-        return GetText($"Risk.Rec.{risk}.Label");
+        return GetText($"Risk.Rec.{RecRiskName(risk)}.Label");
     }
 
     public static string RecTip(RecRisk risk)
     {
-        return GetText($"Risk.Rec.{risk}.Tip");
+        return GetText($"Risk.Rec.{RecRiskName(risk)}.Tip");
     }
 
     public static string RecState(RecState state)
@@ -124,7 +120,7 @@ public sealed class UiText : INotifyPropertyChanged
 
     public static string PatRisk(PatRisk risk)
     {
-        return GetText($"Risk.Patch.{risk}.Label");
+        return GetText($"Risk.Patch.{PatRiskName(risk)}.Label");
     }
 
     public static string PatTip(
@@ -141,7 +137,7 @@ public sealed class UiText : INotifyPropertyChanged
             return MatchTip(matchStatus);
         }
 
-        return GetText($"Risk.Patch.{risk}.Tip");
+        return GetText($"Risk.Patch.{PatRiskName(risk)}.Tip");
     }
 
     public static string PatType(string patchType)
@@ -204,7 +200,53 @@ public sealed class UiText : INotifyPropertyChanged
 
     public static string MatchTip(MatStat status)
     {
-        return GetText($"PatchMatch.{status}.Tip");
+        var key = status switch
+        {
+            MatStat.Match => "PatchMatch.ExactMatch.Tip",
+            MatStat.Unknown =>
+                "PatchMatch.SerialVersionMatchHashUnknown.Tip",
+            MatStat.VerUnk => "PatchMatch.VersionUnknown.Tip",
+            MatStat.VerBad => "PatchMatch.VersionMismatch.Tip",
+            MatStat.HashBad => "PatchMatch.HashMismatch.Tip",
+            MatStat.SerBad => "PatchMatch.SerialMismatch.Tip",
+            MatStat.NoMeta => "PatchMatch.NoMetadata.Tip",
+            _ => "PatchMatch.NoMetadata.Tip"
+        };
+
+        return GetText(key);
+    }
+
+    private static string RecRiskName(RecRisk risk)
+    {
+        return risk switch
+        {
+            global::R3Config.Mdl.RecRisk.Required => "Required",
+            global::R3Config.Mdl.RecRisk.Rec => "Recommended",
+            global::R3Config.Mdl.RecRisk.Optional => "Optional",
+            global::R3Config.Mdl.RecRisk.Cond => "Conditional",
+            global::R3Config.Mdl.RecRisk.PerfCost => "PerformanceCost",
+            global::R3Config.Mdl.RecRisk.PatDep => "PatchDependent",
+            global::R3Config.Mdl.RecRisk.Dep => "HardwareDependent",
+            global::R3Config.Mdl.RecRisk.Timing => "ManualTiming",
+            global::R3Config.Mdl.RecRisk.Only => "ExpertOnly",
+            global::R3Config.Mdl.RecRisk.Risky => "Risky",
+            _ => "Unknown"
+        };
+    }
+
+    private static string PatRiskName(PatRisk risk)
+    {
+        return risk switch
+        {
+            global::R3Config.Mdl.PatRisk.SafeFix => "SafeFix",
+            global::R3Config.Mdl.PatRisk.Fix => "VisualFix",
+            global::R3Config.Mdl.PatRisk.Perf => "Performance",
+            global::R3Config.Mdl.PatRisk.Fps60 => "Fps60",
+            global::R3Config.Mdl.PatRisk.Cheat => "Cheat",
+            global::R3Config.Mdl.PatRisk.Exp => "Experimental",
+            global::R3Config.Mdl.PatRisk.Canary => "Canary",
+            _ => "Unknown"
+        };
     }
 
     public static string HwStatus(HwInfo info)
@@ -258,117 +300,80 @@ public sealed class UiText : INotifyPropertyChanged
 
         effectiveLang = normalized;
 
-        var path = LangPath(normalized);
+        if (!R3LangManifest.TryResolve(
+                normalized,
+                out var fileName,
+                out var expectedSha256))
+        {
+            Trace.TraceWarning(
+                $"R3Config UI language package is not registered: {normalized}");
 
+            return FallBack(normalized, out effectiveLang);
+        }
+
+        var path = LangPath(fileName);
         if (path is null)
         {
             Trace.TraceWarning(
-                $"R3Config UI language file {normalized} was not found.");
+                $"R3Config UI language package {fileName} was not found.");
 
-            if (!string.Equals(
-                    normalized,
-                    ArabLang,
-                    StringComparison.Ordinal))
-            {
-                Trace.TraceWarning(
-                    "Falling back to ar-SA.");
-
-                return LoadText(
-                    ArabLang,
-                    out effectiveLang);
-            }
-
-            Trace.TraceWarning(
-                "R3Config Arabic UI language file was not found. " +
-                "Using an empty UI text map.");
-
-            effectiveLang = ArabLang;
-
-            return new Dictionary<string, string>(
-                StringComparer.Ordinal);
+            return FallBack(normalized, out effectiveLang);
         }
 
         try
         {
-            var json = R3Bound.ReadUtf8(
+            return R3LangReader.Load(
                 path,
-                MaxLanguageBytes,
-                $"R3Config UI language {normalized}");
-
-            using var document = JsonDocument.Parse(
-                json,
-                new JsonDocumentOptions
-                {
-                    AllowTrailingCommas = false,
-                    CommentHandling = JsonCommentHandling.Disallow,
-                    MaxDepth = MaxLanguageDepth
-                });
-
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-            {
-                throw new InvalidDataException(
-                    "R3Config UI language root must be a JSON object.");
-            }
-
-            var loaded = new Dictionary<string, string>(
-                StringComparer.Ordinal);
-
-            foreach (var property in document.RootElement.EnumerateObject())
-            {
-                if (property.Value.ValueKind != JsonValueKind.String)
-                {
-                    throw new InvalidDataException(
-                        $"R3Config UI language value must be text: {property.Name}");
-                }
-
-                if (!loaded.TryAdd(
-                        property.Name,
-                        property.Value.GetString() ?? string.Empty))
-                {
-                    throw new InvalidDataException(
-                        $"R3Config UI language contains a duplicate key: {property.Name}");
-                }
-            }
-
-            return loaded;
+                normalized,
+                expectedSha256);
         }
         catch (Exception ex) when (
             ex is IOException or
             UnauthorizedAccessException or
             InvalidDataException or
-            JsonException or
             NotSupportedException)
         {
             Trace.TraceWarning(
                 $"R3Config UI language load failed for " +
                 $"{normalized}: {ex.Message}");
 
-            if (!string.Equals(
-                    normalized,
-                    ArabLang,
-                    StringComparison.Ordinal))
-            {
-                Trace.TraceWarning(
-                    "Falling back to ar-SA.");
-
-                return LoadText(
-                    ArabLang,
-                    out effectiveLang);
-            }
-
-            effectiveLang = ArabLang;
-
-            return new Dictionary<string, string>(
-                StringComparer.Ordinal);
+            return FallBack(normalized, out effectiveLang);
         }
     }
 
-    private static string? LangPath(string lang)
+    private static IReadOnlyDictionary<string, string> FallBack(
+        string failedLanguage,
+        out string effectiveLang)
+    {
+        if (!string.Equals(
+                failedLanguage,
+                ArabLang,
+                StringComparison.Ordinal))
+        {
+            Trace.TraceWarning(
+                "Falling back to ar-SA.");
+
+            return LoadText(
+                ArabLang,
+                out effectiveLang);
+        }
+
+        Trace.TraceWarning(
+            "R3Config Arabic UI language package is unavailable. " +
+            "Using an empty UI text map.");
+
+        effectiveLang = ArabLang;
+
+        return new Dictionary<string, string>(
+            StringComparer.Ordinal);
+    }
+
+    private static string? LangPath(string fileName)
     {
         var candidate = Path.Combine(
             AppContext.BaseDirectory,
             "Lang",
-            NormLang(lang) + ".json");
+            fileName);
 
         return File.Exists(candidate)
             ? candidate

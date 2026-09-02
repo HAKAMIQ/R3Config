@@ -9,7 +9,8 @@
     <DataTemplate x:Key="PatItem">
         <Border Style="{StaticResource PatCompactItemRow}"
                 FlowDirection="{DynamicResource App.FlowDirection}"
-                ToolTip="{Binding DirStat}">
+                ToolTip="{Binding CompatibilityTip}"
+                ToolTipService.IsEnabled="{Binding HasCompatibilityTip}">
 
             <Grid FlowDirection="{DynamicResource App.FlowDirection}"
                   HorizontalAlignment="Stretch"
@@ -103,7 +104,8 @@
     <DataTemplate x:Key="ArtemisPatItem">
         <Border Style="{StaticResource PatCompactItemRow}"
                 FlowDirection="{DynamicResource App.FlowDirection}"
-                ToolTip="{Binding DirStat}">
+                ToolTip="{Binding ArtemisTip}"
+                ToolTipService.IsEnabled="{Binding HasArtemisTip}">
 
             <Grid FlowDirection="{DynamicResource App.FlowDirection}"
                   HorizontalAlignment="Stretch"
@@ -147,7 +149,7 @@
                             Orientation="Vertical"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Center">
-                    <TextBlock Text="{Binding DspTitle}"
+                    <TextBlock Text="{Binding ArtemisTitle}"
                                Style="{StaticResource PatPatchTitleText}"
                                FlowDirection="{Binding TitleFlow}"
                                TextAlignment="Left"
@@ -212,7 +214,7 @@
                                               UpdateSourceTrigger=PropertyChanged}"
                           IsEnabled="{Binding CanSel}"
                           ToolTip="{lang:TextExt Key=Patch.SelectTip}"
-                          AutomationProperties.Name="{Binding DspTitle}"
+                          AutomationProperties.Name="{Binding ArtemisTitle}"
                           AutomationProperties.HelpText="{lang:TextExt Key=Patch.SelectTip}"
                           Padding="0"
                           Margin="0"

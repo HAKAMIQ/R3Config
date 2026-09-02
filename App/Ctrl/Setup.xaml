@@ -84,7 +84,9 @@
                 <Border BorderBrush="{DynamicResource Stroke.Subtle}"
                         BorderThickness="0,1,0,0"
                         Margin="0,12,0,0"
-                        Padding="0,12,0,0">
+                        Padding="0,12,0,0"
+                        Visibility="{Binding SetupHasPendingChanges,
+                                             Converter={StaticResource BoolToVisibilityConverter}}">
                     <StackPanel HorizontalAlignment="Stretch">
 
                         <TextBlock Text="{lang:TextExt Key=Setup.Plan}"
@@ -93,7 +95,9 @@
                                    HorizontalAlignment="Stretch" />
 
                         <Border Style="{StaticResource SetupPlanRow}"
-                                Margin="0,3,0,0">
+                                Margin="0,3,0,0"
+                                Visibility="{Binding SetupHasBaseChanges,
+                                                     Converter={StaticResource BoolToVisibilityConverter}}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -109,7 +113,9 @@
                             </Grid>
                         </Border>
 
-                        <Border Style="{StaticResource SetupPlanRow}">
+                        <Border Style="{StaticResource SetupPlanRow}"
+                                Visibility="{Binding SetupHasOfficialChanges,
+                                                     Converter={StaticResource BoolToVisibilityConverter}}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -125,7 +131,9 @@
                             </Grid>
                         </Border>
 
-                        <Border Style="{StaticResource SetupPlanRow}">
+                        <Border Style="{StaticResource SetupPlanRow}"
+                                Visibility="{Binding SetupHasCanaryChanges,
+                                                     Converter={StaticResource BoolToVisibilityConverter}}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -141,7 +149,9 @@
                             </Grid>
                         </Border>
 
-                        <Border Style="{StaticResource SetupPlanRow}">
+                        <Border Style="{StaticResource SetupPlanRow}"
+                                Visibility="{Binding SetupHasArtemisChanges,
+                                                     Converter={StaticResource BoolToVisibilityConverter}}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -176,19 +186,14 @@
                 </Border>
 
                 <Grid Margin="0,12,0,0"
-                      HorizontalAlignment="Stretch">
+                      HorizontalAlignment="Stretch"
+                      Visibility="{Binding SetupCanApply,
+                                           Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="12" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Column="0"
-                               Text="{lang:TextExt Key=Setup.ActionHint}"
-                               Style="{StaticResource SectionCaptionText}"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Stretch"
-                               TextWrapping="Wrap" />
 
                     <Button Grid.Column="2"
                             Content="{lang:TextExt Key=Setup.PrepareAction}"

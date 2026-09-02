@@ -203,6 +203,24 @@ public sealed partial class WikiSvc
             ["psn status"] = Values("Disconnected", "Simulated", "RPCN")
         };
 
+    public static IReadOnlyList<string> CanonicalConfigSettingNames =>
+    [
+        .. CfgMap.Values
+            .Select(target => target.Key)
+            .Concat(["Relaxed ZCULL Sync", "Accurate ZCULL stats"])
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+    ];
+
+    public static IReadOnlyList<string> CanonicalConfigValues =>
+    [
+        .. CorpusValues.Values
+            .SelectMany(values => values)
+            .Concat(["On", "true", "false", "LLVM"])
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+    ];
+
     public static WikiCorpusAnalysis Analyze(
         string wikiXmlPath,
         string? snapshotDate = null)

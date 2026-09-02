@@ -351,29 +351,11 @@ public sealed partial class MainVm : VmBase
             UiText.Fmt("Patch.LoadTitle", game.Serial),
             Combine(
                 patchConfigWarning,
-                RunUi ? UiText.GetText("Patch.Rpcs3RunningWarning") : null,
-                PatWarn(game, matches)),
+                RunUi ? UiText.GetText("Patch.Rpcs3RunningWarning") : null),
             match => IsPatOn(patchConfig, match));
 
         LoadGame();
         Log(UiText.Fmt("Msg.PatchPreviewLoaded", game.Serial, matches.Count));
-    }
-
-    private static string? PatWarn(
-        Rpcs3GameDescriptor game,
-        IReadOnlyList<PatMatch> matches)
-    {
-        if (HasHash(game) ||
-            matches.Any(PatAct.Can))
-        {
-            return null;
-        }
-
-        return matches.Any(match =>
-                match.Status == MatStat.Unknown &&
-                !PatAct.Can(match))
-            ? UiText.GetText("PatchReadiness.NeedsColdBootWarning")
-            : null;
     }
 
     private bool IsPatOn(

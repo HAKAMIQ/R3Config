@@ -210,6 +210,7 @@ public sealed partial class MainVm
         OnChange(nameof(ShowFingerprintCaptureAction));
         OnChange(nameof(ShowFingerprintCaptureStatus));
         OnChange(nameof(FingerprintCaptureStatus));
+        OnPatchPresentationChanged();
         LaunchGameCmd.RaiseCan();
         HashRefreshCmd.RaiseCan();
         FingerprintCaptureCmd.RaiseCan();

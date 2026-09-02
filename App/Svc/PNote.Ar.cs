@@ -29,9 +29,9 @@ public static partial class NoteSvc
             ["Compromises visuals for extra performance"] =
                 "يخفض جودة الرسوم مقابل أداء أعلى.",
             ["Unlocks the FPS"] =
-                "يلغي قفل معدل الإطارات.",
+                "يلغي قفل FPS.",
             ["Unlocks FPS"] =
-                "يلغي قفل معدل الإطارات.",
+                "يلغي قفل FPS.",
             ["Unlocks the frame rate"] =
                 "يلغي قفل معدل الإطارات.",
             ["Requires Stretch To Display Area checked in the GPU settings"] =
@@ -219,15 +219,15 @@ public static partial class NoteSvc
             ["Enables rendering of Heat Wave effect under Approximate ZCull, normally works with Precise ZCull only, but Precise ZCull has a big speed impact"] =
                 "يفعل عرض تأثير Heat Wave مع Approximate ZCull. يعمل هذا التأثير عادة مع Precise ZCull فقط، لكن Precise ZCull يؤثر بشدة في الأداء.",
             ["A special patch that scales down some UI elements. Rexis's 4K Mod requires this patch. Don't enable it if you don't use the 4K Mod"] =
-                "باتش خاص يصغر بعض عناصر الواجهة. يتطلب Rexis's 4K Mod هذا الباتش؛ لا تفعله إذا لم تكن تستخدم 4K Mod.",
+                "باتش خاص يصغر بعض عناصر UI. يتطلب Rexis's 4K Mod هذا الباتش؛ لا تفعله إذا لم تكن تستخدم 4K Mod.",
             ["A collection of QoL patches to help make some game mods possible. Currently includes: Single Combat GAP Expand DLC BGM IDs Forcibly Enable motionse.dat/acb on All Enemies Disable Player Swordtrack Loading Load Proper Boss Voices"] =
                 "مجموعة من باتشات QoL للمساعدة على تشغيل بعض Mods. تتضمن حاليا: Single Combat GAP؛ توسيع معرفات DLC BGM؛ فرض تفعيل motionse.dat/acb على جميع الأعداء؛ تعطيل Player Swordtrack Loading؛ وتحميل أصوات الزعماء الصحيحة.",
             ["Fixes a threading deadlock/livelock that causes the game to freeze during gameplay under RPCS3's PPU LLVM recompiler. Changes from v1.0: - Introduces use of sys_ppu_thread_yield (syscall 0x4C) Certain RPCS3 settings can reintroduce sensitivity to this issue. Avoid changing the following from their defaults where possible: - Clock speed (PPU/SPU) - VBlank frequency - Sleep timers accuracy - SPU XFloat accuracy - Accurate RSX reservations - ZCull accuracy Remove PPU cache after applying"] =
-                "يصلح حالة Deadlock/Livelock في الخيوط تتسبب في تجمد اللعبة أثناء اللعب مع PPU LLVM في RPCS3. التغييرات منذ v1.0: استخدام sys_ppu_thread_yield (syscall 0x4C). قد تعيد بعض إعدادات RPCS3 حساسية المشكلة؛ تجنب قدر الإمكان تغيير Clock speed (PPU/SPU) وVBlank frequency وSleep timers accuracy وSPU XFloat accuracy وAccurate RSX reservations وZCull accuracy عن قيمها الافتراضية. احذف PPU cache بعد تطبيق الباتش.",
+                "يصلح حالة Deadlock/Livelock في الخيوط تتسبب في تجمد اللعبة أثناء اللعب مع Recompiler (LLVM) في PPU Decoder ضمن RPCS3. التغييرات منذ v1.0: استخدام sys_ppu_thread_yield (syscall 0x4C). قد تعيد بعض إعدادات RPCS3 حساسية المشكلة؛ تجنب قدر الإمكان تغيير Clock Scale (PPU/SPU) وVBlank Frequency وSleep Timers Accuracy وSPU XFloat Accuracy وAccurate RSX Reservations وZCull Accuracy عن قيمها الافتراضية. احذف PPU cache بعد تطبيق الباتش.",
             ["Version 1.0 - Fixes flickering water reflections under Approximate ZCull, normally this effect requires Precise ZCull, but Precise ZCull has a big speed impact.\\nVersion 2.0 - Enables rendering of Heat Wave effect under Approximate ZCull, again, normally works with Precise ZCull only"] =
                 "الإصدار 1.0: يصلح وميض انعكاسات الماء مع Approximate ZCull؛ يحتاج هذا التأثير عادة إلى Precise ZCull، لكن Precise ZCull يؤثر بشدة في الأداء. الإصدار 2.0: يفعل عرض Heat Wave مع Approximate ZCull، رغم أن التأثير يعمل عادة مع Precise ZCull فقط.",
             ["WARNING: Causes physics issues with harpies, you will need to disable this patch to get past some sections of the game. Unlocks internal timestep calculation and fixes IGC timing issues at 60 FPS and above. Increase vblank to match your desired framerate"] =
-                "تحذير: يسبب مشكلات في الفيزياء مع Harpies، وستحتاج إلى تعطيل الباتش لتجاوز بعض أقسام اللعبة. يفتح حساب Timestep الداخلي ويصلح توقيت IGC عند 60 FPS فما فوق. ارفع VBlank ليتوافق مع معدل الإطارات المطلوب.",
+                "تحذير: يسبب مشكلات في الفيزياء مع Harpies، وستحتاج إلى تعطيل الباتش لتجاوز بعض أقسام اللعبة. يفتح حساب Timestep الداخلي ويصلح توقيت IGC عند 60 FPS فما فوق. ارفع VBlank Frequency ليتوافق مع معدل الإطارات المطلوب.",
 
             ["(L3 = Restore Power)"] =
                 "L3 = استعادة الطاقة.",
@@ -338,7 +338,7 @@ public static partial class NoteSvc
             ["Dose not work whine on vechical"] =
                 "لا تعمل الشفرة أثناء وجودك في مركبة.",
             ["Enemies dying on spawn can definitely break the game, Enemies dying from 1 hit also breaks game"] =
-                "موت الأعداء فور ظهورهم يكسر اللعبة بالتأكيد، كما أن قتلهم بضربة واحدة يكسرها أيضا.",
+                "موت الأعداء فور ظهورهم يكسر اللعبة بالتأكيد، كما أن قتلهم بضربة واحدة (1) يكسرها أيضا.",
             ["Enemies never know where I am making \"Hit Clueless Enemy\" very easy to do. Turrets always get you, and enemies sometimes attack during missions"] =
                 "لا يعرف الأعداء مكانك، مما يجعل Hit Clueless Enemy سهلا جدا. الأبراج ترصدك دائما، وقد يهاجمك بعض الأعداء أثناء المهمات.",
             ["Enemies will not move or do anything at all, they just turn to face you but can still be killed. If they are in turrets they will still attack"] =
@@ -346,7 +346,7 @@ public static partial class NoteSvc
             ["Energy drinks, MREs, those sort of things"] =
                 "يشمل مشروبات الطاقة وMREs والعناصر المشابهة.",
             ["Enter the Chapters menu to trigger it, enter the game, and trigger a save and they will stay unlocked permanently. If you do not see Very Hard or Revengeance difficulties, use the code to unlock all difficulties to make those 2 appear in the chapters menu"] =
-                "ادخل قائمة Chapters لتفعيل الشفرة، ثم ادخل اللعبة وأنشئ عملية حفظ لتبقى الخيارات مفتوحة بصورة دائمة. إذا لم تظهر صعوبتا Very Hard وRevengeance، فاستخدم شفرة فتح جميع الصعوبات أولا لإظهارهما في قائمة Chapters.",
+                "ادخل قائمة Chapters لتفعيل الشفرة، ثم ادخل اللعبة وأنشئ عملية حفظ لتبقى الخيارات مفتوحة بصورة دائمة. إذا لم تظهر صعوبتا Very Hard وRevengeance، فاستخدم شفرة فتح جميع الصعوبات أولا لإظهار الصعوبتين (2) في قائمة Chapters.",
             ["Enter the Customization Menu to access everything, and save to keep them"] =
                 "ادخل Customization Menu للوصول إلى كل العناصر، ثم احفظ للاحتفاظ بها.",
             ["Flares, grenades, those sort of things"] =
@@ -356,15 +356,15 @@ public static partial class NoteSvc
             ["If an enemy grabs you this will instantly complete the button masher for you. This won't work on sequences like the train in the beginning or other things like that, I was too lazy to try finding those"] =
                 "إذا أمسك بك عدو، فستكمل الشفرة ضغط الأزرار المتكرر فورا. لا تعمل في مقاطع خاصة مثل القطار في بداية اللعبة أو الحالات المشابهة؛ ولم أبحث عن تلك الحالات الأخرى.",
             ["If you have no MREs and you pick up 1, you will have 1 MRE. You pick up another MRE and you will have 9"] =
-                "إذا لم يكن لديك أي MRE والتقطت واحدا، فسيصبح لديك 1 MRE. وعند التقاط MRE آخر سيصبح العدد 9.",
+                "إذا لم يكن لديك أي MRE والتقطت 1 MRE، فسيصبح لديك 1 MRE. وعند التقاط MRE آخر سيصبح العدد 9.",
             ["If you have the code to fly with L2 + X on, you will not need this and can just fly from transformer to transformer"] =
                 "إذا كانت شفرة الطيران باستخدام L2 + X مفعلة، فلن تحتاج هذه الشفرة ويمكنك الطيران مباشرة من محول إلى آخر.",
             ["If you notice that magic is not full for anything other than the Fire Of Ares, it is because the other 3 elemental weapons require you to upgrade them to be able to use their magic abilities"] =
-                "إذا لاحظت أن السحر ليس ممتلئا لغير Fire Of Ares، فالسبب أن الأسلحة العنصرية الثلاثة الأخرى تحتاج إلى الترقية قبل أن تتمكن من استخدام قدراتها السحرية.",
+                "إذا لاحظت أن السحر ليس ممتلئا لغير Fire Of Ares، فالسبب أن الأسلحة العنصرية الثلاثة (3) الأخرى تحتاج إلى الترقية قبل أن تتمكن من استخدام قدراتها السحرية.",
             ["In Chapter 2, you will encounter a spot where you will need to control a Dwarf Gekko to continue on, and this works for it without marking the other Drawf Gekkos around"] =
                 "في Chapter 2 ستصل إلى موضع يجب فيه التحكم في Dwarf Gekko للمتابعة، وتعمل الشفرة عليه دون تحديد بقية Dwarf Gekkos القريبة.",
             ["In the very beginning room in Chapter 4 after you go up the steps but before you get on the elevator, there are 2 turrets you can use on the enemies"] =
-                "في الغرفة الأولى من Chapter 4، بعد صعود الدرج وقبل ركوب المصعد، توجد برجتان يمكنك استخدامهما ضد الأعداء.",
+                "في الغرفة الأولى من Chapter 4، بعد صعود الدرج وقبل ركوب المصعد، توجد برجتان (2) يمكنك استخدامهما ضد الأعداء.",
             ["Infinite Heal activates after the first power is drained, but the effect will remain active afterward"] =
                 "يتفعل Infinite Heal بعد استهلاك أول جزء من الطاقة، ويبقى تأثيره فعالا بعد ذلك.",
             ["Infinite Heal activates after the first power is drained, but the effect will remain active afterward. Power chare during fighting"] =
@@ -392,17 +392,17 @@ public static partial class NoteSvc
             ["Remove after you have all of the items you want and then turn it off because it causes problems with blue and bronze pieces"] =
                 "بعد الحصول على جميع العناصر التي تريدها، عطل الشفرة؛ استمرارها يسبب مشكلات مع القطع الزرقاء والبرونزية.",
             ["Required to make enemies ignore you by pressing L3. Turn on 1st or the game will crash"] =
-                "مطلوب لجعل الأعداء يتجاهلونك عند الضغط على L3. فعل هذه الشفرة أولا، وإلا ستنهار اللعبة.",
+                "مطلوب لجعل الأعداء يتجاهلونك عند الضغط على L3. فعل هذه الشفرة أولا (1st)، وإلا ستنهار اللعبة.",
             ["Requires the Button Enable Code to be activated once before this or the game will instantly freeze"] =
                 "يتطلب تفعيل Button Enable Code مرة واحدة قبل هذه الشفرة، وإلا ستتجمد اللعبة فورا.",
             ["Requires the Marker codes for either the Dwarf Gekko in Chapter 2 or the Turrets in Chapter 4 or this will do nothing. The only unwanted effect of the code is that 1 enemy might not respond to damage for the 1st time they take damage, but after that the effect is gone again until you either control the Dwarf Gekko or Turrets again"] =
-                "يتطلب Marker Codes الخاصة بـDwarf Gekko في Chapter 2 أو Turrets في Chapter 4، وإلا فلن تعمل الشفرة. الأثر الجانبي الوحيد هو أن عدوا واحدا قد لا يستجيب لأول ضرر يتلقاه؛ بعد ذلك يختفي الأثر حتى تتحكم في Dwarf Gekko أو Turrets مرة أخرى.",
+                "يتطلب Marker Codes الخاصة بـDwarf Gekko في Chapter 2 أو Turrets في Chapter 4، وإلا فلن تعمل الشفرة. الأثر الجانبي الوحيد هو أن عدوا واحدا (1) قد لا يستجيب للضرر في المرة الأولى (1st)؛ بعد ذلك يختفي الأثر حتى تتحكم في Dwarf Gekko أو Turrets مرة أخرى.",
             ["Requires the button enable code to be on 1st"] =
-                "يتطلب تفعيل Button Enable Code أولا.",
+                "يتطلب تفعيل Button Enable Code أولا (1st).",
             ["Requires the button enable code to be turned on 1st"] =
-                "يتطلب تفعيل Button Enable Code أولا.",
+                "يتطلب تفعيل Button Enable Code أولا (1st).",
             ["Requires the button enable code to be turned on 1st. People might not instantly stop, but once they do they will stay stopped until you toggle the code off"] =
-                "يتطلب تفعيل Button Enable Code أولا. قد لا يتوقف الأشخاص فورا، لكن بعد توقفهم سيبقون متوقفين حتى تعطل الشفرة.",
+                "يتطلب تفعيل Button Enable Code أولا (1st). قد لا يتوقف الأشخاص فورا، لكن بعد توقفهم سيبقون متوقفين حتى تعطل الشفرة.",
             ["Save Your Game Immediately When You Have Lot Of WP"] =
                 "احفظ اللعبة فورا بعد الحصول على كمية كبيرة من WP.",
             ["Select + Left = Toggle Invincibility, Select + Up = Cycle Up Through Superstyle Levels, Select + Down = Toggle Full Superstyle,Select + Right = Toggle Timers"] =
@@ -424,15 +424,15 @@ public static partial class NoteSvc
             ["Used Hiei-YYH Ported by ChIdReamS's code for partner health to create a marker to separate your AI partner from enemies otherwise they would die from any damage too"] =
                 "استخدمت شفرة صحة الشريك من Hiei-YYH والمنقولة بواسطة ChIdReamS لإنشاء Marker يفصل شريك AI عن الأعداء؛ وإلا فسيتأثر شريكك بالضرر مثلهم.",
             ["When inside the ship and flying to the planet, there's a moment where Isaac gets out of the seat to go to the back of the ship to lock those 3 canisters in place. The game normally gives you exactly 60 seconds to do it and if you don't you instantly die"] =
-                "أثناء الرحلة داخل السفينة إلى الكوكب، يغادر Isaac المقعد في لحظة معينة ليتجه إلى مؤخرة السفينة ويثبت الحاويات الثلاث. تمنحك اللعبة عادة 60 ثانية بالضبط لإنهاء ذلك، وإذا لم تفعل فستموت فورا.",
+                "أثناء الرحلة داخل السفينة إلى الكوكب، يغادر Isaac المقعد في لحظة معينة ليتجه إلى مؤخرة السفينة ويثبت الحاويات الثلاث (3). تمنحك اللعبة عادة 60 ثانية بالضبط لإنهاء ذلك، وإذا لم تفعل فستموت فورا.",
             ["When you have the codes on to have all powers and to be able to use powers from both good and evil sides at the same time, the same still applies where you get Overload Burst with good karma and Arc Lightning with evil karma"] =
                 "عند تفعيل شفرات جميع القوى وإتاحة قوى الخير والشر معا، تبقى القاعدة نفسها: تحصل على Overload Burst مع Good Karma وعلى Arc Lightning مع Evil Karma.",
             ["Without this, the game will only spawn a total of 40 treasure chests and then you will be stuck"] =
                 "بدون هذه الشفرة ستنشئ اللعبة 40 صندوق كنز فقط، وبعدها سيتعذر عليك التقدم.",
             ["Works even if you do not do 1 headshot"] =
-                "تعمل حتى إذا لم تنفذ أي Headshot.",
+                "تعمل حتى إذا لم تنفذ Headshot واحدة (1).",
             ["Works even if you do not kill 1 enemy"] =
-                "تعمل حتى إذا لم تقتل أي عدو.",
+                "تعمل حتى إذا لم تقتل عدوا واحدا (1).",
             ["X + Left = Health Regeneration On X + Right = Health Regeneration Off X + Up = Unfreeze NPCs X + Down = Freeze NPCs"] =
                 "التحكم: X + Left لتفعيل تجدد الصحة؛ X + Right لتعطيله؛ X + Up لإلغاء تجميد NPCs؛ X + Down لتجميد NPCs.",
             ["You can control the brightness from the Options Menu with this"] =
@@ -442,7 +442,7 @@ public static partial class NoteSvc
             ["You can still be grabbed, but it is now far easier to break out of the grab and they can not damage your health"] =
                 "لا يزال من الممكن الإمساك بك، لكن الإفلات أصبح أسهل بكثير، ولن يتمكنوا من خفض صحتك.",
             ["so only 1 can be active at a time"] =
-                "لذلك يمكن تفعيل خيار واحد فقط في الوقت نفسه.",
+                "لذلك يمكن تفعيل خيار واحد (1) فقط في الوقت نفسه.",
 
         };
 }

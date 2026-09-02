@@ -204,39 +204,28 @@ internal static partial class Program
                 return;
             }
 
+            if (args.Length == 2 &&
+                args[0].Equals(
+                    "--official-localization-only",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                runner.RunCase(
+                    nameof(PatchText_LocalOfficialCorpus),
+                    () => PatchText_LocalOfficialCorpus(args[1]));
+                Console.WriteLine(
+                    "Local Official patch localization read-only audit passed.");
+                return;
+            }
+
             if (args.Length == 1 &&
                 args[0].Equals(
                     "--patch-localization-only",
                     StringComparison.OrdinalIgnoreCase))
             {
-                runner.RunCase(nameof(Lang_Key), Lang_Key);
-                runner.RunCase(
-                    nameof(PatchText_CanonicalFieldsRemainUnchanged),
-                    PatchText_CanonicalFieldsRemainUnchanged);
-                runner.RunCase(
-                    nameof(PatchText_EnglishPresentationRemainsCanonical),
-                    PatchText_EnglishPresentationRemainsCanonical);
-                runner.RunCase(
-                    nameof(PatchText_ArabicInstructionsAndRequirements),
-                    PatchText_ArabicInstructionsAndRequirements);
-                runner.RunCase(
-                    nameof(PatchText_TechnicalAndControllerTokensRemainCanonical),
-                    PatchText_TechnicalAndControllerTokensRemainCanonical);
-                runner.RunCase(
-                    nameof(PatchText_UnknownAndDiagnosticTextDoesNotLeak),
-                    PatchText_UnknownAndDiagnosticTextDoesNotLeak);
-                runner.RunCase(
-                    nameof(PatchText_UnknownTitlesRemainCanonical),
-                    PatchText_UnknownTitlesRemainCanonical);
-                runner.RunCase(
-                    nameof(PatchText_SourceKindsSharePresentationBoundary),
-                    PatchText_SourceKindsSharePresentationBoundary);
-                runner.RunCase(
-                    nameof(PatchText_CorpusWideSafety),
-                    PatchText_CorpusWideSafety);
+                RunPatchLocalizationCases(runner);
                 Console.WriteLine(
                     "Patch presentation localization focused tests passed.");
-                Console.WriteLine("Passed: 9, Failed: 0, Skipped: 0");
+                Console.WriteLine("Passed: 11, Failed: 0, Skipped: 0");
                 return;
             }
 
@@ -285,31 +274,7 @@ internal static partial class Program
             var smokeRoot = context.CreateTempRoot("R3ConfigSmoke");
 
             runner.RunCase(nameof(RunnerFailureCapture), RunnerFailureCapture);
-            runner.RunCase(nameof(Lang_Key), Lang_Key);
-            runner.RunCase(
-                nameof(PatchText_CanonicalFieldsRemainUnchanged),
-                PatchText_CanonicalFieldsRemainUnchanged);
-            runner.RunCase(
-                nameof(PatchText_EnglishPresentationRemainsCanonical),
-                PatchText_EnglishPresentationRemainsCanonical);
-            runner.RunCase(
-                nameof(PatchText_ArabicInstructionsAndRequirements),
-                PatchText_ArabicInstructionsAndRequirements);
-            runner.RunCase(
-                nameof(PatchText_TechnicalAndControllerTokensRemainCanonical),
-                PatchText_TechnicalAndControllerTokensRemainCanonical);
-            runner.RunCase(
-                nameof(PatchText_UnknownAndDiagnosticTextDoesNotLeak),
-                PatchText_UnknownAndDiagnosticTextDoesNotLeak);
-            runner.RunCase(
-                nameof(PatchText_UnknownTitlesRemainCanonical),
-                PatchText_UnknownTitlesRemainCanonical);
-            runner.RunCase(
-                nameof(PatchText_SourceKindsSharePresentationBoundary),
-                PatchText_SourceKindsSharePresentationBoundary);
-            runner.RunCase(
-                nameof(PatchText_CorpusWideSafety),
-                PatchText_CorpusWideSafety);
+            RunPatchLocalizationCases(runner);
             runner.RunCase(nameof(Art_Imp), Art_Imp);
             runner.RunCase(nameof(Art_Tool), () => Art_Tool(smokeRoot));
             runner.RunCase(nameof(Art_Data), Art_Data);

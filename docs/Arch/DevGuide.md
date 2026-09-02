@@ -300,6 +300,9 @@ ViewModel يفحص التشغيل أيضًا لتقديم warning مترجم م�
 ## 13. Localization
 
 كل user-facing string جديد يدخل `ar-SA.json` و`en-US.json` بالمفتاح نفسه.
+ملفات JSON هي source-only للمطور. أثناء build يحول `Script/LangPack` هذه المصادر
+إلى `Lang/*.r3lang` ثنائية ويولد manifest hashes تلقائيا؛ الـruntime والـpublish
+يقرآن الحزم المترجمة فقط ولا يشحنان JSON القابل للتحرير.
 Application/Core لا يستدعيان `UiText`. formatter أو ViewModel في App هو الذي
 يحول diagnostic إلى نص.
 

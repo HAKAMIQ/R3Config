@@ -106,8 +106,8 @@ $requiredFiles = @(
     'Data/can.yml',
     'Data/art.yml',
     'Data/art_dep.json',
-    'Lang/ar-SA.json',
-    'Lang/en-US.json',
+    'Lang/ar-SA.r3lang',
+    'Lang/en-US.r3lang',
     'README.md',
     'LICENSE',
     'Changes.md',
@@ -170,12 +170,26 @@ if ($forbiddenPayload) {
     throw "Release contains forbidden emulator, firmware, game, or legacy payload: $($forbiddenPayload.FullName)"
 }
 
-$ar = Get-Content -Raw -LiteralPath (Join-Path $releasePath 'Lang/ar-SA.json') | ConvertFrom-Json
-$en = Get-Content -Raw -LiteralPath (Join-Path $releasePath 'Lang/en-US.json') | ConvertFrom-Json
-$arKeys = @($ar.PSObject.Properties.Name | Sort-Object)
-$enKeys = @($en.PSObject.Properties.Name | Sort-Object)
-if (Compare-Object $arKeys $enKeys) {
-    throw 'Arabic and English release language keys do not match.'
+$publishedJsonLanguage = Get-ChildItem -LiteralPath (Join-Path $releasePath 'Lang') -File -Force -ErrorAction SilentlyContinue |
+    Where-Object { $_.Extension -eq '.json' } |
+    Select-Object -First 1
+if ($publishedJsonLanguage) {
+    throw "Release exposes editable JSON language source: $($publishedJsonLanguage.FullName)"
+}
+
+foreach ($languagePack in @('Lang/ar-SA.r3lang', 'Lang/en-US.r3lang')) {
+    $languagePackPath = Join-Path $releasePath $languagePack
+    $stream = [IO.File]::OpenRead($languagePackPath)
+    try {
+        $header = New-Object byte[] 8
+        if ($stream.Read($header, 0, $header.Length) -ne $header.Length -or
+            [Text.Encoding]::ASCII.GetString($header) -ne 'R3LANG01') {
+            throw "Release language pack header is invalid: $languagePack"
+        }
+    }
+    finally {
+        $stream.Dispose()
+    }
 }
 
 $catalog = Get-Content -Raw -LiteralPath (Join-Path $releasePath 'Data/cat.json') | ConvertFrom-Json
@@ -346,7 +360,9 @@ if ($manifestEntries.Count -ne $releaseFiles.Count) {
     throw "SHA256SUMS entry count '$($manifestEntries.Count)' does not match release file count '$($releaseFiles.Count)'."
 }
 
+& (Join-Path $PSScriptRoot 'PublishedLocalizationSmoke.ps1') -PublishDir $releasePath
+
 Write-Host "Portable release verification passed for R3Config $Version."
 Write-Host "Files: $(@(Get-ChildItem -LiteralPath $releasePath -Recurse -File).Count)"
-Write-Host "Language keys: $($arKeys.Count)"
+Write-Host "Compiled language packs: 2"
 Write-Host "Recommendation entries: $(@($catalog.Recommendations).Count)"

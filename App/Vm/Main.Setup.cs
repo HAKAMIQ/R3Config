@@ -21,73 +21,72 @@ public sealed partial class MainVm
             ? _setupPlan.RecommendationProvenance.DataSrc
             : $"{_setupPlan.RecommendationProvenance.DataSrc} {_setupPlan.RecommendationProvenance.DataVer}";
 
-    public string SetupBaseCount => StatusCount(
-        "Setup.AppliedCount",
-        "Setup.AppliedCountPending",
-        "Setup.AppliedNone",
-        "Setup.AppliedPendingOnly",
-        _setupPlan?.BaseConfiguration.Items.Count ?? 0,
-        _setupPlan?.BaseConfiguration.Items.Count(item =>
-            item.State == RecState.Applied) ?? 0,
-        _setupPreview?.SelectedBaseSettings.Count ?? 0);
+    public string SetupBaseCount => PendingCount(
+        SetupBaseChangeCount);
 
-    public string SetupOfficialCount => StatusCount(
-        "Setup.ActivationCount",
-        "Setup.ActivationCountPending",
-        "Setup.ActivationNone",
-        "Setup.ActivationPendingOnly",
-        _setupPlan?.OfficialPatches.Count ?? 0,
-        _setupPlan?.OfficialPatches.Count(candidate =>
-            candidate.IsEnabled) ?? 0,
+    public int SetupBaseChangeCount =>
+        _setupPreview?.SelectedBaseSettings.Count ?? 0;
+
+    public bool SetupHasBaseChanges =>
+        SetupBaseChangeCount > 0;
+
+    public string SetupOfficialCount
+    {
+        get
+        {
+            return PendingCount(
+                SetupOfficialChangeCount);
+        }
+    }
+
+    public int SetupOfficialChangeCount =>
         _setupPreview?.SelectedPatches.Count(candidate =>
             (candidate.Provenance.Kind is SetupPatchSourceKind.OfficialMain or
                 SetupPatchSourceKind.OfficialSpu) &&
-            !candidate.IsEnabled) ?? 0);
+            !candidate.IsEnabled) ?? 0;
+
+    public bool SetupHasOfficialChanges =>
+        SetupOfficialChangeCount > 0;
 
     public string SetupCanaryCount
     {
         get
         {
-            var available = _setupPlan?.CanaryPatches.Count ?? 0;
-            var current = _setupPlan?.CanaryPatches.Count(candidate =>
-                candidate.IsEnabled) ?? 0;
-            var pending = _setupPreview?.SelectedPatches.Count(candidate =>
-                candidate.Provenance.Kind == SetupPatchSourceKind.Canary &&
-                !candidate.IsEnabled) ?? 0;
-
-            if (_setupPlan is not null &&
-                available > 0 &&
-                current == 0 &&
-                pending == 0 &&
-                CountSetupWarnings("HASHMISMATCH") == available)
-            {
-                return UiText.Fmt(
-                    "Setup.CanaryAllIncompatible",
-                    available);
-            }
-
-            return StatusCount(
-                "Setup.ActivationCount",
-                "Setup.ActivationCountPending",
-                "Setup.ActivationNone",
-                "Setup.ActivationPendingOnly",
-                available,
-                current,
-                pending);
+            return PendingCount(
+                SetupCanaryChangeCount);
         }
     }
 
-    public string SetupArtemisCount => StatusCount(
-        "Setup.ActivationCount",
-        "Setup.ActivationCountPending",
-        "Setup.ActivationNone",
-        "Setup.ActivationPendingOnly",
-        _setupPlan?.ArtemisPatches.Count ?? 0,
-        _setupPlan?.ArtemisPatches.Count(candidate =>
-            candidate.IsEnabled) ?? 0,
+    public int SetupCanaryChangeCount =>
+        _setupPreview?.SelectedPatches.Count(candidate =>
+            candidate.Provenance.Kind == SetupPatchSourceKind.Canary &&
+            !candidate.IsEnabled) ?? 0;
+
+    public bool SetupHasCanaryChanges =>
+        SetupCanaryChangeCount > 0;
+
+    public string SetupArtemisCount
+    {
+        get
+        {
+            return PendingCount(
+                SetupArtemisChangeCount);
+        }
+    }
+
+    public int SetupArtemisChangeCount =>
         _setupPreview?.SelectedPatches.Count(candidate =>
             candidate.Provenance.Kind == SetupPatchSourceKind.Artemis &&
-            !candidate.IsEnabled) ?? 0);
+            !candidate.IsEnabled) ?? 0;
+
+    public bool SetupHasArtemisChanges =>
+        SetupArtemisChangeCount > 0;
+
+    public bool SetupHasPendingChanges =>
+        SetupHasBaseChanges ||
+        SetupHasOfficialChanges ||
+        SetupHasCanaryChanges ||
+        SetupHasArtemisChanges;
 
     public string SetupRequirementCount => _setupPlan is null
         ? UiText.GetText("Ui.EmptyValue")
@@ -111,13 +110,16 @@ public sealed partial class MainVm
             ? _setupResult
             : _setupPreview?.CanApply == true
                 ? UiText.GetText("Setup.ReadyToPrepare")
-                : UiText.GetText("Setup.SelectHint");
+                : _setupPlan is null
+                    ? string.Empty
+                    : UiText.GetText("Setup.NoChanges");
 
     public bool SetupHasRequirements => _setupPreview?.PatchRequirements.Count > 0;
 
     public bool SetupHasFiles => _setupPreview?.Files.Count > 0;
 
-    public bool SetupHasWarnings => _setupPreview?.Warnings.Count > 0;
+    public bool SetupHasWarnings =>
+        !string.IsNullOrWhiteSpace(SetupWarnings);
 
     public bool SetupHasConflicts => _setupPreview?.Conflicts.Count > 0;
 
@@ -128,69 +130,16 @@ public sealed partial class MainVm
     public bool SetupCanApply => CanMut && _setupPreview?.CanApply == true;
 
 
-    private string StatusCount(
-        string currentKey,
-        string pendingKey,
-        string noneCurrentKey,
-        string pendingOnlyKey,
-        int available,
-        int current,
-        int pending)
+    private string PendingCount(int pending)
     {
         if (_setupPlan is null)
         {
             return UiText.GetText("Ui.EmptyValue");
         }
 
-        if (available == 0)
-        {
-            return UiText.GetText("Setup.None");
-        }
-
-        if (current == 0)
-        {
-            return pending > 0
-                ? UiText.Fmt(pendingOnlyKey, available, pending)
-                : UiText.Fmt(noneCurrentKey, available);
-        }
-
-        return pending > 0
-            ? UiText.Fmt(
-                pendingKey,
-                current,
-                available,
-                pending)
-            : UiText.Fmt(
-                currentKey,
-                current,
-                available);
-    }
-
-    private int CountSetupWarnings(string token)
-    {
-        if (_setupPreview?.Warnings is null)
-        {
-            return 0;
-        }
-
-        return _setupPreview.Warnings.Count(warning =>
-        {
-            if (string.IsNullOrWhiteSpace(warning))
-            {
-                return false;
-            }
-
-            var trimmed = warning.Trim();
-            var separator = trimmed.IndexOf(':');
-            if (separator <= 0)
-            {
-                return false;
-            }
-
-            return trimmed[..separator].Trim().Equals(
-                token,
-                StringComparison.OrdinalIgnoreCase);
-        });
+        return UiText.Fmt(
+            "Setup.PendingCount",
+            pending);
     }
 
     private static string FormatSetupWarnings(IEnumerable<string>? warnings)
@@ -201,7 +150,6 @@ public sealed partial class MainVm
         }
 
         var visible = new List<string>();
-        var hashMismatchCount = 0;
 
         foreach (var warning in warnings)
         {
@@ -214,7 +162,6 @@ public sealed partial class MainVm
             var separator = trimmed.IndexOf(':');
             if (separator <= 0)
             {
-                visible.Add(PatText.SurfMsg(trimmed).Body);
                 continue;
             }
 
@@ -223,13 +170,18 @@ public sealed partial class MainVm
 
             if (token.Equals("HASHMISMATCH", StringComparison.OrdinalIgnoreCase))
             {
-                hashMismatchCount++;
                 continue;
             }
 
             if (token.Equals("HASH_UNKNOWN", StringComparison.OrdinalIgnoreCase))
             {
-                visible.Add(UiText.GetText("Setup.Warning.HashUnknown"));
+                continue;
+            }
+
+            if (token.Equals(
+                    "VERSION_UNRESOLVED",
+                    StringComparison.OrdinalIgnoreCase))
+            {
                 continue;
             }
 
@@ -237,7 +189,6 @@ public sealed partial class MainVm
                     "PATCH_BOOT_RECOMMENDED",
                     StringComparison.OrdinalIgnoreCase))
             {
-                visible.Add(UiText.GetText("Setup.Warning.PatchBoot"));
                 continue;
             }
 
@@ -263,23 +214,8 @@ public sealed partial class MainVm
 
             if (LooksLikeDiagnosticToken(token))
             {
-                if (!string.IsNullOrWhiteSpace(detail))
-                {
-                    visible.Add(detail);
-                }
                 continue;
             }
-
-            visible.Add(PatText.SurfMsg(trimmed).Body);
-        }
-
-        if (hashMismatchCount > 0)
-        {
-            visible.Insert(
-                0,
-                UiText.Fmt(
-                    "Setup.Warning.HashMismatchCount",
-                    hashMismatchCount));
         }
 
         return string.Join(Environment.NewLine, visible.Distinct(StringComparer.Ordinal));
@@ -447,9 +383,18 @@ public sealed partial class MainVm
     {
         OnChange(nameof(SetupSource));
         OnChange(nameof(SetupBaseCount));
+        OnChange(nameof(SetupBaseChangeCount));
+        OnChange(nameof(SetupHasBaseChanges));
         OnChange(nameof(SetupOfficialCount));
+        OnChange(nameof(SetupOfficialChangeCount));
+        OnChange(nameof(SetupHasOfficialChanges));
         OnChange(nameof(SetupCanaryCount));
+        OnChange(nameof(SetupCanaryChangeCount));
+        OnChange(nameof(SetupHasCanaryChanges));
         OnChange(nameof(SetupArtemisCount));
+        OnChange(nameof(SetupArtemisChangeCount));
+        OnChange(nameof(SetupHasArtemisChanges));
+        OnChange(nameof(SetupHasPendingChanges));
         OnChange(nameof(SetupRequirementCount));
         OnChange(nameof(SetupFiles));
         OnChange(nameof(SetupWarnings));

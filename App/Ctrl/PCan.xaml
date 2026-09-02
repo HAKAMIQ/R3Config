@@ -20,7 +20,8 @@
 
             <DataTemplate x:Key="CanItem">
                 <Border Style="{StaticResource PatCompactItemRow}"
-                        FlowDirection="{DynamicResource App.FlowDirection}">
+                        FlowDirection="{DynamicResource App.FlowDirection}"
+                        ToolTipService.IsEnabled="{Binding HasCanNote}">
                     <Border.ToolTip>
                         <ToolTip Style="{StaticResource PatCanaryNoteToolTip}"
                                  DataContext="{Binding PlacementTarget.DataContext,
@@ -155,18 +156,60 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
+        <Border Grid.Row="0"
+                Background="{DynamicResource Status.WarningSurface}"
+                BorderBrush="{DynamicResource Status.Warning}"
+                BorderThickness="{StaticResource Stroke.Thickness.Default}"
+                CornerRadius="{StaticResource Radius.Medium}"
+                Padding="10,7"
+                Margin="0,0,0,10"
+                FlowDirection="{DynamicResource App.FlowDirection}"
+                HorizontalAlignment="Stretch"
+                Visibility="{Binding ShowCanaryVerificationPanel,
+                                     Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid FlowDirection="{DynamicResource App.FlowDirection}"
+                  HorizontalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding CanaryVerificationText}"
+                           Style="{StaticResource PatLocalizedSubtitleText}"
+                           Foreground="{DynamicResource Text.Primary}"
+                           TextAlignment="{DynamicResource App.TextAlignment}"
+                           HorizontalAlignment="Stretch"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"
+                           Visibility="{Binding ShowCanaryVerificationText,
+                                                Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                <Button Grid.Column="2"
+                        Content="{lang:TextExt Key=PatchReadiness.VerifyAction}"
+                        Style="{StaticResource PatReadinessPrimaryButton}"
+                        Command="{Binding FingerprintCaptureCmd}"
+                        VerticalAlignment="Center"
+                        TextBlock.TextAlignment="Center"
+                        Visibility="{Binding ShowCanaryVerificationAction,
+                                             Converter={StaticResource BoolToVisibilityConverter}}" />
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="1"
                    Text="{Binding Preview.CanSum}"
                    Style="{StaticResource PatSectionSummaryText}"
                    Margin="8,0,8,8"
-                   Visibility="{Binding Preview.HasCan,
+                   Visibility="{Binding Preview.HasCanSummary,
                                         Converter={StaticResource BoolToVisibilityConverter}}" />
 
-        <Border Grid.Row="1"
+        <Border Grid.Row="2"
                 Style="{StaticResource PatResultSurface}"
                 MinHeight="0"
                 HorizontalAlignment="Stretch"
@@ -183,20 +226,18 @@
                 <Border Style="{StaticResource PatEmptyStateHost}"
                         Visibility="{Binding Preview.CanEmpty,
                                              Converter={StaticResource BoolToVisibilityConverter}}">
-                    <StackPanel HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                MaxWidth="480">
-                        <TextBlock Text="{lang:TextExt Key=Patch.CanaryEmptyTitle}"
-                                   Style="{StaticResource PatEmptyStateTitleText}" />
-                        <TextBlock Text="{lang:TextExt Key=Patch.CanaryEmptyHint}"
-                                   Style="{StaticResource PatEmptyStateHintText}" />
-                    </StackPanel>
+                    <TextBlock Text="{Binding Preview.CanEmptyText}"
+                               Style="{StaticResource PatEmptyStateTitleText}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               MaxWidth="520"
+                               TextWrapping="Wrap" />
                 </Border>
             </Grid>
         </Border>
 
         <Grid x:Name="CanActions"
-              Grid.Row="2"
+              Grid.Row="3"
               FlowDirection="{DynamicResource App.FlowDirection}"
               HorizontalAlignment="Stretch"
               VerticalAlignment="Bottom"

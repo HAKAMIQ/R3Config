@@ -34,7 +34,7 @@
                    Text="{Binding Preview.ChtSum}"
                    Style="{StaticResource PatSectionSummaryText}"
                    Margin="8,0,8,8"
-                   Visibility="{Binding Preview.HasCht,
+                   Visibility="{Binding Preview.HasChtSummary,
                                         Converter={StaticResource BoolToVisibilityConverter}}" />
 
         <Border Grid.Row="1"
@@ -60,14 +60,12 @@
                 <Border Style="{StaticResource PatEmptyStateHost}"
                         Visibility="{Binding Preview.ChtEmpty,
                                              Converter={StaticResource BoolToVisibilityConverter}}">
-                    <StackPanel HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                MaxWidth="480">
-                        <TextBlock Text="{lang:TextExt Key=Patch.CheatEmptyTitle}"
-                                   Style="{StaticResource PatEmptyStateTitleText}" />
-                        <TextBlock Text="{lang:TextExt Key=Patch.CheatEmptyHint}"
-                                   Style="{StaticResource PatEmptyStateHintText}" />
-                    </StackPanel>
+                    <TextBlock Text="{Binding Preview.ChtEmptyText}"
+                               Style="{StaticResource PatEmptyStateTitleText}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               MaxWidth="520"
+                               TextWrapping="Wrap" />
                 </Border>
             </Grid>
         </Border>

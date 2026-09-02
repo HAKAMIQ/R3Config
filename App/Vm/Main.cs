@@ -176,6 +176,7 @@ public sealed partial class MainVm : VmBase, IDisposable
         Preview.SelState += (_, _) =>
         {
             RefreshGameSetupPreview();
+            OnPatchPresentationChanged();
             RaiseCmd();
         };
         Advanced.PropChg += (_, e) =>

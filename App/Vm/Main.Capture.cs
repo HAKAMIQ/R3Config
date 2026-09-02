@@ -28,6 +28,7 @@ public sealed partial class MainVm
             OnChange(nameof(CanMut));
             OnChange(nameof(CanSelectGame));
             OnChange(nameof(ShowFingerprintCaptureStatus));
+            OnPatchPresentationChanged();
             FingerprintCaptureCmd.RaiseCan();
             RaiseCmd();
         }
@@ -438,6 +439,7 @@ public sealed partial class MainVm
         OnChange(nameof(ShowFingerprintCaptureAction));
         OnChange(nameof(ShowFingerprintCaptureStatus));
         OnChange(nameof(FingerprintCaptureStatus));
+        OnPatchPresentationChanged();
         FingerprintCaptureCmd.RaiseCan();
     }
 

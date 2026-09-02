@@ -95,6 +95,126 @@ public static class PatText
             : raw.Trim();
     }
 
+    public static string ArtemisTitle(
+        string? raw,
+        bool hasDependencies = false)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return string.Empty;
+        }
+
+        var title = raw.Trim();
+        foreach (var prefix in new[] { "(B)", "(b)", "(M)" })
+        {
+            if (title.StartsWith(prefix + " ", StringComparison.Ordinal))
+            {
+                title = title[(prefix.Length + 1)..].TrimStart();
+                break;
+            }
+        }
+
+        title = StripArtemisTitleMetadata(
+            title,
+            hasDependencies);
+
+        if (title.Equals(
+                "Button Enable Code",
+                StringComparison.OrdinalIgnoreCase) ||
+            title.Equals(
+                "Button Enable Codes",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return UiText.GetText("Patch.Artemis.ButtonSupportCode");
+        }
+
+        return title
+            .Replace(" + \\/", " + ↓", StringComparison.Ordinal)
+            .Replace(" + >", " + →", StringComparison.Ordinal)
+            .Replace(" + <", " + ←", StringComparison.Ordinal)
+            .Replace(" + ^", " + ↑", StringComparison.Ordinal);
+    }
+
+    public static bool IsEmptyDescription(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return true;
+        }
+
+        var value = raw.Trim();
+        return value is "-" or "–" or "—";
+    }
+
+    public static bool SameMeaning(
+        string? first,
+        string? second)
+    {
+        var left = MeaningKey(first);
+        var right = MeaningKey(second);
+        return left.Length > 0 &&
+               left.Equals(right, StringComparison.Ordinal);
+    }
+
+    public static bool RepeatsDependency(
+        string? note,
+        IEnumerable<string> dependencyTitles)
+    {
+        var noteKey = MeaningKey(note);
+        if (noteKey.Length == 0)
+        {
+            return false;
+        }
+
+        return dependencyTitles.Any(title =>
+        {
+            var dependencyKey = MeaningKey(title);
+            return dependencyKey.Length > 0 &&
+                   noteKey.Contains(
+                       dependencyKey,
+                       StringComparison.Ordinal);
+        });
+    }
+
+    public static bool IsTechnicalArtemisNote(string? raw)
+    {
+        if (IsEmptyDescription(raw))
+        {
+            return false;
+        }
+
+        var text = raw!.Trim();
+        var assignmentCount = text.Count(character => character == '=');
+        if (assignmentCount == 0)
+        {
+            return false;
+        }
+
+        var hasValueMapping = text
+            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Any(segment =>
+            {
+                var separator = segment.IndexOf('=');
+                if (separator <= 0)
+                {
+                    return false;
+                }
+
+                var left = segment[..separator].Trim();
+                var tokenStart = left.LastIndexOfAny([' ', ',', '(']);
+                var token = left[(tokenStart + 1)..].Trim();
+                return token.Length > 0 &&
+                       token.All(character =>
+                           char.IsAsciiHexDigit(character));
+            });
+
+        return hasValueMapping &&
+               (assignmentCount > 1 ||
+                text.Contains(';') ||
+                text.Contains("0x", StringComparison.OrdinalIgnoreCase) ||
+                text.Split('=', 2)[0].Trim().Length >= 4);
+    }
+
     public static string SafetyLabel(PatSafetyAssessment safety)
     {
         return safety.Severity switch
@@ -141,6 +261,69 @@ public static class PatText
             string.Join(" ", parts));
     }
 
+    private static string StripArtemisTitleMetadata(
+        string title,
+        bool hasDependencies)
+    {
+        title = StripTrailingMarker(
+            title,
+            '[',
+            ']',
+            hasDependencies);
+        return StripTrailingMarker(
+            title,
+            '(',
+            ')',
+            hasDependencies);
+    }
+
+    private static string StripTrailingMarker(
+        string title,
+        char open,
+        char close,
+        bool hasDependencies)
+    {
+        if (!title.EndsWith(close))
+        {
+            return title;
+        }
+
+        var markerStart = title.LastIndexOf(open);
+        if (markerStart <= 0)
+        {
+            return title;
+        }
+
+        var marker = title[(markerStart + 1)..^1].Trim();
+        var isPresentationMetadata =
+            marker.Equals(
+                "Must Be On",
+                StringComparison.OrdinalIgnoreCase) ||
+            hasDependencies &&
+            (marker.StartsWith(
+                 "Requires ",
+                 StringComparison.OrdinalIgnoreCase) ||
+             marker.StartsWith(
+                 "Turn On ",
+                 StringComparison.OrdinalIgnoreCase));
+        return isPresentationMetadata
+            ? title[..markerStart].TrimEnd()
+            : title;
+    }
+
+    private static string MeaningKey(string? value)
+    {
+        if (IsEmptyDescription(value))
+        {
+            return string.Empty;
+        }
+
+        return new string(value!
+            .Where(char.IsLetterOrDigit)
+            .Select(char.ToLowerInvariant)
+            .ToArray());
+    }
+
     private static NoteText Localize(
         string? raw,
         string title,
@@ -154,7 +337,7 @@ public static class PatText
             return new NoteText(
                 title,
                 type,
-                UiText.GetText("Ui.EmptyValue"),
+                string.Empty,
                 string.Empty,
                 false,
                 kind);
