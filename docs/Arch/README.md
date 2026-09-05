@@ -34,8 +34,10 @@ WPF View
 - `AppFlow` facade رقيق وليس مكانًا لمنطق جديد.
 - analysis/preview/plan مسارات قراءة بلا side effects.
 - كل تعديل لملفات RPCS3 يمر عبر use case و`IRpcs3MutationGuard`.
-- لا تفعيل باتش دون اختيار صريح و`ExactMatch` أو تطابق serial/version موثوق
-  ومحمي بمفتاح بصمة لا يطبقه RPCS3 إلا عند تطابق بصمة التشغيل.
+- لا تفعيل باتش دون اختيار صريح. تعريفات Canary المضمنة تتطلب التقاط PPU
+  محلي مرة واحدة بعد تأكيد ظهور `PPU executable hash` للعبة المحددة في جلسة اللوج الجديدة ثم تجهيز نسخة
+  managed تحت مفتاح التشغيل المحلي؛ بقية المصادر تتبع عقد `ExactMatch` أو
+  runtime guard الموثوق عبر `PatchCompatibilityService`.
 - لا تعديل لـ `patch.yml` أو ملفات اللعبة أو binary المحاكي.
 - multi-file mutation تنجح كاملة أو تتراجع كاملة.
 - العربية والإنجليزية لهما مجموعة المفاتيح نفسها.

@@ -177,7 +177,7 @@ public sealed partial class PatchSelectionCompiler
                 var key = item.Key;
                 var match = item.Match;
 
-                var hashKey = key.HashKey;
+                var hashKey = match.EffectiveRunKey;
 
                 if (!outputHashes.TryGetValue(
                         hashKey,
@@ -258,7 +258,7 @@ public sealed partial class PatchSelectionCompiler
                 !string.IsNullOrWhiteSpace(match.Patch.Group))
             .GroupBy(
                 match =>
-                    $"{match.Patch.RunKey}|{match.Patch.Group!.Trim()}",
+                    $"{match.EffectiveRunKey}|{match.Patch.Group!.Trim()}",
                 StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault(group => group.Count() > 1);
 
@@ -281,7 +281,7 @@ public sealed partial class PatchSelectionCompiler
         var requestedByIdentity = requested
             .GroupBy(
                 match => Valid(
-                    match.Patch.RunKey,
+                    match.EffectiveRunKey,
                     match.Patch.Title),
                 StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
@@ -316,7 +316,7 @@ public sealed partial class PatchSelectionCompiler
 
     private static string? ValidateWriteConflicts(IReadOnlyList<Resolved> resolved)
     {
-        foreach (var target in resolved.GroupBy(item => item.Key.HashKey, StringComparer.OrdinalIgnoreCase))
+        foreach (var target in resolved.GroupBy(item => item.Match.EffectiveRunKey, StringComparer.OrdinalIgnoreCase))
         {
             var writes = target.SelectMany(ReadWrites).ToArray();
             for (var leftIndex = 0; leftIndex < writes.Length; leftIndex++)
@@ -437,7 +437,7 @@ public sealed partial class PatchSelectionCompiler
                      .SelectMany(group => group.Titles))
         {
             var dependencyIdentity = Valid(
-                match.Patch.RunKey,
+                match.EffectiveRunKey,
                 dependency);
 
             if (!requested.ContainsKey(dependencyIdentity))

@@ -54,11 +54,17 @@ public sealed partial class HCanDiscoveryStore
             session.ProcessId < 0 ||
             !TryUtc(session.StartedUtc, out var startedUtc) ||
             !TryFullPath(session.LogPath, out var logPath) ||
-            !TryNormalizeMark(session.Baseline, out var baseline))
+            !TryNormalizeMark(session.Baseline, out var baseline) ||
+            !TryNormalizeLogSources(
+                session.LogSources,
+                logPath,
+                baseline,
+                out var logSources))
         {
             return null;
         }
 
+        var primaryLog = logSources[0];
         return new HCanDiscoverySession(
             executablePath,
             serial,
@@ -66,8 +72,9 @@ public sealed partial class HCanDiscoveryStore
             gameInstallPath,
             session.ProcessId,
             startedUtc,
-            logPath,
-            baseline);
+            primaryLog.LogPath,
+            primaryLog.Baseline,
+            logSources);
     }
 
     private static HCanHashBinding? NormalizeBinding(
@@ -250,6 +257,66 @@ public sealed partial class HCanDiscoveryStore
         }
 
         normalized = candidate.ToLowerInvariant();
+        return true;
+    }
+
+    private static bool TryNormalizeLogSources(
+        IReadOnlyList<HCanLogSource>? sources,
+        string fallbackPath,
+        HCanLogMark fallbackBaseline,
+        out IReadOnlyList<HCanLogSource> normalized)
+    {
+        normalized = [];
+
+        if (sources is null ||
+            sources.Count == 0)
+        {
+            normalized =
+            [
+                new HCanLogSource(
+                    fallbackPath,
+                    fallbackBaseline)
+            ];
+            return true;
+        }
+
+        if (sources.Count > 4)
+        {
+            return false;
+        }
+
+        var result = new List<HCanLogSource>(
+            sources.Count);
+        var seen = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (var source in sources)
+        {
+            if (source is null ||
+                !TryFullPath(
+                    source.LogPath,
+                    out var sourcePath) ||
+                !TryNormalizeMark(
+                    source.Baseline,
+                    out var sourceBaseline))
+            {
+                return false;
+            }
+
+            if (seen.Add(sourcePath))
+            {
+                result.Add(new HCanLogSource(
+                    sourcePath,
+                    sourceBaseline));
+            }
+        }
+
+        if (result.Count == 0)
+        {
+            return false;
+        }
+
+        normalized = result;
         return true;
     }
 

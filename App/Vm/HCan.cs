@@ -460,12 +460,7 @@ public sealed partial class HCanVm : VmBase, IDisposable
     public string R3Path => _install?.RootPath ?? UiText.GetText("HCanary.Error.Rpcs3Missing");
     public string LogPath => _install is null
         ? string.Empty
-        : Path.Combine(
-            string.IsNullOrWhiteSpace(_install.DataRoot)
-                ? _install.RootPath
-                : _install.DataRoot,
-            "log",
-            "RPCS3.log");
+        : Rpcs3LogLocator.PreferredPlainLogPath(_install);
     public string PatPath => _install is null ? string.Empty : Path.Combine(_install.PatPath, "imported_patch.yml");
     public string GameName => _game?.Title ?? UiText.GetText("HCanary.Error.GameMissing");
     public string GameId => _game?.Serial ?? "—";

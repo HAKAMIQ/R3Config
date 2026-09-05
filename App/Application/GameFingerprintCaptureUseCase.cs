@@ -74,7 +74,7 @@ public sealed record GameFingerprintCaptureOptions(
     public static GameFingerprintCaptureOptions Default { get; } = new(
         Timeout: TimeSpan.FromMinutes(5),
         PollInterval: TimeSpan.FromSeconds(1),
-        StartupStabilityDelay: TimeSpan.FromSeconds(20),
+        StartupStabilityDelay: TimeSpan.FromMinutes(1),
         GracefulCloseTimeout: TimeSpan.FromSeconds(8),
         PostExitLogDelay: TimeSpan.FromMilliseconds(750));
 }
@@ -156,10 +156,27 @@ public sealed class GameFingerprintCaptureUseCase
             cancellationToken);
     }
 
+    public Task<GameFingerprintCaptureResult> CaptureAsync(
+        Rpcs3InstallDescriptor install,
+        Rpcs3GameDescriptor game,
+        CanaryHashExpectation expectation,
+        IProgress<GameFingerprintCaptureProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        return CaptureAsync(
+            install,
+            game,
+            expectation,
+            replaceExisting: false,
+            progress: progress,
+            cancellationToken: cancellationToken);
+    }
+
     public async Task<GameFingerprintCaptureResult> CaptureAsync(
         Rpcs3InstallDescriptor install,
         Rpcs3GameDescriptor game,
         CanaryHashExpectation expectation,
+        bool replaceExisting,
         IProgress<GameFingerprintCaptureProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
@@ -179,7 +196,7 @@ public sealed class GameFingerprintCaptureUseCase
                     () => _hashEvidence.LoadSaved(install, game),
                     cancellationToken)
                 .ConfigureAwait(false);
-            if (HasPpu(saved))
+            if (HasPpu(saved) && !replaceExisting)
             {
                 return GameFingerprintCaptureResult.Fail(
                     GameFingerprintCaptureError.FingerprintAlreadyCaptured,
@@ -205,6 +222,7 @@ public sealed class GameFingerprintCaptureUseCase
                         install,
                         game,
                         expectation,
+                        replaceExisting,
                         cancellationToken),
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -273,13 +291,21 @@ public sealed class GameFingerprintCaptureUseCase
                         timedOutStop.Error);
                 }
 
-                var startupReady =
+                var processReady =
                     _processController.IsGameStartupReady(
                         session.Rpcs3ExecutablePath,
                         session.ProcessId,
                         session.StartedUtc);
+                var selectedGameBooted =
+                    processReady &&
+                    await Task.Run(
+                            () => _hashEvidence.IsSelectedGameBooted(
+                                session,
+                                cancellationToken),
+                            cancellationToken)
+                        .ConfigureAwait(false);
 
-                if (!startupReady)
+                if (!selectedGameBooted)
                 {
                     startupStableTimer = null;
                     Report(
@@ -328,6 +354,7 @@ public sealed class GameFingerprintCaptureUseCase
             var final = await CompleteAsync(
                 session,
                 expectation,
+                replaceExisting,
                 progress,
                 cancellationToken);
             if (!HasPpu(final))
@@ -387,6 +414,7 @@ public sealed class GameFingerprintCaptureUseCase
     private Task<HashRead> CompleteAsync(
         HCanDiscoverySession session,
         CanaryHashExpectation expectation,
+        bool replaceExisting,
         IProgress<GameFingerprintCaptureProgress>? progress,
         CancellationToken cancellationToken)
     {
@@ -395,6 +423,7 @@ public sealed class GameFingerprintCaptureUseCase
             () => _hashEvidence.Complete(
                 session,
                 expectation,
+                replaceExisting,
                 cancellationToken),
             cancellationToken);
     }

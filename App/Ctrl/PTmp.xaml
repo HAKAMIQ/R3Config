@@ -9,8 +9,16 @@
     <DataTemplate x:Key="PatItem">
         <Border Style="{StaticResource PatCompactItemRow}"
                 FlowDirection="{DynamicResource App.FlowDirection}"
-                ToolTip="{Binding CompatibilityTip}"
                 ToolTipService.IsEnabled="{Binding HasCompatibilityTip}">
+            <Border.ToolTip>
+                <ToolTip Style="{StaticResource ModernToolTip}">
+                    <TextBlock Text="{Binding CompatibilityTip}"
+                               FlowDirection="{DynamicResource App.TextFlowDirection}"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               NumberSubstitution.Substitution="European"
+                               TextWrapping="Wrap" />
+                </ToolTip>
+            </Border.ToolTip>
 
             <Grid FlowDirection="{DynamicResource App.FlowDirection}"
                   HorizontalAlignment="Stretch"
@@ -90,7 +98,6 @@
                                               Mode=TwoWay,
                                               UpdateSourceTrigger=PropertyChanged}"
                           IsEnabled="{Binding CanSel}"
-                          ToolTip="{lang:TextExt Key=Patch.SelectTip}"
                           AutomationProperties.Name="{Binding DspTitle}"
                           AutomationProperties.HelpText="{lang:TextExt Key=Patch.SelectTip}"
                           Padding="0"
@@ -104,8 +111,16 @@
     <DataTemplate x:Key="ArtemisPatItem">
         <Border Style="{StaticResource PatCompactItemRow}"
                 FlowDirection="{DynamicResource App.FlowDirection}"
-                ToolTip="{Binding ArtemisTip}"
                 ToolTipService.IsEnabled="{Binding HasArtemisTip}">
+            <Border.ToolTip>
+                <ToolTip Style="{StaticResource ModernToolTip}">
+                    <TextBlock Text="{Binding ArtemisTip}"
+                               FlowDirection="{DynamicResource App.TextFlowDirection}"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               NumberSubstitution.Substitution="European"
+                               TextWrapping="Wrap" />
+                </ToolTip>
+            </Border.ToolTip>
 
             <Grid FlowDirection="{DynamicResource App.FlowDirection}"
                   HorizontalAlignment="Stretch"
@@ -213,7 +228,6 @@
                                               Mode=TwoWay,
                                               UpdateSourceTrigger=PropertyChanged}"
                           IsEnabled="{Binding CanSel}"
-                          ToolTip="{lang:TextExt Key=Patch.SelectTip}"
                           AutomationProperties.Name="{Binding ArtemisTitle}"
                           AutomationProperties.HelpText="{lang:TextExt Key=Patch.SelectTip}"
                           Padding="0"

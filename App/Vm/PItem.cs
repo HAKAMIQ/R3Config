@@ -366,6 +366,9 @@ public sealed class PatItVm : VmBase
                 PatchCompatibilityReasonCode.Hash
                     when IsCanary =>
                     "Patch.Direct.CanaryHashRequired",
+                PatchCompatibilityReasonCode.CanaryBindingAmbiguous
+                    when IsCanary =>
+                    "Patch.Direct.CanaryBindingAmbiguous",
                 PatchCompatibilityReasonCode.Hash =>
                     "Patch.Direct.GlobalNeedsExactHash",
                 _ => null
@@ -396,11 +399,13 @@ public sealed class PatItVm : VmBase
                 MatStat.Unknown or MatStat.HashBad when IsGuard =>
                     UiText.GetText("Patch.Direct.RuntimeGuarded"),
                 MatStat.Unknown => UiText.Fmt("Patch.Direct.HashUnknown", KindDsp),
-                MatStat.VerUnk => UiText.Fmt("Patch.Direct.VersionUnknown", ReqVer),
+                MatStat.VerUnk => UiText.Fmt(
+                    "Patch.Direct.VersionUnknown",
+                    FmtTech(ReqVer)),
                 MatStat.VerBad => UiText.Fmt(
                     "Patch.Direct.VersionMismatch",
-                    InstVer,
-                    ReqVer),
+                    FmtTech(InstVer),
+                    FmtTech(ReqVer)),
                 MatStat.HashBad when IsCanary =>
                     UiText.GetText("Patch.Direct.CanaryHashMismatch"),
                 MatStat.HashBad => UiText.GetText(
@@ -438,15 +443,21 @@ public sealed class PatItVm : VmBase
                 : "Patch.State.Ready")
             : UiText.GetText("Patch.State.Blocked");
 
-    public string CurrentStateDsp => UiText.Fmt(
-        "Patch.State.Current",
-        UiText.GetText(IsOn
-            ? "Patch.State.Enabled"
-            : "Patch.State.Disabled"));
+    public string CurrentStateDsp => IsOn
+        ? UiText.Fmt(
+            "Patch.State.Current",
+            UiText.GetText("Patch.State.Enabled"))
+        : CanOn
+            ? UiText.Fmt(
+                "Patch.State.Current",
+                UiText.GetText("Patch.State.Disabled"))
+            : MatchDsp;
 
     public string StateTon => IsOn
         ? "Game"
-        : "Muted";
+        : CanOn
+            ? "Muted"
+            : "Warning";
 
     public bool HasPendingAction => IsSel && CanSel;
 
@@ -485,12 +496,12 @@ public sealed class PatItVm : VmBase
                 MatStat.VerBad =>
                     UiText.Fmt(
                         "Patch.CanaryNote.VersionMismatch",
-                        InstVer,
-                        ReqVer),
+                        FmtTech(InstVer),
+                        FmtTech(ReqVer)),
                 MatStat.VerUnk =>
                     UiText.Fmt(
                         "Patch.CanaryNote.VersionUnknown",
-                        ReqVer),
+                        FmtTech(ReqVer)),
                 MatStat.Unknown when Decision.Code ==
                     PatchCompatibilityReasonCode.Hash =>
                     string.Empty,

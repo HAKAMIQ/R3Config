@@ -4,18 +4,18 @@ R3Config has one Artemis integration surface: the ChiDreams **Artemis Patch Coll
 
 ## Retained source contract
 
-- Canonical source: `Artemis-Patch-Collection-RPCS3-1.01-1654321.zip`
+- Canonical source: `Artemis-Patch-Collection-RPCS3-acfd45b-r3fix2.zip`
 - Repository: `https://github.com/chidreams/Artemis-Patch-Collection-RPCS3`
-- Source SHA-256: `f9e915de0e535b0bbf0fedfbd743f974fc00fa1ea89682e8acb6f049f9491623`
+- Source SHA-256: `26a72f769fb1f7cb51daa8502fbc39b817a904fa1073dfa2c602a8c5f2d76ac9`
 - Source patch files: `132`
 - Candidate definitions before duplicate/dependency resolution: `1028`
 - Accepted definitions in the current generated catalog: `1023`
 - Rejected source/duplicate records: `19`
 - Generated artifact: `App/Data/art.yml`
-- Generated artifact SHA-256: `710c26be3b185e69f741e03dc8555fc3813c55919348d675e9d496aed7a6d1b3`
+- Generated artifact SHA-256: `b09ecd731e2808967dfd32cb9b112db3bf5aa81fe0ee89a827f7a85d99e7adf5`
 - Reviewed dependency metadata: `App/Data/art_dep.json` (`23` exact-entry rules)
-- Dependency source revision: `2b981063a6e53cdb5dc8fefda4b19c74903a138c`
-- Dependency artifact SHA-256: `4f6eecab14fc65f4194f41a7a9e8880c99205f271e52b3f214b43ab7e56e0063`
+- Dependency source revision: `acfd45b61f8295298523548a9ff3406488736d68`
+- Dependency artifact SHA-256: `ab0eab975a9217e1e91c406c5600fae1291f56498b89f3c28ea2a8d197844d68`
 - License: MIT
 
 The second user-supplied archive, `ARTEMIS-RPCS3-Cheat-Manager-1.0.1-RC4(1).zip`, has SHA-256 `372a033655d9c40bbf306a1d56dc5e6749f63400522a577bd15eeadfe175780f`. It is an external manager/editor/downloader for RPCS3 patch files and the same ChiDreams collection. It provides format/provenance reference only; it is not copied into the application and does not add a second cheat catalog.
@@ -61,11 +61,11 @@ Regeneration from the repository root uses the build-time importer. The source-r
 
 ```powershell
 dotnet run --project .\Script\ArtImport\R3ArtImport.csproj -c Release -- `
-  <Artemis-Patch-Collection-RPCS3-1.01-1654321.zip> `
+  <Artemis-Patch-Collection-RPCS3-acfd45b-r3fix2.zip> `
   .\App\Data\art.yml `
   .\CHEATS.md `
-  f9e915de0e535b0bbf0fedfbd743f974fc00fa1ea89682e8acb6f049f9491623 `
-  "user-supplied archive Artemis-Patch-Collection-RPCS3-1.01-1654321.zip" `
+  26a72f769fb1f7cb51daa8502fbc39b817a904fa1073dfa2c602a8c5f2d76ac9 `
+  "user-supplied archive Artemis-Patch-Collection-RPCS3-acfd45b-r3fix2.zip" `
   <ARTEMIS-RPCS3-Cheat-Manager-1.0.1-RC4(1).zip> `
   372a033655d9c40bbf306a1d56dc5e6749f63400522a577bd15eeadfe175780f
 ```

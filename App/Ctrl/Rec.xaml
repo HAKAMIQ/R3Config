@@ -28,70 +28,12 @@
               VerticalAlignment="Stretch">
 
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
+
             <Grid Grid.Row="0"
-                  Margin="0,0,0,12"
-                  FlowDirection="{DynamicResource App.FlowDirection}"
-                  HorizontalAlignment="Stretch">
-
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Column="0"
-                           Text="{Binding Plan.Summary}"
-                           Margin="0"
-                           ToolTip="{Binding Plan.TgtCfg}"
-                           TextAlignment="{DynamicResource App.TextAlignment}"
-                           HorizontalAlignment="Stretch"
-                           VerticalAlignment="Center"
-                           TextWrapping="Wrap">
-
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock"
-                               BasedOn="{StaticResource RecLocalizedSubtitleText}">
-                            <Setter Property="Visibility"
-                                    Value="Visible" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Plan.IsEmpty}"
-                                             Value="True">
-                                    <Setter Property="Visibility"
-                                            Value="Collapsed" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-
-                <Button Grid.Column="2"
-                        Content="{lang:TextExt Key=Plan.RemoveWikiSettings}"
-                        ToolTip="{lang:TextExt Key=Plan.RemoveWikiSettingsTip}"
-                        Command="{Binding DelSet}"
-                        Style="{StaticResource RecSecondaryActionButton}"
-                        Visibility="{Binding Plan.CanDel,
-                                             Converter={StaticResource BoolToVisibilityConverter}}"
-                        FlowDirection="{DynamicResource App.TextFlowDirection}"
-                        TextBlock.TextAlignment="Center" />
-
-                <Button Grid.Column="4"
-                        Content="{lang:TextExt Key=Plan.ApplySection}"
-                        ToolTip="{lang:TextExt Key=Plan.ApplySectionTip}"
-                        Command="{Binding ApplyCmd}"
-                        Style="{StaticResource RecPrimaryActionButton}"
-                        Visibility="{Binding Plan.HasChg,
-                                             Converter={StaticResource BoolToVisibilityConverter}}"
-                        FlowDirection="{DynamicResource App.TextFlowDirection}"
-                        TextBlock.TextAlignment="Center" />
-            </Grid>
-
-            <Grid Grid.Row="1"
                   FlowDirection="{DynamicResource App.FlowDirection}"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch">
@@ -295,6 +237,41 @@
                                TextAlignment="{DynamicResource App.TextAlignment}"
                                TextWrapping="Wrap" />
                 </Border>
+            </Grid>
+
+            <Grid Grid.Row="1"
+                  FlowDirection="{DynamicResource App.FlowDirection}"
+                  HorizontalAlignment="Stretch">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="2"
+                        Margin="0,12,0,0"
+                        Content="{lang:TextExt Key=Plan.RemoveWikiSettings}"
+                        ToolTip="{lang:TextExt Key=Plan.RemoveWikiSettingsTip}"
+                        Command="{Binding DelSet}"
+                        Style="{StaticResource RecSecondaryActionButton}"
+                        Visibility="{Binding Plan.CanDel,
+                                             Converter={StaticResource BoolToVisibilityConverter}}"
+                        FlowDirection="{DynamicResource App.TextFlowDirection}"
+                        TextBlock.TextAlignment="Center" />
+
+                <Button Grid.Column="4"
+                        Margin="0,12,0,0"
+                        Content="{lang:TextExt Key=Plan.ApplySection}"
+                        ToolTip="{lang:TextExt Key=Plan.ApplySectionTip}"
+                        Command="{Binding ApplyCmd}"
+                        Style="{StaticResource RecPrimaryActionButton}"
+                        Visibility="{Binding Plan.HasChg,
+                                             Converter={StaticResource BoolToVisibilityConverter}}"
+                        FlowDirection="{DynamicResource App.TextFlowDirection}"
+                        TextBlock.TextAlignment="Center" />
             </Grid>
         </Grid>
     </Border>

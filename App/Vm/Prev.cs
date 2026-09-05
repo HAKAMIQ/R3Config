@@ -78,10 +78,7 @@ public sealed class PatPrev : VmBase
 
     public string OfclSum => NeedsOfficialVerification
         ? UiText.GetText("PatchReadiness.OfficialVerifyNeeded")
-        : SimpleSum(
-            OfclList,
-            "Patch.OfficialSummaryAvailable",
-            "Patch.OfficialSummaryPendingSimple");
+        : string.Empty;
 
     public string CanSum => CanarySum();
 
@@ -986,15 +983,15 @@ public sealed class TgtGrpVm : VmBase
 
     public string Details => UiText.Fmt(
         "Patch.OfficialGroupVersion",
-        FmtTech(InstVer));
+        FmtTech(VerDsp));
 
     public string CanMeta => UiText.Fmt(
         "Patch.CanaryGroupVersion",
-        FmtTech(InstVer));
+        FmtTech(VerDsp));
 
     public string ArtemisMeta => UiText.Fmt(
         "Patch.Artemis.GroupVersion",
-        FmtTech(InstVer));
+        FmtTech(VerDsp));
 
     public string CanNote => UiText.Fmt(
         "Patch.CanaryGroupNote",

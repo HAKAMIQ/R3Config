@@ -425,16 +425,10 @@ internal static partial class Program
                ar["Patch.CanaryNote.HashMismatch"].Contains(
                    "محظورا",
                    StringComparison.Ordinal) &&
-               ar["PatchReadiness.Capture.SavedMismatch"].Contains(
-                   "محظورة",
-                   StringComparison.Ordinal) &&
                en["Patch.Direct.CanaryHashMismatch"].Contains(
                    "cannot be enabled",
                    StringComparison.OrdinalIgnoreCase) &&
                en["Patch.CanaryNote.HashMismatch"].Contains(
-                   "blocked",
-                   StringComparison.OrdinalIgnoreCase) &&
-               en["PatchReadiness.Capture.SavedMismatch"].Contains(
                    "blocked",
                    StringComparison.OrdinalIgnoreCase) &&
                ar["PatchReadiness.Capture.CatalogMismatch"].Contains(
@@ -443,7 +437,32 @@ internal static partial class Program
                en["PatchReadiness.Capture.CatalogMismatch"].Contains(
                    "cannot be enabled",
                    StringComparison.OrdinalIgnoreCase),
-            "Saved contradictory Canary evidence must describe the actual blocked activation policy, not a runtime-guard override.");
+            "Contradictory Canary evidence must describe the actual blocked activation policy, not a runtime-guard override.");
+        Assert(ar["PatchReadiness.Capture.SavedMismatch"].Contains(
+                   "إعادة التحقق",
+                   StringComparison.Ordinal) &&
+               ar["PatchReadiness.VerifyMismatch"].Contains(
+                   "لمدة دقيقة",
+                   StringComparison.Ordinal) &&
+               ar["PatchReadiness.VerifyMismatch"].Contains(
+                   "RPCS3.log",
+                   StringComparison.Ordinal) &&
+               ar["PatchReadiness.ReverifyConfirm"].Contains(
+                   "لمدة دقيقة",
+                   StringComparison.Ordinal) &&
+               en["PatchReadiness.Capture.SavedMismatch"].Contains(
+                   "verify again",
+                   StringComparison.OrdinalIgnoreCase) &&
+               en["PatchReadiness.VerifyMismatch"].Contains(
+                   "one minute",
+                   StringComparison.OrdinalIgnoreCase) &&
+               en["PatchReadiness.VerifyMismatch"].Contains(
+                   "RPCS3.log",
+                   StringComparison.Ordinal) &&
+               en["PatchReadiness.ReverifyConfirm"].Contains(
+                   "one minute",
+                   StringComparison.OrdinalIgnoreCase),
+            "A saved Canary hash mismatch must expose the one-minute RPCS3.log reverification workflow instead of leaving the user at a dead end.");
         Assert(!ar["Msg.NoSafePatchApply"].Contains("آمن", StringComparison.Ordinal) &&
                !ar["Msg.SkipPatchApply"].Contains("آمن", StringComparison.Ordinal) &&
                !en["Msg.NoSafePatchApply"].Contains("safe", StringComparison.OrdinalIgnoreCase) &&

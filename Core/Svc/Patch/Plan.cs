@@ -182,7 +182,7 @@ public sealed class PatPlnr
         }
 
         return new PatChg(
-            HashKey: ToHash(match.Patch),
+            HashKey: match.EffectiveRunKey,
             PatTitle: match.Patch.Title,
             GameName: match.TgtName ?? target.Title,
             Serial: match.TgtSer ?? target.Serial,
@@ -213,11 +213,6 @@ public sealed class PatPlnr
             PatVer.IsAll(candidate.Serial));
     }
 
-    private static string ToHash(Rpcs3PatchEntry patch)
-    {
-        return patch.RunKey;
-    }
-
     private static void EnsureNoGroupConflict(
         IReadOnlyList<Mdl.PatMatch> matches,
         IReadOnlyList<Mdl.PatMatch> enabledMatches)
@@ -227,7 +222,7 @@ public sealed class PatPlnr
                 !string.IsNullOrWhiteSpace(match.Patch.Group))
             .GroupBy(
                 match =>
-                    $"{match.Patch.RunKey}\0{match.Patch.Group!.Trim()}",
+                    $"{match.EffectiveRunKey}\0{match.Patch.Group!.Trim()}",
                 StringComparer.OrdinalIgnoreCase)
             .Select(group => new
             {
@@ -275,8 +270,8 @@ public sealed class PatPlnr
         Mdl.PatMatch left,
         Mdl.PatMatch right)
     {
-        return left.Patch.RunKey.Equals(
-                   right.Patch.RunKey,
+        return left.EffectiveRunKey.Equals(
+                   right.EffectiveRunKey,
                    StringComparison.OrdinalIgnoreCase) &&
                !string.IsNullOrWhiteSpace(left.Patch.Group) &&
                !string.IsNullOrWhiteSpace(right.Patch.Group) &&

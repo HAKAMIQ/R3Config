@@ -128,6 +128,21 @@ public sealed class HashEvidenceUseCase(
         CanaryHashExpectation expectation,
         CancellationToken cancellationToken = default)
     {
+        return Begin(
+            install,
+            game,
+            expectation,
+            replaceExisting: false,
+            cancellationToken: cancellationToken);
+    }
+
+    public HCanDiscoverySession Begin(
+        Rpcs3InstallDescriptor install,
+        Rpcs3GameDescriptor game,
+        CanaryHashExpectation expectation,
+        bool replaceExisting,
+        CancellationToken cancellationToken = default)
+    {
         ArgumentNullException.ThrowIfNull(install);
         ArgumentNullException.ThrowIfNull(game);
         ArgumentNullException.ThrowIfNull(expectation);
@@ -136,13 +151,20 @@ public sealed class HashEvidenceUseCase(
         _ = expectation;
 
         var saved = LoadBindingRead(install, game);
-        if (HasPpu(saved))
+        if (HasPpu(saved) && !replaceExisting)
         {
             throw new InvalidOperationException(
                 "A Canary PPU fingerprint is already saved for this RPCS3 installation and game.");
         }
 
-        var logPath = discovery.GetLogPath(install);
+        var logSources = discovery.GetLogPaths(install)
+            .Select(logPath => new HCanLogSource(
+                logPath,
+                discovery.Capture(
+                    logPath,
+                    cancellationToken)))
+            .ToArray();
+        var primaryLog = logSources[0];
         var session = new HCanDiscoverySession(
             Path.GetFullPath(install.ExePath),
             game.Serial.Trim().ToUpperInvariant(),
@@ -150,10 +172,9 @@ public sealed class HashEvidenceUseCase(
             Path.GetFullPath(game.InstPath),
             ProcessId: 0,
             StartedUtc: DateTime.UtcNow,
-            LogPath: logPath,
-            Baseline: discovery.Capture(
-                logPath,
-                cancellationToken));
+            LogPath: primaryLog.LogPath,
+            Baseline: primaryLog.Baseline,
+            LogSources: logSources);
 
         cancellationToken.ThrowIfCancellationRequested();
         store.SaveActive(session);
@@ -182,6 +203,18 @@ public sealed class HashEvidenceUseCase(
         {
             store.ClearActive();
         }
+    }
+
+    public bool IsSelectedGameBooted(
+        HCanDiscoverySession session,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return discovery.IsSelectedGameBooted(
+            session,
+            cancellationToken);
     }
 
     public HashReadCode CheckRunning(
@@ -267,7 +300,8 @@ public sealed class HashEvidenceUseCase(
         return SaveOnce(
             active,
             result,
-            cancellationToken);
+            replaceExisting: false,
+            cancellationToken: cancellationToken);
     }
 
     public HashRead Complete(HCanDiscoverySession session)
@@ -283,6 +317,19 @@ public sealed class HashEvidenceUseCase(
         CanaryHashExpectation expectation,
         CancellationToken cancellationToken = default)
     {
+        return Complete(
+            session,
+            expectation,
+            replaceExisting: false,
+            cancellationToken: cancellationToken);
+    }
+
+    public HashRead Complete(
+        HCanDiscoverySession session,
+        CanaryHashExpectation expectation,
+        bool replaceExisting,
+        CancellationToken cancellationToken = default)
+    {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(expectation);
         cancellationToken.ThrowIfCancellationRequested();
@@ -293,7 +340,7 @@ public sealed class HashEvidenceUseCase(
             session.Serial,
             session.GameVersion,
             session.GameInstallPath);
-        if (existing is not null)
+        if (existing is not null && !replaceExisting)
         {
             var saved = discovery.FromBinding(existing);
             if (HasPpu(saved))
@@ -324,12 +371,14 @@ public sealed class HashEvidenceUseCase(
         return SaveOnce(
             active,
             result,
+            replaceExisting,
             cancellationToken);
     }
 
     private HashRead SaveOnce(
         HCanDiscoverySession session,
         HashRead result,
+        bool replaceExisting,
         CancellationToken cancellationToken)
     {
         if (!HasPpu(result))
@@ -342,7 +391,7 @@ public sealed class HashEvidenceUseCase(
             session.Serial,
             session.GameVersion,
             session.GameInstallPath);
-        if (existing is not null)
+        if (existing is not null && !replaceExisting)
         {
             var saved = discovery.FromBinding(existing);
             if (saved.Hashes.Any(item => item.Kind == HashKind.Ppu))
@@ -357,7 +406,9 @@ public sealed class HashEvidenceUseCase(
             result,
             cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
-        store.SaveBinding(binding);
+        store.SaveBinding(
+            binding,
+            replaceExisting);
         store.ClearActive();
 
         return result with
@@ -427,7 +478,7 @@ public sealed class HashEvidenceUseCase(
             return HashReadCode.Rpcs3Running;
         }
 
-        return discovery.IsSelectedGameRunning(
+        return discovery.IsSelectedGameBooted(
                 active,
                 cancellationToken)
             ? HashReadCode.SelectedGameRunning

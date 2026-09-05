@@ -2,56 +2,44 @@
 
 ## Unreleased
 
-### AppFlow compatibility facade
+### AppFlow
 
-* Kept the public compatibility API unchanged while removing redundant namespace qualification and limiting `CA1822` suppression to the two legacy instance methods that delegate to static recommendation-catalog operations.
-* Added an architecture regression gate that rejects filesystem, process, or JSON implementation logic in `App/Flow.cs`, keeping the facade delegation-only.
+* Preserved the public compatibility API and added architecture guards to keep `App/Flow.cs` delegation-only.
 
-### Settings persistence
+### Settings
 
-* Moved settings to `LocalApplicationData` with safe migration from the legacy roaming location.
-* Added canonical RPCS3 path handling, bounded UTF-8/JSON persistence, cross-process locking, and corruption/concurrency regressions.
+* Moved settings to `LocalApplicationData` with safe legacy migration, canonical paths, bounded persistence, locking, and corruption/concurrency protection.
 
 ### H-Canary
 
-* Hardened `HCanDiscoveryStore` with path-scoped cross-process locking, canonical session/hash validation, bounded persistence, and malformed-state handling.
-* Preserved one-time Canary fingerprint capture and saved-binding behavior.
+* Hardened discovery-state persistence, validation, locking, and malformed-state handling while preserving fingerprint and saved-binding behavior.
 
 ### R3Test
 
-* Refactored the former 10,809-line `Program.cs` into responsibility-based test suites.
-* Extracted `TestRunner`, `TestContext`, `TestAssert`, `TestFixtures`, and `TestJson`.
-* Preserved test order, CLI modes, fixtures, and behavior while adding architecture gates against future monolith growth.
+* Split the former monolithic `Program.cs` into focused test suites and shared test infrastructure while preserving behavior and CLI modes.
 
 ### Artemis
 
-* Hardened Artemis import provenance, archive validation, canonical-path protection, and transactional output handling.
-* Added interruption recovery, rollback, external-change protection, and expanded regression coverage.
-* Added the reviewed 23-rule dependency overlay without modifying the executable `art.yml` catalog.
-* Kept the ChiDreams Artemis Patch Collection as the only bundled Artemis executable source.
+* Hardened provenance, archive/path validation, transactional writes, recovery, rollback, and external-change protection.
+* Added the reviewed 23-rule dependency overlay while keeping ChiDreams as the only bundled executable Artemis source.
 
 ### UI and localization
 
-* Completed Arabic/English bidirectional layout handling while keeping technical values LTR.
-* Improved patch-page actions, selection behavior, ToolTips, Canary density, and H-Canary authoring workflow.
-* Polished Arabic RPCS3/Artemis notes while preserving canonical technical terminology.
+* Improved Arabic/English bidirectional layout, patch actions, selection, ToolTips, Canary presentation, and H-Canary workflow.
+* Refined Arabic RPCS3/Artemis notes while preserving technical terminology.
 
 ## 2026-08-09
 
-* Consolidated WPF resource-order guidance into `docs/Arch/UiTheme.md`.
-* Cleaned release verification and RPCS3 integration contracts.
+* Updated UI theme architecture guidance and release/RPCS3 integration contracts.
 
 ## 2026-08-08
 
-* Corrected trusted `PARAM.SFO` fixtures for game-directory limit tests.
+* Corrected trusted `PARAM.SFO` test fixtures.
 
 ## 2026-08-07
 
-* Hardened runtime-path, mutation, staging, bounded-input, and release-security contracts.
-* Fixed H-Canary/imported-patch fixture paths and game scanner boundary fixtures.
-* Improved patch action regressions, Canary state handling, ToolTips, and selection controls.
+* Hardened runtime, staging, mutation, input, security, patch-state, ToolTip, and selection regressions.
 
 ## 2026-07-30
 
-* Corrected Canary runtime-key activation behavior.
-* Added immutable one-time selected-game PPU fingerprint capture and safe RPCS3 process ownership handling.
+* Fixed Canary runtime-key activation and added safe one-time PPU fingerprint capture.

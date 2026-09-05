@@ -8,7 +8,8 @@ namespace R3Config.Svc;
 
 public sealed class GameSetupPlanningService(
     GameIdentityService? identityService = null,
-    PatchCompatibilityService? compatibilityService = null)
+    PatchCompatibilityService? compatibilityService = null,
+    CanaryRuntimeBindingService? canaryRuntimeBindingService = null)
 {
     private static readonly string[] PatchLaunchWarnings =
     [
@@ -17,8 +18,8 @@ public sealed class GameSetupPlanningService(
 
     private readonly GameIdentityService _identity =
         identityService ?? new GameIdentityService();
-    private readonly PatchCompatibilityService _compatibility =
-        compatibilityService ?? new PatchCompatibilityService();
+    private readonly PatchMatchService _patchMatch =
+        new(compatibilityService, canaryRuntimeBindingService);
 
     public GameSetupPlan Build(
         Rpcs3InstallDescriptor install,
@@ -49,8 +50,8 @@ public sealed class GameSetupPlanningService(
                     group.SelectMany(rule => rule.Requirements).ToArray(),
                 StringComparer.Ordinal);
         var allEntries = patchCatalog.Entries.ToArray();
-        var candidates = allEntries
-            .Select(entry => _compatibility.Evaluate(entry, [game]))
+        var candidates = _patchMatch
+            .Match(patchCatalog, game)
             .Where(match => match.Status is not MatStat.SerBad and not MatStat.NoMeta)
             .Where(match => string.Equals(
                 match.MatSer,
@@ -257,8 +258,8 @@ public sealed class GameSetupPlanningService(
             var channel = Channel(patch);
             var collision = all.FirstOrDefault(other =>
                 other.Identity != candidate.Identity &&
-                other.Match.Patch.RunKey.Equals(
-                    patch.RunKey,
+                other.Match.EffectiveRunKey.Equals(
+                    candidate.Match.EffectiveRunKey,
                     StringComparison.OrdinalIgnoreCase) &&
                 other.Match.Patch.Title.Equals(
                     patch.Title,
@@ -369,10 +370,15 @@ public sealed class GameSetupPlanningService(
         Dictionary<string, IReadOnlyList<PatchRequirement>> rules)
     {
         var identity = PatchIdentity(match.Patch);
+        var requirementIdentity = RequirementIdentity(
+            match,
+            catalog,
+            rules,
+            identity);
         var localEntries = catalog.Where(entry =>
             entry.Source == PatSrc.Imported &&
             !ReferenceEquals(entry, match.Patch));
-        rules.TryGetValue(identity, out var requirements);
+        rules.TryGetValue(requirementIdentity, out var requirements);
         return new SetupPatchCandidate(
             identity,
             match,
@@ -383,6 +389,58 @@ public sealed class GameSetupPlanningService(
                 ? ClassifyDuplicate(match.Patch, localEntries)
                 : SetupDuplicateStatus.None,
             DefaultSelected: false);
+    }
+
+    private static string RequirementIdentity(
+        PatMatch match,
+        IReadOnlyList<Rpcs3PatchEntry> catalog,
+        Dictionary<string, IReadOnlyList<PatchRequirement>> rules,
+        string runtimeIdentity)
+    {
+        if (rules.ContainsKey(runtimeIdentity) ||
+            match.Patch.Class != PatClass.Canary)
+        {
+            return runtimeIdentity;
+        }
+
+        var sourceIdentities = catalog
+            .Where(entry => SameDefinitionExceptTargets(
+                entry,
+                match.Patch))
+            .Select(PatchIdentity)
+            .Distinct(StringComparer.Ordinal)
+            .Where(rules.ContainsKey)
+            .ToArray();
+
+        return sourceIdentities.Length == 1
+            ? sourceIdentities[0]
+            : runtimeIdentity;
+    }
+
+    private static bool SameDefinitionExceptTargets(
+        Rpcs3PatchEntry left,
+        Rpcs3PatchEntry right)
+    {
+        return left.Class == right.Class &&
+               left.HashKind == right.HashKind &&
+               left.RunKey.Equals(
+                   right.RunKey,
+                   StringComparison.OrdinalIgnoreCase) &&
+               left.Title.Equals(
+                   right.Title,
+                   StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(
+                   left.PatVer,
+                   right.PatVer,
+                   StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(
+                   left.Group,
+                   right.Group,
+                   StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(
+                   left.DefPrint,
+                   right.DefPrint,
+                   StringComparison.OrdinalIgnoreCase);
     }
 
     private static SetupPatchProvenance Provenance(Rpcs3PatchEntry patch)

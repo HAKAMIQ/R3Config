@@ -340,21 +340,23 @@ public sealed partial class PatchHashProbeService
             .Distinct(StringComparer.OrdinalIgnoreCase);
 
         var paths = roots
-            .SelectMany(root => new[]
-            {
-                Path.Combine(root, "RPCS3.log"),
-                Path.Combine(root, "rpcs3.log"),
-                Path.Combine(root, "RPCS3.log.gz"),
-                Path.Combine(root, "rpcs3.log.gz"),
-                Path.Combine(root, "log", "RPCS3.log"),
-                Path.Combine(root, "log", "rpcs3.log"),
-                Path.Combine(root, "log", "RPCS3.log.gz"),
-                Path.Combine(root, "log", "rpcs3.log.gz"),
-                Path.Combine(root, "logs", "RPCS3.log"),
-                Path.Combine(root, "logs", "rpcs3.log"),
-                Path.Combine(root, "logs", "RPCS3.log.gz"),
-                Path.Combine(root, "logs", "rpcs3.log.gz")
-            })
+            .SelectMany(root =>
+                Rpcs3LogLocator
+                    .PlainLogPaths(root)
+                    .Concat(
+                    new[]
+                    {
+                        Path.Combine(root, "rpcs3.log"),
+                        Path.Combine(root, "RPCS3.log.gz"),
+                        Path.Combine(root, "rpcs3.log.gz"),
+                        Path.Combine(root, "log", "rpcs3.log"),
+                        Path.Combine(root, "log", "RPCS3.log.gz"),
+                        Path.Combine(root, "log", "rpcs3.log.gz"),
+                        Path.Combine(root, "logs", "RPCS3.log"),
+                        Path.Combine(root, "logs", "rpcs3.log"),
+                        Path.Combine(root, "logs", "RPCS3.log.gz"),
+                        Path.Combine(root, "logs", "rpcs3.log.gz")
+                    }))
             .Distinct(StringComparer.OrdinalIgnoreCase);
 
         foreach (var path in paths)

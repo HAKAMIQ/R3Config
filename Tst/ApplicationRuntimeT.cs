@@ -1066,12 +1066,14 @@ internal static class ApplicationRuntimeT
         var store = new HCanDiscoveryStore(Path.Combine(
             tempRoot,
             "runtime-fingerprint-post-commit-state.json"));
-        var controller = new CompletingProcessController(() =>
-            File.AppendAllText(
+        var controller = new CompletingProcessController(
+            onStartupReady: () => File.AppendAllText(
                 logPath,
                 $"SYS: Serial: {game.Serial}{Environment.NewLine}" +
                 $"SYS: App version: {game.Version}{Environment.NewLine}" +
-                $"ppu_loader: PPU executable hash: PPU-{ppu}{Environment.NewLine}" +
+                $"ppu_loader: PPU executable hash: PPU-{ppu}{Environment.NewLine}"),
+            beforeStop: () => File.AppendAllText(
+                logPath,
                 $"SYS: Stopping emulator...{Environment.NewLine}"));
         var capture = new GameFingerprintCaptureUseCase(
             new HashEvidenceUseCase(
@@ -1419,9 +1421,13 @@ internal static class ApplicationRuntimeT
         }
     }
 
-    private sealed class CompletingProcessController(Action beforeStop)
+    private sealed class CompletingProcessController(
+        Action onStartupReady,
+        Action beforeStop)
         : IRpcs3OwnedProcessController
     {
+        private bool _startupReadyNotified;
+
         public bool TryAttach(
             string executablePath,
             int processId,
@@ -1444,6 +1450,12 @@ internal static class ApplicationRuntimeT
             int processId,
             DateTime processStartedUtc)
         {
+            if (!_startupReadyNotified)
+            {
+                _startupReadyNotified = true;
+                onStartupReady();
+            }
+
             return true;
         }
 

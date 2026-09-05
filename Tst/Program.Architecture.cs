@@ -43,6 +43,55 @@ internal static partial class Program
                !coreSource.Contains("R3Config.View", StringComparison.Ordinal),
             "Core must remain independent of WPF, localization, and presentation namespaces.");
 
+        var logLocatorPath = Path.Combine(
+            coreRoot,
+            "Svc",
+            "Scan",
+            "Rpcs3LogLocator.cs");
+        var hCanDiscoveryPath = Path.Combine(
+            coreRoot,
+            "Svc",
+            "Patch",
+            "HCan.cs");
+        var patchHashProbePath = Path.Combine(
+            coreRoot,
+            "Svc",
+            "Patch",
+            "PatchHashProbeService.cs");
+        var hashEvidencePath = Path.Combine(
+            applicationRoot,
+            "HashEvidenceUseCase.cs");
+        var hCanViewModelPath = Path.Combine(
+            viewModelRoot,
+            "HCan.cs");
+        var logLocatorSource = File.ReadAllText(logLocatorPath);
+        var hCanDiscoverySource = File.ReadAllText(hCanDiscoveryPath);
+        var patchHashProbeSource = File.ReadAllText(patchHashProbePath);
+        var hashEvidenceSource = File.ReadAllText(hashEvidencePath);
+        var hCanViewModelSource = File.ReadAllText(hCanViewModelPath);
+        Assert(logLocatorSource.Contains(
+                   "install.RootPath",
+                   StringComparison.Ordinal) &&
+               logLocatorSource.Contains(
+                   "\"log\",",
+                   StringComparison.Ordinal) &&
+               logLocatorSource.Contains(
+                   "\"RPCS3.log\"",
+                   StringComparison.Ordinal) &&
+               hCanDiscoverySource.Contains(
+                   "Rpcs3LogLocator.PlainLogPaths",
+                   StringComparison.Ordinal) &&
+               patchHashProbeSource.Contains(
+                   "Rpcs3LogLocator",
+                   StringComparison.Ordinal) &&
+               hashEvidenceSource.Contains(
+                   "discovery.GetLogPaths(install)",
+                   StringComparison.Ordinal) &&
+               hCanViewModelSource.Contains(
+                   "Rpcs3LogLocator.PreferredPlainLogPath",
+                   StringComparison.Ordinal),
+            "RPCS3 plain-log discovery must remain centralized and cover both root/log/RPCS3.log and legacy root/RPCS3.log from the emulator root.");
+
         var applicationSource = string.Join(
             Environment.NewLine,
             Directory.EnumerateFiles(applicationRoot, "*.cs", SearchOption.AllDirectories)

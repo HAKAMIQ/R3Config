@@ -40,6 +40,9 @@ public static partial class NoteSvc
     public static int ReviewedWikiArabicTranslationCount =>
         WikiArByEn.Count;
 
+    public static int ReviewedOfficialPatchArabicTranslationCount =>
+        OfficialArByEn.Count;
+
     public static IReadOnlyList<string> ProtectedRpcS3Terms { get; } =
     [
         .. WikiSvc.CanonicalConfigSettingNames
@@ -335,7 +338,9 @@ public static partial class NoteSvc
         string original,
         out string localized)
     {
-        return ArByEn.TryGetValue(normalized, out localized!) ||
+        return OfficialArByEn.TryGetValue(normalized, out localized!) ||
+               OfficialArByEn.TryGetValue(original, out localized!) ||
+               ArByEn.TryGetValue(normalized, out localized!) ||
                ArByEn.TryGetValue(original, out localized!) ||
                WikiArByEn.TryGetValue(normalized, out localized!) ||
                WikiArByEn.TryGetValue(original, out localized!);

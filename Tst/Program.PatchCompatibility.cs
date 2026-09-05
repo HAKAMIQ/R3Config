@@ -117,14 +117,28 @@ internal static partial class Program
                     HCanSpu = null,
                     HashEvi = HashEvi.None
                 }]);
-            Assert(noLocalHash.Cmp is
+            if (source == PatSrc.Can)
             {
-                Verdict: PatchCompatibilityVerdict.Guarded,
-                Code: PatchCompatibilityReasonCode.R3Guard,
-                CanOn: true,
-                UseGuard: true
-            },
-                $"Expected {source} to use RPCS3's runtime hash guard when local PPU evidence is absent.");
+                Assert(noLocalHash.Cmp is
+                {
+                    Verdict: PatchCompatibilityVerdict.Blocked,
+                    Code: PatchCompatibilityReasonCode.Hash,
+                    CanOn: false,
+                    UseGuard: false
+                },
+                    "Expected bundled Canary activation to require a one-time local PPU capture before preparation.");
+            }
+            else
+            {
+                Assert(noLocalHash.Cmp is
+                {
+                    Verdict: PatchCompatibilityVerdict.Guarded,
+                    Code: PatchCompatibilityReasonCode.R3Guard,
+                    CanOn: true,
+                    UseGuard: true
+                },
+                    $"Expected {source} to use RPCS3's runtime hash guard when local PPU evidence is absent.");
+            }
         }
 
         var residentCanary = NewPatch(
@@ -147,12 +161,12 @@ internal static partial class Program
             }]);
         Assert(residentCanaryUnknown.Cmp is
         {
-            Verdict: PatchCompatibilityVerdict.Guarded,
-            Code: PatchCompatibilityReasonCode.R3Guard,
-            CanOn: true,
-            UseGuard: true
+            Verdict: PatchCompatibilityVerdict.Blocked,
+            Code: PatchCompatibilityReasonCode.Hash,
+            CanOn: false,
+            UseGuard: false
         },
-            "Expected a trusted Canary definition already resident in imported_patch.yml to remain selectable under RPCS3's runtime-key guard.");
+            "Expected a resident Canary definition to require the saved local discovery binding before it can be enabled.");
         var residentCanaryExact = compatibility.Evaluate(
             residentCanary,
             [exactGame with

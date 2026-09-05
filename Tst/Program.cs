@@ -229,36 +229,8 @@ internal static partial class Program
                 return;
             }
 
-            if (args.Length is 4 or 5 &&
-                args[0].Equals(
-                    "--wiki-corpus",
-                    StringComparison.OrdinalIgnoreCase))
+            if (TryRunWikiMode(args, runner, context))
             {
-                var corpusRun = WikiCorpusT.RunCorpus(
-                    args[1],
-                    args[2],
-                    args[3],
-                    args.Length == 5 ? args[4] : null);
-                Console.WriteLine(JsonSerializer.Serialize(
-                    new
-                    {
-                        corpusRun.CorpusFile,
-                        corpusRun.SnapshotDate,
-                        corpusRun.ParseMilliseconds,
-                        corpusRun.Stats,
-                        corpusRun.OldCatalogChanges,
-                        corpusRun.GeneratedCatalogChanges,
-                        corpusRun.Comparison.OldCatalogEntries,
-                        corpusRun.Comparison.GeneratedCatalogEntries,
-                        corpusRun.Comparison.Added,
-                        corpusRun.Comparison.Removed,
-                        corpusRun.Comparison.Changed,
-                        corpusRun.Comparison.Unchanged,
-                        corpusRun.Deterministic,
-                        corpusRun.CatalogLoadCount
-                    },
-                    TestJson.Indented));
-                Console.WriteLine("Wiki corpus regression passed.");
                 return;
             }
 

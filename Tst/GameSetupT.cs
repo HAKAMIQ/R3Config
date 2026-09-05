@@ -80,6 +80,59 @@ public static class GameSetupT
         Assert(setup.Patches.All(candidate => !candidate.DefaultSelected),
             "Patch candidates must never be selected by default.");
 
+        if (canary.HashKind == HashKind.Ppu)
+        {
+            var localHash = new string('d', 40);
+            if (localHash.Equals(canary.NormHash, StringComparison.OrdinalIgnoreCase))
+            {
+                localHash = new string('c', 40);
+            }
+
+            var currentTarget = canary.GameTgt.First(target =>
+                target.Serial.Equals(
+                    game.Serial,
+                    StringComparison.OrdinalIgnoreCase));
+            var siblingTarget = canary.GameTgt.FirstOrDefault(target =>
+                !target.Serial.Equals(
+                    game.Serial,
+                    StringComparison.OrdinalIgnoreCase)) ??
+                new R3PatTgt(
+                    currentTarget.Title,
+                    "NPUB99999",
+                    currentTarget.Versions);
+            var localVariant = canary with
+            {
+                Hash = localHash,
+                GameTgt = [siblingTarget]
+            };
+            var locallyBoundGame = game with
+            {
+                PpuHash = localHash,
+                PpuRaw = [localHash],
+                AuthPpu = [localHash],
+                HCanPpu = [localHash]
+            };
+            var locallyBoundSetup = useCase.Build(
+                env.Install,
+                locallyBoundGame,
+                catalog,
+                new PatCat(
+                    "1.2",
+                    [official, canary, localVariant]));
+            var locallyBoundCanary = locallyBoundSetup.CanaryPatches.Single();
+            Assert(
+                locallyBoundCanary.Match.Patch.Hash.Equals(
+                    localHash,
+                    StringComparison.OrdinalIgnoreCase) &&
+                locallyBoundCanary.Match.TgtSer == game.Serial &&
+                locallyBoundCanary.Match.Status == MatStat.Match &&
+                locallyBoundCanary.Match.EffectiveRunKey.Equals(
+                    RunKey.Build(HashKind.Ppu, localHash),
+                    StringComparison.OrdinalIgnoreCase) &&
+                locallyBoundCanary.CanSelect,
+                "Game Setup did not consume the same saved local-PPU Canary variant resolution used by the patch catalog.");
+        }
+
         var unknownVersion = game with { Version = null };
         var unknown = new PatchCompatibilityService().Evaluate(
             official,
@@ -175,11 +228,19 @@ public static class GameSetupT
             game,
             catalog,
             new PatCat("1.2", [collisionOfficial, collisionCanary]));
+        var collisionCandidate = collisionSetup.CanaryPatches.Single(candidate =>
+            candidate.Match.Patch.Title.Equals(
+                collisionCanary.Title,
+                StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(
+                candidate.Match.Patch.DefPrint,
+                collisionCanary.DefPrint,
+                StringComparison.OrdinalIgnoreCase));
         var collisionPreview = useCase.Preview(
             collisionSetup,
             new GameSetupSelection(
                 [],
-                [GameSetupPlanningService.PatchIdentity(collisionCanary)]));
+                [collisionCandidate.Identity]));
         Assert(!collisionPreview.CanApply &&
                collisionPreview.Conflicts.Any(conflict =>
                    conflict.Contains(
@@ -1060,15 +1121,22 @@ public static class GameSetupT
         var discovered = new GameScanner()
             .Scan(env.Install)
             .Single(candidate => candidate.Serial == expectedGame.Serial);
-        var game = new PatchHashProbeService().Enrich(
+        var probedGame = new PatchHashProbeService().Enrich(
             env.Install,
             discovered);
-        Assert(game.Title == expectedGame.Title &&
-               game.Version == expectedGame.Version &&
-               game.InstPath == Path.GetFullPath(env.GamePath) &&
-               game.Hashes.Contains(canary.NormHash!, StringComparer.OrdinalIgnoreCase) &&
-               game.SpuList.Contains(canary.NormHash!, StringComparer.OrdinalIgnoreCase),
-            "The end-to-end fixture did not discover game identity/version and bounded RPCS3 log hashes.");
+        Assert(probedGame.Title == expectedGame.Title &&
+               probedGame.Version == expectedGame.Version &&
+               probedGame.InstPath == Path.GetFullPath(env.GamePath) &&
+               probedGame.Hashes.Contains(canary.NormHash!, StringComparer.OrdinalIgnoreCase) &&
+               probedGame.SpuList.Contains(canary.NormHash!, StringComparer.OrdinalIgnoreCase) &&
+               probedGame.HCanPpu is null &&
+               probedGame.HCanSpu is null,
+            "The end-to-end fixture did not keep ordinary RPCS3 log evidence separate from the saved one-time Canary binding.");
+        var game = probedGame with
+        {
+            HCanPpu = expectedGame.HCanPpu,
+            HCanSpu = expectedGame.HCanSpu
+        };
         var official = OfficialFor(canary, env.Install.PatPath) with
         {
             Group = "Official Quality"
@@ -1186,16 +1254,23 @@ public static class GameSetupT
                 [setup.OfficialPatches.Single().Identity,
                  setup.CanaryPatches.Single().Identity,
                  setup.ArtemisPatches.Single().Identity]));
-        Assert(preview.CanApply &&
-               preview.EffectiveSettings.Count == 2 &&
-               preview.Files.Select(file => file.Kind).ToHashSet().SetEquals(
+        Assert(preview.CanApply,
+            "Game Setup preview was not applicable. Conflicts: " +
+            string.Join(" | ", preview.Conflicts));
+        Assert(preview.EffectiveSettings.Count == 2,
+            $"Game Setup preview expected 2 effective settings but found {preview.EffectiveSettings.Count}.");
+        var previewFileKinds = preview.Files
+            .Select(file => file.Kind)
+            .ToHashSet();
+        Assert(previewFileKinds.SetEquals(
                [
                    SetupFileKind.CustomConfig,
                    SetupFileKind.PatchEnablement,
                    SetupFileKind.ImportedPatch,
                    SetupFileKind.ArtemisTitlePatch
                ]),
-            "Game Setup preview did not expose the complete configuration/patch file plan.");
+            "Game Setup preview file kinds differ. Actual: " +
+            string.Join(", ", previewFileKinds.OrderBy(kind => kind)));
 
         var reviewedCustomConfig = File.ReadAllBytes(customPath);
         File.AppendAllText(

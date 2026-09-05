@@ -90,7 +90,7 @@ internal static partial class Program
         var artRead = reader.Read(artPath, PatSrc.Artemis);
         var canRead = reader.Read(canPath, PatSrc.Can);
 
-        Assert(artRead.IsOk && artRead.Catalog.Entries.Count == 1023,
+        Assert(artRead.IsOk && artRead.Catalog.Entries.Count == 1471,
             "Expected the complete bundled Artemis corpus before localization audit.");
         Assert(canRead.IsOk && canRead.Catalog.Entries.Count > 0,
             "Expected the complete bundled Canary corpus before localization audit.");
@@ -147,10 +147,10 @@ internal static partial class Program
             .Select(note => note.Raw.Trim())
             .Distinct(StringComparer.Ordinal)
             .ToArray();
-        Assert(totalNoteSlots == 8601 &&
-               notes.Count == 7666 &&
-               emptySourceNotes == 935 &&
-               uniqueNotes.Length == 835,
+        Assert(totalNoteSlots == 9049 &&
+               notes.Count == 7703 &&
+               emptySourceNotes == 1346 &&
+               uniqueNotes.Length == 863,
             $"Unexpected Note accounting. Total={totalNoteSlots}, NonEmpty={notes.Count}, Empty={emptySourceNotes}, Unique={uniqueNotes.Length}.");
 
         PatchText_WithLang(
@@ -166,13 +166,6 @@ internal static partial class Program
                         $"{source} English presentation changed the canonical source Note: {title}");
                 }
             });
-
-        static bool HasArabicDiacritic(string value) =>
-            value.Any(ch =>
-                (ch >= '\u0610' && ch <= '\u061A') ||
-                (ch >= '\u064B' && ch <= '\u065F') ||
-                ch == '\u0670' ||
-                (ch >= '\u06D6' && ch <= '\u06ED'));
 
         PatchText_WithLang(
             UiText.ArabLang,
@@ -326,9 +319,10 @@ internal static partial class Program
                 Assert(actualTranslations == notes.Count &&
                        fallback == 0 &&
                        omitted == 0 &&
-                       exactUnique.Count == 834 &&
+                       exactUnique.Count == 862 &&
                        structuredUnique.Count == 1 &&
-                       NoteSvc.ReviewedWikiArabicTranslationCount == 612,
+                       NoteSvc.ReviewedWikiArabicTranslationCount == 612 &&
+                       NoteSvc.ReviewedOfficialPatchArabicTranslationCount == 367,
                     $"Arabic corpus coverage is incomplete. Translated={actualTranslations}, Fallback={fallback}, Omitted={omitted}, NonEmpty={notes.Count}.");
 
                 var emptyResult = NoteSvc.Trans(null);
@@ -336,6 +330,26 @@ internal static partial class Program
                 Assert(string.IsNullOrEmpty(emptyResult.Body) &&
                        string.IsNullOrEmpty(emptyPresentation.Body),
                     "Empty source Notes must not produce a placeholder or fallback surface.");
+
+                const string officialAspectNote =
+                    "Requires the \"Aspect Ratio\" patch to be enabled as well as the \"Stretch To Display Area\" checked in the GPU settings. " +
+                    "Centers HUD/menus by offsetting the UI quad while using the wider UI width.";
+                var officialAspectTranslation = NoteSvc.Trans(officialAspectNote);
+                var officialAspectItem = new PatItVm(PatchText_Match(
+                    PatchText_Entry(
+                        "Aspect ratio (HUD/Menus) 21:9 (2560x1080)",
+                        officialAspectNote,
+                        PatSrc.Official,
+                        PatClass.Main)));
+                Assert(officialAspectTranslation.Quality == NoteQual.Exact &&
+                       NoteSvc.ContainsArabic(officialAspectTranslation.Body) &&
+                       officialAspectTranslation.Body.Contains(
+                           "Stretch To Display Area",
+                           StringComparison.Ordinal) &&
+                       officialAspectItem.HasDesc &&
+                       officialAspectItem.NoteBody == officialAspectTranslation.Body &&
+                       NoteSvc.ContainsArabic(officialAspectItem.NoteBody),
+                    "Reviewed Official RPCS3 Notes must remain visible in the Arabic patch row.");
 
                 Console.WriteLine(
                     $"Patch localization corpus: Artemis={artRead.Catalog.Entries.Count}, " +
@@ -345,6 +359,7 @@ internal static partial class Program
                     $"ExactOccurrences={exact}, UniqueArabicExactTranslations={exactUnique.Count}, " +
                     $"ReviewedPatchExactDictionary={NoteSvc.ReviewedPatchArabicTranslationCount}, " +
                     $"ReviewedWikiExactDictionary={NoteSvc.ReviewedWikiArabicTranslationCount}, " +
+                    $"ReviewedOfficialExactDictionary={NoteSvc.ReviewedOfficialPatchArabicTranslationCount}, " +
                     $"StructuredOccurrences={structured}, UniqueStructuredTranslations={structuredUnique.Count}, " +
                     $"Fallbacks={fallback}, OmittedNonEmptyNotes={omitted}, " +
                     $"ForbiddenTranslationMessageOccurrences=0, ActionableOrWarning={instructionCount}.");
@@ -372,11 +387,13 @@ internal static partial class Program
         Assert(read.IsOk,
             "The local Official RPCS3 patch.yml did not parse: " + read.Error);
 
+        var totalOfficialNoteSlots = read.Catalog.Entries.Count;
         var officialNotes = read.Catalog.Entries
             .Select(entry => entry.Notes?.Trim())
             .Where(note => !string.IsNullOrWhiteSpace(note))
             .Cast<string>()
             .ToArray();
+        var emptyOfficialNoteSlots = totalOfficialNoteSlots - officialNotes.Length;
         var uniqueOfficialNotes = officialNotes
             .Distinct(StringComparer.Ordinal)
             .ToArray();
@@ -388,7 +405,17 @@ internal static partial class Program
 
         var exact = 0;
         var structured = 0;
-        var suppressed = 0;
+        var protectedOfficialSettings = new (string Source, string Display)[]
+        {
+            ("Stretch To Display Area", "Stretch To Display Area"),
+            ("Write Color Buffers", "Write Color Buffers"),
+            ("Resolution Scale Threshold", "Resolution Scale Threshold"),
+            ("Clocks scale", "Clocks scale"),
+            ("VBlank Frequency", "VBlank Frequency"),
+            ("Vblank frequency", "VBlank Frequency"),
+            ("Vblank rate", "Vblank Rate"),
+            ("Frame limit", "Frame limit")
+        };
         PatchText_WithLang(
             UiText.ArabLang,
             () =>
@@ -396,6 +423,48 @@ internal static partial class Program
                 foreach (var note in uniqueOfficialNotes)
                 {
                     var result = NoteSvc.Trans(note);
+                    Assert(!string.IsNullOrWhiteSpace(result.Body) &&
+                           result.Quality != NoteQual.Fallback &&
+                           NoteSvc.ContainsArabic(result.Body) &&
+                           !string.Equals(
+                               result.Body,
+                               note,
+                               StringComparison.Ordinal),
+                        "A non-empty Official RPCS3 Note has no reviewed Arabic presentation: " + note);
+                    Assert(!HasArabicDiacritic(result.Body),
+                        "An Official RPCS3 Note translation contains Arabic diacritics: " + note);
+                    Assert(ForbiddenTranslationPhrases.All(phrase =>
+                               !result.Body.Contains(
+                                   phrase,
+                                   StringComparison.OrdinalIgnoreCase)),
+                        "An Official runtime Note exposed a forbidden translation message: " + note);
+                    Assert(CorpusNumericTokens(note).SequenceEqual(
+                               CorpusNumericTokens(result.Body),
+                               StringComparer.OrdinalIgnoreCase),
+                        "An Official RPCS3 Note changed a numeric/FPS/Hz token: " + note);
+
+                    foreach (var technicalToken in CorpusTechnicalTokens(note))
+                    {
+                        Assert(result.Body.Contains(
+                                   technicalToken,
+                                   StringComparison.Ordinal),
+                            $"An Official RPCS3 Note changed technical token '{technicalToken}': {note}");
+                    }
+
+                    Assert(PreservesSemanticForce(note, result.Body),
+                        "An Official RPCS3 Note lost a requirement, condition, warning, or side effect: " + note);
+
+                    foreach (var (sourceTerm, displayTerm) in protectedOfficialSettings)
+                    {
+                        if (CorpusContainsProtectedTerm(note, sourceTerm))
+                        {
+                            Assert(result.Body.Contains(
+                                       displayTerm,
+                                       StringComparison.Ordinal),
+                                $"An Official RPCS3 Note changed protected RPCS3 setting '{sourceTerm}': {note}");
+                        }
+                    }
+
                     switch (result.Quality)
                     {
                         case NoteQual.Exact:
@@ -404,34 +473,24 @@ internal static partial class Program
                         case NoteQual.Fragment:
                             structured++;
                             break;
-                        case NoteQual.Fallback when string.IsNullOrWhiteSpace(result.Body):
-                            suppressed++;
-                            break;
-                        case NoteQual.Fallback:
+                        default:
                             throw new InvalidOperationException(
-                                "An Official runtime Note exposed an Arabic fallback: " + note);
+                                "An Official runtime Note did not resolve to reviewed Arabic: " + note);
                     }
-
-                    Assert(ForbiddenTranslationPhrases.All(phrase =>
-                               !result.Body.Contains(
-                                   phrase,
-                                   StringComparison.OrdinalIgnoreCase)),
-                        "An Official runtime Note exposed a forbidden translation message: " + note);
                 }
 
-                Assert(exact + structured + suppressed ==
-                           uniqueOfficialNotes.Length,
-                    "Local Official Note accounting did not balance.");
+                Assert(exact + structured == uniqueOfficialNotes.Length,
+                    "Every non-empty Official RPCS3 Note must resolve to visible reviewed Arabic.");
 
-                var suppressedEntry = read.Catalog.Entries.FirstOrDefault(entry =>
-                    !string.IsNullOrWhiteSpace(entry.Notes) &&
-                    string.IsNullOrWhiteSpace(NoteSvc.Trans(entry.Notes).Body));
-                if (suppressedEntry is not null)
+                foreach (var entry in read.Catalog.Entries.Where(entry =>
+                             !string.IsNullOrWhiteSpace(entry.Notes)))
                 {
-                    var item = new PatItVm(PatchText_Match(suppressedEntry));
-                    Assert(string.IsNullOrWhiteSpace(item.LocMsg) &&
-                           string.IsNullOrWhiteSpace(item.NoteBody),
-                        "An unreviewed Official Note reached the Arabic patch item surface.");
+                    var item = new PatItVm(PatchText_Match(entry));
+                    Assert(item.HasDesc &&
+                           !string.IsNullOrWhiteSpace(item.LocMsg) &&
+                           !string.IsNullOrWhiteSpace(item.NoteBody) &&
+                           NoteSvc.ContainsArabic(item.NoteBody),
+                        $"Official RPCS3 Note disappeared from the Arabic patch item surface: {entry.Title}");
                 }
             });
 
@@ -458,11 +517,19 @@ internal static partial class Program
 
         Console.WriteLine(
             $"Local Official localization: Entries={read.Catalog.Entries.Count}, " +
+            $"TotalNoteSlots={totalOfficialNoteSlots}, EmptyNoteSlots={emptyOfficialNoteSlots}, " +
             $"NonEmptyNoteOccurrences={officialNotes.Length}, UniqueNonEmptyNotes={uniqueOfficialNotes.Length}, " +
             $"UniqueOutsideEmbeddedCorpora={outsideEmbedded.Length}, Exact={exact}, Structured={structured}, " +
-            $"VisibleReviewed={exact + structured}, SuppressedUnreviewed={suppressed}, " +
+            $"VisibleReviewed={exact + structured}, SuppressedNonEmpty=0, OmittedNonEmpty=0, Fallbacks=0, " +
             $"ForbiddenTranslationMessageOccurrences=0, SHA256={beforeHash}.");
     }
+
+    private static bool HasArabicDiacritic(string value) =>
+        value.Any(ch =>
+            (ch >= '\u0610' && ch <= '\u061A') ||
+            (ch >= '\u064B' && ch <= '\u065F') ||
+            ch == '\u0670' ||
+            (ch >= '\u06D6' && ch <= '\u06ED'));
 
     private static HashSet<string> EmbeddedCorpusNotes()
     {

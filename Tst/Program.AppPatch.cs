@@ -137,11 +137,11 @@ internal static partial class Program
             "Expected the bundled Artemis catalog to satisfy strict executable-hash validation: " +
             bundledCheatStrictRead.Error);
         Assert(
-            bundledCheatStrictRead.Catalog.Entries.Count == 1023 &&
+            bundledCheatStrictRead.Catalog.Entries.Count == 1471 &&
             bundledCheatStrictRead.Catalog.Entries.All(entry =>
                 entry.Source == PatSrc.Artemis &&
                 entry.Risk == PatRisk.Cheat),
-            "Expected the retained Artemis patch collection to produce exactly 1023 source-identified cheat-risk entries.");
+            "Expected the retained Artemis patch collection to produce exactly 1471 source-identified cheat-risk entries.");
         PatSafetyT.Run(repoRoot);
         Assert(!bundledCheatText.Contains("Anchors:", StringComparison.Ordinal) &&
                !bundledCheatText.Contains("&WOFreedom", StringComparison.Ordinal),
@@ -213,7 +213,9 @@ internal static partial class Program
             [infamousMismatchMatches[0]]);
         Assert(
             !infamousCompiled.IsOk,
-            "Expected the Canary compiler to reject a selected patch with a reliable local executable mismatch.");
+            "Expected the low-level Canary compiler to reject an unrebound patch with a reliable local executable mismatch.");
+
+        CanaryRuntimeBinding_Regressions();
 
         var gowAscensionCanary = bundledCanaryRead.Catalog.Entries.Single(entry =>
             entry.Hash.Equals(
@@ -234,23 +236,23 @@ internal static partial class Program
             [gowAscensionGame]);
         Assert(
             gowAscensionNoDiscoveryMatch.Status == MatStat.Unknown &&
-            PatAct.Can(gowAscensionNoDiscoveryMatch) &&
-            PatAct.IsRun(gowAscensionNoDiscoveryMatch) &&
+            !PatAct.Can(gowAscensionNoDiscoveryMatch) &&
+            !PatAct.IsRun(gowAscensionNoDiscoveryMatch) &&
             gowAscensionNoDiscoveryMatch.Cmp is
             {
-                Verdict: PatchCompatibilityVerdict.Guarded,
-                Code: PatchCompatibilityReasonCode.R3Guard,
-                CanOn: true,
-                UseGuard: true
+                Verdict: PatchCompatibilityVerdict.Blocked,
+                Code: PatchCompatibilityReasonCode.Hash,
+                CanOn: false,
+                UseGuard: false
             },
-            "Expected a trusted bundled Canary entry with matching serial and version to remain selectable under RPCS3's exact runtime-key guard.");
+            "Expected bundled Canary activation to remain blocked until the selected game completes one local PPU capture.");
         var gowAscensionNoDiscoveryItem = new PatItVm(
             gowAscensionNoDiscoveryMatch);
         Assert(
-            gowAscensionNoDiscoveryItem.CanOn &&
-            gowAscensionNoDiscoveryItem.CanNote ==
-                UiText.GetText("Patch.CanaryNote.Ready"),
-            "Expected the compact Canary row to stay actionable while explaining that RPCS3 verifies the runtime key when the game starts.");
+            !gowAscensionNoDiscoveryItem.CanOn &&
+            gowAscensionNoDiscoveryItem.DirStat ==
+                UiText.GetText("Patch.Direct.CanaryHashRequired"),
+            "Expected the Canary row to explain the one-time local fingerprint requirement before preparation.");
         var gowAscensionDiscoveredGame = gowAscensionGame with
         {
             HCanPpu = [gowAscensionCanary.Hash],
@@ -295,18 +297,76 @@ internal static partial class Program
             }]);
         var gowWrongVersionItem = new PatItVm(
             gowWrongVersionMatch);
+        PatchText_WithLang(
+            UiText.EnLang,
+            () =>
+            {
+                Assert(
+                    gowWrongVersionMatch.Status == MatStat.VerBad &&
+                    gowWrongVersionItem.StateDsp == UiText.GetText("Patch.State.Blocked") &&
+                    gowWrongVersionItem.CurrentStateDsp == gowWrongVersionItem.MatchDsp &&
+                    gowWrongVersionItem.StateTon == "Warning" &&
+                    gowWrongVersionItem.DirStat == UiText.Fmt(
+                        "Patch.Direct.VersionMismatch",
+                        "01.11",
+                        "01.12") &&
+                    gowWrongVersionItem.CanNote == UiText.Fmt(
+                        "Patch.CanaryNote.VersionMismatch",
+                        "01.11",
+                        "01.12"),
+                    "Expected an unsupported Canary game version to show its incompatibility before selection while preserving installed and required version details.");
+            });
+        var gowWrongVersionGroup = new TgtGrpVm([gowWrongVersionItem]);
         Assert(
-            gowWrongVersionMatch.Status == MatStat.VerBad &&
-            gowWrongVersionItem.StateDsp == UiText.GetText("Patch.State.Blocked") &&
-            gowWrongVersionItem.DirStat == UiText.Fmt(
-                "Patch.Direct.VersionMismatch",
-                "01.11",
-                "01.12") &&
-            gowWrongVersionItem.CanNote == UiText.Fmt(
-                "Patch.CanaryNote.VersionMismatch",
-                "01.11",
-                "01.12"),
-            "Expected an unsupported Canary game version to stay visible with the installed and required versions explained.");
+            gowWrongVersionGroup.InstVer == "01.11" &&
+            gowWrongVersionGroup.VerDsp == "01.12" &&
+            new[]
+            {
+                gowWrongVersionGroup.Details,
+                gowWrongVersionGroup.CanMeta,
+                gowWrongVersionGroup.ArtemisMeta
+            }.All(meta =>
+                meta.Contains("01.12", StringComparison.Ordinal) &&
+                !meta.Contains("01.11", StringComparison.Ordinal)),
+            "Expected every patch target-group surface to present the required target version instead of echoing the installed game version.");
+        PatchText_WithLang(
+            UiText.ArabLang,
+            () =>
+            {
+                var arabicWrongVersionItem = new PatItVm(
+                    gowWrongVersionMatch);
+                var arabicWrongVersionGroup = new TgtGrpVm(
+                    [arabicWrongVersionItem]);
+                Assert(
+                    arabicWrongVersionItem.CurrentStateDsp ==
+                        UiText.GetText("PatchMatch.VersionMismatch.Label") &&
+                    arabicWrongVersionItem.StateTon == "Warning" &&
+                    arabicWrongVersionItem.DirStat.Contains(
+                        "\u200E01.11\u200E",
+                        StringComparison.Ordinal) &&
+                    arabicWrongVersionItem.DirStat.Contains(
+                        "\u200E01.12\u200E",
+                        StringComparison.Ordinal) &&
+                    arabicWrongVersionItem.CanNote.Contains(
+                        "\u200E01.11\u200E",
+                        StringComparison.Ordinal) &&
+                    arabicWrongVersionItem.CanNote.Contains(
+                        "\u200E01.12\u200E",
+                        StringComparison.Ordinal) &&
+                    new[]
+                    {
+                        arabicWrongVersionGroup.Details,
+                        arabicWrongVersionGroup.CanMeta,
+                        arabicWrongVersionGroup.ArtemisMeta
+                    }.All(meta =>
+                        meta.Contains(
+                            "\u200E01.12\u200E",
+                            StringComparison.Ordinal) &&
+                        !meta.Contains(
+                            "\u200E01.11\u200E",
+                            StringComparison.Ordinal)),
+                    "Arabic compatibility UI must show the required target version before selection and isolate technical game versions as LTR values.");
+            });
         var gowAscensionCompiled = new PatchSelectionCompiler().Compile(
             File.ReadAllText(bundledCanaryDataPath),
             [gowAscensionCanaryMatch],
@@ -330,9 +390,23 @@ internal static partial class Program
             bundledCanaryItem.StateTon == "Muted" &&
             !bundledCanaryItem.IsSel,
             "Expected a bundled Canary option to remain explicitly not merged, report its actual disabled current state separately from readiness, and never start selected.");
-        var importedCanaryMatch = new R3Config.Svc.PatchMatchService().Match(
+        var importedCanaryWithoutDiscoveryMatch = new R3Config.Svc.PatchMatchService().Match(
             gowAscensionCanary with { Source = PatSrc.Imported },
             [gowAscensionGame]);
+        var importedCanaryWithoutDiscoveryItem = new PatItVm(
+            importedCanaryWithoutDiscoveryMatch);
+        Assert(
+            importedCanaryWithoutDiscoveryItem.IsDef &&
+            importedCanaryWithoutDiscoveryItem.IsCanary &&
+            importedCanaryWithoutDiscoveryItem.PatSrcKd == PatSrcKd.Canary &&
+            importedCanaryWithoutDiscoveryItem.DefState == UiText.GetText("Patch.Definition.Merged") &&
+            !importedCanaryWithoutDiscoveryItem.CanOn &&
+            importedCanaryWithoutDiscoveryItem.StateDsp == UiText.GetText("Patch.State.Blocked") &&
+            importedCanaryWithoutDiscoveryItem.DirStat == UiText.GetText("Patch.Direct.CanaryHashRequired"),
+            "Expected a resident imported Canary definition to remain in the Canary source channel while requiring the saved local discovery binding before enablement.");
+        var importedCanaryMatch = new R3Config.Svc.PatchMatchService().Match(
+            gowAscensionCanary with { Source = PatSrc.Imported },
+            [gowAscensionDiscoveredGame]);
         var importedCanaryItem = new PatItVm(
             importedCanaryMatch);
         Assert(
@@ -342,7 +416,7 @@ internal static partial class Program
             importedCanaryItem.DefState == UiText.GetText("Patch.Definition.Merged") &&
             importedCanaryItem.StateDsp == UiText.GetText("Patch.State.Disabled") &&
             importedCanaryItem.DirStat == UiText.GetText("Patch.Direct.MergedDisabled"),
-            "Expected a resident imported Canary definition to remain in the Canary source channel after its selection checkmark clears.");
+            "Expected a verified resident imported Canary definition to remain in the Canary source channel after its selection checkmark clears.");
         var enabledImportedCanaryItem = new PatItVm(
             importedCanaryMatch,
             isEnabled: true);
@@ -526,18 +600,16 @@ internal static partial class Program
                mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Patches}\"", StringComparison.Ordinal) &&
                mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Canary}\"", StringComparison.Ordinal) &&
                mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Cheats}\"", StringComparison.Ordinal) &&
-               mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Setup}\"", StringComparison.Ordinal),
-            "Expected the main navigation to expose settings, patch classes, and the final change summary.");
+               !mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Setup}\"", StringComparison.Ordinal),
+            "Expected the main navigation to expose only the player-facing settings and patch-class pages.");
         var settingsTabPos = mainWindowXaml.IndexOf("Header=\"{lang:TextExt Key=Tab.Settings}\"", StringComparison.Ordinal);
         var patchesTabPos = mainWindowXaml.IndexOf("Header=\"{lang:TextExt Key=Tab.Patches}\"", StringComparison.Ordinal);
         var canaryTabPos = mainWindowXaml.IndexOf("Header=\"{lang:TextExt Key=Tab.Canary}\"", StringComparison.Ordinal);
         var cheatsTabPos = mainWindowXaml.IndexOf("Header=\"{lang:TextExt Key=Tab.Cheats}\"", StringComparison.Ordinal);
-        var setupTabPos = mainWindowXaml.IndexOf("Header=\"{lang:TextExt Key=Tab.Setup}\"", StringComparison.Ordinal);
         Assert(settingsTabPos < patchesTabPos &&
                patchesTabPos < canaryTabPos &&
-               canaryTabPos < cheatsTabPos &&
-               cheatsTabPos < setupTabPos,
-            "Expected the player workflow to start with settings and finish with the change summary.");
+               canaryTabPos < cheatsTabPos,
+            "Expected the player workflow to progress from settings through Official, Canary, and Artemis patch classes.");
         Assert(!mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Official}\"", StringComparison.Ordinal) &&
                !mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.Advanced}\"", StringComparison.Ordinal) &&
                !mainWindowXaml.Contains("Header=\"{lang:TextExt Key=Tab.HCanary}\"", StringComparison.Ordinal),
@@ -596,6 +668,10 @@ internal static partial class Program
             Path.Combine(
                 appRoot,
                 "Vm",
+                "Main.PatchPresentation.cs"),
+            Path.Combine(
+                appRoot,
+                "Vm",
                 "HCan.cs"),
             Path.Combine(
                 appRoot,
@@ -636,8 +712,8 @@ internal static partial class Program
                cheatView.Contains("x:Name=\"ChtActions\"", StringComparison.Ordinal) &&
                cheatView.Contains("Grid.Row=\"2\"", StringComparison.Ordinal) &&
                officialView.Contains("Text=\"{Binding Preview.OfclSum}\"", StringComparison.Ordinal) &&
-               canaryView.Contains("Text=\"{Binding Preview.CanSum}\"", StringComparison.Ordinal) &&
-               cheatView.Contains("Text=\"{Binding Preview.ChtSum}\"", StringComparison.Ordinal) &&
+               !canaryView.Contains("Text=\"{Binding Preview.CanSum}\"", StringComparison.Ordinal) &&
+               !cheatView.Contains("Text=\"{Binding Preview.ChtSum}\"", StringComparison.Ordinal) &&
                patchView.Contains("Header=\"{lang:TextExt Key=Patch.Artemis.RemoveSelected}\"", StringComparison.Ordinal) &&
                patchView.Contains("Command=\"{Binding ChtRemove}\"", StringComparison.Ordinal) &&
                patchView.Contains("x:Name=\"ArtemisOptionsButton\"", StringComparison.Ordinal) &&
@@ -646,7 +722,7 @@ internal static partial class Program
                patchView.Contains("AutomationProperties.Name=\"{lang:TextExt Key=Patch.Artemis.Options}\"", StringComparison.Ordinal) &&
                patchView.Contains("Command=\"{Binding ChtSelectAll}\"", StringComparison.Ordinal) &&
                patchView.Contains("Command=\"{Binding ChtClearSelection}\"", StringComparison.Ordinal),
-            "Expected each patch tab to lead with an actual-state summary, keep mutation buttons conditional on selected transitions, and keep the Artemis bulk-selection menu available whenever Artemis entries exist.");
+            "Expected Official verification status to remain available without redundant Canary or Artemis summary counters, while mutation actions stay conditional and Artemis bulk selection remains available.");
         Assert(patchView.Contains("Key=Patch.ApplyOfficialSection", StringComparison.Ordinal) &&
                patchView.Contains("Key=Patch.ApplyCanarySection", StringComparison.Ordinal) &&
                patchView.Contains("Key=Patch.ApplyCheatSection", StringComparison.Ordinal) &&
@@ -714,6 +790,12 @@ internal static partial class Program
             canaryView.Contains(
                 "ShowCanaryVerificationPanel",
                 StringComparison.Ordinal) &&
+            canaryView.Contains(
+                "PatchReadiness.ReverifyAction",
+                StringComparison.Ordinal) &&
+            canaryView.Contains(
+                "ShowCanaryReverificationAction",
+                StringComparison.Ordinal) &&
             !patchShellView.Contains(
                 "Command=\"{Binding FingerprintCaptureCmd}\"",
                 StringComparison.Ordinal) &&
@@ -726,7 +808,30 @@ internal static partial class Program
             !mainWindowXaml.Contains(
                 "FingerprintCaptureCmd",
                 StringComparison.Ordinal),
-            "Expected Canary verification to appear only inside the Canary surface when Canary entries actually require it, without a global fingerprint control.");
+            "Expected Canary executable-hash discovery to appear only inside the Canary surface without a global fingerprint control.");
+        Assert(
+            fingerprintCaptureCode.Contains(
+                "NeedsCanaryFingerprint &&",
+                StringComparison.Ordinal) &&
+            !fingerprintCaptureCode.Contains(
+                "PatchReadiness.ReverifyConfirm",
+                StringComparison.Ordinal) &&
+            fingerprintCaptureCode.Contains(
+                "TimeSpan.FromMinutes(1)",
+                StringComparison.Ordinal) &&
+            fingerprintCaptureCode.Contains(
+                "_hashEvidence.IsSelectedGameBooted(",
+                StringComparison.Ordinal) &&
+            fingerprintCaptureCode.Contains(
+                "latestPpuLoaded",
+                StringComparison.Ordinal) &&
+            fingerprintCaptureCode.Contains(
+                "HashPattern.Match(line)",
+                StringComparison.Ordinal) &&
+            fingerprintCaptureCode.Contains(
+                "SessionOffset(",
+                StringComparison.Ordinal),
+            "Expected Canary hash discovery to be a one-time local capture whose one-minute timer starts only after a fresh selected-game PPU executable hash is present in the current RPCS3 log session.");
         Assert(
             cheatView.Contains("Preview.ChtEmptyText", StringComparison.Ordinal) &&
             !patchView.Contains("Patch.Launch.BootRecommended", StringComparison.Ordinal),
@@ -885,11 +990,14 @@ internal static partial class Program
         var patchMergeText = File.ReadAllText(patchMergePath);
         var patchMutationText = File.ReadAllText(patchMutationPath);
         var mainPatchText = File.ReadAllText(mainPatchPath);
-        Assert(patchCompatibilityText.Contains("status == MatStat.Unknown", StringComparison.Ordinal) &&
-               !patchCompatibilityText.Contains("status is MatStat.Unknown or MatStat.HashBad", StringComparison.Ordinal) &&
-               patchCompatibilityText.Contains("PatchCompatibilityVerdict.Guarded", StringComparison.Ordinal) &&
-               patchCompatibilityText.Contains("PatchCompatibilityReasonCode.R3Guard", StringComparison.Ordinal),
-            "Expected trusted Canary-class definitions to use RPCS3's runtime-key guard only when local PPU/SPU evidence is absent, never when it contradicts the patch key.");
+        var canaryBindingText = File.ReadAllText(
+            Path.Combine(repoRoot, "Core", "Svc", "Patch", "CanaryRuntimeBindingService.cs"));
+        Assert(patchCompatibilityText.Contains("patch.Class == PatClass.Canary", StringComparison.Ordinal) &&
+               patchCompatibilityText.Contains("PatchCompatibilityReasonCode.Hash", StringComparison.Ordinal) &&
+               patchCompatibilityText.Contains("CanaryRuntimeBindingKind.Rebound", StringComparison.Ordinal) &&
+               canaryBindingText.Contains("game.HCanPpuList", StringComparison.Ordinal) &&
+               canaryBindingText.Contains("RunKey.Build(", StringComparison.Ordinal),
+            "Expected bundled Canary definitions to require saved local PPU evidence and to produce an effective runtime key from the captured fingerprint instead of relying on RPCS3's unknown-hash guard.");
         Assert(patchMergeText.Contains("return \"Official\";", StringComparison.Ordinal) &&
                patchMergeText.Contains("return \"Canary\";", StringComparison.Ordinal) &&
                patchMergeText.Contains("return \"Artemis\";", StringComparison.Ordinal) &&
@@ -977,6 +1085,9 @@ internal static partial class Program
                mainWindow.Contains("BuildPat", StringComparison.Ordinal),
             "Expected a live language switch to recreate patch visuals after preserving their view-model state.");
         Assert(patchView.Contains("CompatibilityTip", StringComparison.Ordinal) && patchView.Contains("ArtemisTip", StringComparison.Ordinal) &&
+               patchView.Contains("Text=\"{Binding CompatibilityTip}\"", StringComparison.Ordinal) &&
+               patchView.Contains("Text=\"{Binding ArtemisTip}\"", StringComparison.Ordinal) &&
+               patchView.Contains("NumberSubstitution.Substitution=\"European\"", StringComparison.Ordinal) &&
                patchView.Contains("InsText", StringComparison.Ordinal) &&
                !patchView.Contains("EviSum", StringComparison.Ordinal) &&
                !patchView.Contains("TechTgt", StringComparison.Ordinal) &&
@@ -1005,37 +1116,7 @@ internal static partial class Program
                untranslatedWikiDescription.HasOrig,
             "Expected an untranslated optional wiki description to be omitted from the primary Arabic surface while retaining the raw text as secondary reference data.");
 
-        var installRoot = Path.Combine(
-            Path.GetTempPath(),
-            "R3ConfigInstallSmoke",
-            Guid.NewGuid().ToString("N"));
-
-        Directory.CreateDirectory(installRoot);
-
-        try
-        {
-            var exePath = Path.Combine(installRoot, "rpcs3.exe");
-            File.WriteAllBytes(exePath, []);
-
-            var install = Rpcs3InstallService.FromExe(exePath);
-            var expectedConfigPath = Path.Combine(installRoot, "config");
-            var expectedCustomConfigsPath = Path.Combine(expectedConfigPath, "custom_configs");
-
-            Assert(string.Equals(
-                    install.CfgPath,
-                    expectedConfigPath,
-                    StringComparison.OrdinalIgnoreCase),
-                "Expected Rpcs3InstallService to anchor config to root config.");
-            Assert(string.Equals(
-                    install.CustPath,
-                    expectedCustomConfigsPath,
-                    StringComparison.OrdinalIgnoreCase),
-                "Expected Rpcs3InstallService to anchor custom_configs below root config.");
-        }
-        finally
-        {
-            Directory.Delete(installRoot, recursive: true);
-        }
+        AppPat_InstallPathContracts();
 
         var importService = File.ReadAllText(importServicePath);
         Assert(importService.Contains("Version: 1.2", StringComparison.Ordinal),
@@ -1101,97 +1182,7 @@ internal static partial class Program
                mutationGuard.Contains("IsChild", StringComparison.Ordinal),
             "Expected the central mutation guard to enforce process and path boundaries.");
 
-        var bundledCanaryText = File.ReadAllText(bundledCanaryDataPath);
-        Assert(bundledCanaryText.StartsWith("# R3Config bundled RPCS3 Canary patches", StringComparison.Ordinal),
-            "Expected bundled Canary data source marker.");
-        Assert(bundledCanaryText.Contains("Version: 1.2", StringComparison.Ordinal),
-            "Expected bundled Canary data to use RPCS3 patch version 1.2.");
-        Assert(bundledCanaryText.Contains("PPU-", StringComparison.Ordinal),
-            "Expected bundled Canary data to include PPU patch entries.");
-
-        var normalizedCanary = new R3Config.Svc.CanaryPatchImportService().Norm(bundledCanaryText);
-        Assert(normalizedCanary.IsOk, "Expected bundled Canary data to normalize without duplicate-name failures: " + normalizedCanary.Error);
-
-        var canaryRead = new R3Config.Svc.ReadSvc().ReadText(normalizedCanary.NormText, isCanarySource: true);
-        Assert(canaryRead.IsOk, "Expected bundled Canary data to be parseable after normalization: " + canaryRead.Error);
-        Assert(canaryRead.Catalog.Entries.Count > 0, "Expected bundled Canary data to include patch catalog entries.");
-        Assert(canaryRead.Catalog.Entries
-                .Select(entry => $"{entry.HashKind}|{entry.Hash}")
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Count() == 86,
-            "Expected the bundled Canary database to retain all 86 executable Hash keys from the supplied RPCS3 Wiki snapshot.");
-        Assert(canaryRead.Catalog.Entries.All(entry => entry.Risk == PatRisk.Canary),
-            "Expected bundled Canary entries to be classified as Canary.");
-        Assert(canaryRead.Catalog.Entries.All(entry => entry.Class == PatClass.Canary),
-            "Expected every bundled Canary entry to remain classified for separate Canary handling and explicit user activation.");
-
-        var compatibilityService = new R3Config.Svc.PatchMatchService();
-        foreach (var entry in canaryRead.Catalog.Entries.Where(entry =>
-                     entry.HashKind is HashKind.Ppu or HashKind.Spu &&
-                     entry.NormHash is not null))
-        {
-            foreach (var target in entry.GameTgt)
-            {
-                var serial = PatVer.IsAll(target.Serial)
-                    ? "BLUS00001"
-                    : target.Serial;
-                var version = target.Versions
-                    .Select(PatVer.Norm)
-                    .FirstOrDefault(value =>
-                        value is not null &&
-                        !PatVer.IsAll(value)) ?? "01.00";
-                var expectedHash = entry.NormHash!;
-                var game = new Rpcs3GameDescriptor(
-                    serial,
-                    target.Title,
-                    Path.Combine(@"C:\Games", serial),
-                    version,
-                    null,
-                    null,
-                    HCanPpu: entry.HashKind == HashKind.Ppu
-                        ? [expectedHash]
-                        : [],
-                    HCanSpu: entry.HashKind == HashKind.Spu
-                        ? [expectedHash]
-                        : []);
-                var match = compatibilityService.Match(
-                    entry,
-                    [game]);
-
-                Assert(
-                    match.Status == MatStat.Match,
-                    $"Expected Canary target {serial} {version} to match its declared {entry.HashKind} key {entry.Hash}.");
-            }
-        }
-
-        var normalizedSpuCanary = new R3Config.Svc.CanaryPatchImportService().Norm(
-            "Version: 1.2\n" +
-            "SPU-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:\n" +
-            "  \"SPU Canary\":\n" +
-            "    Games:\n" +
-            "      \"SPU Game\":\n" +
-            "        BLUS00001: [ 01.00 ]\n" +
-            "    Patch Version: 1.0\n" +
-            "    Patch:\n" +
-            "      - [ be32, 0x00000004, 0x60000000 ]\n");
-        Assert(normalizedSpuCanary.IsOk,
-            "Expected the custom import path to support SPU executable hashes.");
-        var spuCanaryRead = new R3Config.Svc.ReadSvc().ReadText(
-            normalizedSpuCanary.NormText,
-            isCanarySource: true);
-        Assert(spuCanaryRead.IsOk &&
-               spuCanaryRead.Catalog.Entries.Single().HashKind == HashKind.Spu,
-            "Expected imported SPU Canary data to remain SPU-scoped.");
-
-        var bundledCheatRead = new R3Config.Svc.ReadSvc().Read(
-            bundledCheatDataPath,
-            PatSrc.Artemis);
-        Assert(bundledCheatRead.IsOk,
-            "Expected the bundled converted cheat library to be readable: " + bundledCheatRead.Error);
-        Assert(bundledCheatRead.Catalog.Entries.Count == 1023,
-            "Expected the retained Artemis patch collection to expose its complete 1023-entry accepted inventory.");
-        Assert(bundledCheatRead.Catalog.Entries.All(entry => entry.Risk == PatRisk.Cheat),
-            "Expected every bundled expansion entry to be handled as a user-selected cheat.");
+        AppPat_BundledCatalogContracts();
 
         Console.WriteLine("App patch presentation source checks passed.");
     }

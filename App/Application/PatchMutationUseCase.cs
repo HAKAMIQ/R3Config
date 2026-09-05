@@ -384,7 +384,7 @@ public sealed class PatchMutationUseCase(
         {
             var selectedChannel = Channel(selected.Patch);
             var collision = resident.FirstOrDefault(entry =>
-                entry.RunKey.Equals(selected.Patch.RunKey, StringComparison.OrdinalIgnoreCase) &&
+                entry.RunKey.Equals(selected.EffectiveRunKey, StringComparison.OrdinalIgnoreCase) &&
                 entry.Title.Equals(selected.Patch.Title, StringComparison.OrdinalIgnoreCase) &&
                 Channel(entry) != selectedChannel &&
                 !string.Equals(entry.DefPrint, selected.Patch.DefPrint, StringComparison.OrdinalIgnoreCase) &&
@@ -393,7 +393,7 @@ public sealed class PatchMutationUseCase(
             if (collision is not null)
             {
                 throw new InvalidOperationException(
-                    $"RPCS3 runtime identity collision for '{selected.Patch.Title}' ({selected.Patch.RunKey}) between {selected.Patch.Source} and {collision.Source}. The definitions differ, so the requested source cannot be enabled or disabled safely.");
+                    $"RPCS3 runtime identity collision for '{selected.Patch.Title}' ({selected.EffectiveRunKey}) between {selected.Patch.Source} and {collision.Source}. The definitions differ, so the requested source cannot be enabled or disabled safely.");
             }
         }
 

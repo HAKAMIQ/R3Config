@@ -331,8 +331,7 @@ public sealed class PatchCatalogUseCase(
         Mdl.PatCat catalog,
         Rpcs3GameDescriptor game)
     {
-        return catalog.Entries
-            .Select(entry => patchMatch.Match(entry, [game]))
+        return patchMatch.Match(catalog, game)
             .Where(match => match.Status is not
                 MatStat.SerBad and not
                 MatStat.NoMeta)
@@ -447,24 +446,31 @@ public sealed class PatchCatalogUseCase(
             cancellationToken);
     }
 
-    private static Mdl.PatCat Classify(
+    internal static Mdl.PatCat Classify(
         Mdl.PatCat imported,
         Mdl.PatCat bundledCanary)
     {
         var bundledKeys = bundledCanary.Entries
             .Select(PatId)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var bundledDefinitions = bundledCanary.Entries
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.DefPrint))
+            .Select(CanaryDefinitionId)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return imported with
         {
             Entries = imported.Entries
-                .Select(entry => bundledKeys.Contains(PatId(entry))
-                    ? entry with
-                    {
-                        Risk = PatRisk.Canary,
-                        Class = PatClass.Canary
-                    }
-                    : entry)
+                .Select(entry =>
+                    bundledKeys.Contains(PatId(entry)) ||
+                    (!string.IsNullOrWhiteSpace(entry.DefPrint) &&
+                     bundledDefinitions.Contains(CanaryDefinitionId(entry)))
+                        ? entry with
+                        {
+                            Risk = PatRisk.Canary,
+                            Class = PatClass.Canary
+                        }
+                        : entry)
                 .ToArray()
         };
     }
@@ -473,6 +479,28 @@ public sealed class PatchCatalogUseCase(
         Rpcs3PatchEntry entry)
     {
         return $"{entry.RunKey}|{entry.Title}";
+    }
+
+    private static string CanaryDefinitionId(
+        Rpcs3PatchEntry entry)
+    {
+        var targets = entry.GameTgt
+            .Select(target => string.Join(
+                ":",
+                target.Title.Trim(),
+                target.Serial.Trim().ToUpperInvariant(),
+                string.Join(
+                    ",",
+                    target.Versions
+                        .Select(version => PatVer.Norm(version) ?? version.Trim())
+                        .OrderBy(version => version, StringComparer.OrdinalIgnoreCase))))
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase);
+
+        return string.Join(
+            "\0",
+            entry.Title.Trim(),
+            entry.DefPrint?.Trim() ?? string.Empty,
+            string.Join(";", targets));
     }
 
     private static PatCat WithoutArtemis(PatCat catalog)

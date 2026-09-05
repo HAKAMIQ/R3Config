@@ -384,10 +384,28 @@ public sealed class AppFlow
         IProgress<GameFingerprintCaptureProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        return CaptureFingerprintAsync(
+            install,
+            game,
+            expectation,
+            replaceExisting: false,
+            progress: progress,
+            cancellationToken: cancellationToken);
+    }
+
+    public Task<GameFingerprintCaptureResult> CaptureFingerprintAsync(
+        Rpcs3InstallDescriptor install,
+        Rpcs3GameDescriptor game,
+        CanaryHashExpectation expectation,
+        bool replaceExisting,
+        IProgress<GameFingerprintCaptureProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
         return _cases.FingerprintCapture.CaptureAsync(
             install,
             game,
             expectation,
+            replaceExisting,
             progress,
             cancellationToken);
     }

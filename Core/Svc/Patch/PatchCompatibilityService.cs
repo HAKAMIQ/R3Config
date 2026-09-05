@@ -26,6 +26,18 @@ public sealed class PatchCompatibilityService
         Rpcs3PatchEntry patch,
         IEnumerable<Rpcs3GameDescriptor> games)
     {
+        return Evaluate(
+            patch,
+            games,
+            CanaryRuntimeBindingDecision.None);
+    }
+
+    public Mdl.PatMatch Evaluate(
+        Rpcs3PatchEntry patch,
+        IEnumerable<Rpcs3GameDescriptor> games,
+        CanaryRuntimeBindingDecision canaryBinding)
+    {
+        ArgumentNullException.ThrowIfNull(canaryBinding);
         var gameList = games.ToArray();
         var runtimeKeyValid = Mdl.RunKey.TryParse(
             patch.RunKey,
@@ -39,7 +51,8 @@ public sealed class PatchCompatibilityService
                     target,
                     game,
                     targetIndex,
-                    runtimeKeyValid)))
+                    runtimeKeyValid,
+                    canaryBinding)))
             .OrderBy(candidate => Status(candidate.Status))
             .ThenByDescending(candidate =>
                 !PatVer.IsAll(candidate.Target.Serial))
@@ -61,7 +74,8 @@ public sealed class PatchCompatibilityService
                 matchedTargetSerial: null,
                 matchedTargetVersion: null,
                 runtimeKeyValid,
-                runtimeKeySerialMismatch: false);
+                runtimeKeySerialMismatch: false,
+                canaryBinding);
 
             return new Mdl.PatMatch(
                 Patch: patch,
@@ -83,7 +97,8 @@ public sealed class PatchCompatibilityService
             best.Target.Serial,
             best.TgtVer,
             runtimeKeyValid,
-            best.KeySerBd);
+            best.KeySerBd,
+            canaryBinding);
 
         return new Mdl.PatMatch(
             Patch: patch,
@@ -95,7 +110,7 @@ public sealed class PatchCompatibilityService
             TgtName: best.Target.Title,
             TgtSer: best.Target.Serial,
             TgtVer: best.TgtVer,
-            DetHash: best.Game.GetHash(patch.HashKind),
+            DetHash: EvidenceHashes(patch, best.Game),
             HashSrc: best.Game.HashSrc,
             HashMsg: best.Game.HashMsg,
             HashEvi: best.Game.HashEvi,
@@ -106,6 +121,11 @@ public sealed class PatchCompatibilityService
     public PatchCompatibilityDecision Decide(
         Mdl.PatMatch match)
     {
+        if (match.Cmp is not null)
+        {
+            return match.Cmp;
+        }
+
         return Build(
             match.Patch,
             match.Status,
@@ -117,7 +137,8 @@ public sealed class PatchCompatibilityService
                 out _),
             RunKey(
                 match.Patch,
-                match.MatSer));
+                match.MatSer),
+            CanaryRuntimeBindingDecision.None);
     }
 
     private static Cand Check(
@@ -125,7 +146,8 @@ public sealed class PatchCompatibilityService
         R3PatTgt target,
         Rpcs3GameDescriptor game,
         int targetIndex,
-        bool runtimeKeyValid)
+        bool runtimeKeyValid,
+        CanaryRuntimeBindingDecision canaryBinding)
     {
         var installedVersion = PatVer.Norm(game.Version);
         var targetVersions = target.Versions
@@ -155,7 +177,8 @@ public sealed class PatchCompatibilityService
             status = GetHash(
                 patch,
                 game,
-                runtimeKeyValid);
+                runtimeKeyValid,
+                canaryBinding);
         }
         else if (installedVersion is null)
         {
@@ -171,7 +194,8 @@ public sealed class PatchCompatibilityService
             status = GetHash(
                 patch,
                 game,
-                runtimeKeyValid);
+                runtimeKeyValid,
+                canaryBinding);
         }
         else
         {
@@ -185,7 +209,7 @@ public sealed class PatchCompatibilityService
             game,
             status,
             matchedTargetVersion,
-            game.GetHash(patch.HashKind).Count > 0,
+            EvidenceHashes(patch, game).Count > 0,
             runtimeKeySerialMismatch,
             targetIndex);
     }
@@ -193,12 +217,23 @@ public sealed class PatchCompatibilityService
     private static MatStat GetHash(
         Rpcs3PatchEntry patch,
         Rpcs3GameDescriptor game,
-        bool runtimeKeyValid)
+        bool runtimeKeyValid,
+        CanaryRuntimeBindingDecision canaryBinding)
     {
         if (!runtimeKeyValid ||
             patch.NormHash is null)
         {
             return MatStat.Unknown;
+        }
+
+        if (canaryBinding.Kind == CanaryRuntimeBindingKind.Ambiguous)
+        {
+            return MatStat.HashBad;
+        }
+
+        if (canaryBinding.Kind == CanaryRuntimeBindingKind.Rebound)
+        {
+            return MatStat.Match;
         }
 
         if (patch.Source == PatSrc.Official)
@@ -245,6 +280,16 @@ public sealed class PatchCompatibilityService
     }
 
 
+    private static IReadOnlyList<string> EvidenceHashes(
+        Rpcs3PatchEntry patch,
+        Rpcs3GameDescriptor game)
+    {
+        return patch.Class == PatClass.Canary &&
+               patch.HashKind is HashKind.Ppu or HashKind.Spu
+            ? GetDiscoveredHashes(patch.HashKind, game)
+            : game.GetHash(patch.HashKind);
+    }
+
     private static IReadOnlyList<string> GetDiscoveredHashes(
         HashKind kind,
         Rpcs3GameDescriptor game)
@@ -286,13 +331,23 @@ public sealed class PatchCompatibilityService
         string? matchedTargetSerial,
         string? matchedTargetVersion,
         bool runtimeKeyValid,
-        bool runtimeKeySerialMismatch)
+        bool runtimeKeySerialMismatch,
+        CanaryRuntimeBindingDecision canaryBinding)
     {
-        var runtimeKey = patch.RunKey;
+        var runtimeKey =
+            canaryBinding.EffectiveRunKey ?? patch.RunKey;
         var canDisable = runtimeKeyValid &&
                          !runtimeKeySerialMismatch &&
                          status is not MatStat.NoMeta and
                              not MatStat.SerBad;
+
+        if (canaryBinding.Kind == CanaryRuntimeBindingKind.Ambiguous)
+        {
+            return Blocked(
+                PatchCompatibilityReasonCode.CanaryBindingAmbiguous,
+                runtimeKey,
+                canDisable: false);
+        }
 
         if (!runtimeKeyValid)
         {
@@ -323,6 +378,15 @@ public sealed class PatchCompatibilityService
 
         if (status == MatStat.Unknown)
         {
+            if (patch.Class == PatClass.Canary &&
+                patch.HashKind == HashKind.Ppu)
+            {
+                return Blocked(
+                    PatchCompatibilityReasonCode.Hash,
+                    runtimeKey,
+                    canDisable);
+            }
+
             if (!IsKnown(patch.Source))
             {
                 return Blocked(
@@ -470,6 +534,8 @@ public sealed class PatchCompatibilityService
                 $"Serial {candidate.Game.Serial} matches, but installed version {installedVersion} does not match target version {requiredVersion}.",
             PatchCompatibilityReasonCode.ExeBad =>
                 $"Serial {candidate.Game.Serial} and version match, but the authoritative executable fingerprint set does not contain this runtime key.",
+            PatchCompatibilityReasonCode.CanaryBindingAmbiguous =>
+                $"Serial {candidate.Game.Serial} and version match, but multiple different Canary definitions target this build and the local PPU fingerprint cannot select one safely.",
             PatchCompatibilityReasonCode.Key =>
                 "Patch key is not a runtime key generated by RPCS3.",
             _ => "Patch metadata did not match this game."

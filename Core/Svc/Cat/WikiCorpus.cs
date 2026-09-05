@@ -15,6 +15,9 @@ namespace R3Config.Svc;
 
 public sealed partial class WikiSvc
 {
+    private const long MaxWikiHistoryXmlBytes = 1024L * 1024 * 1024;
+    private const int MaxHistoricalPageBlocks = 100_000;
+    private const int MaxWikiRevisions = 250_000;
     private const int MaxWikiPages = 10_000;
     private const int MaxTemplatesPerPage = 64;
     private const int MaxParametersPerTemplate = 512;
@@ -31,6 +34,14 @@ public sealed partial class WikiSvc
         @"</?[^>]+>",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    private static readonly Regex VariantLabel = new(
+        @"'{2,5}\s*(?<label>[^'\r\n<>]{1,128}?)\s*'{2,5}",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static readonly Regex RedirectText = new(
+        @"^\s*#redirect\s*\[\[(?<target>[^\]|#]+)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
     private static readonly Regex VersionCondition = new(
         @"\bno longer required\b|\b(?:older|newer) versions?\b|" +
         @"\b(?:RPCS3|emulator|game) (?:versions?|builds?)\b|\bversions?\s+(?:above|below|before|after|prior to|through)\s+\d|" +
@@ -41,9 +52,15 @@ public sealed partial class WikiSvc
 
     private static readonly Regex PatchCondition = new(
         @"\bcanary\b|\bunpatched\b|\bunlock fps\b|" +
-        @"\b(?:the|a|an|game|fps|mlaa|recommended|disable [a-z0-9 -]+)\s+patch(?:es)?\b|" +
+        @"\b(?:the|a|an|fps|mlaa|recommended|disable [a-z0-9 -]+)\s+patch(?:es)?\b|" +
         @"\bpatch(?:es)?\s+(?:is|are|enabled|disabled|required|available|notes)\b|" +
         @"\busing\b[^.]{0,80}\bpatch(?:es)?\b|\b(?:30|60|120)\s*fps patch\b",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    private static readonly Regex PatchDependencyCondition = new(
+        @"\b(?:required|needed)\s+unless\s+using\b[^.]{0,80}\bpatch(?:es)?\b|" +
+        @"\b(?:required|needed)\s+if\s+not\s+using\b[^.]{0,80}\bpatch(?:es)?\b|" +
+        @"\bonly\s+required\s+if\s+not\s+using\b[^.]{0,80}\bpatch(?:es)?\b",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     private static readonly Regex MandatoryCondition = new(
@@ -235,33 +252,45 @@ public sealed partial class WikiSvc
         }
 
         var file = new FileInfo(wikiXmlPath);
-        if (file.Length < 0 || file.Length > MaxWikiXmlBytes)
+        if (file.Length < 0 || file.Length > MaxWikiHistoryXmlBytes)
         {
             throw new InvalidDataException(
-                $"RPCS3 wiki XML exceeds the {MaxWikiXmlBytes}-byte input limit.");
+                $"RPCS3 wiki XML exceeds the {MaxWikiHistoryXmlBytes}-byte history input limit.");
         }
 
         var stopwatch = Stopwatch.StartNew();
         var sourceHash = HashFile(wikiXmlPath);
-        var document = ReadWikiDocument(wikiXmlPath);
-        var pageElements = document
-            .Descendants()
-            .Where(element => element.Name.LocalName == "page")
-            .ToArray();
+        var history = ReadLatestWikiPages(wikiXmlPath);
 
-        if (pageElements.Length > MaxWikiPages)
+        if (history.Pages.Count > MaxWikiPages)
         {
             throw new InvalidDataException(
                 $"RPCS3 wiki XML exceeds the {MaxWikiPages}-page input limit.");
         }
 
         var findings = new List<WikiCorpusFinding>();
-        var pages = new List<WikiCorpusPage>(pageElements.Length);
+        var pages = new List<WikiCorpusPage>(history.Pages.Count);
 
-        foreach (var pageElement in pageElements)
+        foreach (var page in history.Pages)
         {
-            pages.Add(ParsePage(pageElement, findings));
+            pages.Add(ParsePage(page, findings));
         }
+
+        var canonicalTitles = pages
+            .Where(page => page.IsGameContent)
+            .Select(page => page.Title)
+            .ToHashSet(StringComparer.Ordinal);
+        var redirectAliases = pages
+            .Where(page => page.Namespace == 0 &&
+                           page.IsRedirect &&
+                           !string.IsNullOrWhiteSpace(page.RedirectTarget))
+            .Select(page => new WikiRedirectAlias(
+                page.Title,
+                page.RedirectTarget!,
+                page.PageId,
+                canonicalTitles.Contains(page.RedirectTarget!)))
+            .OrderBy(alias => alias.Alias, StringComparer.Ordinal)
+            .ToArray();
 
         var allEntries = pages
             .SelectMany(page => page.Recommendations)
@@ -274,7 +303,7 @@ public sealed partial class WikiSvc
             findings);
         var duplicateSerialGroups = pages
             .Where(page => page.IsGameContent)
-            .SelectMany(page => page.Serials.Select(serial => (Serial: serial, Page: page)))
+            .SelectMany(page => page.GameIdBindings.Select(binding => (binding.Serial, Page: page)))
             .GroupBy(item => item.Serial, StringComparer.OrdinalIgnoreCase)
             .Where(group => group.Select(item => item.Page.Title).Distinct(StringComparer.Ordinal).Count() > 1)
             .ToArray();
@@ -286,6 +315,7 @@ public sealed partial class WikiSvc
             .Count();
         var gamePages = pages.Where(page => page.IsGameContent).ToArray();
         var serialOccurrences = gamePages.Sum(page => page.Serials.Count);
+        var gameAliases = redirectAliases.Count(alias => alias.TargetsGame);
         var resolvedSnapshotDate = ResolveSnapshotDate(
             wikiXmlPath,
             snapshotDate,
@@ -294,12 +324,19 @@ public sealed partial class WikiSvc
         stopwatch.Stop();
 
         var stats = new WikiCorpusStats(
+            HistoricalPageBlocks: history.HistoricalPageBlocks,
+            TotalRevisions: history.TotalRevisions,
             TotalPages: pages.Count,
             ParsedPages: pages.Count(page => page.Parsed),
             ParseFailures: pages.Count(page => !page.Parsed),
             MainNamespacePages: pages.Count(page => page.Namespace == 0),
             GameContentPages: gamePages.Length,
             RedirectPages: pages.Count(page => page.Namespace == 0 && page.IsRedirect),
+            GameRedirectAliases: gameAliases,
+            NonGameRedirects: redirectAliases.Length - gameAliases,
+            UtilityPages: pages.Count(page => page.Namespace == 0 &&
+                                              !page.IsRedirect &&
+                                              !page.IsGameContent),
             NonGamePages: pages.Count(page => page.Namespace != 0),
             PagesWithGameIdTemplate: pages.Count(page => page.GameIdTemplateCount > 0),
             PagesWithSerials: gamePages.Count(page => page.Serials.Count > 0),
@@ -335,6 +372,7 @@ public sealed partial class WikiSvc
             allEntries,
             allNotes,
             findings,
+            redirectAliases,
             catalogRecommendations);
     }
 
@@ -513,48 +551,42 @@ public sealed partial class WikiSvc
     }
 
     private static WikiCorpusPage ParsePage(
-        XElement page,
+        RawWikiPage page,
         List<WikiCorpusFinding> findings)
     {
-        var title = page.Elements().FirstOrDefault(element => element.Name.LocalName == "title")?.Value?.Trim();
-        var namespaceText = page.Elements().FirstOrDefault(element => element.Name.LocalName == "ns")?.Value;
-        var revision = page.Elements().FirstOrDefault(element => element.Name.LocalName == "revision");
-        var text = revision?.Elements().FirstOrDefault(element => element.Name.LocalName == "text")?.Value ?? string.Empty;
-        var revisionId = revision?.Elements().FirstOrDefault(element => element.Name.LocalName == "id")?.Value?.Trim();
-        var timestampText = revision?.Elements().FirstOrDefault(element => element.Name.LocalName == "timestamp")?.Value;
-        var parsedTimestamp = DateTimeOffset.TryParse(
-            timestampText,
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-            out var timestamp)
-            ? timestamp
-            : (DateTimeOffset?)null;
-        var parsedNamespace = int.TryParse(namespaceText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var ns)
-            ? ns
-            : -1;
-        var isRedirect = page.Elements().Any(element => element.Name.LocalName == "redirect");
-        var isGameContent = parsedNamespace == 0 && !isRedirect;
-        title ??= "<untitled>";
-
-        var gameIdBlocks = FindTemplateBlocks(text, "gameid", title, findings);
-        var configBlocks = FindTemplateBlocks(text, "config", title, findings);
-        var serials = isGameContent
-            ? ParseGameIds(title, gameIdBlocks, findings)
-            : Array.Empty<string>();
+        var title = string.IsNullOrWhiteSpace(page.Title) ? "<untitled>" : page.Title;
+        var gameIdBlocks = FindTemplateBlocks(page.Text, "gameid", title, findings);
+        var configBlocks = FindTemplateBlocks(page.Text, "config", title, findings);
+        var isGameContent = page.Namespace == 0 &&
+                            page.RedirectTarget is null &&
+                            gameIdBlocks.Count > 0 &&
+                            configBlocks.Count > 0;
+        var gameIds = isGameContent
+            ? ParseGameIds(page.PageId, title, page.Text, gameIdBlocks, findings)
+            : GameIdParseResult.Empty;
+        var primarySerials = gameIds.Bindings
+            .Where(binding => binding.Role == WikiGameIdRole.Primary)
+            .Select(binding => binding.Serial)
+            .OrderBy(serial => serial, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
         var (entries, notes) = isGameContent
-            ? ParseConfig(title, serials, configBlocks, findings)
+            ? ParseConfig(title, gameIds.Serials, primarySerials, configBlocks, findings)
             : (Array.Empty<WikiCorpusEntry>(), Array.Empty<WikiCorpusNote>());
-        var patchReferences = ExtractPatchReferences(text, entries);
+        var patchReferences = ExtractPatchReferences(page.Text, entries);
 
         return new WikiCorpusPage(
+            page.PageId,
             title,
-            parsedNamespace,
-            isRedirect,
+            page.Namespace,
+            page.RedirectTarget is not null,
+            page.RedirectTarget,
             isGameContent,
             title != "<untitled>",
-            revisionId,
-            parsedTimestamp,
-            serials,
+            page.RevisionId,
+            page.RevisionTimestamp,
+            gameIds.Serials,
+            gameIds.Bindings,
+            gameIds.RawReferences,
             gameIdBlocks.Count,
             configBlocks.Count,
             patchReferences,
@@ -562,16 +594,25 @@ public sealed partial class WikiSvc
             notes);
     }
 
-    private static string[] ParseGameIds(
+    private static GameIdParseResult ParseGameIds(
+        long? pageId,
         string page,
+        string text,
         IReadOnlyList<TemplateBlock> blocks,
         List<WikiCorpusFinding> findings)
     {
-        var serials = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var bindings = new Dictionary<string, WikiGameIdBinding>(StringComparer.OrdinalIgnoreCase);
         var sawCandidate = false;
+        var rawReferences = 0;
 
-        foreach (var block in blocks)
+        for (var blockIndex = 0; blockIndex < blocks.Count; blockIndex++)
         {
+            var block = blocks[blockIndex];
+            var blockSerials = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var label = blockIndex == 0
+                ? null
+                : FindVariantLabel(text, blocks[blockIndex - 1].End, block.Start);
+            var role = ClassifyGameIdRole(blockIndex, label);
             foreach (var parameter in SplitTemplateParameters(block, page, findings))
             {
                 if (parameter.Key is not null &&
@@ -595,7 +636,25 @@ public sealed partial class WikiSvc
                     if (SnapshotSerial.IsMatch(cleaned) &&
                         SnapshotSerial.Match(cleaned).Value.Length == cleaned.Length)
                     {
-                        serials.Add(cleaned);
+                        if (!blockSerials.Add(cleaned))
+                        {
+                            continue;
+                        }
+
+                        rawReferences++;
+                        var candidate = new WikiGameIdBinding(
+                            cleaned,
+                            pageId,
+                            page,
+                            role,
+                            label,
+                            blockIndex);
+                        if (!bindings.TryGetValue(cleaned, out var existing) ||
+                            RolePriority(candidate.Role) < RolePriority(existing.Role))
+                        {
+                            bindings[cleaned] = candidate;
+                        }
+
                         if (!string.Equals(raw, cleaned, StringComparison.OrdinalIgnoreCase))
                         {
                             findings.Add(new WikiCorpusFinding(
@@ -619,7 +678,7 @@ public sealed partial class WikiSvc
             }
         }
 
-        if (blocks.Count > 0 && (!sawCandidate || serials.Count == 0))
+        if (blocks.Count > 0 && (!sawCandidate || bindings.Count == 0))
         {
             findings.Add(new WikiCorpusFinding(
                 WikiFindingCode.EmptyGameId,
@@ -629,12 +688,88 @@ public sealed partial class WikiSvc
                 "The game page has no valid GameID value."));
         }
 
-        return serials.OrderBy(item => item, StringComparer.OrdinalIgnoreCase).ToArray();
+        var orderedBindings = bindings.Values
+            .OrderBy(binding => binding.Serial, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        return new GameIdParseResult(
+            orderedBindings.Select(binding => binding.Serial).ToArray(),
+            orderedBindings,
+            rawReferences);
+    }
+
+    private static string? FindVariantLabel(
+        string text,
+        int from,
+        int to)
+    {
+        if (from < 0 || to <= from || to > text.Length)
+        {
+            return null;
+        }
+
+        var matches = VariantLabel.Matches(text[from..to]);
+        if (matches.Count == 0)
+        {
+            return null;
+        }
+
+        var label = CleanVal(matches[^1].Groups["label"].Value);
+        return string.IsNullOrWhiteSpace(label) ? null : label;
+    }
+
+    private static WikiGameIdRole ClassifyGameIdRole(
+        int templateIndex,
+        string? label)
+    {
+        if (templateIndex == 0 || string.IsNullOrWhiteSpace(label))
+        {
+            return WikiGameIdRole.Primary;
+        }
+
+        var normalized = Regex.Replace(label, @"\s+", " ").Trim();
+        if (normalized.Contains("trade demo", StringComparison.OrdinalIgnoreCase))
+        {
+            return WikiGameIdRole.TradeDemo;
+        }
+
+        if (normalized.Contains("playview", StringComparison.OrdinalIgnoreCase))
+        {
+            return WikiGameIdRole.PlayView;
+        }
+
+        if (Regex.IsMatch(normalized, @"\bdemo\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            return WikiGameIdRole.Demo;
+        }
+
+        if (normalized.Contains("xtreme legends", StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains("empires", StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains("edition", StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains("version", StringComparison.OrdinalIgnoreCase))
+        {
+            return WikiGameIdRole.RelatedEdition;
+        }
+
+        return WikiGameIdRole.Unknown;
+    }
+
+    private static int RolePriority(WikiGameIdRole role)
+    {
+        return role switch
+        {
+            WikiGameIdRole.Primary => 0,
+            WikiGameIdRole.RelatedEdition => 1,
+            WikiGameIdRole.PlayView => 2,
+            WikiGameIdRole.TradeDemo => 3,
+            WikiGameIdRole.Demo => 4,
+            _ => 5
+        };
     }
 
     private static (IReadOnlyList<WikiCorpusEntry> Entries, IReadOnlyList<WikiCorpusNote> Notes) ParseConfig(
         string page,
         IReadOnlyList<string> serials,
+        IReadOnlyList<string> primarySerials,
         IReadOnlyList<TemplateBlock> blocks,
         List<WikiCorpusFinding> findings)
     {
@@ -714,6 +849,7 @@ public sealed partial class WikiSvc
             entries.Add(ClassifyEntry(
                 page,
                 serials,
+                primarySerials,
                 wikiKey,
                 rawValue,
                 rawNote,
@@ -727,6 +863,7 @@ public sealed partial class WikiSvc
     private static WikiCorpusEntry ClassifyEntry(
         string page,
         IReadOnlyList<string> pageSerials,
+        IReadOnlyList<string> primarySerials,
         string wikiKey,
         string rawValue,
         string? rawNote,
@@ -740,6 +877,7 @@ public sealed partial class WikiSvc
         var applicableSerials = ResolveApplicableSerials(
             page,
             pageSerials,
+            primarySerials,
             wikiKey,
             note,
             findings,
@@ -892,8 +1030,19 @@ public sealed partial class WikiSvc
         string wikiKey,
         string? note)
     {
-        if (PatchConfigKeys.Contains(wikiKey) ||
-            (!string.IsNullOrWhiteSpace(note) && PatchCondition.IsMatch(note)))
+        if (PatchConfigKeys.Contains(wikiKey))
+        {
+            return WikiRecommendationClass.PatchSpecific;
+        }
+
+        if (!string.IsNullOrWhiteSpace(note) &&
+            PatchDependencyCondition.IsMatch(note))
+        {
+            return WikiRecommendationClass.GeneralRecommendation;
+        }
+
+        if (!string.IsNullOrWhiteSpace(note) &&
+            PatchCondition.IsMatch(note))
         {
             return WikiRecommendationClass.PatchSpecific;
         }
@@ -998,6 +1147,7 @@ public sealed partial class WikiSvc
     private static IReadOnlyList<string> ResolveApplicableSerials(
         string page,
         IReadOnlyList<string> pageSerials,
+        IReadOnlyList<string> primarySerials,
         string wikiKey,
         string? note,
         List<WikiCorpusFinding> findings,
@@ -1006,7 +1156,7 @@ public sealed partial class WikiSvc
         ambiguous = false;
         if (string.IsNullOrWhiteSpace(note))
         {
-            return pageSerials;
+            return primarySerials;
         }
 
         var referenced = SnapshotSerial.Matches(note)
@@ -1019,14 +1169,19 @@ public sealed partial class WikiSvc
         }
 
         var applicable = referenced
-            .Where(serial => pageSerials.Contains(serial, StringComparer.OrdinalIgnoreCase))
+            .Where(serial => primarySerials.Contains(serial, StringComparer.OrdinalIgnoreCase))
             .OrderBy(serial => serial, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         var outside = referenced
             .Where(serial => !pageSerials.Contains(serial, StringComparer.OrdinalIgnoreCase))
             .ToArray();
 
-        if (outside.Length > 0 || applicable.Length == 0)
+        var nonPrimary = referenced
+            .Where(serial => pageSerials.Contains(serial, StringComparer.OrdinalIgnoreCase) &&
+                             !primarySerials.Contains(serial, StringComparer.OrdinalIgnoreCase))
+            .ToArray();
+
+        if (outside.Length > 0 || nonPrimary.Length > 0 || applicable.Length == 0)
         {
             ambiguous = true;
             findings.Add(new WikiCorpusFinding(
@@ -1034,7 +1189,9 @@ public sealed partial class WikiSvc
                 page,
                 null,
                 wikiKey,
-                $"Note references serial(s) outside the page GameID set: {string.Join(", ", outside)}."));
+                outside.Length > 0
+                    ? $"Note references serial(s) outside the page GameID set: {string.Join(", ", outside)}."
+                    : $"Note references non-primary GameID binding(s): {string.Join(", ", nonPrimary)}."));
             return [];
         }
 
@@ -1047,8 +1204,8 @@ public sealed partial class WikiSvc
     {
         var serialGroups = pages
             .Where(page => page.IsGameContent)
-            .SelectMany(page => page.Serials.Select(serial => (Serial: serial, Page: page)))
-            .GroupBy(item => item.Serial, StringComparer.OrdinalIgnoreCase)
+            .SelectMany(page => page.GameIdBindings.Select(binding => (Binding: binding, Page: page)))
+            .GroupBy(item => item.Binding.Serial, StringComparer.OrdinalIgnoreCase)
             .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase);
         var output = new List<WikiRec>();
 
@@ -1056,21 +1213,42 @@ public sealed partial class WikiSvc
         {
             var candidates = group
                 .Select(item => item.Page)
-                .DistinctBy(page => page.Title, StringComparer.Ordinal)
+                .DistinctBy(PageIdentity, StringComparer.Ordinal)
                 .OrderBy(page => page.Title, StringComparer.Ordinal)
                 .ToArray();
-            if (candidates.Length > 1 && !EquivalentPages(group.Key, candidates))
+            var primaryCandidates = group
+                .Where(item => item.Binding.Role == WikiGameIdRole.Primary)
+                .Select(item => item.Page)
+                .DistinctBy(PageIdentity, StringComparer.Ordinal)
+                .OrderBy(page => page.Title, StringComparer.Ordinal)
+                .ToArray();
+            if (primaryCandidates.Length > 1)
             {
                 findings.Add(new WikiCorpusFinding(
                     WikiFindingCode.DuplicateSerialConflict,
-                    string.Join(" | ", candidates.Select(page => page.Title)),
+                    string.Join(" | ", primaryCandidates.Select(page => page.Title)),
                     group.Key,
                     null,
-                    "The same serial is assigned to different Wiki pages or recommendations; all candidates were excluded."));
+                    "The same serial has multiple primary Wiki pages; all candidates were excluded."));
                 continue;
             }
 
-            var page = candidates[0];
+            if (primaryCandidates.Length == 0)
+            {
+                if (candidates.Length > 1)
+                {
+                    findings.Add(new WikiCorpusFinding(
+                        WikiFindingCode.DuplicateSerialConflict,
+                        string.Join(" | ", candidates.Select(page => page.Title)),
+                        group.Key,
+                        null,
+                        "The same non-primary serial is referenced by multiple Wiki pages; no winner was selected."));
+                }
+
+                continue;
+            }
+
+            var page = primaryCandidates[0];
             var mapped = page.Recommendations
                 .Where(entry => entry.IncludedInCatalog &&
                                 entry.ApplicableSerials.Contains(group.Key, StringComparer.OrdinalIgnoreCase))
@@ -1124,27 +1302,9 @@ public sealed partial class WikiSvc
         return output;
     }
 
-    private static bool EquivalentPages(
-        string serial,
-        WikiCorpusPage[] pages)
+    private static string PageIdentity(WikiCorpusPage page)
     {
-        var first = PageSignature(serial, pages[0]);
-        return pages.Skip(1).All(page =>
-            string.Equals(pages[0].Title, page.Title, StringComparison.Ordinal) &&
-            first.SequenceEqual(PageSignature(serial, page), StringComparer.Ordinal));
-    }
-
-    private static string[] PageSignature(
-        string serial,
-        WikiCorpusPage page)
-    {
-        return page.Recommendations
-            .Where(entry => entry.IncludedInCatalog &&
-                            entry.ApplicableSerials.Contains(serial, StringComparer.OrdinalIgnoreCase))
-            .SelectMany(entry => entry.MappedSettings.Select(target =>
-                $"{entry.WikiKey}\0{target.Section}\0{target.Key}\0{target.Value}\0{entry.Notes}"))
-            .OrderBy(item => item, StringComparer.Ordinal)
-            .ToArray();
+        return page.PageId?.ToString(CultureInfo.InvariantCulture) ?? $"{page.Namespace}\0{page.Title}";
     }
 
     private static void AddCorpusValue(
@@ -1255,11 +1415,11 @@ public sealed partial class WikiSvc
                     null,
                     name,
                     $"Unterminated '{{{{{name}}}' template."));
-                blocks.Add(new TemplateBlock(name, text[start..], false));
+                blocks.Add(new TemplateBlock(name, text[start..], false, start, text.Length));
                 break;
             }
 
-            blocks.Add(new TemplateBlock(name, text[start..end], true));
+            blocks.Add(new TemplateBlock(name, text[start..end], true, start, end));
             if (blocks.Count > MaxTemplatesPerPage)
             {
                 throw new InvalidDataException(
@@ -1389,8 +1549,13 @@ public sealed partial class WikiSvc
         return references.OrderBy(item => item, StringComparer.OrdinalIgnoreCase).ToArray();
     }
 
-    private static XDocument ReadWikiDocument(string path)
+    private static WikiHistoryReadResult ReadLatestWikiPages(string path)
     {
+        var latest = new Dictionary<string, RawWikiPage>(StringComparer.Ordinal);
+        var historicalPageBlocks = 0;
+        var totalRevisions = 0;
+        var encounterOrder = 0;
+
         using var stream = new FileStream(
             path,
             FileMode.Open,
@@ -1405,10 +1570,185 @@ public sealed partial class WikiSvc
                 IgnoreComments = true,
                 IgnoreProcessingInstructions = true,
                 MaxCharactersFromEntities = 0,
-                MaxCharactersInDocument = MaxWikiXmlBytes,
+                MaxCharactersInDocument = MaxWikiHistoryXmlBytes,
                 XmlResolver = null
             });
-        return XDocument.Load(reader, LoadOptions.None);
+
+        reader.MoveToContent();
+        while (!reader.EOF)
+        {
+            if (reader.NodeType != XmlNodeType.Element ||
+                !reader.LocalName.Equals("page", StringComparison.Ordinal))
+            {
+                reader.Read();
+                continue;
+            }
+
+            historicalPageBlocks++;
+            if (historicalPageBlocks > MaxHistoricalPageBlocks)
+            {
+                throw new InvalidDataException(
+                    $"RPCS3 wiki XML exceeds the {MaxHistoricalPageBlocks}-page-block history limit.");
+            }
+
+            var page = (XElement)XNode.ReadFrom(reader);
+            var title = page.Elements()
+                .FirstOrDefault(element => element.Name.LocalName == "title")?
+                .Value
+                .Trim() ?? string.Empty;
+            var namespaceText = page.Elements()
+                .FirstOrDefault(element => element.Name.LocalName == "ns")?
+                .Value;
+            var parsedNamespace = string.IsNullOrWhiteSpace(namespaceText)
+                ? 0
+                : int.TryParse(
+                    namespaceText,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out var ns)
+                    ? ns
+                    : -1;
+            var pageIdText = page.Elements()
+                .FirstOrDefault(element => element.Name.LocalName == "id")?
+                .Value;
+            var pageId = long.TryParse(
+                pageIdText,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out var parsedPageId)
+                ? parsedPageId
+                : (long?)null;
+            var redirectTarget = page.Elements()
+                .FirstOrDefault(element => element.Name.LocalName == "redirect")?
+                .Attribute("title")?
+                .Value
+                .Trim();
+            var revisions = page.Elements()
+                .Where(element => element.Name.LocalName == "revision")
+                .ToArray();
+            totalRevisions += revisions.Length;
+            if (totalRevisions > MaxWikiRevisions)
+            {
+                throw new InvalidDataException(
+                    $"RPCS3 wiki XML exceeds the {MaxWikiRevisions}-revision history limit.");
+            }
+
+            if (revisions.Length == 0)
+            {
+                StoreLatest(new RawWikiPage(
+                    pageId,
+                    title,
+                    parsedNamespace,
+                    redirectTarget,
+                    null,
+                    null,
+                    string.Empty,
+                    encounterOrder++));
+                continue;
+            }
+
+            foreach (var revision in revisions)
+            {
+                var revisionId = revision.Elements()
+                    .FirstOrDefault(element => element.Name.LocalName == "id")?
+                    .Value
+                    .Trim();
+                var timestampText = revision.Elements()
+                    .FirstOrDefault(element => element.Name.LocalName == "timestamp")?
+                    .Value;
+                var revisionTimestamp = DateTimeOffset.TryParse(
+                    timestampText,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                    out var timestamp)
+                    ? timestamp
+                    : (DateTimeOffset?)null;
+                var text = revision.Elements()
+                    .FirstOrDefault(element => element.Name.LocalName == "text")?
+                    .Value ?? string.Empty;
+                var selectedRedirectTarget = redirectTarget ?? ExtractRedirectTarget(text);
+                StoreLatest(new RawWikiPage(
+                    pageId,
+                    title,
+                    parsedNamespace,
+                    selectedRedirectTarget,
+                    revisionId,
+                    revisionTimestamp,
+                    text,
+                    encounterOrder++));
+            }
+        }
+
+        return new WikiHistoryReadResult(
+            latest.Values
+                .OrderBy(page => page.Namespace)
+                .ThenBy(page => page.Title, StringComparer.Ordinal)
+                .ToArray(),
+            historicalPageBlocks,
+            totalRevisions);
+
+        void StoreLatest(RawWikiPage candidate)
+        {
+            var identity = candidate.PageId is not null
+                ? $"id:{candidate.PageId.Value.ToString(CultureInfo.InvariantCulture)}"
+                : $"title:{candidate.Namespace.ToString(CultureInfo.InvariantCulture)}\0{candidate.Title}";
+            if (!latest.TryGetValue(identity, out var current) ||
+                IsNewerRevision(candidate, current))
+            {
+                latest[identity] = candidate;
+            }
+        }
+    }
+
+    private static string? ExtractRedirectTarget(string text)
+    {
+        var match = RedirectText.Match(text);
+        return match.Success ? match.Groups["target"].Value.Trim() : null;
+    }
+
+    private static bool IsNewerRevision(
+        RawWikiPage candidate,
+        RawWikiPage current)
+    {
+        if (candidate.RevisionTimestamp is not null &&
+            current.RevisionTimestamp is not null &&
+            candidate.RevisionTimestamp != current.RevisionTimestamp)
+        {
+            return candidate.RevisionTimestamp > current.RevisionTimestamp;
+        }
+
+        var candidateRevisionId = long.TryParse(
+            candidate.RevisionId,
+            NumberStyles.None,
+            CultureInfo.InvariantCulture,
+            out var parsedCandidateRevisionId)
+            ? parsedCandidateRevisionId
+            : (long?)null;
+        var currentRevisionId = long.TryParse(
+            current.RevisionId,
+            NumberStyles.None,
+            CultureInfo.InvariantCulture,
+            out var parsedCurrentRevisionId)
+            ? parsedCurrentRevisionId
+            : (long?)null;
+        if (candidateRevisionId is not null &&
+            currentRevisionId is not null &&
+            candidateRevisionId != currentRevisionId)
+        {
+            return candidateRevisionId > currentRevisionId;
+        }
+
+        if ((candidate.RevisionTimestamp is not null) != (current.RevisionTimestamp is not null))
+        {
+            return candidate.RevisionTimestamp is not null;
+        }
+
+        if ((candidateRevisionId is not null) != (currentRevisionId is not null))
+        {
+            return candidateRevisionId is not null;
+        }
+
+        return candidate.EncounterOrder > current.EncounterOrder;
     }
 
     private static string ResolveSnapshotDate(
@@ -1477,9 +1817,34 @@ public sealed partial class WikiSvc
     private sealed record TemplateBlock(
         string Name,
         string Text,
-        bool Complete);
+        bool Complete,
+        int Start,
+        int End);
 
     private sealed record TemplateParameter(
         string? Key,
         string Value);
+
+    private sealed record GameIdParseResult(
+        IReadOnlyList<string> Serials,
+        IReadOnlyList<WikiGameIdBinding> Bindings,
+        int RawReferences)
+    {
+        public static GameIdParseResult Empty { get; } = new([], [], 0);
+    }
+
+    private sealed record RawWikiPage(
+        long? PageId,
+        string Title,
+        int Namespace,
+        string? RedirectTarget,
+        string? RevisionId,
+        DateTimeOffset? RevisionTimestamp,
+        string Text,
+        int EncounterOrder);
+
+    private sealed record WikiHistoryReadResult(
+        IReadOnlyList<RawWikiPage> Pages,
+        int HistoricalPageBlocks,
+        int TotalRevisions);
 }

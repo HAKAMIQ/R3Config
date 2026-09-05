@@ -9,17 +9,6 @@
              SnapsToDevicePixels="True">
 
     <UserControl.Resources>
-        <Style x:Key="GameListLocalizedTitleText"
-               TargetType="{x:Type TextBlock}"
-               BasedOn="{StaticResource RailTitleText}">
-            <Setter Property="FlowDirection"
-                    Value="{DynamicResource App.TextFlowDirection}" />
-            <Setter Property="TextAlignment"
-                    Value="{DynamicResource App.TextAlignment}" />
-            <Setter Property="HorizontalAlignment"
-                    Value="Stretch" />
-        </Style>
-
         <Style x:Key="GameListLocalizedCaptionText"
                TargetType="{x:Type TextBlock}"
                BasedOn="{StaticResource RailCaptionText}">
@@ -119,19 +108,13 @@
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="12" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="8" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="12" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0"
-                       Text="{lang:TextExt Key=Games.Title}"
-                       Style="{StaticResource GameListLocalizedTitleText}" />
-
-            <Grid Grid.Row="2"
+            <Grid Grid.Row="0"
                   Height="32"
                   FlowDirection="{DynamicResource App.FlowDirection}">
 
@@ -150,14 +133,15 @@
                            Visibility="{Binding GameList.IsSearch, Converter={StaticResource BoolToVisibilityConverter}}" />
             </Grid>
 
-            <CheckBox Grid.Row="4"
+            <CheckBox Grid.Row="2"
                       MinHeight="32"
                       Content="{lang:TextExt Key=Games.FilterDetectedOnly}"
                       Style="{StaticResource GameListLocalizedFilterCheckBox}"
                       IsChecked="{Binding GameList.InR3, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                      ToolTip="{Binding GameList.Tip}" HorizontalAlignment="Left" />
+                      ToolTip="{Binding GameList.Tip}"
+                      HorizontalAlignment="Left" Checked="CheckBox_Checked" />
 
-            <Grid Grid.Row="6"
+            <Grid Grid.Row="4"
                   FlowDirection="{DynamicResource App.FlowDirection}"
                   HorizontalAlignment="Stretch">
 

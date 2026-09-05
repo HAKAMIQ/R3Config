@@ -829,9 +829,9 @@ internal static class UiGate
         string appDir,
         List<string> errs)
     {
-        const int expectedCount = 810;
+        const int expectedCount = 811;
         const string expectedSha256 =
-            "7c7bd9cd491af5d22f24eac1730320c460de61fb94e368b94aca56e2bc5ea0ba";
+            "202cfd323807a58f49530b7f322b3002df8b29033104b080100a6b35879383e3";
         var propertyNames = new HashSet<string>(
             [
                 "FlowDirection",
@@ -1418,17 +1418,21 @@ internal static class UiGate
 
         if (!canaryPatchView.Contains("ShowCanaryVerificationPanel", StringComparison.Ordinal) ||
             !canaryPatchView.Contains("PatchReadiness.VerifyAction", StringComparison.Ordinal) ||
+            !canaryPatchView.Contains("PatchReadiness.ReverifyAction", StringComparison.Ordinal) ||
+            !canaryPatchView.Contains("ShowCanaryReverificationAction", StringComparison.Ordinal) ||
             !officialPatchView.Contains("Preview.OfclEmptyText", StringComparison.Ordinal) ||
             !canaryPatchView.Contains("Preview.CanEmptyText", StringComparison.Ordinal))
         {
             errs.Add(
-                "Patch compatibility guidance must be contextual: precise empty states on official/Canary pages and verification only on Canary.");
+                "Patch compatibility guidance must be contextual: precise empty states on official/Canary pages, first-time verification, and explicit Canary mismatch reverification.");
         }
 
         if (!patchTemplates.Contains("Text=\"{Binding ArtemisTitle}\"", StringComparison.Ordinal) ||
             !patchTemplates.Contains("Text=\"{Binding NoteBody}\"", StringComparison.Ordinal) ||
             !patchTemplates.Contains("Visibility=\"{Binding HasDesc,", StringComparison.Ordinal) ||
-            !patchTemplates.Contains("ToolTip=\"{Binding ArtemisTip}\"", StringComparison.Ordinal))
+            !patchTemplates.Contains("ToolTipService.IsEnabled=\"{Binding HasArtemisTip}\"", StringComparison.Ordinal) ||
+            !patchTemplates.Contains("<Border.ToolTip>", StringComparison.Ordinal) ||
+            !patchTemplates.Contains("Text=\"{Binding ArtemisTip}\"", StringComparison.Ordinal))
         {
             errs.Add(
                 "Artemis rows must keep cleaned titles separate from localized Notes, suppress technical prose in the primary list, and preserve details in the row ToolTip.");

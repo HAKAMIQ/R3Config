@@ -455,13 +455,12 @@ internal static partial class Program
         Assert(!PatAct.Can(explicitHashMismatch) &&
                !PatAct.IsRun(explicitHashMismatch),
             "Expected a trusted local Hash mismatch to block patch activation.");
-        var unknownSourceHashMatch = hashUnknownSafeFix with
-        {
-            Patch = hashUnknownSafeFix.Patch with
+        var unknownSourceHashMatch = new R3Config.Svc.PatchMatchService().Match(
+            hashUnknownSafeFix.Patch with
             {
                 Source = PatSrc.Unknown
-            }
-        };
+            },
+            [rogue]);
         Assert(!PatAct.Can(unknownSourceHashMatch),
             "Expected an untrusted patch source without local Hash evidence to remain blocked.");
         Assert(!PatPol.Should(fpsPatch.Patch.Risk, MatStat.Match),

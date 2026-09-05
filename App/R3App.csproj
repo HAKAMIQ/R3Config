@@ -29,7 +29,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core\R3Core.csproj" />
-    <ProjectReference Include="..\Script\LangPack\R3LangPack.csproj" ReferenceOutputAssembly="false" />
+	  <ProjectReference Include="..\Script\LangPack\R3LangPack.csproj"
+					 ReferenceOutputAssembly="false"
+					 Private="false"
+					 GlobalPropertiesToRemove="RuntimeIdentifier;RuntimeIdentifiers;PublishRuntimeIdentifier;SelfContained;PublishSelfContained;PublishSingleFile" />
   </ItemGroup>
 
   <ItemGroup>

@@ -8,4 +8,9 @@ public partial class GameList : UserControl
     {
         InitializeComponent();
     }
+
+    private void CheckBox_Checked(object sender, System.Windows.RoutedEventArgs e)
+    {
+
+    }
 }

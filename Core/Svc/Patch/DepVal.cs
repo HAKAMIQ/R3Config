@@ -142,8 +142,8 @@ public static class PatDepVal
             Channel(candidate.Patch).Equals(
                 Channel(dependent.Patch),
                 StringComparison.OrdinalIgnoreCase) &&
-            candidate.Patch.RunKey.Equals(
-                dependent.Patch.RunKey,
+            candidate.EffectiveRunKey.Equals(
+                dependent.EffectiveRunKey,
                 StringComparison.OrdinalIgnoreCase) &&
             candidate.Patch.Title.Equals(
                 title,
@@ -203,8 +203,10 @@ public static class PatDepVal
 
     private static string Identity(PatMatch match)
     {
-        return TargetIdentity(
-            match.Patch,
+        return string.Join(
+            "\0",
+            Channel(match.Patch),
+            match.EffectiveRunKey,
             Serial(match),
             Version(match),
             match.Patch.Title);

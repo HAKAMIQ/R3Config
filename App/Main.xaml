@@ -475,13 +475,6 @@
                                                       VerticalAlignment="Stretch" />
                                 </TabItem>
 
-                                <TabItem Header="{lang:TextExt Key=Tab.Setup}"
-                                         AutomationProperties.AutomationId="Setup.Tab"
-                                         TextBlock.TextAlignment="Left">
-
-                                    <controls:SetupView HorizontalAlignment="Stretch"
-                                                        VerticalAlignment="Stretch" />
-                                </TabItem>
                             </TabControl>
                         </Grid>
 

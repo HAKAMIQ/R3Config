@@ -67,10 +67,9 @@ ExplicitSelection
 AND SerialCompatible
 AND VersionCompatible
 AND TrustedDefinitionWithValidHashKey
-AND (RuntimeHashMatches OR RuntimeGuardCanDecide)
-AND AuthoritativeMainPpuNeverContradicts
+AND (RuntimeHashMatches OR RuntimeGuardCanDecide OR CanaryLocalBindingIsSafe)
 AND PreparedDefinitionValid
-= ExactMatch OR RPCS3-runtime-guarded and enableable
+= exact, allowed runtime-guarded, or locally rebound Canary and enableable
 ```
 
 - risk label ليس إثبات توافق.
@@ -78,8 +77,10 @@ AND PreparedDefinitionValid
 - `All` metadata صريحة، ولا تلغي valid hash-key requirement.
 - no default selection.
 - disable يسمح أيضًا `SerialVersionMatchHashUnknown` لأنه يزيل state.
-- عند غياب local hash يسمح trusted serial/version match لأن RPCS3 يحسب hash وقت
-  التشغيل ولا يستدعي patch block إلا بالاسم المطابق.
+- عند غياب local hash يسمح trusted serial/version match بالـruntime guard للمصادر
+  التي يدعمها هذا العقد، لكن bundled Canary يبقى محظورا حتى التقاط PPU محلي مرة واحدة.
+- Canary local binding لا يبدأ مؤقته حتى يظهر `PPU executable hash` جديد للـserial المحدد وتكون عملية RPCS3 المملوكة جاهزة،
+  ولا يكتب `can.yml`؛ compiler يجهز النسخة المحلية في `imported_patch.yml`.
 - بصمة PPU الرئيسية المخالفة من log/metadata أو cache حديث موثّق بعد EBOOT
   تعارض محظور. كاش PPU القديم وأدلة
   SPU/PRX/OVL جزئية: التطابق منها إثبات إيجابي، لكن الغياب أو مشاهدة وحدة أخرى

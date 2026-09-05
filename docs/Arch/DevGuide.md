@@ -214,8 +214,9 @@ Read each source
  -> match against serial/version/all detected hashes
  -> show every relevant result, select none by default
  -> user selects
- -> planner keeps ExactMatch or RPCS3-runtime-guarded matches only
- -> compiler prepares selected definitions/dependencies
+ -> bundled Canary requires one-time local PPU binding after confirmed boot
+ -> planner keeps ExactMatch, locally rebound Canary, or allowed runtime-guarded matches
+ -> compiler resolves the canonical source definition, then emits the effective runtime key
  -> guard all targets
  -> one backup manifest
  -> one atomic multi-file transaction
@@ -225,13 +226,13 @@ Read each source
 resident definition يتقدم على bundled preview. نسخة رقمية أعلى قد تتقدم بين
 مصادر من الرتبة نفسها. تعريفان مختلفان بالهوية والنسخة نفسها يُرفضان.
 
-Enable يحتاج `ExactMatch`، أو trusted definition ذات serial/version مطابقين
-ومفتاح hash صالح مع غياب الدليل المحلي فقط. الحالة الثانية تبقى
-`SerialVersionMatchHashUnknown` لكن `PatchActivationPolicy` يسمح بها لأن RPCS3
-يحسب hash وقت الإقلاع ويبحث عن ذلك المفتاح قبل التطبيق. بصمة PPU الرئيسية
-الموثوقة المخالفة محظورة؛ أما cache القديم أو SPU/PRX/OVL غير المشاهد فهي أدلة
-جزئية ويحسمها RPCS3 وقت تحميل الوحدة. Disable يسمح أيضًا بالحالة نفسها لأنه
-يزيل enabled state. Expert mode لا يتجاوز الشرط.
+Enable لغير Canary يحتاج `ExactMatch`، أو trusted definition ذات serial/version
+مطابقين ومفتاح hash صالح مع غياب الدليل المحلي فقط؛ عندها يبقى RPCS3 هو runtime
+guard. أما bundled Canary فلا يستخدم هذا المسار: يجب حفظ PPU محلي من جلسة اللعبة
+المحددة مرة واحدة، ثم يربط `CanaryRuntimeBindingService` تعريف المصدر canonical
+بمفتاح PPU المحلي. إذا كان للعنوان نفسه أكثر من body مختلف لنفس serial/version
+ولا يحدد PPU المحلي أحدها تطابقًا، فالقرار fail-closed. Disable يظل قادرًا على
+إزالة state لهوية تشغيل قابلة لإعادة البناء. Expert mode لا يتجاوز الشرط.
 
 طبقة القرار الرسمية هي `PatchCompatibilityService`. تجمع السيريال والإصدار
 وأدلة PPU/SPU/PRX/OVL وتنتج `PatchCompatibilityDecision` واحدًا تستخدمه كل
@@ -244,6 +245,15 @@ parser أو compiler أو واجهة الباتشات.
 source/message/kind/timestamp.
 المصادر الحالية: metadata، log، gzip log، وbounded per-game cache. probing محدود
 بالحجم والتمدد وعدد entries.
+
+`Rpcs3LogLocator` هو المصدر المركزي لمسارات السجل النصي داخل مجلد المحاكي.
+يرجع `log/RPCS3.log` أولاً باعتباره المسار الحديث، ثم `RPCS3.log` في جذر RPCS3
+كتوافق مع البنية القديمة. H-Canary يسجل baseline للمسارين قبل تشغيل اللعبة.
+لا يبدأ مؤقت الدقيقة من إنشاء عملية RPCS3 ولا من ظهور serial أثناء التحميل؛ بل
+يتطلب في الجزء الجديد من السجل `SYS: Serial` المطابق ثم marker RPCS3 الرسمي
+`PPU executable hash` في جلسة اللوج الجديدة الخاصة بالـSerial المحدد، مع بقاء نافذة RPCS3 المملوكة جاهزة. بعد دقيقة من هذا الإثبات يغلق R3Config العملية التي أطلقها،
+ثم يقرأ `PPU executable hash` من الجلسة الجديدة ويحفظ الربط مرة واحدة.
+`PatchHashProbeService` يعيد استخدام locator نفسه بدل إعادة تركيب المسارات.
 
 قراءة `RPCS3.log` الكبير لا تعتمد على آخر السجل فقط. القارئ يأخذ head وtail ضمن
 حد ثابت، ويفحص tail أولاً لأنه الأحدث، ثم head حتى لا تضيع جلسة الإقلاع إذا تجاوز
@@ -258,10 +268,10 @@ source/message/kind/timestamp.
 بصمة PPU الرئيسية الموثوقة يبقى `HashMismatch` ولا يقبل التفعيل.
 
 عند تطابق serial/version وغياب البصمة محليًا تبقى النتيجة
-`SerialVersionMatchHashUnknown`. يمكن تفعيلها فقط إذا كان المصدر معروفًا، ومفتاح
-PPU/SPU/PRX/OVL صالحًا، والهدف ليس `All` الغامض. هذا لا يطبق الباتش تخمينًا:
-RPCS3 ينشئ اسم PPU/SPU/PRX/OVL من hash الفعلي وقت التشغيل، ثم لا يدخل patch block
-إلا إذا وجد الاسم نفسه، وبعدها يعيد فحص serial/version وEnabled.
+`SerialVersionMatchHashUnknown` للمصادر التي يسمح عقدها بالـruntime guard. bundled
+Canary مستثنى: يبقى غير قابل للتفعيل حتى يكتمل local PPU capture، وبعدها يحتفظ
+`PatMatch` بمفتاح المصدر canonical للـsource lookup وبـ`EffectiveRunKey` المحلي
+للتجهيز و`patch_config.yml`.
 
 ## 11. Mutation Guard
 

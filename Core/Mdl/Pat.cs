@@ -345,6 +345,11 @@ public sealed record PatMatch(
 
     public IReadOnlyList<string> Hashes =>
         DetHash ?? [];
+
+    public string EffectiveRunKey =>
+        !string.IsNullOrWhiteSpace(Cmp?.RunKey)
+            ? Cmp!.RunKey
+            : Patch.RunKey;
 }
 
 public sealed record PatChg(

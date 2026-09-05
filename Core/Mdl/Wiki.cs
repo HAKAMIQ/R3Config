@@ -38,6 +38,30 @@ public enum WikiFindingCode
     OrphanNote
 }
 
+public enum WikiGameIdRole
+{
+    Primary,
+    Demo,
+    PlayView,
+    TradeDemo,
+    RelatedEdition,
+    Unknown
+}
+
+public sealed record WikiGameIdBinding(
+    string Serial,
+    long? CanonicalPageId,
+    string Page,
+    WikiGameIdRole Role,
+    string? VariantLabel,
+    int TemplateIndex);
+
+public sealed record WikiRedirectAlias(
+    string Alias,
+    string Target,
+    long? PageId,
+    bool TargetsGame);
+
 public sealed record WikiMappedSetting(
     string Section,
     string Key,
@@ -65,14 +89,18 @@ public sealed record WikiCorpusNote(
     bool AssociatedWithSetting);
 
 public sealed record WikiCorpusPage(
+    long? PageId,
     string Title,
     int Namespace,
     bool IsRedirect,
+    string? RedirectTarget,
     bool IsGameContent,
     bool Parsed,
     string? RevisionId,
     DateTimeOffset? RevisionTimestamp,
     IReadOnlyList<string> Serials,
+    IReadOnlyList<WikiGameIdBinding> GameIdBindings,
+    int RawSerialReferences,
     int GameIdTemplateCount,
     int ConfigTemplateCount,
     IReadOnlyList<string> PatchReferences,
@@ -87,12 +115,17 @@ public sealed record WikiCorpusFinding(
     string Detail);
 
 public sealed record WikiCorpusStats(
+    int HistoricalPageBlocks,
+    int TotalRevisions,
     int TotalPages,
     int ParsedPages,
     int ParseFailures,
     int MainNamespacePages,
     int GameContentPages,
     int RedirectPages,
+    int GameRedirectAliases,
+    int NonGameRedirects,
+    int UtilityPages,
     int NonGamePages,
     int PagesWithGameIdTemplate,
     int PagesWithSerials,
@@ -126,6 +159,7 @@ public sealed record WikiCorpusAnalysis(
     IReadOnlyList<WikiCorpusEntry> Recommendations,
     IReadOnlyList<WikiCorpusNote> Notes,
     IReadOnlyList<WikiCorpusFinding> Findings,
+    IReadOnlyList<WikiRedirectAlias> RedirectAliases,
     IReadOnlyList<WikiRec> CatalogRecommendations);
 
 public enum WikiCatalogDiffKind

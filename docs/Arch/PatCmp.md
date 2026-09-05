@@ -47,6 +47,10 @@ PatchCompatibilityService
   يطابق serial -> version -> runtime key evidence
   ويرجع PatchCompatibilityDecision
 
+CanaryRuntimeBindingService
+  يحافظ على مفتاح can.yml كهوية مصدر، ويولد EffectiveRunKey من PPU المحلي
+  فقط عندما يكون تعريف Canary للـserial/version غير ملتبس
+
 PatchActivationPolicy
   facade وحيد تستخدمه المعاينة والتجميع والتفعيل والتعطيل
 ```
@@ -84,13 +88,32 @@ PatchActivationPolicy
 | الحالة | القرار | السبب |
 |---|---|---|
 | serial + version + runtime hash متطابقة | `Compatible` | تطابق مثبت محليًا |
-| serial/version مطابقان، المفتاح صالح، والمصدر معروف، ولا يوجد تعارض قطعي | `RuntimeGuarded` | RPCS3 يطبق فقط المفتاح المطابق عند boot |
+| serial/version مطابقان، المفتاح صالح، والمصدر غير Canary، ولا يوجد تعارض قطعي | `RuntimeGuarded` | RPCS3 يطبق فقط المفتاح المطابق عند boot |
+| bundled Canary بلا PPU محلي محفوظ | `Blocked` | يلزم التقاط محلي مرة واحدة |
+| bundled Canary + PPU محلي + تعريف وحيد للـserial/version/title | `Compatible` مع `EffectiveRunKey` محلي | يجهز التعريف canonical تحت مفتاح PPU المكتشف |
+| bundled Canary + عدة bodies مختلفة ولا يوجد exact variant محلي | `Blocked` | ربط تلقائي ملتبس |
 | الإصدار مختلف | `Blocked` | الباتش مخصص لإصدار آخر |
 | بصمة PPU الرئيسية الموثوقة مختلفة | `Blocked` | نسخة التنفيذ مختلفة |
 | runtime key غير صالح | `Blocked` | RPCS3 لن يولد هذا المفتاح |
 | مفتاح `TITLE_ID-...` لسيريال آخر | `Blocked` | نطاق المفتاح مختلف |
 | المصدر مجهول والبصمة المحلية غير موجودة | `Blocked` | لا دليل كافٍ للثقة بالحارس المؤجل |
 | هدف `All/All` بلا تطابق hash مثبت | `Blocked` | لا يمكن نسبه للعبة المختارة |
+
+### عقد Canary المحلي
+
+قاعدة `can.yml` مصدر canonical ولا تتغير على جهاز المستخدم. عند أول محاولة
+لاستخدام Canary للعبة محددة، يسجل R3Config baseline لمساري السجل المركزيين،
+يشغل اللعبة، وينتظر `SYS: Serial` المطابق ثم `PPU executable hash` جديدا في الجزء الجديد
+من السجل. يبدأ مؤقت 60 ثانية عند هذا الإثبات فقط. بعد انتهاء المدة يغلق العملية
+التي يملكها، يقرأ `PPU executable hash` بعد الإغلاق، ويحفظ الربط المحلي مرة واحدة.
+
+عند التحليل التالي يبقى `Rpcs3PatchEntry.RunKey` هو مفتاح تعريف المصدر داخل
+`can.yml` حتى يستطيع compiler إعادة إيجاد body المراجع. إذا كان تعريف المصدر
+للـserial/version/title وحيدًا، ينتج matcher `PatMatch.EffectiveRunKey` من PPU
+المحلي. `PatchSelectionCompiler` ينسخ body نفسه من المصدر لكنه يخرجه تحت
+`EffectiveRunKey` في managed `imported_patch.yml`، وplanner يستخدم المفتاح نفسه في
+`patch_config.yml`. إذا كانت هناك عدة bodies مختلفة لنفس الهدف ولم يطابق PPU
+المحلي أحد مفاتيحها الأصلية، لا يختار R3Config offsets عشوائيًا.
 
 ### لماذا لا نعتبر كل بصمة مختلفة تعارضًا؟
 
@@ -129,6 +152,8 @@ PatchActivationPolicy
 - لا تعتبر SPU/PRX/OVL غير المشاهد mismatch.
 - لا تسمح لـExpert mode بتجاوز قرار الطبقة.
 - لا يكتب preview أو probe أي ملف.
+- bundled Canary لا يستخدم unknown-hash runtime guard بديلًا عن local capture.
+- لا تعدل `can.yml` عند الربط؛ أخرج النسخة المجهزة فقط إلى managed `imported_patch.yml`.
 - التفعيل يكتب enabled state فقط بعد اختيار المستخدم وmutation guard وtransaction.
 
 ## إضافة مصدر باتش جديد

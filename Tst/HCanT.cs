@@ -44,6 +44,7 @@ internal static class HCanTst
     public static void Run()
     {
         Hash_Ext();
+        LogLocator_All();
         Discovery_All();
         DiscoveryStore_Hardening();
         Launch_All();
@@ -100,6 +101,209 @@ internal static class HCanTst
                     "input limit",
                     StringComparison.OrdinalIgnoreCase) == true,
                 "Oversized RPCS3.log input should be rejected before whole-file allocation.");
+        }
+        finally
+        {
+            Directory.Delete(temp, true);
+        }
+    }
+
+    private static void LogLocator_All()
+    {
+        const string ppuA =
+            "1111111111111111111111111111111111111111";
+        const string ppuB =
+            "2222222222222222222222222222222222222222";
+
+        var temp = NewTemp();
+        try
+        {
+            var root = Path.Combine(temp, "rpcs3");
+            var externalData = Path.Combine(temp, "external-data");
+            var modernLog = Path.Combine(
+                root,
+                "log",
+                "RPCS3.log");
+            var legacyLog = Path.Combine(
+                root,
+                "RPCS3.log");
+            var gamePath = Path.Combine(
+                temp,
+                "games",
+                "BLUS30109");
+            Directory.CreateDirectory(root);
+            Directory.CreateDirectory(externalData);
+            Directory.CreateDirectory(gamePath);
+            File.WriteAllBytes(
+                Path.Combine(root, "rpcs3.exe"),
+                []);
+
+            var install = new Rpcs3InstallDescriptor(
+                root,
+                Path.Combine(root, "rpcs3.exe"),
+                Path.Combine(externalData, "config"),
+                Path.Combine(externalData, "config", "custom_configs"),
+                Path.Combine(externalData, "patches"),
+                Path.Combine(externalData, "config", "patch_config.yml"),
+                externalData);
+            var game = new Rpcs3GameDescriptor(
+                "BLUS30109",
+                "METAL GEAR SOLID 4",
+                gamePath,
+                "02.00",
+                null,
+                null);
+
+            static string LogSession(
+                string serial,
+                string? version,
+                string ppu)
+            {
+                return $"SYS: Serial: {serial}{Environment.NewLine}" +
+                       $"SYS: App version: {version}{Environment.NewLine}" +
+                       $"ppu_loader: PPU executable hash: PPU-{ppu}{Environment.NewLine}" +
+                       $"GUI: Boot successful.{Environment.NewLine}";
+            }
+
+            var paths = Rpcs3LogLocator
+                .PlainLogPaths(install)
+                .ToArray();
+            Assert(
+                paths.SequenceEqual(
+                    new[] { modernLog, legacyLog },
+                    StringComparer.OrdinalIgnoreCase),
+                "RPCS3 log location must be derived from the emulator root and cover modern log/RPCS3.log plus legacy root/RPCS3.log in deterministic order.");
+
+            var discovery = new HCanHashDiscoveryService();
+            Assert(
+                discovery.GetLogPaths(install).SequenceEqual(
+                    paths,
+                    StringComparer.OrdinalIgnoreCase),
+                "H-Canary discovery must use the centralized RPCS3 log locator instead of rebuilding a DataRoot-specific path.");
+
+            var store = new HCanDiscoveryStore(
+                Path.Combine(temp, "dual-log-state.json"));
+            var useCase = new HashEvidenceUseCase(
+                discovery,
+                store,
+                new FakeProcessProbe());
+            var useCaseSession = useCase.Begin(
+                install,
+                game);
+            Assert(
+                useCaseSession.LogSources is { Count: 2 } &&
+                useCaseSession.LogSources.Select(source =>
+                    source.LogPath).SequenceEqual(
+                        paths,
+                        StringComparer.OrdinalIgnoreCase),
+                "HashEvidenceUseCase must baseline both emulator-root log locations even when RPCS3 DataRoot points elsewhere.");
+            useCase.Cancel(useCaseSession);
+
+            var legacyUseCaseSession = useCase.Begin(
+                install,
+                game);
+            File.WriteAllText(
+                legacyLog,
+                LogSession(
+                    game.Serial,
+                    game.Version,
+                    ppuA));
+            var savedLegacy = useCase.Read(
+                install,
+                game);
+            var savedLegacyBinding = store.LoadBinding(
+                install.ExePath,
+                game.Serial,
+                game.Version,
+                game.InstPath);
+            Assert(
+                savedLegacy.Code == HashReadCode.Found &&
+                savedLegacy.IsSaved &&
+                savedLegacy.SrcPath.Equals(
+                    legacyLog,
+                    StringComparison.OrdinalIgnoreCase) &&
+                savedLegacyBinding is not null &&
+                savedLegacyBinding.LogPath.Equals(
+                    legacyLog,
+                    StringComparison.OrdinalIgnoreCase),
+                "HashEvidenceUseCase must persist the actual legacy root/RPCS3.log source when that candidate produced the fresh selected-game fingerprint.");
+            Assert(
+                useCase.DeleteSaved(install, game),
+                "Dual-log regression setup must be able to remove its saved legacy binding.");
+            useCase.Cancel(legacyUseCaseSession);
+            File.Delete(legacyLog);
+
+            HCanDiscoverySession BeginSession()
+            {
+                var sources = discovery
+                    .GetLogPaths(install)
+                    .Select(path => new HCanLogSource(
+                        path,
+                        discovery.Capture(path)))
+                    .ToArray();
+                return new HCanDiscoverySession(
+                    install.ExePath,
+                    game.Serial,
+                    game.Version,
+                    game.InstPath,
+                    0,
+                    DateTime.UtcNow,
+                    sources[0].LogPath,
+                    sources[0].Baseline,
+                    sources);
+            }
+
+            var legacySession = BeginSession();
+            File.WriteAllText(
+                legacyLog,
+                $"SYS: Serial: {game.Serial}{Environment.NewLine}" +
+                $"SYS: App version: {game.Version}{Environment.NewLine}");
+            Assert(
+                !discovery.IsSelectedGameBooted(legacySession),
+                "Selected-game discovery must not start the one-minute timer from the serial alone before the selected executable has produced a fresh PPU hash.");
+            File.AppendAllText(
+                legacyLog,
+                $"ppu_loader: PPU executable hash: PPU-{ppuA}{Environment.NewLine}");
+            Assert(
+                discovery.IsSelectedGameBooted(legacySession),
+                "Selected-game boot detection must inspect the legacy root/RPCS3.log candidate and require a fresh selected-game PPU executable hash before the one-minute timer can start.");
+            var legacyRead = discovery.Read(legacySession);
+            Assert(
+                legacyRead.Code == HashReadCode.Found &&
+                legacyRead.SrcPath.Equals(
+                    legacyLog,
+                    StringComparison.OrdinalIgnoreCase) &&
+                legacyRead.Hashes.Any(hash =>
+                    hash.Kind == HashKind.Ppu &&
+                    hash.Value == ppuA),
+                "H-Canary discovery must read a fresh selected-game PPU hash from legacy root/RPCS3.log.");
+
+            File.Delete(legacyLog);
+            File.WriteAllText(
+                legacyLog,
+                LogSession(
+                    game.Serial,
+                    game.Version,
+                    ppuA));
+            var modernSession = BeginSession();
+            Directory.CreateDirectory(
+                Path.GetDirectoryName(modernLog)!);
+            File.WriteAllText(
+                modernLog,
+                LogSession(
+                    game.Serial,
+                    game.Version,
+                    ppuB));
+            var modernRead = discovery.Read(modernSession);
+            Assert(
+                modernRead.Code == HashReadCode.Found &&
+                modernRead.SrcPath.Equals(
+                    modernLog,
+                    StringComparison.OrdinalIgnoreCase) &&
+                modernRead.Hashes.Any(hash =>
+                    hash.Kind == HashKind.Ppu &&
+                    hash.Value == ppuB),
+                "When legacy evidence is unchanged and modern log/RPCS3.log changes after the baseline, H-Canary must select the modern session evidence.");
         }
         finally
         {
@@ -164,6 +368,13 @@ internal static class HCanTst
                 logPath,
                 Session(game.Serial, game.Version, ppuA));
             var staleRunningSession = useCase.Begin(install, game);
+            Assert(
+                staleRunningSession.LogSources is { Count: 2 } &&
+                staleRunningSession.LogSources.Select(source =>
+                    source.LogPath).SequenceEqual(
+                        Rpcs3LogLocator.PlainLogPaths(install),
+                        StringComparer.OrdinalIgnoreCase),
+                "HashEvidenceUseCase must baseline both centralized RPCS3 log candidates before launching the game.");
             useCase.AttachProcess(staleRunningSession, 4141);
             process.Running = true;
             Assert(
@@ -546,12 +757,12 @@ internal static class HCanTst
                 guardedWithoutDiscovery.Status == MatStat.Unknown &&
                 guardedWithoutDiscovery.Cmp is
                 {
-                    Verdict: PatchCompatibilityVerdict.Guarded,
-                    Code: PatchCompatibilityReasonCode.R3Guard,
-                    CanOn: true,
-                    UseGuard: true
+                    Verdict: PatchCompatibilityVerdict.Blocked,
+                    Code: PatchCompatibilityReasonCode.Hash,
+                    CanOn: false,
+                    UseGuard: false
                 },
-                "A trusted Canary patch with matching serial and version must remain selectable under RPCS3's exact runtime-key guard when local discovery evidence is absent.");
+                "A Canary patch must remain blocked until the selected game has a saved local executable fingerprint.");
 
             Assert(
                 compatibility.Evaluate(Patch("PPU exact", HashKind.Ppu, ppuB, target), [enriched]).Status == MatStat.Match &&
@@ -728,6 +939,10 @@ internal static class HCanTst
                     replaceExisting: true),
                 "Malformed H-Canary executable hashes must be rejected before persistence.");
 
+            var legacyLogPath = Path.Combine(
+                temp,
+                "RPCS3",
+                "RPCS3.log");
             var active = new HCanDiscoverySession(
                 exePath,
                 "blus30109",
@@ -740,7 +955,23 @@ internal static class HCanTst
                     false,
                     0,
                     null,
-                    "ignored-when-log-does-not-exist"));
+                    "ignored-when-log-does-not-exist"),
+                [
+                    new HCanLogSource(
+                        logPath,
+                        new HCanLogMark(
+                            false,
+                            0,
+                            null,
+                            "ignored-when-log-does-not-exist")),
+                    new HCanLogSource(
+                        legacyLogPath,
+                        new HCanLogMark(
+                            false,
+                            0,
+                            null,
+                            "ignored-when-log-does-not-exist"))
+                ]);
             store.SaveActive(active);
             var loadedActive = store.LoadActive();
 
@@ -749,8 +980,12 @@ internal static class HCanTst
                 loadedActive.Serial == "BLUS30109" &&
                 loadedActive.GameVersion == "02.00" &&
                 !loadedActive.Baseline.Exists &&
-                loadedActive.Baseline.Fingerprint.Length == 0,
-                "H-Canary discovery sessions must normalize canonical identity and absent-log marks.");
+                loadedActive.Baseline.Fingerprint.Length == 0 &&
+                loadedActive.LogSources is { Count: 2 } &&
+                loadedActive.LogSources.All(source =>
+                    !source.Baseline.Exists &&
+                    source.Baseline.Fingerprint.Length == 0),
+                "H-Canary discovery sessions must normalize canonical identity, dual log candidates, and absent-log marks.");
 
             MustFail<ArgumentException>(
                 () => store.SaveActive(active with
@@ -966,6 +1201,11 @@ internal static class HCanTst
 
     private static async Task Capture_All()
     {
+        Assert(
+            GameFingerprintCaptureOptions.Default.StartupStabilityDelay ==
+            TimeSpan.FromMinutes(1),
+            "Automatic executable-hash discovery must keep the selected game running for one minute before closing RPCS3 and reading RPCS3.log.");
+
         const string oldPpu = "3333333333333333333333333333333333333333";
         const string ppu = "4444444444444444444444444444444444444444";
         var temp = NewTemp();
@@ -1026,12 +1266,15 @@ internal static class HCanTst
             var launcher = new FakeGameProcessLauncher();
             var processController = new FakeCaptureProcessController
             {
-                StartupReadyAfterChecks = 2,
-                BeforeStop = () => File.AppendAllText(
+                StartupReadyAfterChecks = 1,
+                LogReadyAfterChecks = 2,
+                OnStartupReady = () => File.AppendAllText(
                     logPath,
                     $"SYS: Serial: {game.Serial}{Environment.NewLine}" +
                     $"SYS: App version: {game.Version}{Environment.NewLine}" +
-                    $"ppu_loader: PPU executable hash: PPU-{ppu}{Environment.NewLine}" +
+                    $"ppu_loader: PPU executable hash: PPU-{ppu}{Environment.NewLine}"),
+                BeforeStop = () => File.AppendAllText(
+                    logPath,
                     $"SYS: Stopping emulator...{Environment.NewLine}")
             };
             var capture = new GameFingerprintCaptureUseCase(
@@ -3024,7 +3267,13 @@ internal static class HCanTst
 
         public int StartupReadyAfterChecks { get; init; } = 1;
 
+        public int LogReadyAfterChecks { get; init; } = 1;
+
+        public Action? OnStartupReady { get; init; }
+
         public Action? BeforeStop { get; init; }
+
+        private bool StartupReadyNotified { get; set; }
 
         public bool TryAttach(
             string executablePath,
@@ -3050,8 +3299,17 @@ internal static class HCanTst
             DateTime processStartedUtc)
         {
             StartupReadyChecks++;
-            return Running &&
-                   StartupReadyChecks >= StartupReadyAfterChecks;
+            var ready = Running &&
+                        StartupReadyChecks >= StartupReadyAfterChecks;
+            if (ready &&
+                StartupReadyChecks >= LogReadyAfterChecks &&
+                !StartupReadyNotified)
+            {
+                StartupReadyNotified = true;
+                OnStartupReady?.Invoke();
+            }
+
+            return ready;
         }
 
         public Task<Rpcs3OwnedProcessStopResult> StopAsync(

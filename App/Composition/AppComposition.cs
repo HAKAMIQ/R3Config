@@ -36,6 +36,7 @@ public static class AppComposition
             patchTransaction);
 
         var patchCompatibility = new PatchCompatibilityService();
+        var canaryRuntimeBinding = new CanaryRuntimeBindingService();
         var patchHashProbe = new PatchHashProbeService();
         var discoveryStore = new HCanDiscoveryStore();
         var hashDiscovery = new HCanHashDiscoveryService();
@@ -55,7 +56,9 @@ public static class AppComposition
         var patchCatalog = new PatchCatalogUseCase(
             patchReader,
             new PatchCatalogMergeService(),
-            new PatchMatchService(patchCompatibility),
+            new PatchMatchService(
+                patchCompatibility,
+                canaryRuntimeBinding),
             patchConfigReader,
             hCanary,
             canaryImport,

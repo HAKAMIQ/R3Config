@@ -1004,7 +1004,7 @@ public sealed class GameSetupUseCase(
         PatMatch match)
     {
         return change.HashKey.Equals(
-                   match.Patch.RunKey,
+                   match.EffectiveRunKey,
                    StringComparison.OrdinalIgnoreCase) &&
                change.PatTitle.Equals(
                    match.Patch.Title,

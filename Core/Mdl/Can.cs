@@ -209,6 +209,10 @@ public sealed record HCanLogMark(
     DateTime? LastWriteTimeUtc,
     string Fingerprint);
 
+public sealed record HCanLogSource(
+    string LogPath,
+    HCanLogMark Baseline);
+
 public sealed record HCanDiscoverySession(
     string Rpcs3ExecutablePath,
     string Serial,
@@ -217,7 +221,8 @@ public sealed record HCanDiscoverySession(
     int ProcessId,
     DateTime StartedUtc,
     string LogPath,
-    HCanLogMark Baseline);
+    HCanLogMark Baseline,
+    IReadOnlyList<HCanLogSource>? LogSources = null);
 
 public sealed record HCanHashBinding(
     string Rpcs3ExecutablePath,

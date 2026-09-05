@@ -1593,26 +1593,41 @@ public sealed class HCanHashDiscoveryService
 
     private const string StopMarker = "Stopping emulator...";
 
-    public string GetLogPath(Rpcs3InstallDescriptor install)
+    public IReadOnlyList<string> GetLogPaths(
+        Rpcs3InstallDescriptor install)
     {
-        ArgumentNullException.ThrowIfNull(install);
-
-        var dataRoot = string.IsNullOrWhiteSpace(install.DataRoot)
-            ? install.RootPath
-            : install.DataRoot;
-
-        return Path.GetFullPath(
-            Path.Combine(dataRoot!, "log", "RPCS3.log"));
+        return Rpcs3LogLocator.PlainLogPaths(install);
     }
 
+    public string GetLogPath(Rpcs3InstallDescriptor install)
+    {
+        return Rpcs3LogLocator.PreferredPlainLogPath(install);
+    }
 
-    public bool IsSelectedGameRunning(
+    public bool IsSelectedGameBooted(
         HCanDiscoverySession session,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(session);
         cancellationToken.ThrowIfCancellationRequested();
 
+        foreach (var source in Sources(session))
+        {
+            if (IsSelectedGameBootedSource(
+                    Scope(session, source),
+                    cancellationToken))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsSelectedGameBootedSource(
+        HCanDiscoverySession session,
+        CancellationToken cancellationToken)
+    {
         try
         {
             if (!File.Exists(session.LogPath))
@@ -1636,16 +1651,22 @@ public sealed class HCanHashDiscoveryService
                 FileMode.Open,
                 FileAccess.Read,
                 FileShare.ReadWrite | FileShare.Delete);
+            var sessionOffset = SessionOffset(
+                stream,
+                session.Baseline,
+                cancellationToken);
+            stream.Position = sessionOffset;
 
             using var reader = new StreamReader(
                 stream,
                 Encoding.UTF8,
-                detectEncodingFromByteOrderMarks: true,
+                detectEncodingFromByteOrderMarks: sessionOffset == 0,
                 bufferSize: 64 * 1024,
                 leaveOpen: false);
 
             string? latestSerial = null;
             var latestStopped = false;
+            var latestPpuLoaded = false;
             var lineNumber = 0;
 
             while (reader.ReadLine() is { } line)
@@ -1660,22 +1681,57 @@ public sealed class HCanHashDiscoveryService
                 var serialMatch = SerialPattern.Match(line);
                 if (serialMatch.Success)
                 {
-                    latestSerial = serialMatch.Groups["serial"]
+                    var detectedSerial = serialMatch.Groups["serial"]
                         .Value
                         .ToUpperInvariant();
+                    var startsNewSession =
+                        latestSerial is null ||
+                        latestStopped ||
+                        !detectedSerial.Equals(
+                            latestSerial,
+                            StringComparison.OrdinalIgnoreCase);
+
+                    latestSerial = detectedSerial;
                     latestStopped = false;
+                    if (startsNewSession)
+                    {
+                        latestPpuLoaded = false;
+                    }
                 }
 
-                if (latestSerial is not null &&
-                    line.Contains(
+                if (latestSerial is null)
+                {
+                    continue;
+                }
+
+                if (line.Contains(
                         StopMarker,
                         StringComparison.OrdinalIgnoreCase))
                 {
                     latestStopped = true;
+                    continue;
+                }
+
+                if (latestSerial.Equals(
+                        session.Serial,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    var hashMatch = HashPattern.Match(line);
+                    if (hashMatch.Success &&
+                        hashMatch.Groups["kind"].Value.Equals(
+                            "PPU",
+                            StringComparison.OrdinalIgnoreCase) &&
+                        hashMatch.Groups["prefix"].Value.Equals(
+                            "PPU",
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        latestPpuLoaded = true;
+                    }
                 }
             }
 
-            return !latestStopped &&
+            return latestPpuLoaded &&
+                   !latestStopped &&
                    string.Equals(
                        latestSerial,
                        session.Serial,
@@ -1735,31 +1791,100 @@ public sealed class HCanHashDiscoveryService
         ArgumentNullException.ThrowIfNull(session);
         cancellationToken.ThrowIfCancellationRequested();
 
+        var attempts = Sources(session)
+            .Select((source, index) => ReadSource(
+                Scope(session, source),
+                index,
+                cancellationToken))
+            .ToArray();
+
+        var found = attempts
+            .Where(attempt =>
+                attempt.Result.Code == HashReadCode.Found)
+            .OrderByDescending(attempt =>
+                attempt.Current.LastWriteTimeUtc ?? DateTime.MinValue)
+            .ThenBy(attempt => attempt.Order)
+            .FirstOrDefault();
+        if (found is not null)
+        {
+            return found.Result;
+        }
+
+        var changed = attempts
+            .Where(attempt =>
+                attempt.Current.Exists &&
+                attempt.Result.Code != HashReadCode.NoLog &&
+                attempt.Result.Code != HashReadCode.LogNotChanged)
+            .OrderByDescending(attempt =>
+                attempt.Current.LastWriteTimeUtc ?? DateTime.MinValue)
+            .ThenBy(attempt => attempt.Order)
+            .FirstOrDefault();
+        if (changed is not null)
+        {
+            return changed.Result;
+        }
+
+        var unchanged = attempts
+            .Where(attempt =>
+                attempt.Current.Exists &&
+                attempt.Result.Code == HashReadCode.LogNotChanged)
+            .OrderByDescending(attempt =>
+                attempt.Current.LastWriteTimeUtc ?? DateTime.MinValue)
+            .ThenBy(attempt => attempt.Order)
+            .FirstOrDefault();
+        if (unchanged is not null)
+        {
+            return unchanged.Result;
+        }
+
+        var error = attempts.FirstOrDefault(attempt =>
+            attempt.Result.Code == HashReadCode.Error);
+        if (error is not null)
+        {
+            return error.Result;
+        }
+
+        return attempts.Length > 0
+            ? attempts[0].Result
+            : Result(
+                session,
+                HashReadCode.NoLog,
+                isOk: true);
+    }
+
+    private DiscoveryAttempt ReadSource(
+        HCanDiscoverySession session,
+        int order,
+        CancellationToken cancellationToken)
+    {
+        var current = new HCanLogMark(
+            false,
+            0,
+            null,
+            string.Empty);
+
         try
         {
-            var current = Capture(
+            current = Capture(
                 session.LogPath,
                 cancellationToken);
             if (!current.Exists)
             {
-                return Result(
-                    session,
+                return Attempt(
                     HashReadCode.NoLog,
                     isOk: true);
             }
 
             if (current.Length == 0)
             {
-                return Result(
-                    session,
+                return Attempt(
                     HashReadCode.EmptyLog,
                     isOk: true);
             }
 
             if (current.Length > MaxLogBytes)
             {
-                return Result(
-                    session,
+                return Attempt(
                     HashReadCode.Error,
                     isOk: false,
                     error: $"RPCS3.log exceeds the {MaxLogBytes / (1024 * 1024)} MiB discovery limit.");
@@ -1767,8 +1892,7 @@ public sealed class HCanHashDiscoveryService
 
             if (!Changed(session, current))
             {
-                return Result(
-                    session,
+                return Attempt(
                     HashReadCode.LogNotChanged,
                     isOk: true);
             }
@@ -1797,8 +1921,7 @@ public sealed class HCanHashDiscoveryService
                 cancellationToken);
             if (!scan.SawAnySerial)
             {
-                return Result(
-                    session,
+                return Attempt(
                     HashReadCode.SelectedGameNotFound,
                     isOk: true);
             }
@@ -1808,8 +1931,7 @@ public sealed class HCanHashDiscoveryService
                     session.Serial,
                     StringComparison.OrdinalIgnoreCase))
             {
-                return Result(
-                    session,
+                return Attempt(
                     HashReadCode.WrongGame,
                     isOk: true,
                     serial: scan.Serial,
@@ -1825,8 +1947,7 @@ public sealed class HCanHashDiscoveryService
                     detectedVersion,
                     StringComparison.OrdinalIgnoreCase))
             {
-                return Result(
-                    session,
+                return Attempt(
                     HashReadCode.WrongVersion,
                     isOk: true,
                     serial: scan.Serial,
@@ -1835,22 +1956,24 @@ public sealed class HCanHashDiscoveryService
 
             if (scan.Hashes.Count == 0)
             {
-                return Result(
-                    session,
+                return Attempt(
                     HashReadCode.NoExecutableHashes,
                     isOk: true,
                     serial: scan.Serial,
                     version: scan.Version);
             }
 
-            return new HashRead(
-                IsOk: true,
-                SrcPath: session.LogPath,
-                Hashes: scan.Hashes,
-                Code: HashReadCode.Found,
-                Serial: scan.Serial,
-                Version: scan.Version,
-                DetectedUtc: current.LastWriteTimeUtc ?? DateTime.UtcNow);
+            return new DiscoveryAttempt(
+                new HashRead(
+                    IsOk: true,
+                    SrcPath: session.LogPath,
+                    Hashes: scan.Hashes,
+                    Code: HashReadCode.Found,
+                    Serial: scan.Serial,
+                    Version: scan.Version,
+                    DetectedUtc: current.LastWriteTimeUtc ?? DateTime.UtcNow),
+                current,
+                order);
         }
         catch (Exception ex) when (
             ex is IOException or
@@ -1859,11 +1982,33 @@ public sealed class HCanHashDiscoveryService
             InvalidDataException or
             CryptographicException)
         {
-            return Result(
-                session,
-                HashReadCode.Error,
-                isOk: false,
-                error: ex.Message);
+            return new DiscoveryAttempt(
+                Result(
+                    session,
+                    HashReadCode.Error,
+                    isOk: false,
+                    error: ex.Message),
+                current,
+                order);
+        }
+
+        DiscoveryAttempt Attempt(
+            HashReadCode code,
+            bool isOk,
+            string? error = null,
+            string? serial = null,
+            string? version = null)
+        {
+            return new DiscoveryAttempt(
+                Result(
+                    session,
+                    code,
+                    isOk,
+                    error,
+                    serial,
+                    version),
+                current,
+                order);
         }
     }
 
@@ -1883,8 +2028,11 @@ public sealed class HCanHashDiscoveryService
                 "Only a successful H-Canary discovery result can be saved.");
         }
 
+        var logPath = string.IsNullOrWhiteSpace(read.SrcPath)
+            ? session.LogPath
+            : Path.GetFullPath(read.SrcPath);
         var mark = Capture(
-            session.LogPath,
+            logPath,
             cancellationToken);
         var ppu = read.Hashes
             .Where(item => item.Kind == HashKind.Ppu)
@@ -1908,7 +2056,7 @@ public sealed class HCanHashDiscoveryService
             session.StartedUtc,
             mark.LastWriteTimeUtc ?? DateTime.UtcNow,
             mark.Fingerprint,
-            Path.GetFullPath(session.LogPath));
+            logPath);
     }
 
     public HashRead FromBinding(HCanHashBinding binding)
@@ -1940,6 +2088,34 @@ public sealed class HCanHashDiscoveryService
             Version: binding.GameVersion,
             DetectedUtc: binding.DetectedUtc,
             IsSaved: true);
+    }
+
+    private static IReadOnlyList<HCanLogSource> Sources(
+        HCanDiscoverySession session)
+    {
+        if (session.LogSources is { Count: > 0 })
+        {
+            return session.LogSources;
+        }
+
+        return
+        [
+            new HCanLogSource(
+                session.LogPath,
+                session.Baseline)
+        ];
+    }
+
+    private static HCanDiscoverySession Scope(
+        HCanDiscoverySession session,
+        HCanLogSource source)
+    {
+        return session with
+        {
+            LogPath = source.LogPath,
+            Baseline = source.Baseline,
+            LogSources = null
+        };
     }
 
     private static bool Changed(
@@ -2163,6 +2339,11 @@ public sealed class HCanHashDiscoveryService
             Serial: serial,
             Version: version);
     }
+
+    private sealed record DiscoveryAttempt(
+        HashRead Result,
+        HCanLogMark Current,
+        int Order);
 
     private sealed record DiscoveryScan(
         bool SawAnySerial,

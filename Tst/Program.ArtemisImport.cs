@@ -644,8 +644,8 @@ internal static partial class Program
         Assert(
             read.IsOk &&
             string.IsNullOrWhiteSpace(read.Error) &&
-            read.Catalog.Entries.Count == 1023,
-            "Expected the user-supplied Artemis patch collection snapshot to round-trip exactly 1023 accepted entries: " + read.Error);
+            read.Catalog.Entries.Count == 1471,
+            "Expected the user-supplied Artemis patch collection snapshot to round-trip exactly 1471 accepted entries: " + read.Error);
         Assert(
             read.Catalog.Entries.All(entry =>
                 entry.Source == PatSrc.Artemis &&
@@ -663,14 +663,14 @@ internal static partial class Program
         var requiredNoticeLines = new[]
         {
             "Canonical cheat source: Artemis Patch Collection for RPCS3 by ChiDreams",
-            "Source archive SHA-256: f9e915de0e535b0bbf0fedfbd743f974fc00fa1ea89682e8acb6f049f9491623",
-            "Source patch files: 132",
-            "Candidate entries: 1028",
-            "Accepted entries: 1023",
+            "Source archive SHA-256: 26a72f769fb1f7cb51daa8502fbc39b817a904fa1073dfa2c602a8c5f2d76ac9",
+            "Source patch files: 178",
+            "Candidate entries: 1496",
+            "Accepted entries: 1471",
             $"Generated art.yml SHA-256: {catalogHash}",
             "Dependency metadata rules: 23",
-            "Dependency source revision: 2b981063a6e53cdb5dc8fefda4b19c74903a138c",
-            "Generated art_dep.json SHA-256: 4f6eecab14fc65f4194f41a7a9e8880c99205f271e52b3f214b43ab7e56e0063",
+            "Dependency source revision: acfd45b61f8295298523548a9ff3406488736d68",
+            "Generated art_dep.json SHA-256: ab0eab975a9217e1e91c406c5600fae1291f56498b89f3c28ea2a8d197844d68",
             "Manager reference artifact: ARTEMIS-RPCS3-Cheat-Manager-1.0.1-RC4(1).zip",
             "Manager reference archive SHA-256: 372a033655d9c40bbf306a1d56dc5e6749f63400522a577bd15eeadfe175780f"
         };

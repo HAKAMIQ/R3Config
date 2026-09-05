@@ -7,39 +7,39 @@ public sealed partial class MainVm
 {
     public bool ShowCanaryVerificationPanel =>
         Preview.HasCan &&
-        ((Preview.NeedsCanaryVerification &&
-          NeedsCanaryFingerprint) ||
+        (NeedsCanaryFingerprint ||
          IsFingerprintCaptureRunning ||
-         _fingerprintCaptureError != GameFingerprintCaptureError.None ||
-         (Preview.HasCanaryHashMismatch &&
-          HasUnmatchedCanaryFingerprint));
+         _fingerprintCaptureError != GameFingerprintCaptureError.None);
 
     public bool ShowCanaryVerificationAction =>
         Preview.HasCan &&
-        Preview.NeedsCanaryVerification &&
         NeedsCanaryFingerprint &&
+        !IsFingerprintCaptureRunning;
+
+    public bool ShowCanaryReverificationAction =>
+        Preview.HasCan &&
+        Preview.HasCanaryHashMismatch &&
+        HasUnmatchedCanaryFingerprint &&
         !IsFingerprintCaptureRunning;
 
     public bool ShowCanaryVerificationText =>
         ShowCanaryVerificationPanel &&
-        (IsFingerprintCaptureRunning ||
-         _fingerprintCaptureError != GameFingerprintCaptureError.None ||
-         (Preview.HasCanaryHashMismatch &&
-          HasUnmatchedCanaryFingerprint));
+        (NeedsCanaryFingerprint ||
+         IsFingerprintCaptureRunning ||
+         _fingerprintCaptureError != GameFingerprintCaptureError.None);
 
     public string CanaryVerificationText
     {
         get
         {
-            if (Preview.HasCanaryHashMismatch &&
-                HasUnmatchedCanaryFingerprint)
-            {
-                return UiText.GetText("PatchReadiness.VerifyMismatch");
-            }
-
             if (_fingerprintCaptureError !=
                 GameFingerprintCaptureError.None ||
                 IsFingerprintCaptureRunning)
+            {
+                return FingerprintCaptureStatus;
+            }
+
+            if (NeedsCanaryFingerprint)
             {
                 return FingerprintCaptureStatus;
             }
@@ -52,6 +52,7 @@ public sealed partial class MainVm
     {
         OnChange(nameof(ShowCanaryVerificationPanel));
         OnChange(nameof(ShowCanaryVerificationAction));
+        OnChange(nameof(ShowCanaryReverificationAction));
         OnChange(nameof(ShowCanaryVerificationText));
         OnChange(nameof(CanaryVerificationText));
     }

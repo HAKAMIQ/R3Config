@@ -30,12 +30,6 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="{Binding Preview.ChtSum}"
-                   Style="{StaticResource PatSectionSummaryText}"
-                   Margin="8,0,8,8"
-                   Visibility="{Binding Preview.HasChtSummary,
-                                        Converter={StaticResource BoolToVisibilityConverter}}" />
 
         <Border Grid.Row="1"
                 Style="{StaticResource PatResultSurface}"

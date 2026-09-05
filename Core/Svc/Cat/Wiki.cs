@@ -5,24 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
-using System.Xml;
-using System.Xml.Linq;
 using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
 public sealed partial class WikiSvc
 {
-    private const long MaxWikiXmlBytes = 128L * 1024 * 1024;
-
-    private static readonly Regex Template = new(
-        @"\{\{gameid\|(?<body>.*?)\}\}",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-    private static readonly Regex Pattern = new(
-        @"[A-Z]{4}\d{5}",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
     private static readonly Regex Comment = new(
         @"<!--.*?-->",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
@@ -194,242 +182,19 @@ public sealed partial class WikiSvc
             return new WikiSvc(new Dictionary<string, WikiRec>());
         }
 
-        var file = new FileInfo(wikiXmlPath);
-        if (file.Length < 0 || file.Length > MaxWikiXmlBytes)
+        var analysis = Analyze(wikiXmlPath, "1970-01-01");
+        var conflict = analysis.Findings.FirstOrDefault(finding =>
+            finding.Code is WikiFindingCode.DuplicateSerialConflict or
+                WikiFindingCode.DuplicateSettingConflict);
+        if (conflict is not null)
         {
             throw new InvalidDataException(
-                $"RPCS3 wiki XML exceeds the {MaxWikiXmlBytes}-byte input limit.");
+                $"RPCS3 wiki XML contains conflicting data: {conflict.Detail}");
         }
 
-        using var stream = new FileStream(
-            wikiXmlPath,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.Read);
-        using var reader = XmlReader.Create(
-            stream,
-            new XmlReaderSettings
-            {
-                CloseInput = false,
-                DtdProcessing = DtdProcessing.Prohibit,
-                IgnoreComments = true,
-                IgnoreProcessingInstructions = true,
-                MaxCharactersFromEntities = 0,
-                MaxCharactersInDocument = MaxWikiXmlBytes,
-                XmlResolver = null
-            });
-        var document = XDocument.Load(
-            reader,
-            LoadOptions.None);
-        var recommendations = new Dictionary<string, WikiRec>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var page in document.Descendants().Where(element => element.Name.LocalName == "page"))
-        {
-            var title = page.Elements().FirstOrDefault(element => element.Name.LocalName == "title")?.Value;
-            var text = page.Descendants().FirstOrDefault(element => element.Name.LocalName == "text")?.Value;
-
-            if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(text))
-            {
-                continue;
-            }
-
-            var serials = Extract(text).ToArray();
-            if (serials.Length == 0)
-            {
-                continue;
-            }
-
-            var changes = Extract2(text).ToArray();
-            foreach (var serial in serials)
-            {
-                var candidate = new WikiRec(
-                    serial,
-                    title.Trim(),
-                    changes);
-
-                if (!recommendations.TryGetValue(
-                        serial,
-                        out var existing))
-                {
-                    recommendations.Add(serial, candidate);
-                    continue;
-                }
-
-                if (!string.Equals(
-                        existing.WikiName,
-                        candidate.WikiName,
-                        StringComparison.Ordinal) ||
-                    !existing.Changes.SequenceEqual(candidate.Changes))
-                {
-                    throw new InvalidDataException(
-                        $"RPCS3 wiki XML contains conflicting recommendations for serial '{serial}'.");
-                }
-            }
-        }
-
-        return new WikiSvc(recommendations);
-    }
-
-    private static IEnumerable<string> Extract(string text)
-    {
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var matches = Template.Matches(text);
-
-        foreach (Match match in matches)
-        {
-            foreach (Match serialMatch in Pattern.Matches(match.Groups["body"].Value))
-            {
-                if (seen.Add(serialMatch.Value))
-                {
-                    yield return serialMatch.Value;
-                }
-            }
-        }
-
-        if (seen.Count == 0)
-        {
-            foreach (Match serialMatch in Pattern.Matches(text))
-            {
-                if (seen.Add(serialMatch.Value))
-                {
-                    yield return serialMatch.Value;
-                }
-            }
-        }
-    }
-
-    private static IEnumerable<CfgChg> Extract2(string text)
-    {
-        var block = Extract3(text);
-        if (string.IsNullOrWhiteSpace(block))
-        {
-            yield break;
-        }
-
-        var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var notes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var line in block.Split('\n'))
-        {
-            var trimmed = line.Trim();
-            if (!trimmed.StartsWith('|'))
-            {
-                continue;
-            }
-
-            var equalsIndex = trimmed.IndexOf('=');
-            if (equalsIndex < 0)
-            {
-                continue;
-            }
-
-            var rawKey = NormWiki(trimmed[1..equalsIndex]);
-            var rawValue = CleanVal(trimmed[(equalsIndex + 1)..]);
-            if (string.IsNullOrWhiteSpace(rawValue))
-            {
-                continue;
-            }
-
-            if (rawKey.EndsWith(" notes", StringComparison.OrdinalIgnoreCase))
-            {
-                AddUnique(
-                    notes,
-                    rawKey[..^6].Trim(),
-                    rawValue);
-            }
-            else
-            {
-                AddUnique(values, rawKey, rawValue);
-            }
-        }
-
-        foreach (var (wikiKey, rawValue) in values.OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase))
-        {
-            notes.TryGetValue(wikiKey, out var note);
-
-            if (wikiKey.Equals("zcull accuracy", StringComparison.OrdinalIgnoreCase))
-            {
-                var zcull = ConvertZCull(rawValue);
-                if (zcull is null)
-                {
-                    continue;
-                }
-
-                var risk = RecPol.Classify(wikiKey, rawValue, note);
-                yield return new CfgChg(
-                    Section: "Video",
-                    Key: "Relaxed ZCULL Sync",
-                    Value: zcull.Value.Relaxed,
-                    WikiKey: wikiKey,
-                    Notes: note,
-                    Risk: risk);
-                yield return new CfgChg(
-                    Section: "Video",
-                    Key: "Accurate ZCULL stats",
-                    Value: zcull.Value.Precise,
-                    WikiKey: wikiKey,
-                    Notes: note,
-                    Risk: risk);
-                continue;
-            }
-
-            if (!CfgMap.TryGetValue(wikiKey, out var target))
-            {
-                continue;
-            }
-
-            var value = Convert(wikiKey, rawValue);
-            if (value is null)
-            {
-                continue;
-            }
-
-            yield return new CfgChg(
-                Section: target.Section,
-                Key: target.Key,
-                Value: value,
-                WikiKey: wikiKey,
-                Notes: note,
-                Risk: RecPol.Classify(wikiKey, value, note));
-        }
-    }
-
-    private static void AddUnique(
-        Dictionary<string, string> values,
-        string key,
-        string value)
-    {
-        if (!values.TryGetValue(key, out var existing))
-        {
-            values.Add(key, value);
-            return;
-        }
-
-        if (!string.Equals(
-                existing,
-                value,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidDataException(
-                $"RPCS3 wiki XML contains conflicting values for config key '{key}'.");
-        }
-    }
-
-    private static string? Extract3(string text)
-    {
-        var start = text.IndexOf("{{config", StringComparison.OrdinalIgnoreCase);
-        if (start < 0)
-        {
-            return null;
-        }
-
-        var end = text.IndexOf("\n}}", start, StringComparison.Ordinal);
-        if (end < 0)
-        {
-            return null;
-        }
-
-        return text[start..end];
+        return new WikiSvc(analysis.CatalogRecommendations.ToDictionary(
+            recommendation => recommendation.Serial,
+            StringComparer.OrdinalIgnoreCase));
     }
 
     private static string NormWiki(string key)
