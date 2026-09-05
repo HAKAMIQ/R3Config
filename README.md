@@ -1,6 +1,6 @@
 # R3Config
 
-> Development status: Private development — Unreleased
+> Development status: v0.1.0 Preview — Unreleased
 
 R3Config is a local Windows companion for RPCS3. It scans installed games, reviews their per-game settings, and helps the user manage compatible patches safely.
 

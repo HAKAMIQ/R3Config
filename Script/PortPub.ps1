@@ -1,7 +1,7 @@
 param(
     [string]$Configuration = 'Release',
     [string]$Runtime = 'win-x64',
-    [string]$Version = '1.0.1',
+    [string]$Version = '0.1.0-preview',
     [string]$Rpcs3Path,
     [string]$SigningCertificateThumbprint = $env:R3CONFIG_SIGNING_CERT_THUMBPRINT,
     [string]$TimestampServer = 'https://timestamp.digicert.com',

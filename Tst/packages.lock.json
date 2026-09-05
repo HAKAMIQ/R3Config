@@ -10,13 +10,13 @@
       "r3artimport": {
         "type": "Project",
         "dependencies": {
-          "R3Core": "[1.0.1, )"
+          "R3Core": "[0.1.0-preview, )"
         }
       },
       "R3Config": {
         "type": "Project",
         "dependencies": {
-          "R3Core": "[1.0.1, )"
+          "R3Core": "[0.1.0-preview, )"
         }
       },
       "r3core": {

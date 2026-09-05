@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)][string]$Path,
-    [string]$Version = '1.0.1',
+    [string]$Version = '0.1.0-preview',
     [Parameter(Mandatory = $true)][string]$ExpectedSignerThumbprint
 )
 
