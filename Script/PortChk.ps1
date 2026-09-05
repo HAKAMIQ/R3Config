@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$Path,
     [string]$Version = '0.1.0-preview',
-    [Parameter(Mandatory = $true)][string]$ExpectedSignerThumbprint
+    [string]$ExpectedSignerThumbprint
 )
 
 function Get-NormalizedThumbprint {
@@ -115,8 +115,7 @@ $requiredFiles = @(
     'RN.md',
     'CHEATS.md',
     'CANARY.md',
-    'SHA256SUMS.txt',
-    'SHA256SUMS.p7s'
+    'SHA256SUMS.txt'
 )
 foreach ($relativePath in $requiredFiles) {
     $candidate = Join-Path $releasePath $relativePath
@@ -131,12 +130,21 @@ if (-not $exe.VersionInfo.ProductVersion.StartsWith($Version, [StringComparison]
 }
 
 $manifestPath = [IO.Path]::GetFullPath((Join-Path $releasePath 'SHA256SUMS.txt'))
-$manifestSignaturePath = [IO.Path]::GetFullPath((Join-Path $releasePath 'SHA256SUMS.p7s'))
-Assert-ReleaseSignatures `
-    -ExecutablePath $exe.FullName `
-    -ManifestPath $manifestPath `
-    -ManifestSignaturePath $manifestSignaturePath `
-    -SignerThumbprint $ExpectedSignerThumbprint
+
+if (-not [string]::IsNullOrWhiteSpace($ExpectedSignerThumbprint)) {
+    $manifestSignaturePath = [IO.Path]::GetFullPath(
+        (Join-Path $releasePath 'SHA256SUMS.p7s'))
+
+    if (-not (Test-Path -LiteralPath $manifestSignaturePath -PathType Leaf)) {
+        throw 'Signed release is missing SHA256SUMS.p7s.'
+    }
+
+    Assert-ReleaseSignatures `
+        -ExecutablePath $exe.FullName `
+        -ManifestPath $manifestPath `
+        -ManifestSignaturePath $manifestSignaturePath `
+        -SignerThumbprint $ExpectedSignerThumbprint
+}
 
 $forbiddenDirectoryNames = @('bin', 'obj', '.vs', 'artifacts', 'publish')
 $forbiddenDirectory = Get-ChildItem -LiteralPath $releasePath -Recurse -Directory -Force |

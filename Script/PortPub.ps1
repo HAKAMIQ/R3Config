@@ -4,7 +4,7 @@ param(
     [string]$Version = '0.1.0-preview',
     [string]$Rpcs3Path,
     [string]$SigningCertificateThumbprint = $env:R3CONFIG_SIGNING_CERT_THUMBPRINT,
-    [string]$TimestampServer = 'https://timestamp.digicert.com',
+    [string]$TimestampServer = 'http://timestamp.digicert.com',
     [string]$SignToolPath
 )
 
@@ -14,16 +14,18 @@ if ([string]::IsNullOrWhiteSpace($Rpcs3Path)) {
     throw 'Final portable publishing requires -Rpcs3Path so the read-only real-install contract is executed.'
 }
 
-if ([string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) {
-    throw 'Final portable publishing requires -SigningCertificateThumbprint or R3CONFIG_SIGNING_CERT_THUMBPRINT. Unsigned releases are blocked.'
-}
-if ([string]::IsNullOrWhiteSpace($TimestampServer)) {
-    throw 'Final portable publishing requires an RFC 3161 timestamp server.'
-}
-$timestampUri = $null
-if (-not [Uri]::TryCreate($TimestampServer, [UriKind]::Absolute, [ref]$timestampUri) -or
-    $timestampUri.Scheme -ne [Uri]::UriSchemeHttps) {
-    throw 'The RFC 3161 timestamp server must be an absolute HTTPS URL.'
+$signingEnabled = -not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)
+
+if ($signingEnabled) {
+    if ([string]::IsNullOrWhiteSpace($TimestampServer)) {
+        throw 'Signed portable publishing requires an RFC 3161 timestamp server.'
+    }
+
+    $timestampUri = $null
+    if (-not [Uri]::TryCreate($TimestampServer, [UriKind]::Absolute, [ref]$timestampUri) -or
+        @([Uri]::UriSchemeHttp, [Uri]::UriSchemeHttps) -notcontains $timestampUri.Scheme) {
+        throw 'The RFC 3161 timestamp server must be an absolute HTTP or HTTPS URL.'
+    }
 }
 
 $resolvedRpcs3Path = if (Test-Path -LiteralPath $Rpcs3Path -PathType Container) {
@@ -189,7 +191,25 @@ $artifactsDir = Join-Path $repoRoot 'artifacts'
 $publishDir = Join-Path $artifactsDir "publish\R3Config-$Version-$Runtime"
 $zipPath = Join-Path $artifactsDir "R3Config-$Version-$Runtime-portable.zip"
 $zipHashPath = "$zipPath.sha256"
-$normalizedSigningThumbprint = Get-NormalizedThumbprint -Thumbprint $SigningCertificateThumbprint
+$normalizedSigningThumbprint = if ($signingEnabled) {
+    Get-NormalizedThumbprint -Thumbprint $SigningCertificateThumbprint
+}
+else {
+    ''
+}
+
+$preservedLockFiles = @(
+    (Join-Path $repoRoot 'Core\packages.lock.json'),
+    (Join-Path $repoRoot 'Script\LangPack\packages.lock.json')
+)
+
+$lockFileSnapshots = @{}
+
+foreach ($lockFile in $preservedLockFiles) {
+    if (Test-Path -LiteralPath $lockFile -PathType Leaf) {
+        $lockFileSnapshots[$lockFile] = [IO.File]::ReadAllBytes($lockFile)
+    }
+}
 
 Assert-ChildPath -Parent $artifactsDir -Child $publishDir
 Assert-ChildPath -Parent $artifactsDir -Child $zipPath
@@ -232,37 +252,51 @@ try {
         '-o', $publishDir
     )
 
-    $certificateInfo = Get-CodeSigningCertificate -Thumbprint $normalizedSigningThumbprint
-    $certificate = $certificateInfo.Certificate
     $publishedExe = Join-Path $publishDir 'R3Config.exe'
-    $resolvedSignTool = Resolve-SignTool -ExplicitPath $SignToolPath
-    Write-Host "Signing with: $resolvedSignTool"
-    $signArguments = @(
-        'sign',
-        '/sha1', $normalizedSigningThumbprint,
-        '/s', 'My',
-        '/fd', 'SHA256',
-        '/tr', $TimestampServer,
-        '/td', 'SHA256',
-        '/v'
-    )
-    if ($certificateInfo.MachineStore) {
-        $signArguments += '/sm'
-    }
-    $signArguments += $publishedExe
-    & $resolvedSignTool @signArguments
-    if ($LASTEXITCODE -ne 0) {
-        throw "SignTool failed with exit code $LASTEXITCODE."
-    }
+    $certificate = $null
 
-    $authenticode = Get-AuthenticodeSignature -FilePath $publishedExe
-    if ($authenticode.Status -ne [System.Management.Automation.SignatureStatus]::Valid -or
-        -not $authenticode.SignerCertificate) {
-        throw "Authenticode verification failed after SignTool: $($authenticode.Status) $($authenticode.StatusMessage)"
+    if ($signingEnabled) {
+        $certificateInfo = Get-CodeSigningCertificate -Thumbprint $normalizedSigningThumbprint
+        $certificate = $certificateInfo.Certificate
+        $resolvedSignTool = Resolve-SignTool -ExplicitPath $SignToolPath
+        Write-Host "Signing with: $resolvedSignTool"
+
+        $signArguments = @(
+            'sign',
+            '/sha1', $normalizedSigningThumbprint,
+            '/s', 'My',
+            '/fd', 'SHA256',
+            '/tr', $TimestampServer,
+            '/td', 'SHA256',
+            '/v'
+        )
+
+        if ($certificateInfo.MachineStore) {
+            $signArguments += '/sm'
+        }
+
+        $signArguments += $publishedExe
+        & $resolvedSignTool @signArguments
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "SignTool failed with exit code $LASTEXITCODE."
+        }
+
+        $authenticode = Get-AuthenticodeSignature -FilePath $publishedExe
+
+        if ($authenticode.Status -ne [System.Management.Automation.SignatureStatus]::Valid -or
+            -not $authenticode.SignerCertificate) {
+            throw "Authenticode verification failed after SignTool: $($authenticode.Status) $($authenticode.StatusMessage)"
+        }
+
+        $actualSigner = Get-NormalizedThumbprint -Thumbprint $authenticode.SignerCertificate.Thumbprint
+
+        if ($actualSigner -ne $normalizedSigningThumbprint) {
+            throw "Signed executable thumbprint '$actualSigner' does not match '$normalizedSigningThumbprint'."
+        }
     }
-    $actualSigner = Get-NormalizedThumbprint -Thumbprint $authenticode.SignerCertificate.Thumbprint
-    if ($actualSigner -ne $normalizedSigningThumbprint) {
-        throw "Signed executable thumbprint '$actualSigner' does not match '$normalizedSigningThumbprint'."
+    else {
+        Write-Host 'Signing skipped: unsigned Preview package.'
     }
 
     $manifestPath = Join-Path $publishDir 'SHA256SUMS.txt'
@@ -279,15 +313,23 @@ try {
             "$hash  $relative"
         }
     Set-Content -LiteralPath $manifestPath -Value $manifestLines -Encoding ascii
-    New-DetachedManifestSignature `
-        -ManifestPath $manifestPath `
-        -SignaturePath $manifestSignaturePath `
-        -Certificate $certificate
 
-    & (Join-Path $scriptRoot 'PortChk.ps1') `
-        -Path $publishDir `
-        -Version $Version `
-        -ExpectedSignerThumbprint $normalizedSigningThumbprint
+    if ($signingEnabled) {
+        New-DetachedManifestSignature `
+            -ManifestPath $manifestPath `
+            -SignaturePath $manifestSignaturePath `
+            -Certificate $certificate
+
+        & (Join-Path $scriptRoot 'PortChk.ps1') `
+            -Path $publishDir `
+            -Version $Version `
+            -ExpectedSignerThumbprint $normalizedSigningThumbprint
+    }
+    else {
+        & (Join-Path $scriptRoot 'PortChk.ps1') `
+            -Path $publishDir `
+            -Version $Version
+    }
     if ($LASTEXITCODE -ne 0) {
         throw "Portable release verification failed with exit code $LASTEXITCODE."
     }
@@ -301,4 +343,11 @@ try {
 }
 finally {
     Pop-Location
+
+    foreach ($entry in $lockFileSnapshots.GetEnumerator()) {
+        [IO.File]::WriteAllBytes(
+            [string]$entry.Key,
+            [byte[]]$entry.Value
+        )
+    }
 }

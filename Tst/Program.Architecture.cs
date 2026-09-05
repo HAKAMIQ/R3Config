@@ -356,24 +356,21 @@ internal static partial class Program
             "Script",
             "PortChk.ps1"));
         Assert(portPublish.Contains(
-                   "signtool.exe",
-                   StringComparison.OrdinalIgnoreCase) &&
-               portPublish.Contains(
-                   "'/tr', $TimestampServer",
+                   "$signingEnabled",
                    StringComparison.Ordinal) &&
                portPublish.Contains(
-                   "'/td', 'SHA256'",
+                   "Signing skipped: unsigned Preview package.",
                    StringComparison.Ordinal) &&
                portPublish.Contains(
-                   "SHA256SUMS.p7s",
+                   "SHA256SUMS.txt",
                    StringComparison.Ordinal) &&
                portCheck.Contains(
-                   "Assert-ReleaseSignatures",
+                   "if (-not [string]::IsNullOrWhiteSpace($ExpectedSignerThumbprint))",
                    StringComparison.Ordinal) &&
                portCheck.Contains(
-                   "ExpectedSignerThumbprint",
+                   "$forbiddenExtensions",
                    StringComparison.Ordinal),
-            "Expected portable release publication to block unsigned executables and unsigned manifests.");
+            "Expected portable Preview publication to allow unsigned binaries while preserving SHA-256 and source-leak verification.");
 
         var uncBlocked = false;
         try
