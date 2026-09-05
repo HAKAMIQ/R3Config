@@ -74,13 +74,17 @@ ZIP files. The verified archive and its SHA-256 checksum are written under
 `artifacts/source`.
 ## License
 
-R3Config is proprietary software owned exclusively by HAKAMIQ.
+Official compiled R3Config releases may be installed and used by end users.
 
-Repository access, possession of the source code, or receipt of a compiled
-build does not grant permission to install, run, copy, modify, publish,
-distribute, sublicense, sell, or create derivative works from R3Config.
+R3Config source code and private development materials are closed and
+proprietary property of HAKAMIQ.
 
-Use by another person or organization requires prior written authorization
-issued directly by HAKAMIQ.
+Permission to use the compiled application does not grant permission to access,
+copy, publish, disclose, distribute, redistribute, mirror, upload, modify, sell,
+sublicense, repackage, or create derivative distributions from the R3Config
+source code.
+
+Redistribution or repackaging of the compiled application also requires prior
+written authorization from HAKAMIQ.
 
 See [LICENSE](LICENSE) for the complete terms.
