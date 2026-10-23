@@ -18,6 +18,6 @@ public sealed record BackupSnapshot(
     [property: JsonPropertyName("CreatedAt")] DateTimeOffset MadeAt,
     IReadOnlyList<BackupFileEntry> Files)
 {
-    public string Name =>
-        $"{MadeAt.LocalDateTime:yyyy-MM-dd HH:mm:ss} - {Files.Count}";
+    [JsonIgnore]
+    public bool IsLegacy { get; init; }
 }

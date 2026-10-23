@@ -105,7 +105,7 @@ PPU وSPU يدويًا.
 - Windows 10 أوWindows 11 بمعمارية x64.
 - نسخة محلية من RPCS3 يحددها المستخدم.
 - يجب إغلاق RPCS3 قبل أي عملية تعدل ملفاته.
-- التطبيق لا يحتاج اتصالًا بالإنترنت في مساراته الحالية.
+- التطبيق يعمل دون اتصال بالإنترنت؛ الاتصال يُستخدم فقط لتحديث قاعدة التوصيات من مصادر RPCS3 الرسمية، ويمكن إيقافه.
 - بناء المشروع يتطلب .NET 8 SDK؛ النسخة المنشورة تكون تطبيق Windows مستقلًا حسب
   إعدادات النشر.
 
@@ -408,11 +408,17 @@ logic أوقرار توافق جديد.
 ### بوابة السورس الأساسية
 
 ```powershell
-dotnet restore .\R3Cfg.slnx
-dotnet build .\R3Cfg.slnx -c Release --no-restore
-dotnet run --project .\Tst\R3Test.csproj -c Release --no-build
-powershell -ExecutionPolicy Bypass -File .\Script\SrcChk.ps1
+.\Script\RelTest.cmd -Configuration Release
 ```
+
+`R3Toolchain.ps1` يملك بيئة dotnet الحتمية ايضا. بما ان graph المشروع الحالي
+workload-free ويستخدم net8.0/net8.0-windows فقط، يعطل MSBuild workload resolver
+داخل الاستدعاء ويعيد بيئة العملية بعدها. اذا دخل مشروع يعتمد على workload فعلي
+فالـtoolchain يرفضه بدل اخفائه.
+
+`R3Cfg.slnx` يبقى ملف solution للمشروع، لكن بوابة CLI تحت SDK المثبت في
+`global.json` تستخدم `Tst/R3Test.csproj` كجذر build graph لان مراجع المشاريع فيه
+تغطي App وCore وArtImport، ويغطي App مشروع LangPack.
 
 ### معايير قبول سلوكية
 
@@ -437,7 +443,7 @@ powershell -ExecutionPolicy Bypass -File .\Script\SrcChk.ps1
 ### المرحلة 1: تثبيت الأساس
 
 - بناء السورس وتشغيل الاختبارات الحالية.
-- قراءة حزمة المعمارية.
+- قراءة `docs/Arch/README.md` وحزمة المعمارية.
 - التأكد من عدم وجود منطق كتابة داخل ViewModels.
 - توثيق أي فشل قائم قبل إضافة ميزة.
 

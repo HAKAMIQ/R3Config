@@ -4,6 +4,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$toolchain = Join-Path $PSScriptRoot 'R3Toolchain.ps1'
+. $toolchain
 
 if ([string]::IsNullOrWhiteSpace($Path)) {
     $Path = Join-Path $PSScriptRoot '..'
@@ -80,6 +82,7 @@ function Test-SourceTree {
     )
 
     $root = (Resolve-Path -LiteralPath $RootPath).Path
+    [void](Get-R3PinnedSdkVersion -RepositoryRoot $root)
     $forbiddenDirectories = @('.git', '.vs', 'bin', 'obj', 'artifacts', 'publish', 'r3configbackups')
     $temporaryInspectionPattern = '^(?:Button-(?:Audit|Groups|Issues)|.+-Audit|.+-Ui-Structure)-\d{8}-\d{6}\.(?:csv|json|txt)$'
 
@@ -125,19 +128,19 @@ function Test-SourceTree {
         $previousErrorAction = $ErrorActionPreference
         try {
             $ErrorActionPreference = 'Continue'
-            $trackedPaths = @(& $gitCommand.Source -C $root -c core.quotepath=false ls-files --cached 2>$null)
-            $trackedPathExitCode = $LASTEXITCODE
+            $workingTreePaths = @(& $gitCommand.Source -C $root -c core.quotepath=false ls-files --cached --others --exclude-standard 2>$null)
+            $workingTreePathExitCode = $LASTEXITCODE
         }
         finally {
             $ErrorActionPreference = $previousErrorAction
         }
 
-        if ($trackedPathExitCode -ne 0) {
+        if ($workingTreePathExitCode -ne 0) {
             throw "git ls-files failed for source tree: $root"
         }
 
         $allFiles = @(
-            foreach ($relativePath in $trackedPaths) {
+            foreach ($relativePath in @($workingTreePaths | Sort-Object -Unique)) {
                 $fullPath = Join-Path $root ($relativePath.Replace('/', [IO.Path]::DirectorySeparatorChar))
                 if (Test-Path -LiteralPath $fullPath -PathType Leaf) {
                     Get-Item -LiteralPath $fullPath -Force
@@ -157,9 +160,37 @@ function Test-SourceTree {
         )
     }
 
-    $nestedZip = $allFiles | Where-Object { $_.Extension -ieq '.zip' } | Select-Object -First 1
+    $nestedZip = $allFiles | Where-Object {
+        if ($_.Extension -ine '.zip') {
+            return $false
+        }
+
+        $relative = $_.FullName.Substring($root.TrimEnd('\').Length + 1).Replace('\', '/')
+        return $relative -ine 'App/Data/ncl.zip'
+    } | Select-Object -First 1
     if ($nestedZip) {
         throw "Source tree contains nested ZIP artifact: $($nestedZip.FullName)"
+    }
+
+    # Private keys, PFX/PKCS#12 secrets, local databases, and environment
+    # files stay outside the repository.
+    $secretExtensions = @('.pem', '.pfx', '.p12', '.p8', '.key', '.snk', '.dpapi', '.sqlite', '.sqlite3')
+    $secretFile = $allFiles | Where-Object {
+        $secretExtensions -contains $_.Extension.ToLowerInvariant() -or
+        $_.Name -like '.dev.vars*' -or
+        $_.Name -like '.env*' -or
+        $_.FullName -match '[\\/]node_modules[\\/]'
+    } | Select-Object -First 1
+    if ($secretFile) {
+        throw "Source tree contains key material, a signing secret, or local secrets: $($secretFile.FullName)"
+    }
+
+    $pemPrivateKeyPattern = '-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----\s*[A-Za-z0-9+/=\r\n]{64,}'
+    foreach ($file in $allFiles | Where-Object { $_.Length -le 4MB -and @('.zip', '.ico', '.png') -notcontains $_.Extension.ToLowerInvariant() }) {
+        $content = [Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($file.FullName))
+        if ($content -match $pemPrivateKeyPattern) {
+            throw "Source tree contains PEM private key material: $($file.FullName)"
+        }
     }
 
     $staleArtImport = Get-ChildItem -LiteralPath $root -Recurse -File -Force | Where-Object {
@@ -179,6 +210,144 @@ function Test-SourceTree {
     $legacyCheatPath = Join-Path $root 'App\Data\cheats.yml'
     if (Test-Path -LiteralPath $legacyCheatPath -PathType Leaf) {
         throw 'Source tree contains obsolete App/Data/cheats.yml; the documented Artemis catalog is App/Data/art.yml.'
+    }
+
+    $nclPath = Join-Path $root 'App\Data\ncl.zip'
+    $nclNoticePath = Join-Path $root 'NCL.md'
+    if (-not (Test-Path -LiteralPath $nclPath -PathType Leaf)) {
+        throw 'Source tree is missing required pinned App/Data/ncl.zip.'
+    }
+    if (-not (Test-Path -LiteralPath $nclNoticePath -PathType Leaf)) {
+        throw 'Source tree is missing required NCL.md bundled-corpus provenance notice.'
+    }
+
+    if (Test-Path -LiteralPath $nclPath -PathType Leaf) {
+
+        $nclHash = Get-Sha256Hex -LiteralPath $nclPath
+        $expectedNclHash = 'C4C70C6E73A225F1E15096A3AEA06DD05461F7EF0CBB4BE8B106577ABC22D8B8'
+        if ($nclHash -ne $expectedNclHash) {
+            throw "App/Data/ncl.zip SHA-256 drifted from the pinned bundled corpus: $nclHash"
+        }
+
+        $nclNotice = Get-Content -Raw -LiteralPath $nclNoticePath
+        $requiredNclNoticeLines = @(
+            'R3Config verified merged NCL corpus',
+            'Source lineage: 5 records',
+            'Source NCL files: 2910',
+            "Bundled artifact SHA-256: $expectedNclHash",
+            'Embedded provenance schema: 2',
+            'Upstream ArtemisPS3 license notice: LICENSE-ArtemisPS3.txt'
+        )
+        foreach ($requiredLine in $requiredNclNoticeLines) {
+            if ($nclNotice.IndexOf($requiredLine, [StringComparison]::Ordinal) -lt 0) {
+                throw "NCL.md is missing required bundled-corpus provenance line: $requiredLine"
+            }
+        }
+
+        Add-Type -AssemblyName System.IO.Compression
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $nclArchive = [IO.Compression.ZipFile]::OpenRead($nclPath)
+        try {
+            $nclEntries = @($nclArchive.Entries | Where-Object {
+                $_.Name.Length -gt 0 -and $_.FullName.EndsWith('.ncl', [StringComparison]::OrdinalIgnoreCase)
+            })
+            if ($nclEntries.Count -ne 2910) {
+                throw "App/Data/ncl.zip expected 2910 NCL entries but found $($nclEntries.Count)."
+            }
+
+            if ($nclArchive.Entries.Count -ne 2912) {
+                throw "App/Data/ncl.zip must contain exactly 2910 NCL entries plus LICENSE-ArtemisPS3.txt and PROVENANCE.json."
+            }
+
+            $unsafeNclEntry = $nclEntries | Where-Object {
+                -not $_.FullName.StartsWith('codes/', [StringComparison]::Ordinal) -or
+                $_.FullName.IndexOf('\', [StringComparison]::Ordinal) -ge 0 -or
+                @($_.FullName.Split('/') | Where-Object { $_ -eq '..' }).Count -gt 0
+            } | Select-Object -First 1
+            if ($unsafeNclEntry) {
+                throw "App/Data/ncl.zip contains an unsafe NCL entry path: $($unsafeNclEntry.FullName)"
+            }
+
+            $licenseEntry = $nclArchive.GetEntry('LICENSE-ArtemisPS3.txt')
+            $provenanceEntry = $nclArchive.GetEntry('PROVENANCE.json')
+            if ($null -eq $licenseEntry -or $null -eq $provenanceEntry) {
+                throw 'App/Data/ncl.zip is missing its embedded license or provenance record.'
+            }
+
+            $licenseStream = $licenseEntry.Open()
+            try {
+                $licenseSha = [Security.Cryptography.SHA256]::Create()
+                try {
+                    $licenseHash = [BitConverter]::ToString($licenseSha.ComputeHash($licenseStream)).Replace('-', '')
+                }
+                finally {
+                    $licenseSha.Dispose()
+                }
+            }
+            finally {
+                $licenseStream.Dispose()
+            }
+            if ($licenseHash -ne '6A3E4BA999067B1C412F1740282BC077F8EDF5F7178EA085ACB5F5CCA6FECB46') {
+                throw 'App/Data/ncl.zip ArtemisPS3 license notice does not match the proven upstream license text.'
+            }
+
+            $reader = [IO.StreamReader]::new($provenanceEntry.Open(), [Text.Encoding]::UTF8, $true)
+            try {
+                $provenance = $reader.ReadToEnd() | ConvertFrom-Json
+            }
+            finally {
+                $reader.Dispose()
+            }
+
+            if ($provenance.schema -ne 2 -or
+                $provenance.artifactKind -ne 'R3Config NCL corpus' -or
+                $provenance.nclFileCount -ne 2910 -or
+                $provenance.dialect -ne 'ArtemisPs3' -or
+                $provenance.generatedBy -ne 'R3Config deterministic NCL corpus builder' -or
+                $provenance.licenseNotice -ne 'LICENSE-ArtemisPS3.txt') {
+                throw 'App/Data/ncl.zip embedded schema-2 provenance header is invalid.'
+            }
+
+            $expectedSources = @{
+                'ALDOSTOOLS_CODELIST' = @('upstreamArchive', 'A1ABC379DD6F8BB65399EACD97D147A33C5907BAFE2C1E0B468BA86A786E8CEA', 2501)
+                'BUCANERO_CURRENT' = @('upstreamArchive', '8289EFDB5B5441A579C1ECAC8E608852FAB4D225A92728B5EB8D6227ED89EBA2', 2540)
+                'DNAWRKSHP_HISTORICAL' = @('historicalUpstreamArchive', '8AC628D238D0501D699552EECF40C836D417DCADD66419699DC2C56BBE6D01A6', 1287)
+                'R3CONFIG_CURRENT' = @('legacyCarryForward', '80AA918A4F98A7491A0D684456D7620486296C54B396FEA0C89D117CBF5DD17D', 2497)
+                'AR_SITE_CODELIST_2026' = @('manifestDownloadArchive', '734896CB7DD1EEE2B9E6720E6E75D9D852626F213C8676B03914257DF8555DC3', 2495)
+            }
+            $sources = @($provenance.sources)
+            if ($sources.Count -ne $expectedSources.Count) {
+                throw "App/Data/ncl.zip provenance expected $($expectedSources.Count) source records but found $($sources.Count)."
+            }
+
+            $ids = @($sources | ForEach-Object { [string]$_.id })
+            if (@($ids | Sort-Object -Unique).Count -ne $ids.Count) {
+                throw 'App/Data/ncl.zip provenance contains duplicate source IDs.'
+            }
+
+            foreach ($source in $sources) {
+                if ([string]::IsNullOrWhiteSpace([string]$source.id) -or
+                    [string]::IsNullOrWhiteSpace([string]$source.kind) -or
+                    [string]::IsNullOrWhiteSpace([string]$source.sha256) -or
+                    [int]$source.nclFileCount -le 0) {
+                    throw 'App/Data/ncl.zip provenance contains an incomplete source record.'
+                }
+
+                if (-not $expectedSources.ContainsKey([string]$source.id)) {
+                    throw "App/Data/ncl.zip provenance contains an unexpected source ID: $($source.id)"
+                }
+
+                $expected = $expectedSources[[string]$source.id]
+                if ([string]$source.kind -ne $expected[0] -or
+                    [string]$source.sha256 -ne $expected[1] -or
+                    [int]$source.nclFileCount -ne [int]$expected[2]) {
+                    throw "App/Data/ncl.zip provenance mismatch for source ID: $($source.id)"
+                }
+            }
+        }
+        finally {
+            $nclArchive.Dispose()
+        }
     }
 
     $artemisPath = Join-Path $root 'App\Data\art.yml'
@@ -324,10 +493,7 @@ function Test-ProjectContracts {
         throw "Source tree is missing the architecture and contract gate: $gate"
     }
 
-    & powershell -ExecutionPolicy Bypass -File $gate
-    if ($LASTEXITCODE -ne 0) {
-        throw "Architecture and contract gate failed for: $RootPath"
-    }
+    Invoke-R3PowerShellFile -ScriptPath $gate
 }
 
 $resolvedPath = (Resolve-Path -LiteralPath $Path).Path

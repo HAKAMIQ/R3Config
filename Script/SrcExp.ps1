@@ -4,6 +4,29 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$toolchain = Join-Path $PSScriptRoot 'R3Toolchain.ps1'
+. $toolchain
+
+function Test-IsLocalOnlySourceFile {
+    param(
+        [Parameter(Mandatory = $true)][string]$RelativePath
+    )
+
+    $localDirectories = @()
+    $segments = $RelativePath -split '[\\/]'
+    if ($segments | Where-Object { $localDirectories -contains $_.ToLowerInvariant() }) {
+        return $true
+    }
+
+    $name = $segments[-1]
+    foreach ($pattern in @('*.local.md', '*.local.json', '*.local.json.*', '.env', '.env.*', '.dev.vars', '.dev.vars.*')) {
+        if ($name -like $pattern) {
+            return $true
+        }
+    }
+
+    return $false
+}
 
 function Test-IsExcludedSourceFile {
     param(
@@ -15,6 +38,16 @@ function Test-IsExcludedSourceFile {
     $segments = $RelativePath -split '[\\/]'
     if ($segments | Where-Object { $excludedDirectories -contains $_.ToLowerInvariant() }) {
         return $true
+    }
+
+    if (Test-IsLocalOnlySourceFile -RelativePath $RelativePath) {
+        return $true
+    }
+
+    $normalized = $RelativePath.Replace('\', '/')
+    if ($Extension -ieq '.zip' -and
+        $normalized -ieq 'App/Data/ncl.zip') {
+        return $false
     }
 
     $excludedExtensions = @('.user', '.suo', '.rsuser', '.log', '.tmp', '.bak', '.zip')
@@ -121,8 +154,9 @@ try {
         'Working-Tree-Entry-Count: ' + $workingTreeEntryCount
         'Includes-Working-Tree: yes'
         'File-Count: ' + $sourceFiles.Count
-        'Excluded: .git, .vs, bin, obj, artifacts, publish, local user files, logs, temp files, backups, nested ZIP files'
+        'Excluded: .git, .vs, bin, obj, artifacts, publish, local user files, local user files (*.local.*), .env/.dev.vars, logs, temp files, backups, ZIP files except pinned App/Data/ncl.zip'
         'Start-Here: docs/ProdAr.md'
+        'Developer-Guide: docs/Arch/README.md'
         'Architecture-Index: docs/Arch/README.md'
         'Contract-Gate: Script/NameChk.ps1'
         'Source-Gate: Script/SrcChk.ps1 -StrictTree runs before archive creation'
@@ -133,10 +167,17 @@ try {
         $handoffText,
         [Text.UTF8Encoding]::new($false))
 
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $stagingRoot 'Script\SrcChk.ps1') -Path $stagingRoot -StrictTree
-    if ($LASTEXITCODE -ne 0) {
-        throw "Staged source verification failed with exit code $LASTEXITCODE."
+    $stagingPrefix = $stagingRoot.TrimEnd([IO.Path]::DirectorySeparatorChar).Length + 1
+    $localLeak = Get-ChildItem -LiteralPath $stagingRoot -Recurse -File -Force |
+        Where-Object { Test-IsLocalOnlySourceFile -RelativePath $_.FullName.Substring($stagingPrefix) } |
+        Select-Object -First 1
+    if ($null -ne $localLeak) {
+        throw "Source package contains a local-only settings file: $($localLeak.FullName.Substring($stagingPrefix))"
     }
+
+    Invoke-R3PowerShellFile `
+        -ScriptPath (Join-Path $stagingRoot 'Script\SrcChk.ps1') `
+        -Arguments @('-Path', $stagingRoot, '-StrictTree')
 
     New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
     if (Test-Path -LiteralPath $archivePath) {
@@ -166,10 +207,9 @@ try {
         $archive.Dispose()
     }
 
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'Script\SrcChk.ps1') -Path $archivePath
-    if ($LASTEXITCODE -ne 0) {
-        throw "Source ZIP verification failed with exit code $LASTEXITCODE."
-    }
+    Invoke-R3PowerShellFile `
+        -ScriptPath (Join-Path $repoRoot 'Script\SrcChk.ps1') `
+        -Arguments @('-Path', $archivePath)
 
     $hash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
     $hashPath = $archivePath + '.sha256'

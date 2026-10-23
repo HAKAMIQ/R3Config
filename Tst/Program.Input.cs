@@ -124,7 +124,8 @@ internal static partial class Program
             {
                 ["TITLE"] = "Games YML At Limit",
                 ["TITLE_ID"] = "BLUS40001",
-                ["APP_VER"] = "01.00"
+                ["APP_VER"] = "01.00",
+                ["CATEGORY"] = "DG"
             });
         var atLimitGamesYml = Path.Combine(
             atLimitInstall.CfgPath,
@@ -159,7 +160,8 @@ internal static partial class Program
             {
                 ["TITLE"] = "Games YML Fallback",
                 ["TITLE_ID"] = "BLUS40002",
-                ["APP_VER"] = "01.00"
+                ["APP_VER"] = "01.00",
+                ["CATEGORY"] = "DG"
             });
         File.WriteAllText(
             Path.Combine(overLimitRoot, "games.yml"),
@@ -167,6 +169,52 @@ internal static partial class Program
         Assert(new GameScanner().Scan(overLimitInstall)
                 .Any(game => game.Serial == "BLUS40002"),
             "Expected one oversized games.yml source not to block a valid independent source.");
+
+        var oversizedVfsRoot = Path.Combine(
+            suiteRoot,
+            "oversized-vfs");
+        var oversizedVfsConfig = Path.Combine(
+            oversizedVfsRoot,
+            "config");
+        var oversizedVfsDecoy = Path.Combine(
+            oversizedVfsRoot,
+            "dev_hdd0",
+            "game",
+            "NPEB40003");
+        Directory.CreateDirectory(oversizedVfsConfig);
+        Directory.CreateDirectory(oversizedVfsDecoy);
+        var oversizedVfsExe = Path.Combine(
+            oversizedVfsRoot,
+            "rpcs3.exe");
+        File.WriteAllBytes(oversizedVfsExe, []);
+        SfoWrite(
+            Path.Combine(oversizedVfsDecoy, "PARAM.SFO"),
+            new Dictionary<string, string>
+            {
+                ["TITLE"] = "Oversized VFS Decoy",
+                ["TITLE_ID"] = "NPEB40003",
+                ["APP_VER"] = "01.00",
+                ["CATEGORY"] = "HG"
+            });
+        using (var stream = File.Create(Path.Combine(
+                   oversizedVfsConfig,
+                   "vfs.yml")))
+        {
+            stream.SetLength(R3Limits.CfgByte + 1);
+        }
+        var oversizedVfsResult = new GameScanner().ScanInfo(
+            Rpcs3InstallService.FromExe(oversizedVfsExe));
+        Assert(oversizedVfsResult.Games.All(game =>
+                   game.Serial != "NPEB40003") &&
+               oversizedVfsResult.Diags.Any(diagnostic =>
+                   diagnostic.SrcKind == ScanSrc.Yaml &&
+                   diagnostic.SrcPath.EndsWith(
+                       "vfs.yml",
+                       StringComparison.OrdinalIgnoreCase) &&
+                   diagnostic.TechMsg.Contains(
+                       "input limit",
+                       StringComparison.OrdinalIgnoreCase)),
+            "Expected oversized vfs.yml to fail closed before unbounded allocation instead of falling back to DataRoot\\dev_hdd0.");
 
         var oversizedPatch = Path.Combine(suiteRoot, "patch.yml");
         using (var stream = File.Create(oversizedPatch))
@@ -354,7 +402,8 @@ internal static partial class Program
                 {
                     ["TITLE"] = $"Directory Limit Game {index}",
                     ["TITLE_ID"] = serial,
-                    ["APP_VER"] = "01.00"
+                    ["APP_VER"] = "01.00",
+                    ["CATEGORY"] = "HG"
                 });
         }
         var directoryLimitResult = new GameScanner(
@@ -433,7 +482,8 @@ internal static partial class Program
             {
                 ["TITLE"] = "Diagnostic Healthy Game",
                 ["TITLE_ID"] = "BLUS42000",
-                ["APP_VER"] = "01.00"
+                ["APP_VER"] = "01.00",
+                ["CATEGORY"] = "HG"
             });
         File.WriteAllBytes(
             Path.Combine(malformedFolder, "PARAM.SFO"),

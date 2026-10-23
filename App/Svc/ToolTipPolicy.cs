@@ -37,6 +37,11 @@ internal static class ToolTipPolicy
             return;
         }
 
+        Apply(element);
+    }
+
+    internal static void Apply(FrameworkElement element)
+    {
         ToolTipService.SetInitialShowDelay(
             element,
             InitialShowDelayMs);

@@ -1,0 +1,28 @@
+<mediawiki><!-- Configuration and GameID excerpt; comments and empty values omitted. Original source SHA256: BBF7D69454270E332F5F0C3294C41BBE6A9332C8AB780BBC48714C24C68BB0A2 --><page><title>Grand Theft Auto IV</title><ns>0</ns><id>829</id><revision><id>47638</id><timestamp>2024-03-26T20:14:26Z</timestamp><text><![CDATA[{{vginfobox
+|gameid    = {{gameid|id=BLES00229, BLUS30127, NPEB00882, NPUB30702|oid=BLES00258, BLJM60093|ird=Yes}}<br>'''''The Complete Edition'''''<br>{{gameid|id=BLES01128, BLUS30682|oid=BLJM60346|ird=Yes}}
+}}
+==Configuration==
+{{config
+
+|spu xfloat accuracy                   = Accurate
+|spu xfloat accuracy notes             = Fixes missing collision. Requires SPU LLVM recompiler. Expect audio stutter.
+
+|zcull accuracy                        = Relaxed
+|zcull accuracy notes                  = Improves performance without any noticeable issues.
+|write color buffers                   = On
+|write color buffers notes             = Fixes missing reflections.
+|multithreaded rsx                     = On
+|multithreaded rsx notes               = Improves performance.
+|asynchronous texture streaming        = On
+|asynchronous texture streaming notes  = If you have a stronger GPU, this can give substantial performance boost.
+
+
+
+
+|sleep timers accuracy                 = As Host
+|sleep timers accuracy notes           = Slightly improves performance.
+|rsx fifo accuracy                     = Atomic
+|rsx fifo accuracy notes               = Helps to reduce crashes.
+
+
+}}]]></text></revision></page></mediawiki>

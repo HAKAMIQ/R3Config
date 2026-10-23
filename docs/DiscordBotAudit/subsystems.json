@@ -1,0 +1,175 @@
+{
+ "total": 34,
+ "subsystems": [
+  {
+   "subsystem": "Log parsing: streaming/pipelines/Aho-Corasick/sliding window",
+   "disposition": "ALREADY_COVERED",
+   "note": "PERFORMANCE_NOT_JUSTIFIED: 11 MB in ~280 ms; guard test LogObservationT.AssertThroughput"
+  },
+  {
+   "subsystem": "Log parsing: sections/state machine",
+   "disposition": "ALREADY_COVERED",
+   "note": "Rpcs3LogParser.Machine (per-boot Segment)"
+  },
+  {
+   "subsystem": "Log parsing: multi-boot",
+   "disposition": "ALREADY_COVERED",
+   "note": "Segments per BootGame/serial; LogObservationT.AssertMultiBootIsolation"
+  },
+  {
+   "subsystem": "Log parsing: multi-value / count-only observations",
+   "disposition": "IMPLEMENTED",
+   "note": "Observations with Count/First/Last; hashes, patches, devices, syscalls, licenses are lists; PERF samples kept whole"
+  },
+  {
+   "subsystem": "Log parsing: partial input / completeness",
+   "disposition": "IMPLEMENTED",
+   "note": "LogCompleteness + no BlackScreen synthesis on header-less fragments"
+  },
+  {
+   "subsystem": "Log parsing: analysis manifest / reproducibility",
+   "disposition": "IMPLEMENTED",
+   "note": "LogAnalysisManifest (hash, parser/rule-set versions, source type, warnings); duration separate"
+  },
+  {
+   "subsystem": "GeneralNotes diagnostic rules",
+   "disposition": "IMPLEMENTED",
+   "note": "general-notes-rules.json: every emission has a disposition; observations implemented, advice reference-only"
+  },
+  {
+   "subsystem": "WeirdSettings / game-family rules",
+   "disposition": "REFERENCE_ONLY",
+   "note": "weird-settings-families.json + weird-settings-rules.json preserved; no active finding without predicate-level corroboration"
+  },
+  {
+   "subsystem": "Advice engine: CPU/GPU/RAM/driver/OS nags",
+   "disposition": "REFERENCE_ONLY",
+   "note": "inventoried in general-notes-rules.json with hardware inputs and version constants; canonical Wiki has 0 mentions; official CPU tier list not captured locally"
+  },
+  {
+   "subsystem": "Hardware: raw vs normalized, imported vs current",
+   "disposition": "IMPLEMENTED",
+   "note": "LogHardware (NormalizedValue raw/value/method, HardwareSource); HwProbe owns the current machine"
+  },
+  {
+   "subsystem": "Hardware: CPU tier",
+   "disposition": "REFERENCE_ONLY",
+   "note": "HwTier is an internal heuristic, labelled as such; official tier list needs a local snapshot (none) - pending"
+  },
+  {
+   "subsystem": "PerfSensor / CPU-RAM samples",
+   "disposition": "IMPLEMENTED",
+   "note": "LogPerformanceSummary: median + p5/p95, RAM peak, count"
+  },
+  {
+   "subsystem": "IRD (model/parser/local import/comparison)",
+   "disposition": "IMPLEMENTED",
+   "note": "IrdParser (v6-9), IsoHeaderLister, IrdComparer; validated on synthetic IRDs only; real .ird fixture pending; hash verification of on-disk files pending"
+  },
+  {
+   "subsystem": "IRD online library client",
+   "disposition": "NOT_APPLICABLE",
+   "note": "network download; R3Config runtime is offline"
+  },
+  {
+   "subsystem": "PSN / game update metadata",
+   "disposition": "IMPLEMENTED",
+   "note": "GameUpdateSnapshot contract: dated sourced local snapshot, exact ProductCode/ContentId, stale flag; no shipped data"
+  },
+  {
+   "subsystem": "PSN client / scrapers / title metadata download",
+   "disposition": "NOT_APPLICABLE",
+   "note": "network / build-time scraping; not a runtime dependency"
+  },
+  {
+   "subsystem": "Compatibility API concepts (compat list status)",
+   "disposition": "REFERENCE_ONLY",
+   "note": "local capture exists under R3Config-Evidence/RPCS3-Compatibility; not integrated (Domain 5 uses Wiki RPCN + build catalog)"
+  },
+  {
+   "subsystem": "GitHub / CI concepts (builds, PRs)",
+   "disposition": "ALREADY_COVERED",
+   "note": "rpcs3-builds.json exact Version+Build catalog; regressions in diagnostics-kb.json"
+  },
+  {
+   "subsystem": "Win32 error decoding",
+   "disposition": "IMPLEMENTED",
+   "note": "Win32ErrorSymbols (winerror.h derived) + Win32ErrorObservation; fixture is source-derived (no real log line exists locally)"
+  },
+  {
+   "subsystem": "Syscall knowledge",
+   "disposition": "IMPLEMENTED",
+   "note": "UnimplementedSyscall observation with count/first/last; SyscallInfoProvider name tables are REFERENCE_ONLY"
+  },
+  {
+   "subsystem": "OCR / vision",
+   "disposition": "REFERENCE_ONLY",
+   "note": "OPTIONAL_FEATURE: design = IOcrProvider -> OcrObservation(Text, Confidence, Provenance) that is never Exact by itself; not implemented, no cloud OCR"
+  },
+  {
+   "subsystem": "Unicode / confusables / zalgo",
+   "disposition": "IMPLEMENTED",
+   "note": "TextSafety (display sanitation, combining cap, search key) + exact-identity guard; confusables data NOT copied (LGPL data)"
+  },
+  {
+   "subsystem": "Archive handlers (zip/gz/plain)",
+   "disposition": "IMPLEMENTED",
+   "note": "ILogSource: LocalFileLogSource, LocalArchiveLogSource (read-only, limits, ambiguity fail-closed); rar/7z/tar not added (no justified dependency)"
+  },
+  {
+   "subsystem": "Source handlers (Discord/Mega/Pastebin/Drive/OneDrive/Yandex/Dropbox/Mediafire)",
+   "disposition": "NOT_APPLICABLE",
+   "note": "network downloaders"
+  },
+  {
+   "subsystem": "Caching (memory cache, IRD cache)",
+   "disposition": "REFERENCE_ONLY",
+   "note": "lesson: bounded caches; R3Config has no runtime remote data to cache"
+  },
+  {
+   "subsystem": "Persistent providers / EF Core DBs / migrations",
+   "disposition": "NOT_APPLICABLE",
+   "note": "server state; lesson kept: versioned schemas (manifest.SchemaVersion, catalog schema checks)"
+  },
+  {
+   "subsystem": "Bounded work / cancellation",
+   "disposition": "IMPLEMENTED",
+   "note": "byte budget, entry/observation caps, CancellationToken through Rpcs3LogService.Read"
+  },
+  {
+   "subsystem": "Graceful shutdown / hosted service",
+   "disposition": "NOT_APPLICABLE",
+   "note": "server lifecycle"
+  },
+  {
+   "subsystem": "Explain / explanation terms",
+   "disposition": "REFERENCE_ONLY",
+   "note": "lesson: term explanations separate from detection; R3Config uses localized keys per observation"
+  },
+  {
+   "subsystem": "Localization separation",
+   "disposition": "ALREADY_COVERED",
+   "note": "UiText keys with EN/AR parity gate; observation kinds carry no prose"
+  },
+  {
+   "subsystem": "ProductCodeDecoder (serial region/type tables)",
+   "disposition": "REFERENCE_ONLY",
+   "note": "candidate: region decoding from serial; R3Config keeps edition-from-prefix only; needs a primary source before shipping"
+  },
+  {
+   "subsystem": "Moderation: warnings, content filters, piracy filter, invite filter, username raids",
+   "disposition": "NOT_APPLICABLE",
+   "note": "Discord moderation"
+  },
+  {
+   "subsystem": "Fun: fortune, starbucks, table flip, name lists, anime lists",
+   "disposition": "NOT_APPLICABLE",
+   "note": "Discord entertainment"
+  },
+  {
+   "subsystem": "Commands: sudo, audit, events, stats, bot status, mod",
+   "disposition": "NOT_APPLICABLE",
+   "note": "Discord administration"
+  }
+ ]
+}

@@ -1,0 +1,80 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             x:Class="R3Config.Ctrl.PatchSourceView"
+             mc:Ignorable="d"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="PatchStyles.xaml" />
+                <ResourceDictionary Source="PatchTemplates.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid x:Name="SourceArea"
+          Grid.Row="1"
+          FlowDirection="{DynamicResource App.FlowDirection}">
+
+        <Border x:Name="OfclSrc"
+                FlowDirection="{DynamicResource App.FlowDirection}"
+                Background="{DynamicResource Surface.Subtle}"
+                BorderThickness="0"
+                CornerRadius="{StaticResource Radius.None}"
+                Padding="8"
+                HorizontalAlignment="Stretch">
+
+            <Grid FlowDirection="{DynamicResource App.FlowDirection}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <WrapPanel Grid.Column="0"
+                           Orientation="Horizontal"
+                           Style="{StaticResource PatTrailingWrapPanel}"
+                           Margin="0">
+
+                    <Button Command="{Binding OfclMgr}"
+                            Style="{StaticResource PatSourceActionButton}"
+                            ToolTip="{lang:TextExt Key=Patch.SourceStatus.UpdateOfficialTip}"
+                            AutomationProperties.Name="{lang:TextExt Key=Patch.SourceStatus.UpdateOfficial}">
+
+                        <StackPanel Orientation="Horizontal"
+                                    FlowDirection="{DynamicResource App.FlowDirection}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    IsHitTestVisible="False">
+
+                            <TextBlock Text=""
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                       FontSize="13"
+                                       Width="16"
+                                       Height="16"
+                                       FlowDirection="LeftToRight"
+                                       TextAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False" />
+
+                            <TextBlock Text="{lang:TextExt Key=Patch.SourceStatus.UpdateOfficial}"
+                                       Margin="6,0,0,0"
+                                       VerticalAlignment="Center"
+                                       FlowDirection="{DynamicResource App.TextFlowDirection}"
+                                       TextAlignment="{DynamicResource App.TextAlignment}" />
+                        </StackPanel>
+                    </Button>
+
+                </WrapPanel>
+
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

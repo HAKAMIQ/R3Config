@@ -1,0 +1,355 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             xmlns:ctrl="clr-namespace:R3Config.Ctrl"
+             x:Class="R3Config.View.ARecSyncView"
+             mc:Ignorable="d"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ASty.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="SyncOptionCheckBox"
+                   TargetType="{x:Type CheckBox}"
+                   BasedOn="{StaticResource FluentCheckBox}">
+                <Setter Property="MinHeight"
+                        Value="32" />
+                <Setter Property="FlowDirection"
+                        Value="{DynamicResource App.TextFlowDirection}" />
+                <!-- Left is the start edge inside the RTL panel, so the label
+                     stays next to its box instead of the far side. -->
+                <Setter Property="HorizontalAlignment"
+                        Value="Left" />
+                <Setter Property="HorizontalContentAlignment"
+                        Value="{DynamicResource App.HorizontalAlignment}" />
+                <Setter Property="VerticalContentAlignment"
+                        Value="Center" />
+            </Style>
+
+            <!-- Localized cells get the same inset as their header. -->
+            <Style x:Key="SyncLocalizedCellText"
+                   TargetType="{x:Type TextBlock}"
+                   BasedOn="{StaticResource DataGridCellLocalizedText}">
+                <Setter Property="Padding"
+                        Value="8,0" />
+            </Style>
+
+            <!-- The two-row source grid shows its long status and detail in
+                 full; the change log keeps one line per row with ToolTips. -->
+            <Style x:Key="SyncWrapLocalizedCellText"
+                   TargetType="{x:Type TextBlock}"
+                   BasedOn="{StaticResource SyncLocalizedCellText}">
+                <Setter Property="Padding"
+                        Value="8,4" />
+                <Setter Property="TextWrapping"
+                        Value="Wrap" />
+                <Setter Property="TextTrimming"
+                        Value="None" />
+            </Style>
+
+            <Style x:Key="SyncWrapTechnicalCellText"
+                   TargetType="{x:Type TextBlock}"
+                   BasedOn="{StaticResource DataGridCellTextLeft}">
+                <Setter Property="Padding"
+                        Value="8,4" />
+                <Setter Property="TextWrapping"
+                        Value="Wrap" />
+                <Setter Property="TextTrimming"
+                        Value="None" />
+            </Style>
+
+            <Style x:Key="SyncLinkCellText"
+                   TargetType="{x:Type TextBlock}"
+                   BasedOn="{StaticResource SyncLocalizedCellText}" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid x:Name="RecSyncWorkspace"
+          FlowDirection="{DynamicResource App.FlowDirection}"
+          Language="{DynamicResource App.XmlLanguage}">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Style="{StaticResource R3SettingsSection}"
+                Margin="0"
+                Padding="16"
+                CornerRadius="{StaticResource Radius.None}"
+                FlowDirection="{DynamicResource App.FlowDirection}">
+
+            <StackPanel FlowDirection="{DynamicResource App.FlowDirection}">
+
+                <TextBlock Text="{lang:TextExt Key=Sync.Title}"
+                           Style="{StaticResource AdvLocalizedRowTitleText}" />
+
+                <CheckBox AutomationProperties.AutomationId="Sync.AutoUpdate"
+                          AutomationProperties.Name="{lang:TextExt Key=Sync.AutoUpdate}"
+                          IsChecked="{Binding Sync.AutoUpdate, Mode=TwoWay}"
+                          Style="{StaticResource SyncOptionCheckBox}"
+                          ToolTip="{lang:TextExt Key=Sync.AutoUpdateTip}">
+                    <TextBlock Text="{lang:TextExt Key=Sync.AutoUpdate}"
+                               Style="{StaticResource AdvLocalizedLabelText}" />
+                </CheckBox>
+
+                <Grid Margin="0,8,0,0"
+                      FlowDirection="{DynamicResource App.FlowDirection}">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0"
+                            AutomationProperties.AutomationId="Sync.CheckNow"
+                            Content="{Binding Sync.CheckText}"
+                            Style="{StaticResource AdvStandardActionButton}"
+                            ToolTip="{lang:TextExt Key=Sync.CheckNowTip}"
+                            Command="{Binding SyncNowCmd}" />
+
+                    <StackPanel Grid.Column="2"
+                                VerticalAlignment="Center"
+                                FlowDirection="{DynamicResource App.FlowDirection}">
+
+                        <StackPanel Orientation="Horizontal"
+                                    FlowDirection="{DynamicResource App.FlowDirection}">
+
+                            <TextBlock Text="{lang:TextExt Key=Sync.LastSuccess}"
+                                       Style="{StaticResource AdvLocalizedLabelText}"
+                                       HorizontalAlignment="Left" />
+
+                            <TextBlock Text="{Binding Sync.LastSuccess}"
+                                       Style="{StaticResource R3TechnicalValueText}"
+                                       Margin="8,0" />
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding Sync.RunStatus}"
+                                   Style="{StaticResource AdvLocalizedDescriptionText}" />
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Text="{lang:TextExt Key=Sync.SourceSummary}"
+                           Style="{StaticResource AdvLocalizedDescriptionText}"
+                           Margin="0,8,0,0" />
+
+                <Border Style="{StaticResource AdvInlineNotice}"
+                        Margin="0,8,0,0"
+                        Visibility="{Binding Sync.HasStoreNote,
+                                             Converter={StaticResource BoolToVisibilityConverter}}">
+
+                    <TextBlock Text="{Binding Sync.StoreNote}"
+                               Style="{StaticResource AdvLocalizedDescriptionText}" />
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <Expander Grid.Row="2"
+                  AutomationProperties.AutomationId="Sync.AdvancedDetails"
+                  Header="{lang:TextExt Key=Sync.AdvancedDetails}"
+                  FlowDirection="{DynamicResource App.FlowDirection}"
+                  IsExpanded="False">
+          <StackPanel Margin="0,8,0,0">
+                <CheckBox AutomationProperties.AutomationId="Sync.NotifyMyGames"
+                          AutomationProperties.Name="{lang:TextExt Key=Sync.NotifyMyGames}"
+                          IsChecked="{Binding Sync.NotifyMyGames, Mode=TwoWay}"
+                          Style="{StaticResource SyncOptionCheckBox}"
+                          ToolTip="{lang:TextExt Key=Sync.NotifyMyGamesTip}">
+                    <TextBlock Text="{lang:TextExt Key=Sync.NotifyMyGames}"
+                               Style="{StaticResource AdvLocalizedLabelText}" />
+                </CheckBox>
+        <DataGrid
+                  AutomationProperties.AutomationId="Sync.Sources"
+                  AutomationProperties.Name="{lang:TextExt Key=Sync.Sources}"
+                  ItemsSource="{Binding Sync.Sources}"
+                  Style="{StaticResource FluentDataGrid}"
+                  IsReadOnly="True"
+                  AutoGenerateColumns="False"
+                  CanUserResizeColumns="True"
+                  HeadersVisibility="Column"
+                  RowHeight="NaN"
+                  MinRowHeight="36"
+                  ColumnHeaderHeight="32"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                  Language="{DynamicResource App.XmlLanguage}"
+                  FlowDirection="{DynamicResource App.FlowDirection}">
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Source}"
+                                    HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                    Binding="{Binding Name}"
+                                    Width="Auto"
+                                    MinWidth="120"
+                                    ElementStyle="{StaticResource SyncLocalizedCellText}" />
+
+                <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Status}"
+                                    HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                    Binding="{Binding Status}"
+                                    Width="*"
+                                    MinWidth="120"
+                                    ElementStyle="{StaticResource SyncWrapLocalizedCellText}" />
+
+                <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.LastSuccess}"
+                                    HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                    Binding="{Binding LastSuccess}"
+                                    Width="Auto"
+                                    MinWidth="120"
+                                    ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
+                <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Detail}"
+                                    HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                    Binding="{Binding Detail}"
+                                    Width="2*"
+                                    MinWidth="140"
+                                    ElementStyle="{StaticResource SyncWrapTechnicalCellText}" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <Grid Margin="0,12,0,0"
+              FlowDirection="{DynamicResource App.FlowDirection}">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="8" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Text="{lang:TextExt Key=Sync.Changes}"
+                       Style="{StaticResource AdvLocalizedRowTitleText}" />
+
+            <DataGrid Grid.Row="2"
+                      AutomationProperties.AutomationId="Sync.Changes"
+                      AutomationProperties.Name="{lang:TextExt Key=Sync.Changes}"
+                      ItemsSource="{Binding Sync.Changes}"
+                      IsReadOnly="True"
+                      AutoGenerateColumns="False"
+                      CanUserResizeColumns="True"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="True"
+                      RowHeight="36"
+                      MinRowHeight="36"
+                      ColumnHeaderHeight="32"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      Language="{DynamicResource App.XmlLanguage}"
+                      FlowDirection="{DynamicResource App.FlowDirection}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+
+                <DataGrid.Style>
+                    <Style TargetType="{x:Type DataGrid}"
+                           BasedOn="{StaticResource FluentDataGrid}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Sync.HasChanges}"
+                                         Value="False">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.Style>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Date}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding Observed}"
+                                        Width="Auto"
+                                        MinWidth="110"
+                                        ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
+                    <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Serial}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding Serial}"
+                                        Width="Auto"
+                                        MinWidth="90"
+                                        ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
+                    <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Game}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding Title}"
+                                        Width="*"
+                                        MinWidth="64"
+                                        ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
+                    <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Setting}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding Setting}"
+                                        Width="1.8*"
+                                        MinWidth="104"
+                                        ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
+                    <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Old}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding OldValue}"
+                                        Width="0.6*"
+                                        MinWidth="52"
+                                        ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
+                    <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.New}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding NewValue}"
+                                        Width="0.6*"
+                                        MinWidth="52"
+                                        ElementStyle="{StaticResource DataGridCellTextLeft}" />
+
+                    <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Kind}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding Kind}"
+                                        Width="Auto"
+                                        MinWidth="60"
+                                        ElementStyle="{StaticResource SyncLocalizedCellText}" />
+
+                    <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Status}"
+                                        HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                        Binding="{Binding State}"
+                                        Width="2.2*"
+                                        MinWidth="104"
+                                        ElementStyle="{StaticResource SyncLocalizedCellText}" />
+
+                    <DataGridTemplateColumn Header="{lang:TextExt Key=Sync.Column.Source}"
+                                            HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
+                                            Width="1.1*"
+                                            MinWidth="72">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Style="{StaticResource SyncLinkCellText}"
+                                           ToolTip="{Binding SourceUrl}"
+                                           ctrl:LinkText.Text="{Binding Source}"
+                                           ctrl:LinkText.Target="{Binding SourceUrl}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Border Grid.Row="2"
+                    Style="{StaticResource EmptyStatePanel}"
+                    CornerRadius="{StaticResource Radius.None}"
+                    FlowDirection="{DynamicResource App.FlowDirection}"
+                    Visibility="{Binding Sync.HasNoChanges,
+                                         Converter={StaticResource BoolToVisibilityConverter}}">
+
+                <TextBlock Text="{lang:TextExt Key=Sync.ChangesEmpty}"
+                           Style="{StaticResource AdvLocalizedEmptyStateText}"
+                           VerticalAlignment="Center" />
+            </Border>
+        </Grid>
+          </StackPanel>
+        </Expander>
+    </Grid>
+</UserControl>

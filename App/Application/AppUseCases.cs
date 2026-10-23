@@ -13,4 +13,9 @@ public sealed record AppUseCases(
     HCanaryUseCase HCanary,
     GameLaunchUseCase GameLaunch,
     GameFingerprintCaptureUseCase FingerprintCapture,
-    GameSetupUseCase GameSetup);
+    GameSetupUseCase GameSetup,
+    NclManagedPatchUseCase? NclManagedPatch = null,
+    WikiEvidenceUseCase? WikiEvidence = null,
+    RuntimeContextUseCase? RuntimeContext = null,
+    LogDiagnosticsUseCase? LogDiagnostics = null,
+    RecommendationSyncUseCase? RecommendationSync = null);

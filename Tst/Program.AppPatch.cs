@@ -66,25 +66,25 @@ internal static partial class Program
         var configViewPaths = new[]
         {
             configViewPath,
-            Path.Combine(appRoot, "Ctrl", "RSty.xaml")
+            Path.Combine(appRoot, "Ctrl", "RecommendationStyles.xaml")
         };
-        var patchViewPath = Path.Combine(appRoot, "Ctrl", "Pat.xaml");
+        var patchViewPath = Path.Combine(appRoot, "Ctrl", "PatchView.xaml");
         var patchViewPaths = new[]
         {
             patchViewPath,
-            Path.Combine(appRoot, "Ctrl", "PSty.xaml"),
-            Path.Combine(appRoot, "Ctrl", "PTmp.xaml"),
-            Path.Combine(appRoot, "Ctrl", "PSrc.xaml"),
-            Path.Combine(appRoot, "Ctrl", "POff.xaml"),
-            Path.Combine(appRoot, "Ctrl", "PCan.xaml"),
-            Path.Combine(appRoot, "Ctrl", "PCht.xaml")
+            Path.Combine(appRoot, "Ctrl", "PatchStyles.xaml"),
+            Path.Combine(appRoot, "Ctrl", "PatchTemplates.xaml"),
+            Path.Combine(appRoot, "Ctrl", "PatchSourceView.xaml"),
+            Path.Combine(appRoot, "Ctrl", "OfficialPatchView.xaml"),
+            Path.Combine(appRoot, "Ctrl", "CanaryPatchView.xaml"),
+            Path.Combine(appRoot, "Ctrl", "CheatPatchView.xaml")
         };
         var typeThemePath = Path.Combine(appRoot, "Thm", "Type.xaml");
         var hCanaryViewPath = Path.Combine(appRoot, "Ctrl", "HCan.xaml");
         var hCanaryViewPaths = new[]
         {
             hCanaryViewPath,
-            Path.Combine(appRoot, "Ctrl", "HSty.xaml"),
+            Path.Combine(appRoot, "Ctrl", "HCanStyles.xaml"),
             Path.Combine(appRoot, "Ctrl", "HGam.xaml"),
             Path.Combine(appRoot, "Ctrl", "HTgt.xaml"),
             Path.Combine(appRoot, "Ctrl", "HHsh.xaml"),
@@ -464,16 +464,7 @@ internal static partial class Program
             crossChannelMerge.Entries.Any(entry => entry.Risk == PatRisk.Canary) &&
             crossChannelMerge.Entries.Any(entry => entry.Risk == PatRisk.Cheat),
             "Expected same-title Canary and Artemis definitions to remain independent instead of being rejected as a duplicate conflict.");
-        var crossChannelPreview = new PatPrev();
-        crossChannelPreview.Load(
-            crossChannelMerge.Entries
-                .Select(entry => new PatchMatchService().Match(entry, [gowAscensionGame]))
-                .ToArray(),
-            title: null);
-        Assert(
-            crossChannelPreview.CanItems.Any(item => item.Title == "Unlock FPS") &&
-            crossChannelPreview.ChtItems.Any(item => item.Title == "Unlock FPS"),
-            "Expected the God of War Ascension Unlock FPS Canary option to remain visible beside the distinct Artemis cheat.");
+        AppPat_CrossChannelUnlockFps(crossChannelMerge, gowAscensionDiscoveredGame);
 
         var officialCheatDefinition = gowAscensionCheat with
         {
@@ -639,13 +630,13 @@ internal static partial class Program
         var patchView = ReadSources(patchViewPaths);
         var patchShellView = File.ReadAllText(patchViewPath);
         var officialView = File.ReadAllText(
-            Path.Combine(appRoot, "Ctrl", "POff.xaml"));
+            Path.Combine(appRoot, "Ctrl", "OfficialPatchView.xaml"));
         var canaryView = File.ReadAllText(
-            Path.Combine(appRoot, "Ctrl", "PCan.xaml"));
+            Path.Combine(appRoot, "Ctrl", "CanaryPatchView.xaml"));
         var cheatView = File.ReadAllText(
-            Path.Combine(appRoot, "Ctrl", "PCht.xaml"));
+            Path.Combine(appRoot, "Ctrl", "CheatPatchView.xaml"));
         var patchSourceView = File.ReadAllText(
-            Path.Combine(appRoot, "Ctrl", "PSrc.xaml"));
+            Path.Combine(appRoot, "Ctrl", "PatchSourceView.xaml"));
         var actionBarView = File.ReadAllText(actionBarViewPath);
         var hCanaryGameView = File.ReadAllText(hCanaryGameViewPath);
         var setupView = File.ReadAllText(
@@ -710,7 +701,7 @@ internal static partial class Program
                canaryView.Contains("x:Name=\"CanActions\"", StringComparison.Ordinal) &&
                canaryView.Contains("Grid.Row=\"3\"", StringComparison.Ordinal) &&
                cheatView.Contains("x:Name=\"ChtActions\"", StringComparison.Ordinal) &&
-               cheatView.Contains("Grid.Row=\"2\"", StringComparison.Ordinal) &&
+               cheatView.Contains("Grid.Row=\"1\"", StringComparison.Ordinal) &&
                officialView.Contains("Text=\"{Binding Preview.OfclSum}\"", StringComparison.Ordinal) &&
                !canaryView.Contains("Text=\"{Binding Preview.CanSum}\"", StringComparison.Ordinal) &&
                !cheatView.Contains("Text=\"{Binding Preview.ChtSum}\"", StringComparison.Ordinal) &&

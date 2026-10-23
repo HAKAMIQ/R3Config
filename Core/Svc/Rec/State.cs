@@ -4,33 +4,32 @@ namespace R3Config.Svc;
 
 #pragma warning disable CA1822
 
+// Decides the state of each documented change from the game, the evidence class
+// and the value RPCS3 would currently use. It does not read the machine: a
+// generic hardware tier never blocks, unblocks or demotes documented evidence.
+// A hardware condition may only come from the evidence itself (see ChangeScope): the scope a
+// change states in its own note is compared with the runtime facts through EvidencePolicy, and
+// only an Exact, deterministic change is auto-selectable. A scope mismatch blocks; an unresolved
+// or unprovable scope is never applied automatically.
 public sealed class StateSvc
 {
-    private static readonly string[] LowKeys =
-    [
-        "resolution scale",
-        "resolution scale threshold",
-        "default resolution",
-        "anisotropic filter",
-        "anti-aliasing",
-        "shader quality",
-        "asynchronous texture streaming",
-        "multithreaded rsx"
-    ];
-
     public RecSum Evaluate(
         Rpcs3GameDescriptor game,
         IReadOnlyList<WikiRec> recs,
         Func<string, string, string?> readCurrent,
-        HwInfo? hw = null)
+        EvidenceRuntimeFacts? facts = null)
     {
+        facts ??= RuntimeFacts.Create(game);
+
         var changes = recs
-            .Where(rec => string.Equals(rec.Serial, game.Serial, StringComparison.OrdinalIgnoreCase))
+            .Where(rec =>
+                string.Equals(rec.Serial, game.Serial, StringComparison.OrdinalIgnoreCase) &&
+                rec.Binding == WikiGameIdRole.Primary)
             .SelectMany(rec => rec.Changes)
             .ToArray();
 
         var items = changes
-            .Select(change => Check(game.Serial, change, readCurrent, hw))
+            .Select(change => Check(game.Serial, change, readCurrent, facts))
             .ToArray();
 
         return new RecSum(
@@ -48,8 +47,20 @@ public sealed class StateSvc
         string serial,
         CfgChg change,
         Func<string, string, string?> readCurrent,
-        HwInfo? hw)
+        EvidenceRuntimeFacts facts)
     {
+        if (!IsGameConfigClass(change.Class))
+        {
+            return NewItem(
+                serial,
+                change,
+                null,
+                Mdl.RecState.Blocked,
+                isDifferent: true,
+                isActionable: false,
+                isAutoSelectable: false);
+        }
+
         string? current;
         try
         {
@@ -65,17 +76,26 @@ public sealed class StateSvc
             return NewItem(serial, change, current, Mdl.RecState.Applied, isDifferent: false, isActionable: false, isAutoSelectable: false);
         }
 
-        if (Is(change, hw))
-        {
-            return NewItem(serial, change, current, Mdl.RecState.Blocked, isDifferent: true, isActionable: false, isAutoSelectable: false);
-        }
+        var assessment = EvidencePolicy.Assess(ChangeScope.Conditions(serial, change.Notes), facts);
+        var action = EvidencePolicy.Decide(
+            assessment,
+            EvidenceAuthority.Wiki,
+            isHistorical: false,
+            buildApplicabilityProven: true,
+            deterministicValue: IsAuto(change.Risk) && change.Origin == RecOrigin.Baseline);
+        var decision = new SettingDecision(
+            action,
+            assessment.Applicability,
+            EvidenceKind.CurrentWikiConfig,
+            EvidenceAuthority.Wiki,
+            assessment.Reasons);
 
-        if (IsAuto(change.Risk))
+        return action switch
         {
-            return NewItem(serial, change, current, Mdl.RecState.Pending, isDifferent: true, isActionable: true, isAutoSelectable: true);
-        }
-
-        return NewItem(serial, change, current, Mdl.RecState.Manual, isDifferent: true, isActionable: true, isAutoSelectable: false);
+            SettingAction.Blocked => NewItem(serial, change, current, Mdl.RecState.Blocked, isDifferent: true, isActionable: false, isAutoSelectable: false, decision),
+            SettingAction.Apply => NewItem(serial, change, current, Mdl.RecState.Pending, isDifferent: true, isActionable: true, isAutoSelectable: true, decision),
+            _ => NewItem(serial, change, current, Mdl.RecState.Manual, isDifferent: true, isActionable: true, isAutoSelectable: false, decision)
+        };
     }
 
     private static RecItem NewItem(
@@ -85,7 +105,8 @@ public sealed class StateSvc
         Mdl.RecState state,
         bool isDifferent,
         bool isActionable,
-        bool isAutoSelectable)
+        bool isAutoSelectable,
+        SettingDecision? decision = null)
     {
         return new RecItem(
             Serial: serial,
@@ -97,29 +118,21 @@ public sealed class StateSvc
             IsDiff: isDifferent,
             IsAction: isActionable,
             IsSel: isAutoSelectable,
-            Notes: change.Notes ?? string.Empty);
+            Notes: change.Notes ?? string.Empty,
+            Class: change.Class,
+            Decision: decision);
+    }
+
+    private static bool IsGameConfigClass(WikiRecommendationClass classification)
+    {
+        return classification is
+            WikiRecommendationClass.MandatoryGameConfig or
+            WikiRecommendationClass.GeneralRecommendation;
     }
 
     private static bool IsAuto(Mdl.RecRisk risk)
     {
         return risk is Mdl.RecRisk.Required or Mdl.RecRisk.Rec;
-    }
-
-    private static bool Is(CfgChg change, HwInfo? hw)
-    {
-        if (hw?.Tier != HwTier.Low)
-        {
-            return false;
-        }
-
-        if (change.Risk is Mdl.RecRisk.Dep or Mdl.RecRisk.PerfCost)
-        {
-            return true;
-        }
-
-        return LowKeys.Any(key =>
-            change.WikiKey.Contains(key, StringComparison.OrdinalIgnoreCase) ||
-            change.Key.Contains(key, StringComparison.OrdinalIgnoreCase));
     }
 }
 

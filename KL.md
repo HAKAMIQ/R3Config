@@ -1,7 +1,10 @@
-# Known Limitations — Unreleased
+# Known Limitations — 0.1.0
 
 - Supports Windows 10 and Windows 11 x64 only.
-- Recommendation and Canary data are bundled locally and do not update automatically.
+- Canary data is bundled locally and does not update automatically. Recommendations
+  update from the official RPCS3 config API into a local layer (Advanced tools →
+  Data updates); the RPCS3 Wiki API currently answers automated requests
+  with a Cloudflare challenge, so Wiki notes and new Wiki games do not update yet.
 - Hardware classification is approximate and does not guarantee performance.
 - Hash detection relies on RPCS3 logs and local metadata and does not scan full game files.
 - Patches with an explicit local hash mismatch cannot be enabled. When the local

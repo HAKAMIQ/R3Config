@@ -13,7 +13,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="HSty.xaml" />
+                <ResourceDictionary Source="HCanStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -48,9 +48,6 @@
                 </Grid.ColumnDefinitions>
 
                 <Button Grid.Column="0"
-                        Content=""
-                        FontFamily="Segoe Fluent Icons"
-                        FontSize="10"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         ToolTip="{lang:TextExt Key=HCanary.Stored.Close}"
@@ -58,7 +55,17 @@
                         Style="{StaticResource HCanSavedCloseButton}"
                         Click="RaiseCloseRequested"
                         FlowDirection="LeftToRight"
-                        TextBlock.TextAlignment="Center" />
+                        TextBlock.TextAlignment="Center">
+                    <TextBlock Text="&#xE8BB;"
+                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                               FontSize="10"
+                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextAlignment="Center"
+                               FlowDirection="LeftToRight"
+                               IsHitTestVisible="False" />
+                </Button>
 
                 <TextBlock Grid.Column="2"
                            Text="{lang:TextExt Key=HCanary.Stored.Title}"
@@ -113,10 +120,15 @@
                         Visibility="{Binding HCanary.IsStoredEmpty,
                                              Converter={StaticResource BoolToVisibilityConverter}}">
 
-                    <TextBlock Text="{lang:TextExt Key=HCanary.Stored.Empty}"
-                               Style="{StaticResource HCanLocalizedSectionCaptionText}"
-                               TextWrapping="Wrap"
-                               VerticalAlignment="Center" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="&#xE74E;"
+                                   Style="{StaticResource EmptyStateGlyph}" />
+                        <TextBlock Text="{lang:TextExt Key=HCanary.Stored.Empty}"
+                                   Style="{StaticResource HCanLocalizedSectionCaptionText}"
+                                   TextWrapping="Wrap"
+                                   VerticalAlignment="Top"
+                                   TextAlignment="Center" />
+                    </StackPanel>
                 </Border>
             </Grid>
 

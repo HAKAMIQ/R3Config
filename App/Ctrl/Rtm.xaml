@@ -1,0 +1,576 @@
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:lang="clr-namespace:R3Config.Lang"
+             xmlns:ctrl="clr-namespace:R3Config.Ctrl"
+             x:Class="R3Config.Ctrl.RuntimeView"
+             AutomationProperties.AutomationId="Runtime.Root"
+             FlowDirection="{DynamicResource App.FlowDirection}"
+             Language="{DynamicResource App.XmlLanguage}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="RecommendationStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- One evidence fact: label, technical value or localized text, weaker-than-known state. -->
+            <DataTemplate x:Key="RuntimeFactTemplate">
+                <Grid Margin="0,3,0,0"
+                      FlowDirection="{DynamicResource App.FlowDirection}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Label}"
+                               Style="{StaticResource RecToolTipSectionLabelText}"
+                               TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                    <StackPanel Grid.Column="1"
+                                Orientation="Vertical"
+                                HorizontalAlignment="Stretch">
+
+                        <TextBlock Text="{Binding Value}"
+                                   Style="{StaticResource RecToolTipTechnicalValueText}"
+                                   Visibility="{Binding IsTechnical,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <TextBlock Text="{Binding Value}"
+                                   Style="{StaticResource RecLocalizedBodyText}"
+                                   Visibility="{Binding IsLocalizedValue,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <TextBlock Text="{Binding Note}"
+                                   Style="{StaticResource RecLocalizedSubtitleText}"
+                                   Visibility="{Binding HasNote,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding StateText}"
+                               Style="{StaticResource RecLocalizedSubtitleText}"
+                               Margin="12,0,0,0"
+                               Visibility="{Binding HasState,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Grid>
+            </DataTemplate>
+
+            <DataTemplate x:Key="RuntimeGroupTemplate">
+                <Border Style="{StaticResource RecEvidenceCard}">
+
+                    <StackPanel Orientation="Vertical"
+                                HorizontalAlignment="Stretch">
+
+                        <TextBlock Text="{Binding Title}"
+                                   Style="{StaticResource RecToolTipWikiHeadingText}"
+                                   TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                        <ItemsControl ItemsSource="{Binding SummaryRows}"
+                                      ItemTemplate="{StaticResource RuntimeFactTemplate}"
+                                      HorizontalContentAlignment="Stretch" />
+
+                        <Expander Style="{StaticResource RecDetailsExpander}"
+                                  Margin="0,8,0,0"
+                                  Visibility="{Binding HasDetails,
+                                                       Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Expander.Header>
+                                <TextBlock Text="{Binding DetailsLabel}"
+                                           Style="{StaticResource RecDetailsHeaderText}" />
+                            </Expander.Header>
+
+                            <ItemsControl ItemsSource="{Binding DetailRows}"
+                                          ItemTemplate="{StaticResource RuntimeFactTemplate}"
+                                          Margin="0,6,0,0"
+                                          HorizontalContentAlignment="Stretch" />
+                        </Expander>
+                    </StackPanel>
+                </Border>
+            </DataTemplate>
+
+            <!-- One diagnostic line: label, technical value, optional localized note. -->
+            <DataTemplate x:Key="DiagLineTemplate">
+                <Grid Margin="0,3,0,0"
+                      FlowDirection="{DynamicResource App.FlowDirection}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Label}"
+                               Style="{StaticResource RecToolTipSectionLabelText}"
+                               TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                    <StackPanel Grid.Column="1"
+                                Orientation="Vertical"
+                                HorizontalAlignment="Stretch">
+
+                        <TextBlock Text="{Binding Value}"
+                                   Style="{StaticResource RecToolTipTechnicalValueText}"
+                                   Visibility="{Binding IsTechnical,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <TextBlock Text="{Binding Value}"
+                                   Style="{StaticResource RecLocalizedBodyText}"
+                                   Visibility="{Binding IsLocalized,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <TextBlock Text="{Binding Note}"
+                                   Style="{StaticResource RecLocalizedSubtitleText}"
+                                   Visibility="{Binding HasNote,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+                </Grid>
+            </DataTemplate>
+
+            <DataTemplate x:Key="DiagEventTemplate">
+                <Border Style="{StaticResource RecSettingRow}"
+                        FlowDirection="{DynamicResource App.FlowDirection}"
+                        HorizontalAlignment="Stretch">
+
+                    <StackPanel Orientation="Vertical"
+                                HorizontalAlignment="Stretch">
+
+                        <Grid FlowDirection="{DynamicResource App.FlowDirection}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding Categories}"
+                                       Style="{StaticResource RecToolTipWikiHeadingText}"
+                                       TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Count}"
+                                       Style="{StaticResource RecToolTipTechnicalValueText}"
+                                       Margin="12,0,0,0" />
+                        </Grid>
+
+                        <TextBlock Text="{Binding Message}"
+                                   Style="{StaticResource RecToolTipTechnicalValueText}"
+                                   Margin="0,2,0,0" />
+
+                        <TextBlock Text="{Binding Where}"
+                                   Style="{StaticResource RecToolTipTechnicalValueText}"
+                                   Margin="0,2,0,0" />
+                    </StackPanel>
+                </Border>
+            </DataTemplate>
+
+            <DataTemplate x:Key="DiagSolutionTemplate">
+                <Grid Margin="0,3,0,0"
+                      FlowDirection="{DynamicResource App.FlowDirection}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Label}"
+                               Style="{StaticResource RecToolTipSectionLabelText}"
+                               TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding Detail}"
+                               Style="{StaticResource RecToolTipTechnicalValueText}" />
+
+                    <TextBlock Grid.Column="2"
+                               ctrl:LinkText.Text="{Binding DownloadLabel}"
+                               ctrl:LinkText.Target="{Binding DownloadUrl}"
+                               Style="{StaticResource RecLocalizedSubtitleText}"
+                               Margin="12,0,0,0"
+                               Visibility="{Binding HasDownload,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Grid>
+            </DataTemplate>
+
+            <DataTemplate x:Key="DiagFindingTemplate">
+                <Border Style="{StaticResource RecEvidenceCard}"
+                        AutomationProperties.AutomationId="Runtime.Finding">
+
+                    <StackPanel Orientation="Vertical"
+                                HorizontalAlignment="Stretch">
+
+                        <TextBlock Text="{Binding Title}"
+                                   Style="{StaticResource RecToolTipWikiHeadingText}"
+                                   TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                        <TextBlock Text="{Binding Symptom}"
+                                   Style="{StaticResource RecLocalizedSubtitleText}" />
+
+                        <TextBlock ctrl:LinkText.Text="{Binding SourceText}"
+                                   ctrl:LinkText.Target="{Binding SourceUrl}"
+                                   Style="{StaticResource RecLocalizedBodyText}"
+                                   Margin="0,4,0,0" />
+
+                        <ItemsControl ItemsSource="{Binding Rows}"
+                                      ItemTemplate="{StaticResource DiagLineTemplate}"
+                                      HorizontalContentAlignment="Stretch" />
+
+                        <ItemsControl ItemsSource="{Binding Solutions}"
+                                      ItemTemplate="{StaticResource DiagSolutionTemplate}"
+                                      Margin="0,8,0,0"
+                                      HorizontalContentAlignment="Stretch" />
+
+                        <TextBlock Text="{Binding NoSolution}"
+                                   Style="{StaticResource RecLocalizedBodyText}"
+                                   Margin="0,8,0,0"
+                                   Visibility="{Binding HasNoSolution,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+                </Border>
+            </DataTemplate>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <TabControl AutomationProperties.AutomationId="Runtime.Tabs"
+                Style="{StaticResource FluentTabControl}"
+                ItemContainerStyle="{StaticResource FluentTabItem}"
+                SelectedIndex="{Binding Runtime.LogDiag.SelectedTab, Mode=TwoWay}"
+                Margin="0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                FlowDirection="{DynamicResource App.FlowDirection}">
+
+        <!-- 1. Overview: the concise diagnostic result. -->
+        <TabItem Header="{Binding Runtime.TabOverview}"
+                 AutomationProperties.AutomationId="Runtime.Overview.Tab"
+                 TextBlock.TextAlignment="Left">
+
+            <ScrollViewer AutomationProperties.AutomationId="Runtime.Overview.Scroll"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          FlowDirection="{DynamicResource App.FlowDirection}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Padding="{DynamicResource App.ScrollPadding4}">
+
+                <StackPanel Orientation="Vertical"
+                            FlowDirection="{DynamicResource App.FlowDirection}"
+                            HorizontalAlignment="Stretch">
+
+                    <TextBlock Text="{Binding Runtime.LogDiag.StateText}"
+                               AutomationProperties.AutomationId="Runtime.Overview.State"
+                               Style="{StaticResource RecLocalizedBodyText}"
+                               Margin="0,4,0,8"
+                               Visibility="{Binding Runtime.LogDiag.HasStateText,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBlock Text="{Binding Runtime.LogDiag.NotesText}"
+                               AutomationProperties.AutomationId="Runtime.Overview.Notes"
+                               Style="{StaticResource RecLocalizedSubtitleText}"
+                               Margin="0,0,0,8"
+                               Visibility="{Binding Runtime.LogDiag.HasNotes,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Border Style="{StaticResource RecEvidenceCard}"
+                            AutomationProperties.AutomationId="Runtime.Overview.Card">
+
+                        <StackPanel Orientation="Vertical"
+                                    HorizontalAlignment="Stretch">
+
+                            <ItemsControl ItemsSource="{Binding Runtime.LogDiag.OverviewRows}"
+                                          ItemTemplate="{StaticResource DiagLineTemplate}"
+                                          HorizontalContentAlignment="Stretch" />
+
+                            <TextBlock Text="{lang:TextExt Key=Diag.Overview.Action}"
+                                       Style="{StaticResource RecToolTipWikiHeadingText}"
+                                       Margin="0,10,0,0"
+                                       TextAlignment="{DynamicResource App.TextAlignment}"
+                                       Visibility="{Binding Runtime.LogDiag.HasAction,
+                                                            Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                            <TextBlock Text="{Binding Runtime.LogDiag.ActionText}"
+                                       AutomationProperties.AutomationId="Runtime.Overview.Action"
+                                       Style="{StaticResource RecLocalizedBodyText}"
+                                       Margin="0,2,0,0"
+                                       Visibility="{Binding Runtime.LogDiag.HasAction,
+                                                            Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                            <StackPanel Orientation="Horizontal"
+                                        Margin="0,10,0,0"
+                                        FlowDirection="{DynamicResource App.FlowDirection}">
+
+                                <TextBlock ctrl:LinkText.Text="{Binding Runtime.LogDiag.ViewEvidenceLabel}"
+                                           ctrl:LinkText.Target="{Binding Runtime.LogDiag.EvidenceUrl}"
+                                           Style="{StaticResource RecLocalizedSubtitleText}"
+                                           Margin="0,0,16,0"
+                                           Visibility="{Binding Runtime.LogDiag.HasEvidenceUrl,
+                                                                Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                <TextBlock ctrl:LinkText.Text="{Binding Runtime.LogDiag.DownloadLabel}"
+                                           ctrl:LinkText.Target="{Binding Runtime.LogDiag.DownloadUrl}"
+                                           Style="{StaticResource RecLocalizedSubtitleText}"
+                                           Margin="0,0,16,0"
+                                           Visibility="{Binding Runtime.LogDiag.HasDownloadUrl,
+                                                                Converter={StaticResource BoolToVisibilityConverter}}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,4,0,8"
+                                FlowDirection="{DynamicResource App.FlowDirection}">
+
+                        <Button AutomationProperties.AutomationId="Runtime.Analyze"
+                                Content="{Binding Runtime.LogDiag.AnalyzeLabel}"
+                                Command="{Binding Runtime.LogDiag.AnalyzeCmd}"
+                                Style="{StaticResource RecSecondaryActionButton}"
+                                Margin="0,0,8,0"
+                                FlowDirection="{DynamicResource App.TextFlowDirection}"
+                                TextBlock.TextAlignment="Center" />
+
+                        <Button AutomationProperties.AutomationId="Runtime.ViewEvents"
+                                Content="{Binding Runtime.LogDiag.ViewEventsLabel}"
+                                Command="{Binding Runtime.LogDiag.ShowEventsCmd}"
+                                Style="{StaticResource RecSecondaryActionButton}"
+                                FlowDirection="{DynamicResource App.TextFlowDirection}"
+                                TextBlock.TextAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- 2. Hardware & environment: the runtime evidence groups. -->
+        <TabItem Header="{Binding Runtime.TabHardware}"
+                 AutomationProperties.AutomationId="Runtime.Hardware.Tab"
+                 TextBlock.TextAlignment="Left">
+
+            <Grid FlowDirection="{DynamicResource App.FlowDirection}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
+
+                <ScrollViewer AutomationProperties.AutomationId="Runtime.Scroll"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              FlowDirection="{DynamicResource App.FlowDirection}"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              Padding="{DynamicResource App.ScrollPadding4}">
+
+                    <ItemsControl AutomationProperties.AutomationId="Runtime.Groups"
+                                  ItemsSource="{Binding Runtime.Groups}"
+                                  ItemTemplate="{StaticResource RuntimeGroupTemplate}"
+                                  FlowDirection="{DynamicResource App.FlowDirection}"
+                                  HorizontalAlignment="Stretch"
+                                  HorizontalContentAlignment="Stretch" />
+                </ScrollViewer>
+
+                <Border CornerRadius="{StaticResource Radius.None}"
+                        FlowDirection="{DynamicResource App.FlowDirection}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
+
+                    <Border.Style>
+                        <Style TargetType="{x:Type Border}"
+                               BasedOn="{StaticResource ViewportEmptyStatePanel}">
+
+                            <Setter Property="Visibility"
+                                    Value="Visible" />
+
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Runtime.HasGroups}"
+                                             Value="True">
+
+                                    <Setter Property="Visibility"
+                                            Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+
+                    <TextBlock Text="{Binding Runtime.EmptyText}"
+                               Style="{StaticResource RecLocalizedEmptyText}"
+                               MaxWidth="460"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               TextWrapping="Wrap" />
+                </Border>
+            </Grid>
+        </TabItem>
+
+        <!-- 3. Log diagnostics: session, timeline, observed events; raw lines under Details. -->
+        <TabItem Header="{Binding Runtime.TabLogs}"
+                 AutomationProperties.AutomationId="Runtime.Logs.Tab"
+                 TextBlock.TextAlignment="Left">
+
+            <ScrollViewer AutomationProperties.AutomationId="Runtime.Logs.Scroll"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          FlowDirection="{DynamicResource App.FlowDirection}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Padding="{DynamicResource App.ScrollPadding4}">
+
+                <StackPanel Orientation="Vertical"
+                            FlowDirection="{DynamicResource App.FlowDirection}"
+                            HorizontalAlignment="Stretch">
+
+                    <TextBlock Text="{Binding Runtime.LogDiag.StateText}"
+                               Style="{StaticResource RecLocalizedBodyText}"
+                               Margin="0,4,0,8"
+                               Visibility="{Binding Runtime.LogDiag.HasStateText,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBlock Text="{Binding Runtime.LogDiag.NotesText}"
+                               AutomationProperties.AutomationId="Runtime.Logs.Notes"
+                               Style="{StaticResource RecLocalizedSubtitleText}"
+                               Margin="0,0,0,8"
+                               Visibility="{Binding Runtime.LogDiag.HasNotes,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Border Style="{StaticResource RecEvidenceCard}"
+                            Visibility="{Binding Runtime.LogDiag.IsReady,
+                                                 Converter={StaticResource BoolToVisibilityConverter}}">
+
+                        <StackPanel Orientation="Vertical"
+                                    HorizontalAlignment="Stretch">
+
+                            <TextBlock Text="{Binding Runtime.LogDiag.SourceText}"
+                                       Style="{StaticResource RecLocalizedBodyText}" />
+
+                            <ItemsControl ItemsSource="{Binding Runtime.LogDiag.SessionRows}"
+                                          ItemTemplate="{StaticResource DiagLineTemplate}"
+                                          Margin="0,6,0,0"
+                                          HorizontalContentAlignment="Stretch" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource RecEvidenceCard}"
+                            AutomationProperties.AutomationId="Runtime.Timeline"
+                            Visibility="{Binding Runtime.LogDiag.HasTimeline,
+                                                 Converter={StaticResource BoolToVisibilityConverter}}">
+
+                        <StackPanel Orientation="Vertical"
+                                    HorizontalAlignment="Stretch">
+
+                            <TextBlock Text="{lang:TextExt Key=Diag.Timeline}"
+                                       Style="{StaticResource RecToolTipWikiHeadingText}"
+                                       TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                            <TextBlock Text="{Binding Runtime.LogDiag.TimelineText}"
+                                       Style="{StaticResource RecLocalizedBodyText}"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource RecEvidenceCard}"
+                            AutomationProperties.AutomationId="Runtime.Events"
+                            Visibility="{Binding Runtime.LogDiag.HasEvents,
+                                                 Converter={StaticResource BoolToVisibilityConverter}}">
+
+                        <StackPanel Orientation="Vertical"
+                                    HorizontalAlignment="Stretch">
+
+                            <TextBlock Text="{lang:TextExt Key=Diag.Events}"
+                                       Style="{StaticResource RecToolTipWikiHeadingText}"
+                                       TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                            <ItemsControl ItemsSource="{Binding Runtime.LogDiag.Events}"
+                                          ItemTemplate="{StaticResource DiagEventTemplate}"
+                                          Margin="0,4,0,0"
+                                          HorizontalContentAlignment="Stretch" />
+                        </StackPanel>
+                    </Border>
+
+                    <Expander Style="{StaticResource RecDetailsExpander}"
+                              AutomationProperties.AutomationId="Runtime.Logs.Details"
+                              Margin="0,4,0,8"
+                              Visibility="{Binding Runtime.LogDiag.IsReady,
+                                                   Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Expander.Header>
+                            <TextBlock Text="{Binding Runtime.LogDiag.DetailsLabel}"
+                                       Style="{StaticResource RecDetailsHeaderText}" />
+                        </Expander.Header>
+
+                        <StackPanel Orientation="Vertical"
+                                    Margin="0,6,0,0">
+
+                            <TextBlock Text="{lang:TextExt Key=Diag.Settings}"
+                                       Style="{StaticResource RecToolTipWikiHeadingText}"
+                                       TextAlignment="{DynamicResource App.TextAlignment}"
+                                       Visibility="{Binding Runtime.LogDiag.HasSettings,
+                                                            Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                            <ItemsControl ItemsSource="{Binding Runtime.LogDiag.SettingRows}"
+                                          ItemTemplate="{StaticResource DiagLineTemplate}"
+                                          HorizontalContentAlignment="Stretch" />
+
+                            <TextBlock Text="{lang:TextExt Key=Diag.MinorEvents}"
+                                       Style="{StaticResource RecToolTipWikiHeadingText}"
+                                       Margin="0,10,0,0"
+                                       TextAlignment="{DynamicResource App.TextAlignment}"
+                                       Visibility="{Binding Runtime.LogDiag.HasMinorEvents,
+                                                            Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                            <ItemsControl ItemsSource="{Binding Runtime.LogDiag.MinorEvents}"
+                                          ItemTemplate="{StaticResource DiagEventTemplate}"
+                                          HorizontalContentAlignment="Stretch" />
+
+                            <TextBlock Text="{lang:TextExt Key=Diag.RawLines}"
+                                       Style="{StaticResource RecToolTipWikiHeadingText}"
+                                       Margin="0,10,0,0"
+                                       TextAlignment="{DynamicResource App.TextAlignment}"
+                                       Visibility="{Binding Runtime.LogDiag.HasRawLines,
+                                                            Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                            <ItemsControl ItemsSource="{Binding Runtime.LogDiag.RawLines}"
+                                          HorizontalContentAlignment="Stretch">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"
+                                                   Style="{StaticResource RecToolTipTechnicalValueText}"
+                                                   Margin="0,1,0,0" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- 4. Evidence & solutions: documented cases, with source, evidence class and match quality. -->
+        <TabItem Header="{Binding Runtime.TabEvidence}"
+                 AutomationProperties.AutomationId="Runtime.Evidence.Tab"
+                 TextBlock.TextAlignment="Left">
+
+            <ScrollViewer AutomationProperties.AutomationId="Runtime.Evidence.Scroll"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          FlowDirection="{DynamicResource App.FlowDirection}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Padding="{DynamicResource App.ScrollPadding4}">
+
+                <StackPanel Orientation="Vertical"
+                            FlowDirection="{DynamicResource App.FlowDirection}"
+                            HorizontalAlignment="Stretch">
+
+                    <TextBlock Text="{Binding Runtime.LogDiag.StateText}"
+                               Style="{StaticResource RecLocalizedBodyText}"
+                               Margin="0,4,0,8"
+                               Visibility="{Binding Runtime.LogDiag.HasStateText,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBlock Text="{Binding Runtime.LogDiag.EvidenceErrorText}"
+                               Style="{StaticResource RecLocalizedSubtitleText}"
+                               Margin="0,0,0,8" />
+
+                    <ItemsControl AutomationProperties.AutomationId="Runtime.Findings"
+                                  ItemsSource="{Binding Runtime.LogDiag.Findings}"
+                                  ItemTemplate="{StaticResource DiagFindingTemplate}"
+                                  HorizontalContentAlignment="Stretch" />
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+    </TabControl>
+</UserControl>

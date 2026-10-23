@@ -22,6 +22,32 @@ View. عند الحاجة إلى قيمة جديدة، أضف Token دلاليً
 مترابطة دون إثبات ترتيب التحميل بمصفوفة UI؛ كسر هذا الترتيب قد ينتج
 `DependencyProperty.UnsetValue` وقت تشغيل WPF رغم نجاح تحليل XAML الساكن.
 
+## WPF UI 4.3.0 (Fluent 2 foundation)
+
+`App/App.xaml` يدمج `ui:ThemesDictionary` و`ui:ControlsDictionary` من حزمة
+`WPF-UI` 4.3.0 **أولًا**، ثم `Colors.xaml` و`Type.xaml` و`Ctrl.xaml`. الترتيب
+حتمي: القاموس المدمج لاحقًا يفوز، فكل عنصر تحكم تملكه R3Config يبقى بقالبها
+المتحقق منه، وتقتصر WPF UI على موارد Fluent وعناصرها الخاصة.
+
+- `WinTheme.ApplyResources` هو مصدر الحقيقة الوحيد للثيم: يبدّل لوحة R3Config
+  ويستبدل `ThemesDictionary` في مكانه بثيم WPF UI المطابق (Dark/Light) دون
+  استخدام مدير نوافذ WPF UI أو خلفياته، فتبقى حدود النوافذ ملكًا لـR3Config.
+  بوابة UI تتحقق أن ثيم WPF UI يتبع ثيم R3Config في الاتجاهين.
+- `Ctrl.xaml` يعيد ملكية `ScrollViewer` (أشرطة تمرير ظاهرة بالحجم الكامل)
+  و`Expander` و`ToggleButton` (موضع سهم ComboBox) وزر التحديد الكلي في
+  `DataGrid`؛ مقارنة البكسل مع القاعدة أثبتت أن أنماط WPF UI لهذه الأنواع
+  تغيّر سلوكًا متحققًا منه.
+- الرموز: `FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"` في كل موضع؛
+  Segoe Fluent Icons موجود في Windows 11 فقط، وWindows 10 مدعوم ويحمل الرموز
+  نفسها في Segoe MDL2 Assets. `IconFontT` يتحقق أن كل رمز مستخدم موجود في الخطين.
+- أسماء الألعاب في رؤوس مجموعات Official وCanary وArtemis تأخذ اتجاهها من
+  محتواها (`ContentTextFlowConverter`) مع `HorizontalAlignment="Left"` (بداية
+  الواجهة): `God of War 3` يبقى كذلك داخل الواجهة العربية. `GroupTitleDirectionT`.
+- الترخيص: MIT؛ `THIRD-PARTY-NOTICES.md` يُشحن مع الإصدار وينسخ `LICENSE`
+  و`ThirdPartyNotices.txt` من الحزمة حرفيًا (`ThirdPartyNoticeT` و`PortChk`).
+- لا يُستخدم `FluentWindow`: قشرة R3Config (WindowChrome، أزرار العنوان الفيزيائية
+  في العربية والإنجليزية، DPI) متحقق منها، والتحويل لا يضيف وظيفة.
+
 ## Semantic color contract
 
 العروض والقوالب تستخدم هذه المفاتيح فقط:
@@ -160,6 +186,24 @@ FluentSurface.Dialog
 كل Surface أو Dialog يملك إجراء Primary واحدًا فقط. بقية الإجراءات Secondary
 أو Subtle. الأزرار الأيقونية تحتاج `ToolTip` و`AutomationProperties.Name`.
 
+## Transient surfaces and feedback
+
+- `Popup` و`ContextMenu` و`ToolTip` تفتح فقط من تفاعل صريح (Hover/Focus للملاحظة،
+  Click أو لوحة المفاتيح للقائمة والمعاينة). يمنع `IsOpen` حرفي أو مربوط بـViewModel،
+  وكل `IsOpen = true` في الكود يكون داخل معالج حدث إدخال (`RoutedEventArgs`).
+  `VerifyTransientSurfaceOwnership` في `UiGate` يفرض ذلك؛ الاستثناء الوحيد
+  `{TemplateBinding IsDropDownOpen}` داخل قالب ComboBox.
+- المعاينة العائمة مرتبطة بالعنصر الذي فتحها، وتغلق بـEscape أو النقر خارجها أو زر
+  الإغلاق، وتعيد التركيز إلى الزر عند الإغلاق من لوحة المفاتيح أو زر الإغلاق، وتغلق
+  إذا خرج العنصر المرتبط من الشجرة (تحديث القائمة).
+- الملاحظة لا تكرر النص الظاهر لعنصرها، وعلى الزر المعطل تذكر شرط تفعيله.
+- أخطاء الحقل تظهر تحت الحقل مباشرة، ونتيجة إجراء ثانوي تظهر كـ`AdvInlineNotice`
+  (مكافئ MessageBar داخل السطح، نص + رمز + لون، ولا يطفو فوق المحتوى). رسالة واحدة
+  لكل سطح تستبدل سابقتها، وتمسح عند إعادة الدخول إلى الصفحة.
+- الحوار مخصص للتأكيد أو لتغير حالة يجب قراءته (مثل استعادة نسخة احتياطية)، ولا يفتح من
+  Loaded أو PropertyChanged أو التنقل. رسالة الخطأ غير المتوقع لا تتكدس: صندوق واحد
+  ظاهر في كل مرة.
+
 ## ToolTip timing and ownership
 
 `App/Svc/ToolTipPolicy.cs` هو المصدر الوحيد لتوقيت الملاحظات في التطبيق:
@@ -204,6 +248,17 @@ ShowOnDisabled = true
 `LeftToRight` والاسم العربي `RightToLeft` في اللغتين، بينما تبقى serials
 والإصدارات في أسطح Technical مستقلة `LeftToRight`.
 
+قاعدة الاتجاه الديناميكي عامة بحسب فئة المحتوى وليست قائمة أسماء: الاتجاه من
+المحتوى، والموضع دائما عند الطرف الابتدائي للواجهة. عنوان المحتوى يستخدم
+`HorizontalAlignment="Left"` داخل حاوية منطقية حتى يلتصق بالطرف الابتدائي حتى
+لو اختلف اتجاهه عن الواجهة. عناوين الباتشات الإنجليزية القياسية التي قد تلتف
+تستخدم `TechnicalText.StartTextAlignment` (`Right` بالعربية و`Left`
+بالإنجليزية، يحدّثه `UiLaySvc` مباشرة) فيبقى كل سطر ملتف عند الطرف الابتدائي.
+يتحقق `GroupTitleDirectionT` من ذلك بسبعة عناوين ("God of War 3"، "3D Dot Game
+Heroes"، "F1 2014"، "WWE 2K14"، "NieR Replicant ver.1.22474487139..."، "Call of
+Duty: Black Ops II"، وعنوان عربي) في رأس هوية اللعبة ورؤوس المجموعات وصفوف
+الباتشات الثلاثة، ويقيس موضع النص المرسوم وليس صندوق التخطيط فقط.
+
 تستخدم الحاويات `App.FlowDirection` أو `App.ShellFlowDirection`، والنصوص المحلية
 `App.TextFlowDirection` و`App.TextAlignment`، والطرف الابتدائي
 `App.HorizontalAlignment`، والطرف التنفيذي المقابل
@@ -220,6 +275,24 @@ HorizontalAlignment="Right"  <!-- للإجراءات المحلية بدل ال�
 
 القيم الصلبة `LeftToRight` و`TextAlignment="Left"` مسموحة فقط للعناصر التقنية
 ولشريط عنوان Windows والرسومات التي لا ينبغي قلبها.
+
+## Fluent 2 visual redesign primitives
+
+- الألوان: `Surface.Input` لخلفية حقول الإدخال و`Text.Tertiary` للرموز
+  الزخرفية وحالات الفراغ، مسجلة في `WinTheme.SemanticBrushes` للتبديل الحي.
+- الأشكال: `Radius.Pill` للشارات والرقائق، و`Radius.Input.Underline` لخط
+  الأساس السفلي الثابت في `TextBox` (بدون مشغلات تركيز لوحة المفاتيح؛ التركيز
+  يبقى لسياسة `Stroke.FocusVisualStyle`).
+- الرموز: `IconGlyphText` (Segoe Fluent Icons مع Segoe MDL2 Assets، غير
+  مقلوب)، و`IdentityTile`/`IdentityTileGlyph`، و`EmptyStateGlyph`.
+- الهوية: `IdentityChip`/`IdentityChipText` للـserial والإصدار؛ رأس اللعبة
+  المختارة في `Ctrl/GameIdentityTemplate.xaml` (`GameIdentity`) واسمه المتاح هو `SelGame`
+  الكامل. حالة الجاهزية تبقى داخل أسطح الباتشات.
+- التنقل: `FluentTabItem` يعرض رمزا اختياريا من `TabItem.Tag` ومؤشر تحديد قصيرا
+  في المنتصف.
+- الصفوف: صفوف الباتشات والإعدادات بطاقات مستقلة (`Surface.Card`،
+  `Stroke.Subtle`، `Radius.Medium`)، وحالة الباتش شارة `PatStatePill` نصها يسمي
+  الحالة دائما واللون يدعمها فقط.
 
 ## Data surfaces
 
@@ -289,13 +362,11 @@ One shared MainVm / HCanVm instance
 ## Verification
 
 ```powershell
-dotnet restore .\R3Cfg.slnx
-dotnet build .\R3Cfg.slnx -c Debug --no-restore --nologo
-dotnet build .\R3Cfg.slnx -c Release --no-restore --nologo
-dotnet run --project .\Tst\R3Test.csproj -c Release --no-build
-powershell -ExecutionPolicy Bypass -File .\Script\SrcChk.ps1
-powershell -ExecutionPolicy Bypass -File .\Script\RelTest.ps1 -Configuration Release
+.\Script\RelTest.cmd -Configuration Debug
+.\Script\RelTest.cmd -Configuration Release
 ```
+
+`global.json` is the repository SDK source of truth. `RelTest.cmd` is the canonical UI/build entry point because `R3Toolchain.ps1` also owns the scoped workload-resolver environment. The UI gate runs from the built `R3Test.exe`; `dotnet run` is not the acceptance runner.
 
 ## Minimal patch action surfaces
 

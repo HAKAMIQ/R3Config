@@ -257,7 +257,8 @@ public sealed partial class MainVm
                 GameList.SelGame.Game,
                 _catalog,
                 _patCat,
-                _hwInfo);
+                _hwInfo,
+                buildIdentity: _buildIdentity);
             RefreshGameSetupPreview();
         }
         catch (Exception ex) when (
@@ -344,7 +345,7 @@ public sealed partial class MainVm
             {
                 Log(UiText.Fmt(
                     "Msg.BkpSaved",
-                    result.Backup.MadeAt.LocalDateTime));
+                    UiDate.Inline(result.Backup.MadeAt)));
             }
 
             Log(resultMessage);

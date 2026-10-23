@@ -113,15 +113,19 @@ public sealed class PatPrev : VmBase
 
     public bool CanEmpty => CanItems.Count == 0;
 
-    public string OfclEmptyText => SectionEmptyText(
-        _matches.Where(IsOfficial),
+    public string OfclEmptyText => TextFragments.PlainText(OfclEmptyTextFragments);
+
+    public IReadOnlyList<TextFragment> OfclEmptyTextFragments => SectionEmptyText(
+        _matches.Where(IsOfficial).Where(IsAttributable),
         "Patch.Empty.Official.None",
         "Patch.Empty.OtherVersions",
         "Patch.Empty.HashMismatch",
         "Patch.Empty.NeedsVerification",
         "Patch.Empty.Filtered");
 
-    public string CanEmptyText => SectionEmptyText(
+    public string CanEmptyText => TextFragments.PlainText(CanEmptyTextFragments);
+
+    public IReadOnlyList<TextFragment> CanEmptyTextFragments => SectionEmptyText(
         _matches.Where(match => match.Patch.Class == PatClass.Canary),
         "Patch.Empty.Canary.None",
         "Patch.Empty.OtherVersions",
@@ -142,7 +146,9 @@ public sealed class PatPrev : VmBase
     public bool HasCanaryHashMismatch =>
         CanItems.Any(item => item.HasHashMismatch);
 
-    public string ChtEmptyText => SectionEmptyText(
+    public string ChtEmptyText => TextFragments.PlainText(ChtEmptyTextFragments);
+
+    public IReadOnlyList<TextFragment> ChtEmptyTextFragments => SectionEmptyText(
         _matches.Where(match => match.Patch.Source is PatSrc.Artemis or PatSrc.ManagedArtemis),
         "Patch.Empty.Artemis.None",
         "Patch.Empty.Artemis.OtherVersions",
@@ -490,8 +496,7 @@ public sealed class PatPrev : VmBase
         foreach (var match in _matches.Where(match => PatPol.Is(match.Patch.Risk, ShowExp)))
         {
             var isEnabled = _isOnFn?.Invoke(match) == true;
-            if (PatVer.IsAll(match.TgtSer) &&
-                match.Status != MatStat.Match)
+            if (!IsAttributable(match))
             {
                 continue;
             }
@@ -721,6 +726,9 @@ public sealed class PatPrev : VmBase
         OnChange(nameof(OfclEmptyText));
         OnChange(nameof(CanEmptyText));
         OnChange(nameof(ChtEmptyText));
+        OnChange(nameof(OfclEmptyTextFragments));
+        OnChange(nameof(CanEmptyTextFragments));
+        OnChange(nameof(ChtEmptyTextFragments));
         OnChange(nameof(NeedsOfficialVerification));
         OnChange(nameof(NeedsCanaryVerification));
         OnChange(nameof(HasCanaryHashMismatch));
@@ -836,7 +844,16 @@ public sealed class PatPrev : VmBase
                match.Patch.Source == PatSrc.Official;
     }
 
-    private static string SectionEmptyText(
+    // An All/All wildcard target cannot be attributed to the selected game
+    // without an exact runtime-hash match; it must be excluded from both the
+    // visible list and any empty-state relevance check that reads it.
+    private static bool IsAttributable(PatMatch match)
+    {
+        return !PatVer.IsAll(match.TgtSer) ||
+               match.Status == MatStat.Match;
+    }
+
+    private static IReadOnlyList<TextFragment> SectionEmptyText(
         IEnumerable<PatMatch> source,
         string noneKey,
         string otherVersionsKey,
@@ -847,7 +864,7 @@ public sealed class PatPrev : VmBase
         var matches = source.ToArray();
         if (matches.Length == 0)
         {
-            return UiText.GetText(noneKey);
+            return [new TextFragment(UiText.GetText(noneKey))];
         }
 
         if (matches.All(match => match.Status == MatStat.VerBad))
@@ -864,23 +881,23 @@ public sealed class PatPrev : VmBase
 
             if (versions.Length > 0)
             {
-                return UiText.Fmt(
-                    otherVersionsKey,
-                    string.Join(", ", versions));
+                return TextFragments.TechnicalList(
+                    UiText.GetText(otherVersionsKey),
+                    versions);
             }
         }
 
         if (matches.Any(match => match.Status is MatStat.Unknown or MatStat.VerUnk))
         {
-            return UiText.GetText(needsVerificationKey);
+            return [new TextFragment(UiText.GetText(needsVerificationKey))];
         }
 
         if (matches.Any(match => match.Status == MatStat.HashBad))
         {
-            return UiText.GetText(hashMismatchKey);
+            return [new TextFragment(UiText.GetText(hashMismatchKey))];
         }
 
-        return UiText.GetText(filteredKey);
+        return [new TextFragment(UiText.GetText(filteredKey))];
     }
 
     private enum PatSurf

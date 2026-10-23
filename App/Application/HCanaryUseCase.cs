@@ -20,18 +20,9 @@ public sealed class HCanaryUseCase(
         string? originalIdentity = null,
         bool saveAsNew = false)
     {
-        CheckCan(install);
+        ArgumentNullException.ThrowIfNull(draft);
 
-        return authoring.Save(
-            Rpcs3AppPaths.ImpPat(install),
-            Rpcs3AppPaths.BkpRoot(install),
-            draft,
-            originalIdentity,
-            saveAsNew,
-            (_, backupRoot, targets) => mutationGuard.CheckCan(
-                install,
-                targets,
-                [backupRoot]));
+        return SaveGuarded(install, draft, originalIdentity, saveAsNew);
     }
 
     public SaveRes Delete(
@@ -44,6 +35,26 @@ public sealed class HCanaryUseCase(
             Rpcs3AppPaths.ImpPat(install),
             Rpcs3AppPaths.BkpRoot(install),
             identity,
+            (_, backupRoot, targets) => mutationGuard.CheckCan(
+                install,
+                targets,
+                [backupRoot]));
+    }
+
+    private SaveRes SaveGuarded(
+        Rpcs3InstallDescriptor install,
+        HCanDrft draft,
+        string? originalIdentity,
+        bool saveAsNew)
+    {
+        CheckCan(install);
+
+        return authoring.Save(
+            Rpcs3AppPaths.ImpPat(install),
+            Rpcs3AppPaths.BkpRoot(install),
+            draft,
+            originalIdentity,
+            saveAsNew,
             (_, backupRoot, targets) => mutationGuard.CheckCan(
                 install,
                 targets,

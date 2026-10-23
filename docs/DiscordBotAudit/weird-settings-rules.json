@@ -1,0 +1,3646 @@
+{
+ "source": "WeirdSettingsSection",
+ "total": 216,
+ "rules": [
+  {
+   "id": "WS-001",
+   "upstream": "WeirdSettingsSection#22",
+   "severity": "important",
+   "inputKeys": [
+    "disable_logs",
+    "serial",
+    "thread_count"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "DiscordEmbedBuilder"
+   ],
+   "settingsReferenced": [
+    "Silence All Logs"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-002",
+   "upstream": "WeirdSettingsSection#25",
+   "severity": "important",
+   "inputKeys": [
+    "disable_logs",
+    "log_disabled_channels",
+    "log_disabled_channels_multiline",
+    "serial",
+    "thread_count"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "DiscordEmbedBuilder"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-003",
+   "upstream": "WeirdSettingsSection#34",
+   "severity": "info",
+   "inputKeys": [
+    "cpu_extensions",
+    "disable_logs",
+    "enable_tsx",
+    "has_tsx",
+    "has_tsx_fa",
+    "log_disabled_channels",
+    "log_disabled_channels_multiline",
+    "thread_count"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "TryGetRpcs3Version",
+    "TsxFaFixedVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-004",
+   "upstream": "WeirdSettingsSection#36",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_extensions",
+    "enable_tsx",
+    "has_tsx",
+    "has_tsx_fa",
+    "log_disabled_channels",
+    "log_disabled_channels_multiline"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "TryGetRpcs3Version",
+    "TsxFaFixedVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-005",
+   "upstream": "WeirdSettingsSection#41",
+   "severity": "info",
+   "inputKeys": [
+    "cpu_extensions",
+    "enable_tsx",
+    "has_tsx",
+    "has_tsx_fa"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "TryGetRpcs3Version",
+    "TsxFaFixedVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-006",
+   "upstream": "WeirdSettingsSection#45",
+   "severity": "question",
+   "inputKeys": [
+    "enable_tsx",
+    "spu_lower_thread_priority"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "TsxFaFixedVersion"
+   ],
+   "settingsReferenced": [
+    "Lower SPU thread priority"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-007",
+   "upstream": "WeirdSettingsSection#59",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_model",
+    "os_type",
+    "os_version",
+    "thread_scheduler"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "IntelThreadSchedulerBuildVersion"
+   ],
+   "settingsReferenced": [
+    "Thread Scheduler"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-008",
+   "upstream": "WeirdSettingsSection#61",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_model",
+    "os_type",
+    "os_version",
+    "thread_scheduler"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "IntelThreadSchedulerBuildVersion"
+   ],
+   "settingsReferenced": [
+    "Thread Scheduler"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-009",
+   "upstream": "WeirdSettingsSection#64",
+   "severity": "info",
+   "inputKeys": [
+    "os_type",
+    "os_version",
+    "thread_scheduler"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "IntelThreadSchedulerBuildVersion"
+   ],
+   "settingsReferenced": [
+    "Thread Scheduler"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-010",
+   "upstream": "WeirdSettingsSection#67",
+   "severity": "info",
+   "inputKeys": [
+    "os_version",
+    "thread_scheduler"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "IntelThreadSchedulerBuildVersion"
+   ],
+   "settingsReferenced": [
+    "Thread Scheduler"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-011",
+   "upstream": "WeirdSettingsSection#72",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [
+    "IntelThreadSchedulerBuildVersion"
+   ],
+   "settingsReferenced": [
+    "Thread Scheduler"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-012",
+   "upstream": "WeirdSettingsSection#77",
+   "severity": "question",
+   "inputKeys": [
+    "gpu_info",
+    "llvm_arch",
+    "renderer",
+    "vk_ext"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "IntelThreadSchedulerBuildVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-013",
+   "upstream": "WeirdSettingsSection#79",
+   "severity": "strong-warning",
+   "inputKeys": [
+    "gpu_info",
+    "llvm_arch",
+    "renderer",
+    "vk_ext"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "IntelThreadSchedulerBuildVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-014",
+   "upstream": "WeirdSettingsSection#83",
+   "severity": "warning",
+   "inputKeys": [
+    "gpu_info",
+    "llvm_arch",
+    "renderer",
+    "supported_gpu",
+    "vk_ext"
+   ],
+   "gameFamilies": [
+    "GowHDIds"
+   ],
+   "versionConstants": [
+    "IntelThreadSchedulerBuildVersion"
+   ],
+   "settingsReferenced": [
+    "Renderer",
+    "Vulkan"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-015",
+   "upstream": "WeirdSettingsSection#87",
+   "severity": "error",
+   "inputKeys": [
+    "gpu_info",
+    "llvm_arch",
+    "renderer",
+    "supported_gpu",
+    "vk_ext"
+   ],
+   "gameFamilies": [
+    "GowHDIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "OpenGL",
+    "Vulkan"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-016",
+   "upstream": "WeirdSettingsSection#100",
+   "severity": "warning",
+   "inputKeys": [
+    "aspect_ratio",
+    "game_category",
+    "resolution",
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "720x576",
+    "Resolution"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-017",
+   "upstream": "WeirdSettingsSection#105",
+   "severity": "warning",
+   "inputKeys": [
+    "game_category"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "720x480",
+    "Resolution"
+   ],
+   "disposition": "ALREADY_COVERED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "WS-018",
+   "upstream": "WeirdSettingsSection#130",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [
+    "Known1080pIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "1280x720",
+    "Resolution"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-019",
+   "upstream": "WeirdSettingsSection#133",
+   "severity": "warning",
+   "inputKeys": [
+    "game_category"
+   ],
+   "gameFamilies": [
+    "Known1080pIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "1280x720",
+    "Resolution"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-020",
+   "upstream": "WeirdSettingsSection#157",
+   "severity": "warning",
+   "inputKeys": [
+    "game_category"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Aspect Ratio"
+   ],
+   "disposition": "ALREADY_COVERED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "WS-021",
+   "upstream": "WeirdSettingsSection#162",
+   "severity": "warning",
+   "inputKeys": [
+    "game_category"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Aspect Ratio",
+    "Resolution"
+   ],
+   "disposition": "ALREADY_COVERED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "WS-022",
+   "upstream": "WeirdSettingsSection#168",
+   "severity": "info",
+   "inputKeys": [
+    "game_category"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "16:9",
+    "4:3",
+    "Aspect Ratio",
+    "Auto"
+   ],
+   "disposition": "ALREADY_COVERED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "WS-023",
+   "upstream": "WeirdSettingsSection#170",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    " instead of ",
+    "Aspect Ratio"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-024",
+   "upstream": "WeirdSettingsSection#173",
+   "severity": "warning",
+   "inputKeys": [
+    "game_category"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Resolution"
+   ],
+   "disposition": "ALREADY_COVERED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "WS-025",
+   "upstream": "WeirdSettingsSection#179",
+   "severity": "other",
+   "inputKeys": [
+    "game_category",
+    "stretch_to_display"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Stretch to Display Area"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-026",
+   "upstream": "WeirdSettingsSection#182",
+   "severity": "warning",
+   "inputKeys": [
+    "game_category",
+    "mtrsx",
+    "stretch_to_display",
+    "vertex_cache"
+   ],
+   "gameFamilies": [
+    "KnownDisableVertexCacheIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Vertex Cache"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-027",
+   "upstream": "WeirdSettingsSection#187",
+   "severity": "info",
+   "inputKeys": [
+    "msaa",
+    "mtrsx",
+    "rsx_not_supported_feature",
+    "stretch_to_display",
+    "vertex_cache"
+   ],
+   "gameFamilies": [
+    "KnownDisableVertexCacheIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-028",
+   "upstream": "WeirdSettingsSection#196",
+   "severity": "info",
+   "inputKeys": [
+    "gpu_info",
+    "msaa",
+    "rsx_not_supported_feature"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "RdnaMsaaFixedVersion"
+   ],
+   "settingsReferenced": [
+    "Anti-aliasing"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-029",
+   "upstream": "WeirdSettingsSection#201",
+   "severity": "warning",
+   "inputKeys": [
+    "gpu_info",
+    "msaa"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "RdnaMsaaFixedVersion"
+   ],
+   "settingsReferenced": [
+    "Anti-aliasing"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-030",
+   "upstream": "WeirdSettingsSection#203",
+   "severity": "warning",
+   "inputKeys": [
+    "gpu_info",
+    "msaa"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "RdnaMsaaFixedVersion"
+   ],
+   "settingsReferenced": [
+    "Anti-aliasing"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-031",
+   "upstream": "WeirdSettingsSection#214",
+   "severity": "warning",
+   "inputKeys": [
+    "force_fifo_present",
+    "rsx_present_mode",
+    "vsync"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-032",
+   "upstream": "WeirdSettingsSection#222",
+   "severity": "info",
+   "inputKeys": [
+    "force_fifo_present",
+    "frame_limit",
+    "rsx_present_mode",
+    "rsx_swapchain_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-033",
+   "upstream": "WeirdSettingsSection#226",
+   "severity": "info",
+   "inputKeys": [
+    "force_fifo_present",
+    "frame_limit",
+    "rsx_swapchain_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-034",
+   "upstream": "WeirdSettingsSection#228",
+   "severity": "info",
+   "inputKeys": [
+    "frame_limit",
+    "rsx_swapchain_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-035",
+   "upstream": "WeirdSettingsSection#230",
+   "severity": "info",
+   "inputKeys": [
+    "frame_limit",
+    "rsx_swapchain_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-036",
+   "upstream": "WeirdSettingsSection#243",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "VSync"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-037",
+   "upstream": "WeirdSettingsSection#249",
+   "severity": "warning",
+   "inputKeys": [
+    "async_texture_streaming"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Async Texture Streaming"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-038",
+   "upstream": "WeirdSettingsSection#254",
+   "severity": "warning",
+   "inputKeys": [
+    "async_queue_scheduler",
+    "async_texture_streaming"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Async Queue Scheduler",
+    "Host"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-039",
+   "upstream": "WeirdSettingsSection#255",
+   "severity": "warning",
+   "inputKeys": [
+    "async_queue_scheduler",
+    "async_texture_streaming"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Async Texture Streaming"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-040",
+   "upstream": "WeirdSettingsSection#264",
+   "severity": "warning",
+   "inputKeys": [
+    "async_queue_scheduler",
+    "ppu_decoder"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Interpreter (static)",
+    "PPU Decoder"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-041",
+   "upstream": "WeirdSettingsSection#269",
+   "severity": "warning",
+   "inputKeys": [
+    "ppu_decoder"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "PPU Decoder"
+   ],
+   "disposition": "ALREADY_COVERED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "WS-042",
+   "upstream": "WeirdSettingsSection#273",
+   "severity": "warning",
+   "inputKeys": [
+    "ppu_decoder",
+    "spu_decoder"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "SPU Decoder"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-043",
+   "upstream": "WeirdSettingsSection#276",
+   "severity": "info",
+   "inputKeys": [
+    "accurate_getllar",
+    "spu_decoder"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Accurate GETLLAR"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-044",
+   "upstream": "WeirdSettingsSection#278",
+   "severity": "info",
+   "inputKeys": [
+    "accurate_getllar",
+    "accurate_putlluc",
+    "spu_decoder"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Accurate PUTLLUC"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-045",
+   "upstream": "WeirdSettingsSection#280",
+   "severity": "info",
+   "inputKeys": [
+    "accurate_getllar",
+    "accurate_putlluc",
+    "accurate_rsx_reservation",
+    "spu_decoder"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Accurate RSX Reservation Access"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-046",
+   "upstream": "WeirdSettingsSection#282",
+   "severity": "warning",
+   "inputKeys": [
+    "accurate_getllar",
+    "accurate_putlluc",
+    "accurate_rsx_reservation",
+    "spu_decoder",
+    "spu_events_busy_loop"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "SPU Events Busy Loop"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-047",
+   "upstream": "WeirdSettingsSection#285",
+   "severity": "warning",
+   "inputKeys": [
+    "accurate_getllar",
+    "accurate_putlluc",
+    "accurate_rsx_reservation",
+    "spu_decoder",
+    "spu_events_busy_loop",
+    "xfloat_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Accurate xfloat"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-048",
+   "upstream": "WeirdSettingsSection#287",
+   "severity": "warning",
+   "inputKeys": [
+    "accurate_getllar",
+    "accurate_putlluc",
+    "accurate_rsx_reservation",
+    "spu_events_busy_loop",
+    "xfloat_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Accurate xfloat"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-049",
+   "upstream": "WeirdSettingsSection#289",
+   "severity": "warning",
+   "inputKeys": [
+    "accurate_getllar",
+    "accurate_putlluc",
+    "accurate_rsx_reservation",
+    "spu_events_busy_loop",
+    "xfloat_mode"
+   ],
+   "gameFamilies": [
+    "KnownNoApproximateXFloatIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Approximate xfloat"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-050",
+   "upstream": "WeirdSettingsSection#291",
+   "severity": "warning",
+   "inputKeys": [
+    "accurate_putlluc",
+    "accurate_rsx_reservation",
+    "spu_events_busy_loop",
+    "xfloat_mode"
+   ],
+   "gameFamilies": [
+    "KnownNoApproximateXFloatIds",
+    "KnownNoRelaxedXFloatIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Relaxed xfloat"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-051",
+   "upstream": "WeirdSettingsSection#296",
+   "severity": "question",
+   "inputKeys": [
+    "resolution_scale",
+    "xfloat_mode"
+   ],
+   "gameFamilies": [
+    "KnownNoApproximateXFloatIds",
+    "KnownNoRelaxedXFloatIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Resolution Scale"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-052",
+   "upstream": "WeirdSettingsSection#303",
+   "severity": "warning",
+   "inputKeys": [
+    "resolution_scale",
+    "texture_scale_threshold",
+    "xfloat_mode"
+   ],
+   "gameFamilies": [
+    "KnownNoRelaxedXFloatIds",
+    "KnownResScaleThresholdIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "16x16",
+    "Resolution Scale Threshold"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-053",
+   "upstream": "WeirdSettingsSection#312",
+   "severity": "other",
+   "inputKeys": [
+    "msaa",
+    "texture_scale_threshold"
+   ],
+   "gameFamilies": [
+    "KnownResScaleThresholdIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Anti-aliasing",
+    "Resolution Scale"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-054",
+   "upstream": "WeirdSettingsSection#316",
+   "severity": "warning",
+   "inputKeys": [
+    "msaa"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Resolution Scale"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-055",
+   "upstream": "WeirdSettingsSection#327",
+   "severity": "info",
+   "inputKeys": [
+    "patch_desc",
+    "ppu_patch",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [
+    "DesIds",
+    "KnownWriteColorBuffersIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-056",
+   "upstream": "WeirdSettingsSection#329",
+   "severity": "warning",
+   "inputKeys": [
+    "patch_desc",
+    "ppu_patch",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [
+    "DesIds",
+    "KnownWriteColorBuffersIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-057",
+   "upstream": "WeirdSettingsSection#335",
+   "severity": "info",
+   "inputKeys": [
+    "mtrsx",
+    "patch_desc",
+    "vertex_cache",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [
+    "DesIds",
+    "KnownDisableVertexCacheIds",
+    "KnownWriteColorBuffersIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Vertex Cache"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-058",
+   "upstream": "WeirdSettingsSection#337",
+   "severity": "warning",
+   "inputKeys": [
+    "frame_skip",
+    "mtrsx",
+    "vertex_cache"
+   ],
+   "gameFamilies": [
+    "DesIds",
+    "KnownDisableVertexCacheIds",
+    "KnownWriteColorBuffersIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Frame Skip"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-059",
+   "upstream": "WeirdSettingsSection#340",
+   "severity": "question",
+   "inputKeys": [
+    "cpu_blit",
+    "frame_skip",
+    "mtrsx",
+    "vertex_cache",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [
+    "DesIds",
+    "KnownDisableVertexCacheIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Force CPU Blit",
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-060",
+   "upstream": "WeirdSettingsSection#343",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_blit",
+    "frame_skip",
+    "mtrsx",
+    "vertex_cache",
+    "write_color_buffers",
+    "zcull_status"
+   ],
+   "gameFamilies": [
+    "KnownDisableVertexCacheIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Relaxed ZCull Sync",
+    "VK_EXT_depth_range_unrestricted"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-061",
+   "upstream": "WeirdSettingsSection#345",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_blit",
+    "frame_skip",
+    "mtrsx",
+    "vertex_cache",
+    "write_color_buffers",
+    "zcull_status"
+   ],
+   "gameFamilies": [
+    "KnownDisableVertexCacheIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "ZCull Occlusion Queries"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-062",
+   "upstream": "WeirdSettingsSection#351",
+   "severity": "info",
+   "inputKeys": [
+    "cpu_blit",
+    "relaxed_zcull",
+    "write_color_buffers",
+    "zcull_status"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Relaxed",
+    "ZCull Accuracy"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-063",
+   "upstream": "WeirdSettingsSection#357",
+   "severity": "info",
+   "inputKeys": [
+    "relaxed_zcull",
+    "zcull_status"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Relaxed",
+    "ZCull Accuracy"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-064",
+   "upstream": "WeirdSettingsSection#361",
+   "severity": "warning",
+   "inputKeys": [
+    "use_rebar"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Use Re-BAR memory for GPU uploads"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-065",
+   "upstream": "WeirdSettingsSection#366",
+   "severity": "warning",
+   "inputKeys": [
+    "gpu_rebar_size",
+    "gpu_vram_size",
+    "use_rebar"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-066",
+   "upstream": "WeirdSettingsSection#374",
+   "severity": "info",
+   "inputKeys": [
+    "gpu_rebar_size",
+    "gpu_vram_size",
+    "use_rebar",
+    "vblank_rate"
+   ],
+   "gameFamilies": [
+    "KnownFpsUnlockPatchIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "VBlank Rate"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-067",
+   "upstream": "WeirdSettingsSection#379",
+   "severity": "info",
+   "inputKeys": [
+    "clock_scale",
+    "vblank_rate"
+   ],
+   "gameFamilies": [
+    "KnownFpsUnlockPatchIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Clock Scale"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-068",
+   "upstream": "WeirdSettingsSection#388",
+   "severity": "warning",
+   "inputKeys": [
+    "clock_scale",
+    "game_title",
+    "lib_loader",
+    "library_list"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Library loader",
+    "Load liblv2.sprx only"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-069",
+   "upstream": "WeirdSettingsSection#394",
+   "severity": "important",
+   "inputKeys": [
+    "game_title",
+    "lib_loader",
+    "library_list",
+    "library_list_hle",
+    "library_list_lle"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "sysutil"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-070",
+   "upstream": "WeirdSettingsSection#401",
+   "severity": "warning",
+   "inputKeys": [
+    "game_title",
+    "library_list_hle",
+    "library_list_lle"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-071",
+   "upstream": "WeirdSettingsSection#409",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-072",
+   "upstream": "WeirdSettingsSection#443",
+   "severity": "warning",
+   "inputKeys": [
+    "debug_console_mode",
+    "game_category",
+    "game_title"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Debug Console Mode"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-073",
+   "upstream": "WeirdSettingsSection#445",
+   "severity": "warning",
+   "inputKeys": [
+    "debug_console_mode",
+    "game_category",
+    "game_title",
+    "hook_static_functions"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Hook Static Functions"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-074",
+   "upstream": "WeirdSettingsSection#447",
+   "severity": "question",
+   "inputKeys": [
+    "debug_console_mode",
+    "game_category",
+    "game_title",
+    "hook_static_functions",
+    "host_root"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "/host_root/"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-075",
+   "upstream": "WeirdSettingsSection#450",
+   "severity": "warning",
+   "inputKeys": [
+    "debug_console_mode",
+    "game_category",
+    "game_title",
+    "hook_static_functions",
+    "host_root",
+    "ppu_threads"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "; please change it back to ",
+    "PPU Threads"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-076",
+   "upstream": "WeirdSettingsSection#456",
+   "severity": "warning",
+   "inputKeys": [
+    "debug_console_mode",
+    "game_title",
+    "hook_static_functions",
+    "host_root",
+    "ppu_threads",
+    "spurs_threads"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "; please change it back to ",
+    "Max SPURS Threads"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-077",
+   "upstream": "WeirdSettingsSection#458",
+   "severity": "info",
+   "inputKeys": [
+    "hook_static_functions",
+    "host_root",
+    "ppu_threads",
+    "spurs_threads"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Max SPURS Threads"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-078",
+   "upstream": "WeirdSettingsSection#462",
+   "severity": "warning",
+   "inputKeys": [
+    "gpu_texture_scaling",
+    "ppu_threads",
+    "spurs_threads"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "GPU Texture Scaling"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-079",
+   "upstream": "WeirdSettingsSection#466",
+   "severity": "warning",
+   "inputKeys": [
+    "af_override",
+    "gpu_texture_scaling"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Anisotropic Filter",
+    "Auto"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-080",
+   "upstream": "WeirdSettingsSection#468",
+   "severity": "error",
+   "inputKeys": [
+    "af_override",
+    "gpu_texture_scaling"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Anisotropic Filter",
+    "Auto",
+    "Disabled"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-081",
+   "upstream": "WeirdSettingsSection#470",
+   "severity": "question",
+   "inputKeys": [
+    "af_override",
+    "gpu_texture_scaling"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    " or ",
+    ", which makes little sense over ",
+    "Anisotropic Filter"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-082",
+   "upstream": "WeirdSettingsSection#474",
+   "severity": "warning",
+   "inputKeys": [
+    "af_override",
+    "gpu_texture_scaling",
+    "shader_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Shader Mode"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-083",
+   "upstream": "WeirdSettingsSection#476",
+   "severity": "warning",
+   "inputKeys": [
+    "af_override",
+    "shader_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Shader Interpreter Only"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-084",
+   "upstream": "WeirdSettingsSection#478",
+   "severity": "question",
+   "inputKeys": [
+    "shader_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-085",
+   "upstream": "WeirdSettingsSection#484",
+   "severity": "warning",
+   "inputKeys": [
+    "driver_recovery_timeout",
+    "shader_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Driver Recovery Timeout"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-086",
+   "upstream": "WeirdSettingsSection#486",
+   "severity": "warning",
+   "inputKeys": [
+    "driver_recovery_timeout",
+    "shader_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Driver Recovery Timeout"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-087",
+   "upstream": "WeirdSettingsSection#488",
+   "severity": "warning",
+   "inputKeys": [
+    "driver_recovery_timeout",
+    "shader_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Driver Recovery Timeout"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-088",
+   "upstream": "WeirdSettingsSection#495",
+   "severity": "warning",
+   "inputKeys": [
+    "driver_wakeup_delay"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Driver Wake-up Delay"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-089",
+   "upstream": "WeirdSettingsSection#497",
+   "severity": "info",
+   "inputKeys": [
+    "driver_wakeup_delay"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Driver Wake-up Delay"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-090",
+   "upstream": "WeirdSettingsSection#502",
+   "severity": "info",
+   "inputKeys": [
+    "audio_buffer_duration",
+    "audio_buffering",
+    "driver_wakeup_delay"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Audio Buffer Duration"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-091",
+   "upstream": "WeirdSettingsSection#504",
+   "severity": "info",
+   "inputKeys": [
+    "audio_buffer_duration",
+    "audio_buffering",
+    "audio_stretching",
+    "driver_wakeup_delay"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Audio Time Stretching",
+    "Enabled"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-092",
+   "upstream": "WeirdSettingsSection#509",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_buffer_duration",
+    "audio_buffering",
+    "audio_stretching",
+    "mtrsx"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Multithreaded RSX"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-093",
+   "upstream": "WeirdSettingsSection#511",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_buffer_duration",
+    "audio_buffering",
+    "audio_stretching",
+    "fatal_error",
+    "mtrsx"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Multithreaded RSX"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-094",
+   "upstream": "WeirdSettingsSection#513",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_buffer_duration",
+    "audio_buffering",
+    "audio_stretching",
+    "fatal_error",
+    "mtrsx"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Multithreaded RSX"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-095",
+   "upstream": "WeirdSettingsSection#515",
+   "severity": "info",
+   "inputKeys": [
+    "audio_stretching",
+    "fatal_error",
+    "mtrsx"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Multithreaded RSX"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-096",
+   "upstream": "WeirdSettingsSection#519",
+   "severity": "warning",
+   "inputKeys": [
+    "failed_pad",
+    "fatal_error",
+    "mtrsx"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-097",
+   "upstream": "WeirdSettingsSection#524",
+   "severity": "important",
+   "inputKeys": [
+    "failed_pad",
+    "fatal_error",
+    "pad_handler",
+    "pad_has_gyro"
+   ],
+   "gameFamilies": [
+    "KnownMotionControlsIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-098",
+   "upstream": "WeirdSettingsSection#531",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_backend",
+    "failed_pad",
+    "os_type",
+    "pad_handler",
+    "pad_has_gyro"
+   ],
+   "gameFamilies": [
+    "KnownMotionControlsIds"
+   ],
+   "versionConstants": [
+    "CubebBuildVersion"
+   ],
+   "settingsReferenced": [
+    "XAudio2"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-099",
+   "upstream": "WeirdSettingsSection#535",
+   "severity": "info",
+   "inputKeys": [
+    "audio_backend",
+    "os_type",
+    "pad_handler",
+    "pad_has_gyro"
+   ],
+   "gameFamilies": [
+    "KnownMotionControlsIds"
+   ],
+   "versionConstants": [
+    "CubebBuildVersion"
+   ],
+   "settingsReferenced": [
+    "FAudio",
+    "OpenAL"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-100",
+   "upstream": "WeirdSettingsSection#542",
+   "severity": "warning",
+   "inputKeys": [
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "CubebBuildVersion"
+   ],
+   "settingsReferenced": [
+    "Cubeb"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-101",
+   "upstream": "WeirdSettingsSection#545",
+   "severity": "warning",
+   "inputKeys": [
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Audio backend",
+    "null"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-102",
+   "upstream": "WeirdSettingsSection#551",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_volume",
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-103",
+   "upstream": "WeirdSettingsSection#553",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_volume",
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-104",
+   "upstream": "WeirdSettingsSection#557",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_volume",
+    "hle_lwmutex"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "HLE lwmutex"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-105",
+   "upstream": "WeirdSettingsSection#561",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_volume",
+    "hle_lwmutex",
+    "spu_block_size"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "SPU Analyzer Block Size",
+    "Safe/Mega"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-106",
+   "upstream": "WeirdSettingsSection#567",
+   "severity": "question",
+   "inputKeys": [
+    "auto_start_on_boot",
+    "booting_savestate",
+    "hle_lwmutex",
+    "spu_block_size"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Automatically start games after boot"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-107",
+   "upstream": "WeirdSettingsSection#569",
+   "severity": "question",
+   "inputKeys": [
+    "always_start_on_boot",
+    "auto_start_on_boot",
+    "booting_savestate",
+    "hle_lwmutex",
+    "spu_block_size"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Always start after boot"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-108",
+   "upstream": "WeirdSettingsSection#574",
+   "severity": "question",
+   "inputKeys": [
+    "always_start_on_boot",
+    "auto_start_on_boot",
+    "booting_savestate",
+    "start_paused_savestate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Pause emulation after loading savestates"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-109",
+   "upstream": "WeirdSettingsSection#576",
+   "severity": "warning",
+   "inputKeys": [
+    "always_start_on_boot",
+    "auto_start_on_boot",
+    "booting_savestate",
+    "compatible_savestate",
+    "start_paused_savestate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "SPU-Compatible Savestate Mode"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-110",
+   "upstream": "WeirdSettingsSection#580",
+   "severity": "warning",
+   "inputKeys": [
+    "always_start_on_boot",
+    "applied_config_type",
+    "auto_start_on_boot",
+    "compatible_savestate",
+    "start_paused_savestate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Configure"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-111",
+   "upstream": "WeirdSettingsSection#582",
+   "severity": "info",
+   "inputKeys": [
+    "always_start_on_boot",
+    "applied_config_type",
+    "compatible_savestate",
+    "custom_input_config",
+    "start_paused_savestate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-112",
+   "upstream": "WeirdSettingsSection#611",
+   "severity": "warning",
+   "inputKeys": [
+    "ppu_decoder"
+   ],
+   "gameFamilies": [
+    "P5Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "PPU Decoder",
+    "Recompiler (LLVM)"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-113",
+   "upstream": "WeirdSettingsSection#615",
+   "severity": "warning",
+   "inputKeys": [
+    "ppu_decoder",
+    "spu_decoder"
+   ],
+   "gameFamilies": [
+    "P5Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Recompiler (LLVM)",
+    "SPU Decoder"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-114",
+   "upstream": "WeirdSettingsSection#617",
+   "severity": "info",
+   "inputKeys": [
+    "ppu_decoder",
+    "spu_decoder"
+   ],
+   "gameFamilies": [
+    "P5Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Recompiler (LLVM)",
+    "SPU Decoder"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-115",
+   "upstream": "WeirdSettingsSection#625",
+   "severity": "info",
+   "inputKeys": [
+    "has_tsx",
+    "spu_decoder",
+    "spu_threads"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Auto",
+    "SPU Thread Count"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-116",
+   "upstream": "WeirdSettingsSection#632",
+   "severity": "info",
+   "inputKeys": [
+    "has_tsx",
+    "spu_threads",
+    "thread_count"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "2",
+    "SPU Thread Count"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-117",
+   "upstream": "WeirdSettingsSection#634",
+   "severity": "info",
+   "inputKeys": [
+    "has_tsx",
+    "spu_threads",
+    "thread_count"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "1",
+    "2",
+    "SPU Thread Count"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-118",
+   "upstream": "WeirdSettingsSection#637",
+   "severity": "info",
+   "inputKeys": [
+    "thread_count"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "2",
+    "SPU Thread Count"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-119",
+   "upstream": "WeirdSettingsSection#641",
+   "severity": "info",
+   "inputKeys": [
+    "spu_loop_detection",
+    "thread_count"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "SPU Loop Detection"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-120",
+   "upstream": "WeirdSettingsSection#643",
+   "severity": "warning",
+   "inputKeys": [
+    "frame_limit",
+    "spu_loop_detection",
+    "thread_count"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Frame Limiter"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-121",
+   "upstream": "WeirdSettingsSection#645",
+   "severity": "warning",
+   "inputKeys": [
+    "frame_limit",
+    "spu_loop_detection",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-122",
+   "upstream": "WeirdSettingsSection#647",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_blit",
+    "frame_limit",
+    "spu_loop_detection",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Force CPU Blit"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-123",
+   "upstream": "WeirdSettingsSection#649",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_blit",
+    "frame_limit",
+    "spu_loop_detection",
+    "strict_rendering_mode",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Strict Rendering Mode"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-124",
+   "upstream": "WeirdSettingsSection#654",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_blit",
+    "frame_limit",
+    "resolution_scale",
+    "spu_loop_detection",
+    "strict_rendering_mode",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Resolution Scale"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-125",
+   "upstream": "WeirdSettingsSection#660",
+   "severity": "info",
+   "inputKeys": [
+    "cpu_blit",
+    "resolution_scale",
+    "strict_rendering_mode"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-126",
+   "upstream": "WeirdSettingsSection#663",
+   "severity": "other",
+   "inputKeys": [
+    "resolution_scale"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-127",
+   "upstream": "WeirdSettingsSection#676",
+   "severity": "warning",
+   "inputKeys": [
+    "resolution_scale",
+    "texture_scale_threshold"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "512x512",
+    "Resolution Scale",
+    "Resolution Scale Threshold"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-128",
+   "upstream": "WeirdSettingsSection#679",
+   "severity": "warning",
+   "inputKeys": [
+    "af_override",
+    "resolution_scale",
+    "texture_scale_threshold"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Anisotropic Filter Override",
+    "Auto"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-129",
+   "upstream": "WeirdSettingsSection#702",
+   "severity": "info",
+   "inputKeys": [
+    "audio_buffer_duration",
+    "audio_buffering"
+   ],
+   "gameFamilies": [
+    "AllStarBattleIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "20ms",
+    "Audio Buffer Duration"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-130",
+   "upstream": "WeirdSettingsSection#704",
+   "severity": "info",
+   "inputKeys": [
+    "audio_buffer_duration",
+    "audio_buffering"
+   ],
+   "gameFamilies": [
+    "AllStarBattleIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "20ms",
+    "Audio Buffer Duration",
+    "Enable Buffering"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-131",
+   "upstream": "WeirdSettingsSection#713",
+   "severity": "info",
+   "inputKeys": [
+    "audio_buffer_duration",
+    "audio_buffering",
+    "vblank_rate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "VBlank Rate"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-132",
+   "upstream": "WeirdSettingsSection#715",
+   "severity": "ok",
+   "inputKeys": [
+    "audio_buffer_duration",
+    "audio_buffering",
+    "vblank_rate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-133",
+   "upstream": "WeirdSettingsSection#717",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_buffering",
+    "vblank_rate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-134",
+   "upstream": "WeirdSettingsSection#722",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-135",
+   "upstream": "WeirdSettingsSection#724",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-136",
+   "upstream": "WeirdSettingsSection#732",
+   "severity": "other",
+   "inputKeys": [
+    "compat_database_path"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "IMPLEMENTED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "WS-137",
+   "upstream": "WeirdSettingsSection#739",
+   "severity": "warning",
+   "inputKeys": [
+    "compat_database_path",
+    "title_was_set_from",
+    "title_was_set_to"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-138",
+   "upstream": "WeirdSettingsSection#751",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [
+    "FixedSimpsonsBuild",
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-139",
+   "upstream": "WeirdSettingsSection#767",
+   "severity": "ok",
+   "inputKeys": [
+    "frame_limit",
+    "vsync"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-140",
+   "upstream": "WeirdSettingsSection#773",
+   "severity": "warning",
+   "inputKeys": [
+    "frame_limit",
+    "vsync"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Auto",
+    "Framerate Limiter"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-141",
+   "upstream": "WeirdSettingsSection#780",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Framerate Limiter",
+    "Off"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-142",
+   "upstream": "WeirdSettingsSection#782",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Auto",
+    "Framerate Limiter"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-143",
+   "upstream": "WeirdSettingsSection#787",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Framerate Limiter",
+    "Off"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-144",
+   "upstream": "WeirdSettingsSection#789",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-145",
+   "upstream": "WeirdSettingsSection#794",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Framerate Limiter"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-146",
+   "upstream": "WeirdSettingsSection#796",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-147",
+   "upstream": "WeirdSettingsSection#800",
+   "severity": "info",
+   "inputKeys": [
+    "native_ui"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Native UI"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-148",
+   "upstream": "WeirdSettingsSection#805",
+   "severity": "warning",
+   "inputKeys": [
+    "native_ui",
+    "sleep_timer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Sleep Timers Accuracy",
+    "Usleep Only"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-149",
+   "upstream": "WeirdSettingsSection#814",
+   "severity": "warning",
+   "inputKeys": [
+    "resolution",
+    "sleep_timer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "1920x1080",
+    "Resolution"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-150",
+   "upstream": "WeirdSettingsSection#818",
+   "severity": "warning",
+   "inputKeys": [
+    "game_version",
+    "resolution"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-151",
+   "upstream": "WeirdSettingsSection#855",
+   "severity": "other",
+   "inputKeys": [],
+   "gameFamilies": [
+    "Gow3Ids",
+    "GowAscIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-152",
+   "upstream": "WeirdSettingsSection#879",
+   "severity": "info",
+   "inputKeys": [
+    "spu_block_size"
+   ],
+   "gameFamilies": [
+    "DesIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "SPU Analyzer Block Size",
+    "Safe"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-153",
+   "upstream": "WeirdSettingsSection#882",
+   "severity": "warning",
+   "inputKeys": [
+    "frame_limit",
+    "spu_block_size"
+   ],
+   "gameFamilies": [
+    "DesIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Frame Limiter",
+    "Off"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-154",
+   "upstream": "WeirdSettingsSection#885",
+   "severity": "warning",
+   "inputKeys": [
+    "frame_limit",
+    "spu_block_size",
+    "spu_loop_detection"
+   ],
+   "gameFamilies": [
+    "DesIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Enabled",
+    "SPU Loop Detection"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-155",
+   "upstream": "WeirdSettingsSection#888",
+   "severity": "warning",
+   "inputKeys": [
+    "frame_limit",
+    "spu_block_size",
+    "spu_loop_detection",
+    "spu_threads"
+   ],
+   "gameFamilies": [
+    "DesIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Auto",
+    "SPU Thread Count"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-156",
+   "upstream": "WeirdSettingsSection#903",
+   "severity": "info",
+   "inputKeys": [
+    "clock_scale",
+    "vblank_rate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "VBlank Rate"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-157",
+   "upstream": "WeirdSettingsSection#905",
+   "severity": "warning",
+   "inputKeys": [
+    "clock_scale",
+    "vblank_rate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Clock Scale"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-158",
+   "upstream": "WeirdSettingsSection#907",
+   "severity": "ok",
+   "inputKeys": [
+    "clock_scale",
+    "vblank_rate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-159",
+   "upstream": "WeirdSettingsSection#912",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "VBlank Rate"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-160",
+   "upstream": "WeirdSettingsSection#914",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Clock Scale",
+    "VBlank Rate"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-161",
+   "upstream": "WeirdSettingsSection#916",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-162",
+   "upstream": "WeirdSettingsSection#918",
+   "severity": "ok",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-163",
+   "upstream": "WeirdSettingsSection#919",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-164",
+   "upstream": "WeirdSettingsSection#924",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-165",
+   "upstream": "WeirdSettingsSection#929",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Clock Scale",
+    "VBlank Rate"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-166",
+   "upstream": "WeirdSettingsSection#972",
+   "severity": "info",
+   "inputKeys": [
+    "vblank_rate"
+   ],
+   "gameFamilies": [
+    "Dod3Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "VBlank Rate"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-167",
+   "upstream": "WeirdSettingsSection#974",
+   "severity": "ok",
+   "inputKeys": [
+    "vblank_rate"
+   ],
+   "gameFamilies": [
+    "Dod3Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-168",
+   "upstream": "WeirdSettingsSection#976",
+   "severity": "warning",
+   "inputKeys": [
+    "vblank_rate"
+   ],
+   "gameFamilies": [
+    "Dod3Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-169",
+   "upstream": "WeirdSettingsSection#978",
+   "severity": "info",
+   "inputKeys": [
+    "vblank_rate"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-170",
+   "upstream": "WeirdSettingsSection#983",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-171",
+   "upstream": "WeirdSettingsSection#985",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-172",
+   "upstream": "WeirdSettingsSection#987",
+   "severity": "other",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "no diagnostic input (fun/moderation text)"
+  },
+  {
+   "id": "WS-173",
+   "upstream": "WeirdSettingsSection#1019",
+   "severity": "info",
+   "inputKeys": [
+    "spu_block_size"
+   ],
+   "gameFamilies": [
+    "TlouIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "SPU Analyzer Block Size",
+    "Safe"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-174",
+   "upstream": "WeirdSettingsSection#1021",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_blit",
+    "spu_block_size"
+   ],
+   "gameFamilies": [
+    "TlouIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Force CPU Blit"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-175",
+   "upstream": "WeirdSettingsSection#1023",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_blit",
+    "read_color_buffers",
+    "spu_block_size"
+   ],
+   "gameFamilies": [
+    "TlouIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Read Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-176",
+   "upstream": "WeirdSettingsSection#1032",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_blit",
+    "read_color_buffers",
+    "read_depth_buffer",
+    "spu_block_size"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "FixedTlouRcbBuild",
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [
+    "Read Depth Buffer"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-177",
+   "upstream": "WeirdSettingsSection#1037",
+   "severity": "warning",
+   "inputKeys": [
+    "read_depth_buffer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "FixedTlouRcbBuild",
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [
+    "Read Depth Buffer"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-178",
+   "upstream": "WeirdSettingsSection#1043",
+   "severity": "warning",
+   "inputKeys": [
+    "read_depth_buffer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Read Depth Buffer"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-179",
+   "upstream": "WeirdSettingsSection#1048",
+   "severity": "warning",
+   "inputKeys": [
+    "read_depth_buffer",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-180",
+   "upstream": "WeirdSettingsSection#1053",
+   "severity": "warning",
+   "inputKeys": [
+    "read_depth_buffer",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-181",
+   "upstream": "WeirdSettingsSection#1061",
+   "severity": "warning",
+   "inputKeys": [
+    "resolution_scale",
+    "strict_rendering_mode",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Resolution Scale"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-182",
+   "upstream": "WeirdSettingsSection#1066",
+   "severity": "warning",
+   "inputKeys": [
+    "resolution_scale",
+    "strict_rendering_mode",
+    "texture_scale_threshold",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Resolution Scale Threshold"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-183",
+   "upstream": "WeirdSettingsSection#1086",
+   "severity": "warning",
+   "inputKeys": [
+    "write_color_buffers"
+   ],
+   "gameFamilies": [
+    "Killzone3Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-184",
+   "upstream": "WeirdSettingsSection#1091",
+   "severity": "warning",
+   "inputKeys": [
+    "write_color_buffers"
+   ],
+   "gameFamilies": [
+    "Killzone3Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-185",
+   "upstream": "WeirdSettingsSection#1108",
+   "severity": "info",
+   "inputKeys": [
+    "write_color_buffers"
+   ],
+   "gameFamilies": [
+    "RdrIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-186",
+   "upstream": "WeirdSettingsSection#1151",
+   "severity": "warning",
+   "inputKeys": [
+    "build_branch"
+   ],
+   "gameFamilies": [
+    "Mgs4Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-187",
+   "upstream": "WeirdSettingsSection#1152",
+   "severity": "warning",
+   "inputKeys": [
+    "build_branch"
+   ],
+   "gameFamilies": [
+    "Mgs4Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-188",
+   "upstream": "WeirdSettingsSection#1155",
+   "severity": "info",
+   "inputKeys": [
+    "build_branch"
+   ],
+   "gameFamilies": [
+    "Mgs4Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-189",
+   "upstream": "WeirdSettingsSection#1157",
+   "severity": "other",
+   "inputKeys": [
+    "build_branch"
+   ],
+   "gameFamilies": [
+    "Mgs4Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-190",
+   "upstream": "WeirdSettingsSection#1174",
+   "severity": "warning",
+   "inputKeys": [
+    "disable_getllar_spin_optimization"
+   ],
+   "gameFamilies": [
+    "MgsPwIds"
+   ],
+   "versionConstants": [
+    "FixedSpuGetllarOptimizationBuild",
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [
+    "Disable SPU GETLLAR Spin Optimization"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-191",
+   "upstream": "WeirdSettingsSection#1221",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [
+    "Pdf2ndIds",
+    "PdfIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-192",
+   "upstream": "WeirdSettingsSection#1224",
+   "severity": "warning",
+   "inputKeys": [
+    "frame_limit"
+   ],
+   "gameFamilies": [
+    "Pdf2ndIds",
+    "PdfIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Frame Limiter",
+    "Off"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-193",
+   "upstream": "WeirdSettingsSection#1227",
+   "severity": "other",
+   "inputKeys": [
+    "frame_limit"
+   ],
+   "gameFamilies": [
+    "Pdf2ndIds",
+    "PdfIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-194",
+   "upstream": "WeirdSettingsSection#1264",
+   "severity": "info",
+   "inputKeys": [
+    "game_version"
+   ],
+   "gameFamilies": [
+    "Gt5Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-195",
+   "upstream": "WeirdSettingsSection#1280",
+   "severity": "warning",
+   "inputKeys": [
+    "spu_loop_detection"
+   ],
+   "gameFamilies": [
+    "Gt6Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "SPU Loop Detection"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-196",
+   "upstream": "WeirdSettingsSection#1290",
+   "severity": "warning",
+   "inputKeys": [
+    "game_version",
+    "spu_loop_detection",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [
+    "Gt6Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-197",
+   "upstream": "WeirdSettingsSection#1295",
+   "severity": "warning",
+   "inputKeys": [
+    "game_version",
+    "read_color_buffer",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Read Color Buffer"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-198",
+   "upstream": "WeirdSettingsSection#1300",
+   "severity": "warning",
+   "inputKeys": [
+    "read_color_buffer",
+    "read_depth_buffer",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Read Depth Buffer"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-199",
+   "upstream": "WeirdSettingsSection#1304",
+   "severity": "warning",
+   "inputKeys": [
+    "read_color_buffer",
+    "read_depth_buffer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-200",
+   "upstream": "WeirdSettingsSection#1311",
+   "severity": "warning",
+   "inputKeys": [
+    "read_depth_buffer",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-201",
+   "upstream": "WeirdSettingsSection#1316",
+   "severity": "warning",
+   "inputKeys": [
+    "read_color_buffer",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Read Color Buffer"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-202",
+   "upstream": "WeirdSettingsSection#1321",
+   "severity": "warning",
+   "inputKeys": [
+    "read_color_buffer",
+    "write_color_buffers",
+    "write_depth_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Depth Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-203",
+   "upstream": "WeirdSettingsSection#1326",
+   "severity": "warning",
+   "inputKeys": [
+    "read_color_buffer",
+    "read_depth_buffer",
+    "write_depth_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Read Depth Buffer"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-204",
+   "upstream": "WeirdSettingsSection#1330",
+   "severity": "warning",
+   "inputKeys": [
+    "read_depth_buffer",
+    "write_depth_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-205",
+   "upstream": "WeirdSettingsSection#1335",
+   "severity": "warning",
+   "inputKeys": [
+    "read_depth_buffer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-206",
+   "upstream": "WeirdSettingsSection#1363",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_blit",
+    "resolution_scale"
+   ],
+   "gameFamilies": [
+    "Sly4Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Enabled",
+    "Force CPU Blit"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-207",
+   "upstream": "WeirdSettingsSection#1379",
+   "severity": "warning",
+   "inputKeys": [
+    "spu_loop_detection"
+   ],
+   "gameFamilies": [
+    "DragonsCrownIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "SPU Loop Detection"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-208",
+   "upstream": "WeirdSettingsSection#1418",
+   "severity": "warning",
+   "inputKeys": [
+    "gpu_info"
+   ],
+   "gameFamilies": [
+    "Lbp1Ids",
+    "Lbp2Ids",
+    "Lbp3Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-209",
+   "upstream": "WeirdSettingsSection#1427",
+   "severity": "warning",
+   "inputKeys": [
+    "game_version",
+    "gpu_info"
+   ],
+   "gameFamilies": [
+    "Lbp1Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-210",
+   "upstream": "WeirdSettingsSection#1451",
+   "severity": "other",
+   "inputKeys": [],
+   "gameFamilies": [
+    "Skate3Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-211",
+   "upstream": "WeirdSettingsSection#1473",
+   "severity": "other",
+   "inputKeys": [],
+   "gameFamilies": [
+    "Sonic06Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-212",
+   "upstream": "WeirdSettingsSection#1479",
+   "severity": "info",
+   "inputKeys": [
+    "write_color_buffers"
+   ],
+   "gameFamilies": [
+    "Sonic06Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Write Color Buffers"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-213",
+   "upstream": "WeirdSettingsSection#1481",
+   "severity": "info",
+   "inputKeys": [
+    "cpu_blit",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [
+    "Sonic06Ids"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Force CPU Blit"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "WS-214",
+   "upstream": "WeirdSettingsSection#1488",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_blit",
+    "spu_decoder",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Recompiler (ASMJIT)",
+    "SPU Decoder"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-215",
+   "upstream": "WeirdSettingsSection#1490",
+   "severity": "info",
+   "inputKeys": [
+    "cpu_blit",
+    "spu_decoder",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Force CPU Blit"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "WS-216",
+   "upstream": "WeirdSettingsSection#1491",
+   "severity": "info",
+   "inputKeys": [
+    "cpu_blit",
+    "spu_decoder",
+    "write_color_buffers"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  }
+ ]
+}

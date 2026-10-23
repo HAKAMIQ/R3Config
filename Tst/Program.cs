@@ -27,116 +27,91 @@ internal static partial class Program
     {
         var runner = new TestRunner();
         var context = new TestContext();
+        // No automatic recommendation sync from any window or app this runner starts.
+        Environment.SetEnvironmentVariable(RecommendationSyncUseCase.AutoSyncKillSwitch, "1");
 
         try
         {
-            if (args.Length == 1 &&
-                args[0].Equals(
-                    "--runner-failure-probe",
-                    StringComparison.OrdinalIgnoreCase))
+            if (args.Length is 1 or 2 && args[0] == "--review-fixes-only")
             {
-                runner.RunCase(
-                    "runner-failure-probe",
-                    () => throw new InvalidOperationException(
-                        "Intentional R3Test runner failure probe."));
+                ReviewFixesT.Run(runner, context.CreateTempRoot("ReviewFixes"), args.Length == 2 ? args[1] : null);
+                return;
+            }
+            if (args.Length == 1 && args[0] == "--game-settings-evidence-only")
+            {
+                var evidenceRoot = context.CreateTempRoot("GameSettingsEvidence");
+                runner.RunCase(nameof(GameSettingsEvidenceT), () => GameSettingsEvidenceT.Run(evidenceRoot));
+                runner.RunCase(nameof(Rpcs3KnowledgeT), () => Rpcs3KnowledgeT.Run(evidenceRoot));
+                runner.RunCase(nameof(EvidencePolicyT), EvidencePolicyT.Run);
+                return;
+            }
+            if (args.Length == 1 && args[0].Equals("--wiki-scope-only", StringComparison.OrdinalIgnoreCase))
+            {
+                var root = context.CreateTempRoot("R3ConfigWikiScope");
+                runner.RunCase(nameof(WikiExplicitSerial_Runtime), () => WikiExplicitSerial_Runtime(root));
+                runner.RunCase(nameof(WikiScope_Restrictions), () => WikiScope_Restrictions(root));
+                runner.RunCase(nameof(Settings_AllCatalogDiscovery), () => Settings_AllCatalogDiscovery(root));
+                runner.RunCase(nameof(WikiCorpusT.Fixture), () => WikiCorpusT.Fixture(root));
+                runner.RunCase(nameof(Plan_Ui), Plan_Ui);
+                Console.WriteLine("Wiki scope focused tests passed. Passed: 5, Failed: 0, Skipped: 0");
+                return;
+            }
+            if (args.Length == 3 && args[0].Equals("--gen-production-data", StringComparison.OrdinalIgnoreCase))
+            {
+                runner.RunCase(nameof(WikiProductionData), () => WikiProductionData(args[1], args[2]));
+                return;
+            }
+            if (args.Length is 3 or 4 && args[0].Equals("--wiki-notes-audit", StringComparison.OrdinalIgnoreCase))
+            {
+                runner.RunCase(nameof(WikiNotesAudit), () => WikiNotesAudit(args[1], args[2], args.Length == 4 ? args[3] : null));
+                Console.WriteLine("Wiki notes/online audit passed. Passed: 1, Failed: 0, Skipped: 0");
+                return;
+            }
+            if (args.Length == 5 && args[0].Equals("--wiki-scope-audit", StringComparison.OrdinalIgnoreCase))
+            {
+                var root = context.CreateTempRoot("R3ConfigWikiScopeAudit");
+                runner.RunCase(nameof(WikiScope_SourceParity), () => WikiScope_SourceParity(root, args[1], args[2], args[3], args[4]));
+                Console.WriteLine("Wiki source parity passed. Passed: 1, Failed: 0, Skipped: 0");
+                return;
+            }
+            if (args.Length is 1 or 2 && args[0].Equals("--discovery-only", StringComparison.OrdinalIgnoreCase))
+            {
+                var root = context.CreateTempRoot("R3ConfigDiscovery");
+                runner.RunCase(nameof(WikiExplicitSerial_Runtime), () => WikiExplicitSerial_Runtime(root));
+                runner.RunCase(nameof(Settings_AllCatalogDiscovery), () => Settings_AllCatalogDiscovery(root));
+                runner.RunCase(nameof(Patch_CorpusDiscovery), () => Patch_CorpusDiscovery(root, args.Length == 2 ? args[1] : null));
+                runner.RunCase(nameof(WikiCorpusT.Fixture), () => WikiCorpusT.Fixture(root));
+                runner.RunCase(nameof(Plan_Ui), Plan_Ui);
+                runner.RunCase(nameof(CanaryRuntimeBinding_Regressions), CanaryRuntimeBinding_Regressions);
+                Console.WriteLine("Discovery focused tests passed. Passed: 6, Failed: 0, Skipped: 0");
+                return;
+            }
+
+            if (TryRunNclConvertMode(args))
+            {
+                return;
+            }
+
+            if (TryRunExtraModes(args, runner, context))
+            {
+                return;
+            }
+
+            if (TryRunFocusedTraceModes(args, runner, context))
+            {
                 return;
             }
 
             if (args.Length == 1 &&
                 args[0].Equals(
-                    "--application-runtime-only",
+                    "--ncl-only",
                     StringComparison.OrdinalIgnoreCase))
             {
-                var tempRoot = context.CreateTempRoot(
-                    "R3ConfigApplicationRuntime");
-                runner.RunCase(
-                    nameof(ApplicationRuntimeT),
-                    () => ApplicationRuntimeT.Run(tempRoot));
-                Console.WriteLine(
-                    "Application runtime focused tests passed.");
-                return;
-            }
-
-            if (args.Length == 1 &&
-                args[0].Equals(
-                    "--artemis-dependencies-only",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                var tempRoot = context.CreateTempRoot("R3ConfigArtemisDependencies");
-                runner.RunCase(
-                    nameof(ArtemisDependencyT),
-                    () => ArtemisDependencyT.Run(tempRoot));
-                Console.WriteLine("Artemis dependency focused tests passed.");
-                return;
-            }
-
-            if (args.Length == 1 &&
-                args[0].Equals(
-                    "--artemis-only",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                var tempRoot = context.CreateTempRoot("R3ConfigArtemisCollection");
-                runner.RunCase(nameof(Lang_Key), Lang_Key);
-                runner.RunCase(nameof(Art_Imp), Art_Imp);
-                runner.RunCase(nameof(Art_Tool), () => Art_Tool(tempRoot));
-                runner.RunCase(nameof(Art_Data), Art_Data);
-                runner.RunCase(
-                    nameof(ArtemisDependencyT),
-                    () => ArtemisDependencyT.Run(tempRoot));
-                runner.RunCase(nameof(Cht_Bndl), () => Cht_Bndl(tempRoot));
-                Console.WriteLine("Artemis RPCS3 patch collection focused tests passed.");
-                return;
-            }
-
-            if (args.Length == 1 &&
-                args[0].Equals(
-                    "--game-setup-only",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                var tempRoot = context.CreateTempRoot("R3ConfigGameSetup");
-                runner.RunCase(nameof(GameSetupT), () => GameSetupT.Run(tempRoot));
-                Console.WriteLine("Game Setup focused tests passed.");
-                return;
-            }
-
-            if (args.Length == 1 &&
-                args[0].Equals(
-                    "--ui-gate-only",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                runner.RunCase(nameof(UiGate.RunPatchMode), UiGate.RunPatchMode);
-                Console.WriteLine("Patch UI gate passed.");
-                return;
-            }
-
-            if (args.Length == 1 &&
-                args[0].Equals(
-                    "--ui-runtime-matrix-only",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                runner.RunCase(nameof(UiGate.RunVisualOnly), UiGate.RunVisualOnly);
-                Console.WriteLine("Runtime UI matrix passed.");
-                return;
-            }
-
-            if (args.Length == 1 &&
-                args[0].Equals(
-                    "--backup-cleanup-only",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                var tempRoot = context.CreateTempRoot("R3ConfigBackupCleanup");
-                runner.RunCase(nameof(Bkp_Del), () => Bkp_Del(tempRoot));
-                Console.WriteLine("Backup deletion and retention tests passed.");
-                return;
-            }
-
-            if (args.Length == 1 &&
-                args[0].Equals(
-                    "--busy-overlay-only",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                runner.RunCase(nameof(UiGate.RunBusyOverlay), UiGate.RunBusyOverlay);
-                Console.WriteLine("Busy overlay runtime test passed.");
+                runner.RunCase(nameof(NclSemanticT), NclSemanticT.Run);
+                runner.RunCase(nameof(NclCorpusT), NclCorpusT.Run);
+                runner.RunCase(nameof(NclUiT), NclUiT.Run);
+                runner.RunCase("NclConvertCli", NclConvertCliTests);
+                Console.WriteLine("NCL focused suites passed. Passed: 4, Failed: 0, Skipped: 0");
                 return;
             }
 
@@ -225,7 +200,7 @@ internal static partial class Program
                 RunPatchLocalizationCases(runner);
                 Console.WriteLine(
                     "Patch presentation localization focused tests passed.");
-                Console.WriteLine("Passed: 11, Failed: 0, Skipped: 0");
+                Console.WriteLine("Passed: 12, Failed: 0, Skipped: 0");
                 return;
             }
 
@@ -240,6 +215,16 @@ internal static partial class Program
                 runner.RunCase("OfficialCorpusT", () => OfficialCorpusT.Run(
                     args[1],
                     args.Length == 3 ? args[2] : null));
+                return;
+            }
+
+            if (TryRunNclCorpusAuditMode(args, runner))
+            {
+                return;
+            }
+
+            if (TryRunSecurityClosureMode(args, context))
+            {
                 return;
             }
 
@@ -258,18 +243,56 @@ internal static partial class Program
                 nameof(Ui_GameDataTextDirection),
                 Ui_GameDataTextDirection);
             runner.RunCase(nameof(Arch_Svc), Arch_Svc);
+            runner.RunCase(nameof(PatchWriteSemanticsT), PatchWriteSemanticsT.Run);
+            runner.RunCase(
+                nameof(CanaryArtemisConflictT),
+                () => CanaryArtemisConflictT.Run(smokeRoot));
+            runner.RunCase(nameof(OfficialRuntimeT.PatchYmlReadOnly), () => OfficialRuntimeT.PatchYmlReadOnly(smokeRoot));
+            runner.RunCase(nameof(OfficialRuntimeT.WikiOfficialIsolation), () => OfficialRuntimeT.WikiOfficialIsolation(smokeRoot));
             runner.RunCase(nameof(Security_Hardening), () => Security_Hardening(smokeRoot));
+            runner.RunCase(nameof(ThirdPartyNoticeT), () => ThirdPartyNoticeT.Run(RepoRoot()));
+            runner.RunCase(nameof(UiDateT), () => UiDateT.Run(RepoRoot()));
             runner.RunCase(nameof(SetSvcT), () => SetSvcT.Run(smokeRoot));
+            runner.RunCase(nameof(RecSyncT), () => RecSyncT.Run(smokeRoot));
+            runner.RunCase(
+                nameof(CfgBaselineT),
+                () => CfgBaselineT.Run(smokeRoot));
             runner.RunCase(nameof(Can_Comp), () => Can_Comp(smokeRoot));
             runner.RunCase(nameof(App_Pat), App_Pat);
             runner.RunCase(nameof(Cat_Dup), Cat_Dup);
             runner.RunCase(nameof(WikiCorpusT), () => WikiCorpusT.Fixture(smokeRoot));
+            runner.RunCase(nameof(WikiNotesParserT), WikiNotesParserT.Run);
+            runner.RunCase(nameof(GameSettingsUiT), GameSettingsUiT.Run);
+            runner.RunCase(nameof(Rpcs3BuildCatalogT), Rpcs3BuildCatalogT.Run);
+            runner.RunCase(nameof(RuntimeContextT), RuntimeContextT.Run);
+            runner.RunCase(nameof(HostCpuT), HostCpuT.Run);
+            runner.RunCase(nameof(EvidenceApplicabilityT), () => EvidenceApplicabilityT.Run(smokeRoot));
+            runner.RunCase(nameof(Rpcs3BuildScopeT), Rpcs3BuildScopeT.Run);
+            runner.RunCase(nameof(EvidencePolicyT), EvidencePolicyT.Run);
+            runner.RunCase(nameof(GameSettingsEvidenceT), () => GameSettingsEvidenceT.Run(smokeRoot));
+            runner.RunCase(nameof(Rpcs3KnowledgeT), () => Rpcs3KnowledgeT.Run(smokeRoot));
+            runner.RunCase(nameof(NoteVersionScopeT), NoteVersionScopeT.Run);
+            runner.RunCase(nameof(HostCpuT.RunRealHost), HostCpuT.RunRealHost);
+            runner.RunCase(nameof(DiagnosticEvidenceT), () => DiagnosticEvidenceT.Run(smokeRoot));
+            runner.RunCase(nameof(LogDiagT), () => LogDiagT.Run(smokeRoot));
+            runner.RunCase(nameof(LogRunContextT), LogRunContextT.Run);
+            runner.RunCase(nameof(LogObservationT), () => LogObservationT.Run(smokeRoot));
+            runner.RunCase(nameof(DiscKnowledgeT), () => DiscKnowledgeT.Run(smokeRoot));
+            runner.RunCase(nameof(DiscordBotAuditT), DiscordBotAuditT.Run);
             runner.RunCase(nameof(Pat_Cmp), () => Pat_Cmp(smokeRoot));
             runner.RunCase(nameof(GameSetupT), () => GameSetupT.Run(smokeRoot));
             runner.RunCase(
                 nameof(ApplicationRuntimeT),
                 () => ApplicationRuntimeT.Run(smokeRoot));
+            runner.RunCase(
+                nameof(Rpcs3BuildIdentityProbeT),
+                () => Rpcs3BuildIdentityProbeT.Run(smokeRoot));
             runner.RunCase(nameof(HCanTst), HCanTst.Run);
+            runner.RunCase(nameof(NclSemanticT), NclSemanticT.Run);
+            runner.RunCase(nameof(NclCorpusT), NclCorpusT.Run);
+
+            runner.RunCase(nameof(NclUiT), NclUiT.Run);
+            runner.RunCase("NclConvertCli", NclConvertCliTests);
             runner.RunCase(nameof(Cht_Bndl), () => Cht_Bndl(smokeRoot));
             runner.RunCase(nameof(Pat_Txn), () => Pat_Txn(smokeRoot));
             runner.RunCase(
@@ -278,6 +301,11 @@ internal static partial class Program
             runner.RunCase(nameof(Can_Txn), () => Can_Txn(smokeRoot));
             runner.RunCase(nameof(Bkp_Rst), () => Bkp_Rst(smokeRoot));
             runner.RunCase(nameof(Bkp_Del), () => Bkp_Del(smokeRoot));
+            runner.RunCase(nameof(Bkp_LegacyRetention), () => Bkp_LegacyRetention(smokeRoot));
+            runner.RunCase(nameof(Bkp_NameGregorian), () => Bkp_NameGregorian(smokeRoot));
+            runner.RunCase(nameof(Bkp_LegacyHijri), () => Bkp_LegacyHijri(smokeRoot));
+            runner.RunCase(nameof(Bkp_MixedNames), () => Bkp_MixedNames(smokeRoot));
+            runner.RunCase(nameof(Bkp_PreRestore), () => Bkp_PreRestore(smokeRoot));
             runner.RunCase(
                 nameof(Bkp_ConcurrencyOwnership),
                 () => Bkp_ConcurrencyOwnership(smokeRoot));
@@ -285,6 +313,7 @@ internal static partial class Program
             runner.RunCase(
                 nameof(Rpcs3MutationGuard),
                 () => Rpcs3MutationGuard(smokeRoot));
+            RunSecurityClosure(runner, smokeRoot);
             runner.RunCase(nameof(Inp_Lim), () => Inp_Lim(smokeRoot));
             runner.RunCase(nameof(Scan_Src), () => Scan_Src(smokeRoot));
             runner.RunCase(nameof(Mut_Cmd), () => Mut_Cmd(smokeRoot));

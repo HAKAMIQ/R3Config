@@ -34,8 +34,10 @@ public sealed partial class MainVm : VmBase, IDisposable
     private CfgPlan? _curPlan;
     private UiLaySt _layout = UiLaySvc.Current;
     private HwInfo? _hwInfo;
+    private Rpcs3BuildIdentity? _buildIdentity;
     private string _exePath = string.Empty;
     private string _r3Stat = UiText.GetText("Status.Rpcs3Missing");
+    private string _r3VerTip = UiText.Rpcs3BuildTip(null);
     private string _status = UiText.Fmt("Status.DataSource", UiText.GetText("Cat.BuiltIn"));
     private string _recStat = UiText.Fmt("Status.RecCount", 0);
     private string _hwStat = UiText.GetText("Status.HwUnknown");
@@ -125,14 +127,17 @@ public sealed partial class MainVm : VmBase, IDisposable
         ChtRemove = new RelayCmd(
             RemoveManagedArtemis,
             () => CanMut && Preview.HasManagedChtSelection);
+        NclImportCmd = new RelayCmd(
+            OpenNclImport,
+            CanOpenNclImport);
         RstCmd = new RelayCmd(RstBkp, () => CanMut && Advanced.SelBkp is not null);
         DelBkpCmd = new RelayCmd(
             DelBkp,
-            () => CanMut && Advanced.SelBkp is not null);
+            () => CanMut && Advanced.SelBkp is { IsLegacy: false });
         CleanBkpCmd = new RelayCmd(
             CleanBkp,
             () => CanMut &&
-                  Advanced.Backups.Count > BackupUseCase.DefaultRetentionCount);
+                  Advanced.Backups.Count(backup => !backup.IsLegacy) > BackupUseCase.DefaultRetentionCount);
         SelCmd = new RelayCmd(Plan.Select, () => Plan.Items.Count > 0);
         ClearCmd = new RelayCmd(Plan.ClearSel, () => Plan.Items.Count > 0);
         WikiCmd = new RelayCmd(ImpWiki);
@@ -249,6 +254,8 @@ public sealed partial class MainVm : VmBase, IDisposable
     public RelayCmd ChtClearSelection { get; }
 
     public RelayCmd ChtRemove { get; }
+
+    public RelayCmd NclImportCmd { get; }
 
     public RelayCmd RstCmd { get; }
 
@@ -405,6 +412,12 @@ public sealed partial class MainVm : VmBase, IDisposable
     {
         get => _r3Stat;
         set => Set(ref _r3Stat, value);
+    }
+
+    public string R3VerTip
+    {
+        get => _r3VerTip;
+        set => Set(ref _r3VerTip, value);
     }
 
     public string Status

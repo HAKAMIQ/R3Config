@@ -26,7 +26,8 @@ public enum PatchCompatibilityReasonCode
     KeySerBd,
     Guard,
     Hash,
-    CanaryBindingAmbiguous
+    CanaryBindingAmbiguous,
+    CanaryEquivalent
 }
 
 public sealed record PatchCompatibilityDecision(

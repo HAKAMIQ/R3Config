@@ -219,6 +219,7 @@ public sealed partial class MainVm : VmBase
         CancelGameLibraryScan();
         GameList.BeginLibraryScan();
         var operation = BeginAnalysis();
+        string? failureMessage = null;
         try
         {
             SetBusyStage(AnalyzeStage.ReadRpcs3);
@@ -252,6 +253,7 @@ public sealed partial class MainVm : VmBase
             LoadR3Ui();
             LoadCan();
             _hwInfo = result.Hw;
+            _buildIdentity = result.BuildIdentity;
             _patCat = result.PatchCat.Cat;
             _catErr = result.PatchCat.Error;
             _catSrc = result.PatchCat.SrcStat;
@@ -264,6 +266,7 @@ public sealed partial class MainVm : VmBase
 
             HwStatus = FmtHw();
             HwTip = FmtHwTip();
+            R3VerTip = UiText.Rpcs3BuildTip(_buildIdentity);
             Log(UiText.Fmt("Msg.HwScanned", _hwInfo.Tier));
 
             var gameItems = result.Games
@@ -280,6 +283,7 @@ public sealed partial class MainVm : VmBase
 
             GameList.Load(gameItems);
             GameList.SelGame ??= GameList.Games.FirstOrDefault();
+            RefreshRuntimeContext();
 
             LoadSrc();
 
@@ -320,9 +324,7 @@ public sealed partial class MainVm : VmBase
             await Task.Yield();
             if (IsCurrentAnalysis(operation, exePath))
             {
-                UiDlg.Error(
-                    ex.Message,
-                    UiText.GetText("Dialog.FailAnalyze"));
+                failureMessage = ex.Message;
             }
         }
         finally
@@ -333,6 +335,15 @@ public sealed partial class MainVm : VmBase
                 LoadR3Ui();
                 RaiseCmd();
             }
+        }
+
+        // The modal error is shown only after the busy overlay is released, so
+        // the dialog never sits on top of a disabled, blurred shell.
+        if (failureMessage is not null)
+        {
+            UiDlg.Error(
+                failureMessage,
+                UiText.GetText("Dialog.FailAnalyze"));
         }
     }
 

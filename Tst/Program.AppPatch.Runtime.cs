@@ -157,4 +157,38 @@ internal static partial class Program
         Assert(bundledCheatRead.Catalog.Entries.All(entry => entry.Risk == PatRisk.Cheat),
             "Expected every bundled expansion entry to be handled as a user-selected cheat.");
     }
+
+    // God of War: Ascension Unlock FPS: the Canary option stays actionable,
+    // the exact Artemis equivalent stays visible but enable-blocked, and a
+    // legacy enabled Artemis copy can still be disabled.
+    static void AppPat_CrossChannelUnlockFps(
+        R3Config.Mdl.PatCat crossChannelMerge,
+        Rpcs3GameDescriptor gowAscensionDiscoveredGame)
+    {
+        var crossChannelPreview = new PatPrev();
+        var crossChannelMatches = new PatchMatchService().Match(
+            crossChannelMerge,
+            gowAscensionDiscoveredGame);
+        crossChannelPreview.Load(crossChannelMatches, title: null);
+        var canaryUnlockFps = crossChannelPreview.CanItems.Single(item =>
+            item.Title == "Unlock FPS");
+        var artemisUnlockFps = crossChannelPreview.ChtItems.Single(item =>
+            item.Title == "Unlock FPS");
+        var enabledArtemisUnlockFps = new PatItVm(
+            artemisUnlockFps.Match,
+            isEnabled: true);
+        Assert(
+            canaryUnlockFps.Match.Patch.Source == PatSrc.Can &&
+            canaryUnlockFps.CanOn &&
+            artemisUnlockFps.Match.Patch.Source == PatSrc.Artemis &&
+            artemisUnlockFps.Decision.Code == PatchCompatibilityReasonCode.CanaryEquivalent &&
+            !artemisUnlockFps.CanOn &&
+            !artemisUnlockFps.CanSel &&
+            artemisUnlockFps.CompatibilityTip ==
+                UiText.GetText("Patch.Direct.CanaryEquivalent") &&
+            enabledArtemisUnlockFps.CanOff &&
+            enabledArtemisUnlockFps.CanSel &&
+            !enabledArtemisUnlockFps.CanOn,
+            "Expected God of War Ascension Unlock FPS to remain actionable through Canary, keep the exact Artemis equivalent visible but blocked from enable, and preserve legacy Artemis disable recovery.");
+    }
 }

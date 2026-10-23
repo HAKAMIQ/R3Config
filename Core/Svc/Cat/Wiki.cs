@@ -11,6 +11,12 @@ namespace R3Config.Svc;
 
 public sealed partial class WikiSvc
 {
+    public const string CanonicalSnapshotFileName =
+        "RPCS3+Wiki-20260920160231.xml";
+    public const string CanonicalSnapshotDate = "2026-09-20";
+    public const string CanonicalSnapshotSha256 =
+        "7977CA26176E12DD167241CDE77D68E6CC64CE24CB39C2682FD5E686CA7936C5";
+
     private static readonly Regex Comment = new(
         @"<!--.*?-->",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
@@ -72,16 +78,29 @@ public sealed partial class WikiSvc
             "force cpu blit emulation",
             "force gpu texture scaling",
             "disable zcull occlusion queries",
+            "allow host gpu labels",
+            "force hardware msaa resolve",
+            "emulate special depth comparison",
+            "disable asynchronous memory manager",
             "dump to file",
             "convert to 16-bit",
             "enable buffering",
             "enable time stretching"
         };
 
+    private static readonly HashSet<string> NullHandlerKeys =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "renderer",
+            "audio out windows",
+            "microphone type"
+        };
+
     private static readonly Dictionary<string, (string Section, string Key)> CfgMap =
         new Dictionary<string, (string Section, string Key)>(StringComparer.OrdinalIgnoreCase)
         {
             ["ppu decoder"] = ("Core", "PPU Decoder"),
+            ["ppu thread count"] = ("Core", "PPU Threads"),
             ["spu decoder"] = ("Core", "SPU Decoder"),
             ["preferred spu threads"] = ("Core", "Preferred SPU Threads"),
             ["thread scheduler"] = ("Core", "Thread Scheduler Mode"),
@@ -99,7 +118,7 @@ public sealed partial class WikiSvc
             ["clocks scale"] = ("Core", "Clocks scale"),
             ["accurate llvm dfma"] = ("Core", "Use Accurate DFMA"),
             ["accurate dfma"] = ("Core", "Use Accurate DFMA"),
-            ["ppu llvm java mode handling"] = ("Core", "PPU LLVM Java Mode Handling"),
+            ["ppu llvm java mode handling"] = ("Core", "PPU Accurate Non-Java Mode"),
             ["ppu llvm accurate vector nans"] = ("Core", "PPU Accurate Vector NaN Values"),
             ["debug console mode"] = ("Core", "Debug Console Mode"),
             ["hook static functions"] = ("Core", "Hook static functions"),
@@ -135,6 +154,11 @@ public sealed partial class WikiSvc
             ["force gpu texture scaling"] = ("Video", "Use GPU texture scaling"),
             ["disable zcull occlusion queries"] = ("Video", "Disable ZCull Occlusion Queries"),
             ["lod bias offset"] = ("Video", "Texture LOD Bias Addend"),
+            ["output scaling"] = ("Video", "Output Scaling Mode"),
+            ["allow host gpu labels"] = ("Video", "Allow Host GPU Labels"),
+            ["force hardware msaa resolve"] = ("Video", "Force Hardware MSAA Resolve"),
+            ["emulate special depth comparison"] = ("Video", "Emulate Special Depth Comparison"),
+            ["disable asynchronous memory manager"] = ("Video", "Disable Asynchronous Memory Manager"),
 
             ["audio out windows"] = ("Audio", "Renderer"),
             ["audio format"] = ("Audio", "Audio Format"),
@@ -154,7 +178,12 @@ public sealed partial class WikiSvc
             ["move handler"] = ("Input/Output", "Move"),
 
             ["network status"] = ("Net", "Internet enabled"),
-            ["psn status"] = ("Net", "PSN status")
+            ["psn status"] = ("Net", "PSN status"),
+
+            // RPCS3 stores the LLE library selection as the sequence
+            // "Core: Libraries Control" of "<name>.sprx:lle" entries; the
+            // Wiki itself writes the entries in that form ("libvdec.sprx:lle").
+            ["firmware libraries"] = ("Core", "Libraries Control")
         };
 
     private readonly IReadOnlyDictionary<string, WikiRec> _Rec;
@@ -239,7 +268,8 @@ public sealed partial class WikiSvc
         {
             return value.Equals("Fast", StringComparison.OrdinalIgnoreCase) ||
                    value.Equals("Atomic", StringComparison.OrdinalIgnoreCase) ||
-                   value.Equals("Ordered & Atomic", StringComparison.OrdinalIgnoreCase)
+                   value.Equals("Ordered & Atomic", StringComparison.OrdinalIgnoreCase) ||
+                   value.Equals("PS3", StringComparison.OrdinalIgnoreCase)
                 ? value
                 : null;
         }
@@ -303,6 +333,12 @@ public sealed partial class WikiSvc
             return TryParse(value, 0, 6, out var preferredThreads)
                 ? preferredThreads.ToString(CultureInfo.InvariantCulture)
                 : null;
+        }
+
+        if (NullHandlerKeys.Contains(wikiKey) &&
+            value.Equals("Disabled", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Null";
         }
 
         if (Keys.Contains(wikiKey))

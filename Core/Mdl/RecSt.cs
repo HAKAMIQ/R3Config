@@ -19,7 +19,11 @@ public sealed record RecItem(
     bool IsDiff,
     bool IsAction,
     bool IsSel,
-    string Notes);
+    string Notes,
+    WikiRecommendationClass Class =
+        WikiRecommendationClass.GeneralRecommendation,
+    WikiGameIdRole Binding = WikiGameIdRole.Primary,
+    SettingDecision? Decision = null);
 
 public sealed record RecSum(
     string Serial,

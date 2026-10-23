@@ -26,6 +26,7 @@ public partial class MainWin : Window
         _vm.LangChg += (_, _) => BuildPat();
         Activated += (_, _) =>
             _vm.LoadR3Ui();
+        Loaded += (_, _) => _vm.StartRecSync();
         StateChanged += (_, _) => SetCap();
         SetCap();
     }
@@ -34,7 +35,14 @@ public partial class MainWin : Window
 
     private void ToggleTheme(object sender, RoutedEventArgs e)
     {
+        // Checked/Unchecked rather than Click, so a UI Automation Toggle
+        // (Narrator, Voice Access) switches the theme as well as the switch.
         var isDark = ThemeToggle.IsChecked == true;
+        if (isDark == IsDarkTheme())
+        {
+            return;
+        }
+
         WinTheme.ApplyResources(isDark);
         WinTheme.Apply(this);
     }
@@ -68,9 +76,9 @@ public partial class MainWin : Window
         SetCap();
     }
 
-    private static Ctrl.PatView MakePat(Ctrl.PatMode mode)
+    private static Ctrl.PatchView MakePat(Ctrl.PatMode mode)
     {
-        return new Ctrl.PatView
+        return new Ctrl.PatchView
         {
             Mode = mode,
             HorizontalAlignment = HorizontalAlignment.Stretch,

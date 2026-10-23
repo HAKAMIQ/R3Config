@@ -13,13 +13,15 @@ public sealed class ConfigUseCase(
         Rpcs3InstallDescriptor install,
         Rpcs3GameDescriptor game,
         WikiRec? recommendation,
-        HwInfo? hardware)
+        HwInfo? hardware,
+        Rpcs3RuntimeBuild? build = null)
     {
         return planService.BuildCfg(
             install,
             game,
             recommendation,
-            hardware);
+            hardware,
+            build);
     }
 
     public CfgRes Apply(
@@ -27,19 +29,9 @@ public sealed class ConfigUseCase(
         IReadOnlyList<CfgChg> changes,
         Rpcs3InstallDescriptor install)
     {
-        Check(plan, install);
-        var backupRoot = Rpcs3AppPaths.BkpRoot(install);
-        var validator = VldFunc(install);
-        validator(
-            PatPhase.Stg,
-            backupRoot,
-            [plan.CfgPath]);
+        ArgumentNullException.ThrowIfNull(plan);
 
-        return applyService.Apply(
-            plan,
-            changes,
-            backupRoot,
-            validator);
+        return ApplyGuarded(plan, changes, install);
     }
 
     public CfgRes Remove(
@@ -62,6 +54,26 @@ public sealed class ConfigUseCase(
             validator);
     }
 
+    private CfgRes ApplyGuarded(
+        CfgPlan plan,
+        IReadOnlyList<CfgChg> changes,
+        Rpcs3InstallDescriptor install)
+    {
+        Check(plan, install);
+        var backupRoot = Rpcs3AppPaths.BkpRoot(install);
+        var validator = VldFunc(install);
+        validator(
+            PatPhase.Stg,
+            backupRoot,
+            [plan.CfgPath]);
+
+        return applyService.Apply(
+            plan,
+            changes,
+            backupRoot,
+            validator);
+    }
+
     private static void Check(
         CfgPlan plan,
         Rpcs3InstallDescriptor install)
@@ -77,6 +89,22 @@ public sealed class ConfigUseCase(
             throw new Rpcs3MutationBlockedException(
                 MutBlock.Tgt,
                 "The config plan target does not match its RPCS3 installation and game serial.");
+        }
+
+        // The plan resolves inherited values against this installation's global
+        // config, and Apply re-resolves them the same way, so the baseline is
+        // part of the plan's target ownership rather than an incidental path.
+        var expectedGlobal = Path.Combine(
+            install.CfgPath,
+            "config.yml");
+
+        if (!Path.GetFullPath(plan.GlobalCfgPath).Equals(
+                Path.GetFullPath(expectedGlobal),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new Rpcs3MutationBlockedException(
+                MutBlock.Tgt,
+                "The config plan global baseline does not match its RPCS3 installation.");
         }
     }
 

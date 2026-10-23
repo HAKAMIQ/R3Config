@@ -22,8 +22,10 @@ public static class WinTheme
         "Surface.CardPressed",
         "Surface.Subtle",
         "Surface.Overlay",
+        "Surface.Input",
         "Text.Primary",
         "Text.Secondary",
+        "Text.Tertiary",
         "Text.Disabled",
         "Text.OnAccent",
         "Stroke.Default",
@@ -97,6 +99,31 @@ public static class WinTheme
         }
 
         app.Resources["Fluent.Theme.Mode"] = isDark ? "Dark" : "Light";
+        ApplyLibraryTheme(app, isDark);
+    }
+
+    // WPF UI's theme dictionary follows the one R3Config theme state. The
+    // dictionary is replaced in place (as WPF UI does) so DynamicResource
+    // consumers update live; WPF UI's window/backdrop manager is not used,
+    // so R3Config keeps ownership of its window chrome.
+    private static void ApplyLibraryTheme(
+        System.Windows.Application app,
+        bool isDark)
+    {
+        var dictionaries = app.Resources.MergedDictionaries;
+        for (var index = 0; index < dictionaries.Count; index++)
+        {
+            if (dictionaries[index] is Wpf.Ui.Markup.ThemesDictionary)
+            {
+                dictionaries[index] = new Wpf.Ui.Markup.ThemesDictionary
+                {
+                    Theme = isDark
+                        ? Wpf.Ui.Appearance.ApplicationTheme.Dark
+                        : Wpf.Ui.Appearance.ApplicationTheme.Light
+                };
+                return;
+            }
+        }
     }
 
     public static void Apply(Window? window)

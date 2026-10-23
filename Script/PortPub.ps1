@@ -1,7 +1,7 @@
 param(
     [string]$Configuration = 'Release',
     [string]$Runtime = 'win-x64',
-    [string]$Version = '0.1.0-preview',
+    [string]$Version = '0.1.0',
     [string]$Rpcs3Path,
     [string]$SigningCertificateThumbprint = $env:R3CONFIG_SIGNING_CERT_THUMBPRINT,
     [string]$TimestampServer = 'http://timestamp.digicert.com',
@@ -9,6 +9,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repoRoot = (Resolve-Path (Join-Path $scriptRoot '..')).Path
+$toolchain = Join-Path $scriptRoot 'R3Toolchain.ps1'
+. $toolchain
+
+Assert-R3DotNetSdk -RepositoryRoot $repoRoot | Out-Null
 
 if ([string]::IsNullOrWhiteSpace($Rpcs3Path)) {
     throw 'Final portable publishing requires -Rpcs3Path so the read-only real-install contract is executed.'
@@ -37,15 +43,6 @@ else {
 
 if (-not (Test-Path -LiteralPath $resolvedRpcs3Path -PathType Leaf)) {
     throw "RPCS3 executable was not found: $resolvedRpcs3Path"
-}
-
-function Invoke-DotNet {
-    param([Parameter(Mandatory = $true)][string[]]$Arguments)
-    Write-Host "dotnet $($Arguments -join ' ')"
-    & dotnet @Arguments
-    if ($LASTEXITCODE -ne 0) {
-        throw "dotnet failed with exit code ${LASTEXITCODE}: dotnet $($Arguments -join ' ')"
-    }
 }
 
 function Get-NormalizedThumbprint {
@@ -185,8 +182,6 @@ function Assert-ChildPath {
     }
 }
 
-$scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot = (Resolve-Path (Join-Path $scriptRoot '..')).Path
 $artifactsDir = Join-Path $repoRoot 'artifacts'
 $publishDir = Join-Path $artifactsDir "publish\R3Config-$Version-$Runtime"
 $zipPath = Join-Path $artifactsDir "R3Config-$Version-$Runtime-portable.zip"
@@ -228,18 +223,16 @@ New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 
 Push-Location $repoRoot
 try {
-    Invoke-DotNet -Arguments @('restore', '.\R3Cfg.slnx')
-    Invoke-DotNet -Arguments @('restore', '.\App\R3App.csproj', '-r', $Runtime)
-    Invoke-DotNet -Arguments @('build', '.\R3Cfg.slnx', '-c', $Configuration, '--no-restore', '--nologo')
+    Invoke-R3PowerShellFile `
+        -ScriptPath (Join-Path $scriptRoot 'RelTest.ps1') `
+        -Arguments @(
+            '-Configuration', $Configuration,
+            '-Rpcs3Path', $resolvedRpcs3Path
+        )
 
-    $testArguments = @(
-        'run', '--project', '.\Tst\R3Test.csproj',
-        '-c', $Configuration, '--no-build', '--',
-        $resolvedRpcs3Path
-    )
-    Invoke-DotNet -Arguments $testArguments
+    Invoke-R3DotNet -RepositoryRoot $repoRoot -Arguments @('restore', '.\App\R3App.csproj', '-r', $Runtime)
 
-    Invoke-DotNet -Arguments @(
+    Invoke-R3DotNet -RepositoryRoot $repoRoot -Arguments @(
         'publish', '.\App\R3App.csproj',
         '-c', $Configuration,
         '-r', $Runtime,
@@ -249,6 +242,7 @@ try {
         '-p:IncludeNativeLibrariesForSelfExtract=true',
         '-p:PublishReadyToRun=false',
         '-p:DebugType=embedded',
+        '-p:ContinuousIntegrationBuild=true',
         '-o', $publishDir
     )
 
@@ -296,7 +290,7 @@ try {
         }
     }
     else {
-        Write-Host 'Signing skipped: unsigned Preview package.'
+        Write-Host 'Signing skipped: unsigned package (AUTHENTICODE NOT PROVISIONED).'
     }
 
     $manifestPath = Join-Path $publishDir 'SHA256SUMS.txt'
@@ -320,20 +314,15 @@ try {
             -SignaturePath $manifestSignaturePath `
             -Certificate $certificate
 
-        & (Join-Path $scriptRoot 'PortChk.ps1') `
-            -Path $publishDir `
-            -Version $Version `
-            -ExpectedSignerThumbprint $normalizedSigningThumbprint
+        Invoke-R3PowerShellFile `
+            -ScriptPath (Join-Path $scriptRoot 'PortChk.ps1') `
+            -Arguments @('-Path', $publishDir, '-Version', $Version, '-ExpectedSignerThumbprint', $normalizedSigningThumbprint)
     }
     else {
-        & (Join-Path $scriptRoot 'PortChk.ps1') `
-            -Path $publishDir `
-            -Version $Version
+        Invoke-R3PowerShellFile `
+            -ScriptPath (Join-Path $scriptRoot 'PortChk.ps1') `
+            -Arguments @('-Path', $publishDir, '-Version', $Version)
     }
-    if ($LASTEXITCODE -ne 0) {
-        throw "Portable release verification failed with exit code $LASTEXITCODE."
-    }
-
     Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $zipPath -Force
     $zipHash = Get-Sha256Hex -LiteralPath $zipPath
     Set-Content -LiteralPath $zipHashPath -Value "$zipHash  $([IO.Path]::GetFileName($zipPath))" -Encoding ascii

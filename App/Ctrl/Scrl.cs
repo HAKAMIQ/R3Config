@@ -4,13 +4,15 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 
 namespace R3Config.Ctrl;
 
 public static class Scrl
 {
-    private const double WheelStep = 56.0;
+    private const double PixelWheelStep = 56.0;
+    private const double LogicalWheelStep = 3.0;
     private const double Ease = 0.22;
     private const double StopThreshold = 0.5;
 
@@ -55,18 +57,21 @@ public static class Scrl
             return;
         }
 
-        if (States.TryGetValue(element, out var state))
+        if (!States.TryGetValue(element, out var state))
         {
-            state.Reset();
-            States.Remove(element);
+            return;
         }
+
+        state.Reset();
+        States.Remove(element);
     }
 
     private static void OnPreviewMouseWheel(
         object sender,
         MouseWheelEventArgs e)
     {
-        if (sender is not FrameworkElement element)
+        if (sender is not FrameworkElement element ||
+            e.Delta == 0)
         {
             return;
         }
@@ -75,36 +80,38 @@ public static class Scrl
             element,
             static owner => new ScrollState(owner.Dispatcher));
 
-        state.Viewer ??= FindScrollViewer(element);
+        var viewer = ResolveScrollViewer(
+            element,
+            e.OriginalSource as DependencyObject);
 
-        if (state.Viewer is null)
-        {
-            if (element is Control control)
-            {
-                control.ApplyTemplate();
-            }
-
-            state.Viewer = FindScrollViewer(element);
-        }
-
-        if (state.Viewer is null)
+        if (viewer is null)
         {
             return;
         }
 
+        if (!ReferenceEquals(state.Viewer, viewer))
+        {
+            state.Attach(viewer);
+        }
+
         if (!state.Timer.IsEnabled)
         {
-            state.TargetOffset = state.Viewer.VerticalOffset;
+            state.TargetOffset = viewer.VerticalOffset;
         }
 
         var wheelSteps = e.Delta / 120.0;
+
+        var wheelStep = viewer.CanContentScroll
+            ? LogicalWheelStep
+            : PixelWheelStep;
+
         var requestedOffset =
             state.TargetOffset -
-            (wheelSteps * WheelStep);
+            (wheelSteps * wheelStep);
 
         var maximumOffset = Math.Max(
             0.0,
-            state.Viewer.ScrollableHeight);
+            viewer.ScrollableHeight);
 
         var nextOffset = Math.Clamp(
             requestedOffset,
@@ -137,6 +144,53 @@ public static class Scrl
         }
 
         state.Reset();
+        States.Remove(element);
+    }
+
+    private static ScrollViewer? ResolveScrollViewer(
+        FrameworkElement owner,
+        DependencyObject? source)
+    {
+        var current = source;
+
+        while (current is not null)
+        {
+            if (current is ScrollViewer viewer)
+            {
+                return viewer;
+            }
+
+            if (ReferenceEquals(current, owner))
+            {
+                break;
+            }
+
+            current = GetParent(current);
+        }
+
+        if (owner is Control control)
+        {
+            control.ApplyTemplate();
+        }
+
+        return FindScrollViewer(owner);
+    }
+
+    private static DependencyObject? GetParent(
+        DependencyObject element)
+    {
+        if (element is Visual ||
+            element is Visual3D)
+        {
+            return VisualTreeHelper.GetParent(element);
+        }
+
+        if (element is FrameworkContentElement contentElement)
+        {
+            return contentElement.Parent;
+        }
+
+        return LogicalTreeHelper.GetParent(element);
     }
 
     private static ScrollViewer? FindScrollViewer(
@@ -151,7 +205,10 @@ public static class Scrl
 
         for (var index = 0; index < childCount; index++)
         {
-            var child = VisualTreeHelper.GetChild(parent, index);
+            var child = VisualTreeHelper.GetChild(
+                parent,
+                index);
+
             var nestedViewer = FindScrollViewer(child);
 
             if (nestedViewer is not null)
@@ -178,9 +235,16 @@ public static class Scrl
 
         public DispatcherTimer Timer { get; }
 
-        public ScrollViewer? Viewer { get; set; }
+        public ScrollViewer? Viewer { get; private set; }
 
         public double TargetOffset { get; set; }
+
+        public void Attach(ScrollViewer viewer)
+        {
+            Timer.Stop();
+            Viewer = viewer;
+            TargetOffset = viewer.VerticalOffset;
+        }
 
         public void Reset()
         {
@@ -209,7 +273,8 @@ public static class Scrl
                 maximumOffset);
 
             var currentOffset = Viewer.VerticalOffset;
-            var remainingDistance = TargetOffset - currentOffset;
+            var remainingDistance =
+                TargetOffset - currentOffset;
 
             if (Math.Abs(remainingDistance) <= StopThreshold)
             {
@@ -218,9 +283,15 @@ public static class Scrl
                 return;
             }
 
-            Viewer.ScrollToVerticalOffset(
+            var nextOffset =
                 currentOffset +
-                (remainingDistance * Ease));
+                (remainingDistance * Ease);
+
+            Viewer.ScrollToVerticalOffset(
+                Math.Clamp(
+                    nextOffset,
+                    0.0,
+                    maximumOffset));
         }
     }
 }

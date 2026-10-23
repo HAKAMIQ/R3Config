@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "version": "20261020120000",
+  "repository": "HAKAMIQ/rpcs3",
+  "generatedAt": "2026-10-20T12:00:00+00:00",
+  "files": [
+    {
+      "path": "recommendations.json",
+      "sizeBytes": 556,
+      "sha256": "C8F61661A6E5F48EC3DF2B3B13CB3C9E2FB5632D81468317DD65DFFC39F227A9"
+    },
+    {
+      "path": "notes-ar.json",
+      "sizeBytes": 244,
+      "sha256": "37282CC604B3C132C22E84DB6879B1BEA3D4CD8EA3EC672D68EC2230F3E4887D"
+    }
+  ]
+}

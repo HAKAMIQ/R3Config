@@ -212,10 +212,31 @@ public sealed partial class RecSvc
                 "\n",
                 StringComparison.Ordinal);
 
-        File.WriteAllText(
-            catalogPath,
-            json,
-            Utf8Bom);
+        // Write beside the target, then move over it: a move replaces the
+        // directory entry, so a hardlinked target name never writes through
+        // to the linked file, and a failed write leaves the target intact.
+        var fullPath = Path.GetFullPath(catalogPath);
+        var stagePath = Path.Combine(
+            Path.GetDirectoryName(fullPath) ?? string.Empty,
+            $".{Path.GetFileName(fullPath)}.{Guid.NewGuid():N}.tmp");
+        try
+        {
+            File.WriteAllText(
+                stagePath,
+                json,
+                Utf8Bom);
+            File.Move(
+                stagePath,
+                fullPath,
+                overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(stagePath))
+            {
+                File.Delete(stagePath);
+            }
+        }
     }
 
     private static Dictionary<string, WikiRec> BuildMap(

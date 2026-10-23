@@ -1,3 +1,4 @@
+using System.IO;
 using R3Config.Application;
 using R3Config.Svc;
 
@@ -14,7 +15,8 @@ public static class AppComposition
     }
 
     public static AppUseCases Build(
-        IRpcs3MutationGuard? mutationGuard = null)
+        IRpcs3MutationGuard? mutationGuard = null,
+        string? recommendationSyncFolder = null)
     {
         var backup = new BackupService();
         mutationGuard ??= new Rpcs3MutationGuard();
@@ -69,6 +71,18 @@ public static class AppComposition
             backup,
             mutationGuard);
 
+        var bundledCheats = new BundledCheatPatchService();
+
+        var patchMutation = new PatchMutationUseCase(
+            new PatPlnr(),
+            new PatchApplyService(
+                backup,
+                new CfgWrite(patchConfigReader),
+                transaction: patchTransaction),
+            new BundledCanaryPatchService(),
+            bundledCheats,
+            mutationGuard);
+
         return new AppUseCases(
             new AnalysisUseCase(
                 gameScanner,
@@ -77,7 +91,8 @@ public static class AppComposition
                 patchHashProbe,
                 bindingEvidence,
                 patchCatalog,
-                backupUseCase),
+                backupUseCase,
+                new Rpcs3BuildIdentityProbe()),
             new Rpcs3GameLibraryUseCase(
                 gameScanner),
             new ConfigUseCase(
@@ -85,15 +100,7 @@ public static class AppComposition
                 new ConfigApplyService(backup),
                 mutationGuard),
             patchCatalog,
-            new PatchMutationUseCase(
-                new PatPlnr(),
-                new PatchApplyService(
-                    backup,
-                    new CfgWrite(patchConfigReader),
-                    transaction: patchTransaction),
-                new BundledCanaryPatchService(),
-                new BundledCheatPatchService(),
-                mutationGuard),
+            patchMutation,
             new CanaryImportUseCase(
                 canaryImport,
                 mutationGuard,
@@ -122,7 +129,37 @@ public static class AppComposition
                 new BundledCheatPatchService(),
                 patchReader,
                 patchTransaction,
-                mutationGuard));
+                mutationGuard),
+            NclManagedPatch: new NclManagedPatchUseCase(
+                bundledCheats,
+                patchMutation,
+                Path.Combine(
+                    AppContext.BaseDirectory,
+                    "Data",
+                    NclManagedPatchUseCase.BundledCorpusName)),
+            WikiEvidence: new WikiEvidenceUseCase(),
+            RuntimeContext: new RuntimeContextUseCase(),
+            LogDiagnostics: new LogDiagnosticsUseCase(),
+            RecommendationSync: BuildRecommendationSync(
+                recommendationSyncFolder ?? RecommendationSyncUseCase.DefaultFolder));
+    }
+
+    // One HTTP client and one store for the application lifetime; the sync
+    // service serializes runs, so the startup check, the daily check and the
+    // manual check never overlap.
+    private static RecommendationSyncUseCase BuildRecommendationSync(
+        string folder)
+    {
+        var version = typeof(AppComposition).Assembly.GetName().Version?.ToString(3) ?? "0";
+        var http = new RecSyncHttp(
+            RecSyncHttp.CreateHandler(),
+            version);
+
+        return new RecommendationSyncUseCase(
+            new RecSyncService(
+                new RecSyncStore(folder),
+                http,
+                new WikiRevisionSource(http)));
     }
 }
 

@@ -14,13 +14,20 @@ public sealed class PlanItVm : VmBase
 {
     private bool _isSel;
 
-    public PlanItVm(CfgEntry entry, bool isSelected)
+    public PlanItVm(CfgEntry entry, bool isSelected, GameSettingRow? row = null)
     {
         Entry = entry;
+        Row = row ?? GameSettingsProjector.Row(entry);
         _isSel = isSelected && entry.IsAction;
     }
 
     public CfgEntry Entry { get; }
+
+    public GameSettingRow Row { get; }
+
+    public Rpcs3SettingsSection SectionKind => Row.Section;
+
+    public SettingRole Role => Row.Role;
 
     public CfgChg Change => Entry.Change;
 

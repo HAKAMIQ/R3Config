@@ -1,0 +1,22 @@
+{
+  "batchcomplete": true,
+  "query": {
+    "embeddedin": [
+      {
+        "pageid": 829,
+        "ns": 0,
+        "title": "Grand Theft Auto IV"
+      },
+      {
+        "pageid": 4,
+        "ns": 0,
+        "title": "Demon's Souls"
+      },
+      {
+        "pageid": 99901,
+        "ns": 0,
+        "title": "Fixture New Game"
+      }
+    ]
+  }
+}

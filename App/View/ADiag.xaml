@@ -156,16 +156,15 @@
                            Text="{lang:TextExt Key=Adv.SessionLog}"
                            Style="{StaticResource AdvLocalizedRowTitleText}" />
 
-                <TextBox Grid.Row="2"
+                <TextBox AutomationProperties.Name="{lang:TextExt Key=Adv.SessionLog}" Grid.Row="2"
                          Text="{Binding Advanced.LogText, Mode=OneWay}"
-                         Style="{StaticResource TechnicalTextBox}"
+                         Style="{StaticResource LocalizedTextBox}"
                          IsReadOnly="True"
                          AcceptsReturn="True"
                          VerticalContentAlignment="Top"
                          TextWrapping="NoWrap"
                          HorizontalScrollBarVisibility="Auto"
                          VerticalScrollBarVisibility="Auto"
-                         FontFamily="{DynamicResource Type.Font.Technical}"
                          FontSize="12" />
 
                 <Grid Grid.Row="4"

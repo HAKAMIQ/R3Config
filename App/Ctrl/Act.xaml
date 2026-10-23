@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:lang="clr-namespace:R3Config.Lang"
              x:Class="R3Config.Ctrl.ActBar"
+             AutomationProperties.AutomationId="ActionBar.Root"
              FlowDirection="{DynamicResource App.FlowDirection}"
              Language="{DynamicResource App.XmlLanguage}"
              UseLayoutRounding="True"
@@ -23,10 +24,14 @@
                     Value="{DynamicResource TechnicalText.TextAlignment}" />
             <Setter Property="Language"
                     Value="{DynamicResource TechnicalText.Language}" />
+            <Setter Property="NumberSubstitution.Substitution"
+                    Value="European" />
             <Setter Property="VerticalAlignment"
                     Value="Center" />
             <Setter Property="VerticalContentAlignment"
                     Value="Center" />
+            <Setter Property="SpellCheck.IsEnabled"
+                    Value="False" />
         </Style>
 
         <Style x:Key="ActBarSecondaryActionButton"
@@ -80,7 +85,8 @@
         <Grid MinHeight="{StaticResource Control.Height.Standard}"
               FlowDirection="LeftToRight"
               Language="{DynamicResource App.XmlLanguage}"
-              VerticalAlignment="Center">
+              VerticalAlignment="Center"
+              HorizontalAlignment="Stretch">
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -98,18 +104,26 @@
                        FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
                        TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
                        Language="{DynamicResource TechnicalText.Language}"
+                       NumberSubstitution.Substitution="European"
                        VerticalAlignment="Center" />
 
             <TextBox Grid.Column="2"
                      AutomationProperties.AutomationId="App.Rpcs3Path"
+                     AutomationProperties.Name="RPCS3"
+                     AutomationProperties.HelpText="{lang:TextExt Key=Top.Rpcs3Tip}"
                      Style="{StaticResource ActBarTechnicalTextBox}"
-                     Text="{Binding ExePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     Text="{Binding ExePath,
+                                    Mode=TwoWay,
+                                    UpdateSourceTrigger=PropertyChanged}"
                      IsReadOnly="False"
                      MinWidth="180"
+                     HorizontalAlignment="Stretch"
                      ToolTip="{lang:TextExt Key=Top.Rpcs3Tip}" />
 
             <Button Grid.Column="4"
                     AutomationProperties.AutomationId="App.Rpcs3BrowseButton"
+                    AutomationProperties.Name="{lang:TextExt Key=Btn.Browse}"
+                    AutomationProperties.HelpText="{lang:TextExt Key=Btn.BrowseTip}"
                     Style="{StaticResource ActBarSecondaryActionButton}"
                     Content="{lang:TextExt Key=Btn.Browse}"
                     ToolTip="{lang:TextExt Key=Btn.BrowseTip}"
@@ -117,6 +131,8 @@
 
             <Button Grid.Column="6"
                     AutomationProperties.AutomationId="App.AnalyzeButton"
+                    AutomationProperties.Name="{lang:TextExt Key=Btn.Analyze}"
+                    AutomationProperties.HelpText="{lang:TextExt Key=Btn.AnalyzeTip}"
                     Style="{StaticResource ActBarPrimaryActionButton}"
                     Content="{lang:TextExt Key=Btn.Analyze}"
                     ToolTip="{lang:TextExt Key=Btn.AnalyzeTip}"

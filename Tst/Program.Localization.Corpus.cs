@@ -147,10 +147,20 @@ internal static partial class Program
             .Select(note => note.Raw.Trim())
             .Distinct(StringComparer.Ordinal)
             .ToArray();
-        Assert(totalNoteSlots == 9049 &&
-               notes.Count == 7703 &&
+        // The canonical catalog promoted to RPCS3+Wiki-20260920160231.xml
+        // (SHA-256 7977CA26...36C5, docs/Arch/RelTest.md). --wiki-verify
+        // proves these bytes regenerate from that snapshot with 0 differences
+        // (8542 serials, 7794 settings). The earlier 711A3C13... baseline was
+        // the superseded 2026-09-07 catalog. The promotion added 5 Wiki Notes
+        // that now carry reviewed Arabic translations in PNote.Wiki.Ar.cs.
+        Assert(Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(catPath))) ==
+               "48C8E569A50FD68B8C77ACB3F0542977022E808CFAE09E8EA4B02B4CB94799DD",
+            "Localization accounting requires the reviewed September catalog bytes; re-audit source deltas before changing this baseline.");
+
+        Assert(totalNoteSlots == 9393 &&
+               notes.Count == 8047 &&
                emptySourceNotes == 1346 &&
-               uniqueNotes.Length == 863,
+               uniqueNotes.Length == 925,
             $"Unexpected Note accounting. Total={totalNoteSlots}, NonEmpty={notes.Count}, Empty={emptySourceNotes}, Unique={uniqueNotes.Length}.");
 
         PatchText_WithLang(
@@ -319,11 +329,13 @@ internal static partial class Program
                 Assert(actualTranslations == notes.Count &&
                        fallback == 0 &&
                        omitted == 0 &&
-                       exactUnique.Count == 862 &&
+                       exactUnique.Count == 924 &&
                        structuredUnique.Count == 1 &&
-                       NoteSvc.ReviewedWikiArabicTranslationCount == 612 &&
+                       NoteSvc.ReviewedWikiArabicTranslationCount == 705 &&
                        NoteSvc.ReviewedOfficialPatchArabicTranslationCount == 367,
-                    $"Arabic corpus coverage is incomplete. Translated={actualTranslations}, Fallback={fallback}, Omitted={omitted}, NonEmpty={notes.Count}.");
+                    $"Arabic corpus coverage is incomplete. Translated={actualTranslations}, Fallback={fallback}, Omitted={omitted}, NonEmpty={notes.Count}, " +
+                    $"ExactUnique={exactUnique.Count}, StructuredUnique={structuredUnique.Count}, " +
+                    $"WikiDictionary={NoteSvc.ReviewedWikiArabicTranslationCount}, OfficialDictionary={NoteSvc.ReviewedOfficialPatchArabicTranslationCount}.");
 
                 var emptyResult = NoteSvc.Trans(null);
                 var emptyPresentation = PatText.PatMsg("   ");
@@ -365,7 +377,7 @@ internal static partial class Program
                     $"ForbiddenTranslationMessageOccurrences=0, ActionableOrWarning={instructionCount}.");
 
                 var patchTemplate = File.ReadAllText(
-                    Path.Combine(repoRoot, "App", "Ctrl", "PTmp.xaml"));
+                    Path.Combine(repoRoot, "App", "Ctrl", "PatchTemplates.xaml"));
                 Assert(patchTemplate.Split(
                            "FlowDirection=\"{Binding TitleFlow}\"",
                            StringSplitOptions.None).Length - 1 == 2,
@@ -405,6 +417,7 @@ internal static partial class Program
 
         var exact = 0;
         var structured = 0;
+        var upstreamFallback = 0;
         var protectedOfficialSettings = new (string Source, string Display)[]
         {
             ("Stretch To Display Area", "Stretch To Display Area"),
@@ -423,6 +436,20 @@ internal static partial class Program
                 foreach (var note in uniqueOfficialNotes)
                 {
                     var result = NoteSvc.Trans(note);
+                    // Owner decision 2026-09-25: an upstream Official note without
+                    // reviewed Arabic is shown verbatim with Official provenance.
+                    // It carries no invented body and keeps its exact upstream text.
+                    if (result.Quality == NoteQual.Fallback &&
+                        !NoteSvc.IsInternalDiagnostic(note))
+                    {
+                        Assert(string.IsNullOrEmpty(result.Body) &&
+                               result.HasOrig &&
+                               string.Equals(result.OrigBody, note, StringComparison.Ordinal),
+                            "An upstream Official note without reviewed Arabic must keep its exact text and gain no generated body: " + note);
+                        upstreamFallback++;
+                        continue;
+                    }
+
                     Assert(!string.IsNullOrWhiteSpace(result.Body) &&
                            result.Quality != NoteQual.Fallback &&
                            NoteSvc.ContainsArabic(result.Body) &&
@@ -479,8 +506,8 @@ internal static partial class Program
                     }
                 }
 
-                Assert(exact + structured == uniqueOfficialNotes.Length,
-                    "Every non-empty Official RPCS3 Note must resolve to visible reviewed Arabic.");
+                Assert(exact + structured + upstreamFallback == uniqueOfficialNotes.Length,
+                    "Every non-empty Official RPCS3 Note must resolve to reviewed Arabic or to its verbatim upstream text.");
 
                 foreach (var entry in read.Catalog.Entries.Where(entry =>
                              !string.IsNullOrWhiteSpace(entry.Notes)))
@@ -489,7 +516,9 @@ internal static partial class Program
                     Assert(item.HasDesc &&
                            !string.IsNullOrWhiteSpace(item.LocMsg) &&
                            !string.IsNullOrWhiteSpace(item.NoteBody) &&
-                           NoteSvc.ContainsArabic(item.NoteBody),
+                           (NoteSvc.ContainsArabic(item.NoteBody) ||
+                            (item.IsOfficialNoteFallback &&
+                             string.Equals(item.LocMsg, entry.Notes!.Trim(), StringComparison.Ordinal))),
                         $"Official RPCS3 Note disappeared from the Arabic patch item surface: {entry.Title}");
                 }
             });
@@ -520,7 +549,7 @@ internal static partial class Program
             $"TotalNoteSlots={totalOfficialNoteSlots}, EmptyNoteSlots={emptyOfficialNoteSlots}, " +
             $"NonEmptyNoteOccurrences={officialNotes.Length}, UniqueNonEmptyNotes={uniqueOfficialNotes.Length}, " +
             $"UniqueOutsideEmbeddedCorpora={outsideEmbedded.Length}, Exact={exact}, Structured={structured}, " +
-            $"VisibleReviewed={exact + structured}, SuppressedNonEmpty=0, OmittedNonEmpty=0, Fallbacks=0, " +
+            $"VisibleReviewed={exact + structured}, UpstreamOfficialVerbatim={upstreamFallback}, SuppressedNonEmpty=0, OmittedNonEmpty=0, " +
             $"ForbiddenTranslationMessageOccurrences=0, SHA256={beforeHash}.");
     }
 

@@ -4,6 +4,8 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         x:Class="R3Config.View.CanDlg"
         Title="{lang:TextExt Key=Patch.ImportCanaryTitle}"
+        AutomationProperties.AutomationId="CanaryImport.Root"
+        AutomationProperties.Name="{lang:TextExt Key=Patch.ImportCanaryTitle}"
         Width="620"
         Height="440"
         MinWidth="560"
@@ -24,13 +26,13 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="ISty.xaml" />
+                <ResourceDictionary Source="ImportDlgStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
 
     <shell:WindowChrome.WindowChrome>
-        <shell:WindowChrome CaptionHeight="32"
+        <shell:WindowChrome CaptionHeight="{StaticResource Control.Height.Standard}"
                             ResizeBorderThickness="6"
                             CornerRadius="0"
                             GlassFrameThickness="0"
@@ -56,20 +58,21 @@
                     MouseLeftButtonDown="DragWin">
 
                 <Grid Height="32"
-                      FlowDirection="LeftToRight"
+                      FlowDirection="{DynamicResource App.CaptionButtonsFlowDirection}"
                       ClipToBounds="True">
 
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="46" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="46" />
                     </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0"
+                    <Button Grid.Column="1"
+                            AutomationProperties.AutomationId="CanaryImport.CloseButton"
                             AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
                             ToolTip="{lang:TextExt Key=Window.CloseTip}"
                             Click="CloseWin"
                             Width="46"
-                            Height="32"
+                            Height="{StaticResource Control.Height.Standard}"
                             Margin="0"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
@@ -80,9 +83,9 @@
                             <Style TargetType="{x:Type Button}"
                                    BasedOn="{StaticResource FluentButton.Close.Caption}">
                                 <Setter Property="Height"
-                                        Value="32" />
+                                        Value="{StaticResource Control.Height.Standard}" />
                                 <Setter Property="MinHeight"
-                                        Value="32" />
+                                        Value="{StaticResource Control.Height.Standard}" />
                             </Style>
                         </Button.Style>
 
@@ -93,7 +96,7 @@
                               UseLayoutRounding="True">
 
                             <TextBlock Text=""
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="10"
                                        Foreground="{Binding Foreground,
                                                             RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
@@ -106,8 +109,9 @@
                         </Grid>
                     </Button>
 
-                    <TextBlock Grid.Column="1"
+                    <TextBlock Grid.Column="0"
                                Text="{lang:TextExt Key=Patch.ImportCanaryTitle}"
+                               AutomationProperties.AutomationId="CanaryImport.Title"
                                Style="{StaticResource CanLocalizedTitleText}"
                                FlowDirection="{DynamicResource App.TextFlowDirection}"
                                Language="{DynamicResource App.XmlLanguage}"
@@ -116,7 +120,8 @@
                                VerticalAlignment="Center"
                                TextAlignment="{DynamicResource App.TextAlignment}"
                                TextTrimming="CharacterEllipsis"
-                               TextWrapping="NoWrap" />
+                               TextWrapping="NoWrap"
+                               ToolTip="{lang:TextExt Key=Patch.ImportCanaryTitle}" />
                 </Grid>
             </Border>
 
@@ -143,13 +148,15 @@
                                    Text="{lang:TextExt Key=Patch.ImportCanaryPasteLabel}"
                                    Style="{StaticResource CanLocalizedDescriptionText}"
                                    HorizontalAlignment="Stretch"
-                                   TextWrapping="Wrap" />
+                                   TextWrapping="Wrap"
+                                   TextTrimming="None" />
 
                         <TextBox x:Name="ImportTextBox"
                                  Grid.Row="2"
                                  Text="{Binding ImpText,
                                                 Mode=TwoWay,
                                                 UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.AutomationId="CanaryImport.SourceText"
                                  AutomationProperties.Name="{lang:TextExt Key=Patch.ImportCanaryPasteLabel}"
                                  AcceptsReturn="True"
                                  AcceptsTab="True"
@@ -160,17 +167,22 @@
                                  Padding="12,8"
                                  FontFamily="{DynamicResource Type.Font.Technical}"
                                  FontSize="12"
+                                 FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
+                                 Language="{DynamicResource TechnicalText.Language}"
+                                 NumberSubstitution.Substitution="European"
+                                 TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
                                  VerticalContentAlignment="Top"
                                  Style="{StaticResource PathTextBox}" />
                     </Grid>
                 </Border>
 
                 <Border Grid.Row="1"
+                        AutomationProperties.AutomationId="CanaryImport.Status"
                         Margin="0,12,0,0"
                         Padding="12"
                         Background="{DynamicResource Surface.Subtle}"
                         BorderBrush="{DynamicResource Stroke.Subtle}"
-                        BorderThickness="1"
+                        BorderThickness="{StaticResource Stroke.Thickness.Default}"
                         CornerRadius="{StaticResource Radius.Medium}">
 
                     <Border.Style>
@@ -230,12 +242,20 @@
                         </Style>
                     </Border.Style>
 
-                    <StackPanel>
+                    <StackPanel HorizontalAlignment="Stretch">
                         <TextBlock Text="{Binding VldMsg}"
-                                   Style="{StaticResource CanValidationText}" />
+                                   AutomationProperties.AutomationId="CanaryImport.ValidationMessage"
+                                   Style="{StaticResource CanValidationText}"
+                                   HorizontalAlignment="Stretch"
+                                   TextWrapping="Wrap"
+                                   TextTrimming="None" />
 
                         <TextBlock Text="{Binding ResMsg}"
-                                   Style="{StaticResource CanResultText}" />
+                                   AutomationProperties.AutomationId="CanaryImport.ResultMessage"
+                                   Style="{StaticResource CanResultText}"
+                                   HorizontalAlignment="Stretch"
+                                   TextWrapping="Wrap"
+                                   TextTrimming="None" />
                     </StackPanel>
                 </Border>
             </Grid>
@@ -258,6 +278,8 @@
                     <Button Grid.Column="0"
                             Content="{lang:TextExt Key=Patch.ImportCanaryChooseFile}"
                             Command="{Binding PickCmd}"
+                            AutomationProperties.AutomationId="CanaryImport.ChooseFileButton"
+                            AutomationProperties.Name="{lang:TextExt Key=Patch.ImportCanaryChooseFile}"
                             Style="{StaticResource CanSecondaryActionButton}"
                             FlowDirection="{DynamicResource App.TextFlowDirection}"
                             TextBlock.TextAlignment="Center" />
@@ -265,6 +287,8 @@
                     <Button Grid.Column="2"
                             Content="{lang:TextExt Key=Patch.ImportCanaryCreateFile}"
                             Command="{Binding MakeCmd}"
+                            AutomationProperties.AutomationId="CanaryImport.CreateFileButton"
+                            AutomationProperties.Name="{lang:TextExt Key=Patch.ImportCanaryCreateFile}"
                             Style="{StaticResource CanPrimaryActionButton}"
                             FlowDirection="{DynamicResource App.TextFlowDirection}"
                             IsDefault="True"
@@ -273,6 +297,8 @@
                     <Button Grid.Column="4"
                             Content="{lang:TextExt Key=Dialog.Cancel}"
                             Command="{Binding CloseCmd}"
+                            AutomationProperties.AutomationId="CanaryImport.CancelButton"
+                            AutomationProperties.Name="{lang:TextExt Key=Dialog.Cancel}"
                             Style="{StaticResource CanSecondaryActionButton}"
                             FlowDirection="{DynamicResource App.TextFlowDirection}"
                             IsCancel="True"

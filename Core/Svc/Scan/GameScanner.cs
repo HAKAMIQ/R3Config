@@ -312,6 +312,7 @@ public sealed partial class GameScanner
             var title = SfoTitle(
                 serial,
                 sfo);
+            var category = SfoCategory(sfo);
 
             if (title is null)
             {
@@ -320,7 +321,19 @@ public sealed partial class GameScanner
                     ScanSev.Warning,
                     ScanSrc.ParamSfo,
                     installPath,
-                    $"Installed game {serial} has no trusted PARAM.SFO title."));
+                    $"Installed game {serial} has no trusted PARAM.SFO title or exact TITLE_ID."));
+
+                continue;
+            }
+
+            if (!IsGameCategory(category))
+            {
+                diagnostics.Add(new GameScanDiagnostic(
+                    ScanCode.GameBad,
+                    ScanSev.Warning,
+                    ScanSrc.ParamSfo,
+                    installPath,
+                    $"games.yml entry {serial} has unsupported PARAM.SFO CATEGORY '{category ?? "<missing>"}'."));
 
                 continue;
             }
@@ -334,7 +347,8 @@ public sealed partial class GameScanner
                     Version: PatVer.Norm(
                         sfo?.EffectiveVersion),
                     PpuHash: null,
-                    SpuHash: null));
+                    SpuHash: null,
+                    Category: category));
         }
     }
 
@@ -365,9 +379,29 @@ public sealed partial class GameScanner
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var hdd0Path = Rpcs3InstallService.Hdd0(
+            install,
+            out var hdd0Issue);
+
+        if (string.IsNullOrWhiteSpace(hdd0Path))
+        {
+            if (!string.IsNullOrWhiteSpace(hdd0Issue))
+            {
+                diagnostics.Add(new GameScanDiagnostic(
+                    ScanCode.GameBad,
+                    ScanSev.Warning,
+                    ScanSrc.Yaml,
+                    Path.Combine(
+                        install.CfgPath,
+                        "vfs.yml"),
+                    hdd0Issue));
+            }
+
+            return;
+        }
+
         var hddGamePath = Path.Combine(
-            DataRoot(install),
-            "dev_hdd0",
+            hdd0Path,
             "game");
 
         if (!Directory.Exists(hddGamePath))
@@ -434,16 +468,79 @@ public sealed partial class GameScanner
 
             var sfo = sfoProbe.Info;
 
+            if (!SfoIdentityMatches(
+                    folderName,
+                    sfo))
+            {
+                diagnostics.Add(new GameScanDiagnostic(
+                    ScanCode.GameBad,
+                    ScanSev.Warning,
+                    ScanSrc.ParamSfo,
+                    directory,
+                    $"RPCS3 data folder {folderName} has no exact matching PARAM.SFO TITLE_ID."));
+
+                continue;
+            }
+
+            var category = SfoCategory(sfo);
+
             if (games.TryGetValue(
                     folderName,
                     out var existing))
             {
-                games[folderName] = existing with
+                if (string.Equals(
+                        existing.Category,
+                        "DG",
+                        StringComparison.Ordinal) &&
+                    string.Equals(
+                        category,
+                        "GD",
+                        StringComparison.Ordinal))
                 {
-                    Version = Select(
-                        existing.Version,
-                        sfo?.EffectiveVersion)
-                };
+                    games[folderName] = existing with
+                    {
+                        Version = Select(
+                            existing.Version,
+                            sfo?.EffectiveVersion)
+                    };
+
+                    continue;
+                }
+
+                if (string.Equals(
+                        existing.Category,
+                        category,
+                        StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                diagnostics.Add(new GameScanDiagnostic(
+                    ScanCode.GameBad,
+                    ScanSev.Warning,
+                    ScanSrc.ParamSfo,
+                    directory,
+                    $"RPCS3 data folder {folderName} CATEGORY '{category ?? "<missing>"}' conflicts with installed-game CATEGORY '{existing.Category ?? "<missing>"}' and was ignored."));
+
+                continue;
+            }
+
+            if (!IsGameCategory(category))
+            {
+                // RPCS3 enumerates game-data entries, but GD and other data
+                // categories do not establish R3Config installed-game membership.
+                if (!string.Equals(
+                        category,
+                        "GD",
+                        StringComparison.Ordinal))
+                {
+                    diagnostics.Add(new GameScanDiagnostic(
+                        ScanCode.GameBad,
+                        ScanSev.Warning,
+                        ScanSrc.ParamSfo,
+                        directory,
+                        $"RPCS3 data folder {folderName} has unsupported PARAM.SFO CATEGORY '{category ?? "<missing>"}'."));
+                }
 
                 continue;
             }
@@ -471,7 +568,8 @@ public sealed partial class GameScanner
                 Version: PatVer.Norm(
                     sfo?.EffectiveVersion),
                 PpuHash: null,
-                SpuHash: null);
+                SpuHash: null,
+                Category: category);
         }
     }
 
@@ -537,6 +635,32 @@ public sealed partial class GameScanner
             : configBasePath;
     }
 
+    private static bool SfoIdentityMatches(
+        string serial,
+        SfoInfo? sfo)
+    {
+        var titleId = sfo?.TitleId?.Trim();
+
+        return !string.IsNullOrWhiteSpace(titleId) &&
+               titleId.Equals(
+                   serial,
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? SfoCategory(SfoInfo? sfo)
+    {
+        var category = sfo?.Category?.Trim();
+
+        return string.IsNullOrWhiteSpace(category)
+            ? null
+            : category.ToUpperInvariant();
+    }
+
+    private static bool IsGameCategory(string? category)
+    {
+        return category is "DG" or "HG";
+    }
+
     private static string? SfoTitle(
         string serial,
         SfoInfo? sfo)
@@ -548,14 +672,9 @@ public sealed partial class GameScanner
             return null;
         }
 
-        var sfoSerial =
-            sfo.TitleId?.Trim();
-
-        if (!string.IsNullOrWhiteSpace(
-                sfoSerial) &&
-            !sfoSerial.Equals(
+        if (!SfoIdentityMatches(
                 serial,
-                StringComparison.OrdinalIgnoreCase))
+                sfo))
         {
             return null;
         }

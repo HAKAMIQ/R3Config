@@ -1,0 +1,420 @@
+{
+  "schema": 1,
+  "source": "Generated from the qualified RPCS3 GitHub regression evidence (snapshot 2026-09-17). Build boundaries, scope and fixes come from the qualified regression rows; a log signature is included only when the same normalized problem event appears in every readable broken log of the issue and in no readable working log. Entries are documented cases, not causes: a match needs the exact signature, the documented scope and the build boundary. Regenerate with R3Test --gen-diagnostics-kb; do not edit by hand.",
+  "entries": [
+    {
+      "id": "gh-8170-10307",
+      "kind": "Regression",
+      "evidenceClass": "DeveloperConfirmedFix",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/8170",
+        "title": "Regression - WRC 3 FIA World Rally Championship Demo [NPEB90467] crashes when starting the race",
+        "number": 8170,
+        "date": "2020-05-07"
+      },
+      "scope": "GAME_SCENARIO_SPECIFIC",
+      "applies": {
+        "titleIds": [
+          "NPEB90467"
+        ]
+      },
+      "lastGoodBuild": 10298,
+      "firstBrokenBuild": 10307,
+      "fixedBuild": 10346,
+      "causingPr": 8106,
+      "fixPr": 8185,
+      "categories": [],
+      "signatures": [],
+      "solutions": [],
+      "notes": "WRC 3 Demo NPEB90467. Working and broken logs match the reported boundary. Regression depends on shader compilation/cache scenario. Fix PR #8185 confirmed and published at build 10346."
+    },
+    {
+      "id": "gh-15411-15912",
+      "kind": "Regression",
+      "evidenceClass": "DeveloperConfirmedFix",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/15411",
+        "title": "[Regression] Marvel Super Hero Squad: Comic Combat (BLES01379) broken visuals since #15003",
+        "number": 15411,
+        "date": "2024-04-06"
+      },
+      "scope": "MULTI_GAME_GRAPHICS",
+      "applies": {
+        "titleIds": [
+          "BLES01379"
+        ]
+      },
+      "lastGoodBuild": 15910,
+      "firstBrokenBuild": 15912,
+      "fixedBuild": 16303,
+      "causingPr": 15003,
+      "fixPr": 15431,
+      "categories": [
+        "RsxError"
+      ],
+      "signatures": [
+        {
+          "id": "s1:935b61f947cf",
+          "subsystem": "RSX",
+          "level": "E",
+          "pattern": "Unhandled video output format 0x#"
+        }
+      ],
+      "solutions": [],
+      "notes": "BLES01379 has matching working/broken logs plus RSX and RenderDoc captures. Other titles were also reported affected. Fix PR #15431 confirmed and published at build 16303."
+    },
+    {
+      "id": "gh-19158-15470",
+      "kind": "Regression",
+      "evidenceClass": "CorroboratedRegression",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19158",
+        "title": "[Regression] [NPEB90179] The Punisher: No Mercy Demo Boots to black screen (#14458)",
+        "number": 19158,
+        "date": "2026-08-05"
+      },
+      "scope": "GAME_SPECIFIC",
+      "applies": {
+        "titleIds": [
+          "NPEB90179"
+        ]
+      },
+      "lastGoodBuild": 15468,
+      "firstBrokenBuild": 15470,
+      "causingPr": 14458,
+      "categories": [],
+      "signatures": [],
+      "solutions": [],
+      "notes": "NPEB90179 appears in both working 15468 and broken 15470 logs. Latest supplied NPEB90179 log at build 19699 is still affected. Related-edition log must not be transferred to NPEB90179. No confirmed fix."
+    },
+    {
+      "id": "gh-19262-19782",
+      "kind": "Regression",
+      "evidenceClass": "CorroboratedRegression",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19262",
+        "title": "[Regression] Various titles fail to boot when connected",
+        "number": 19262,
+        "date": "2026-08-18"
+      },
+      "scope": "RPCN_SUBSYSTEM_MULTI_GAME",
+      "applies": {
+        "titleIds": [],
+        "platform": "Windows",
+        "architecture": "x64"
+      },
+      "lastGoodBuild": 19781,
+      "firstBrokenBuild": 19782,
+      "causingPr": 18760,
+      "categories": [
+        "NetworkError"
+      ],
+      "signatures": [
+        {
+          "id": "s1:48bdca7d1ad5",
+          "subsystem": "sys_net",
+          "level": "E",
+          "pattern": "Failed to bind to <ip>:#, falling back to <ip>:#"
+        }
+      ],
+      "solutions": [],
+      "notes": "Canonical source issue replacing duplicate #19263. Multiple games and machines reproduce the same 19781 to 19782 RPCN boundary. Cause commit equals PR #18760 merge commit. No canonical published-build row and no confirmed fix."
+    },
+    {
+      "id": "gh-19277-19785",
+      "kind": "Regression",
+      "evidenceClass": "ReportedOnly",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19277",
+        "title": "[Regression] Portal 2 - No Longer Installs to HDD Correctly (#19169)",
+        "number": 19277,
+        "date": "2026-08-19"
+      },
+      "scope": "GAME_INSTALL_SPECIFIC",
+      "applies": {
+        "titleIds": [
+          "NPUB31077"
+        ],
+        "platform": "Windows",
+        "architecture": "x64"
+      },
+      "lastGoodBuild": 19782,
+      "firstBrokenBuild": 19785,
+      "causingPr": 19169,
+      "categories": [],
+      "signatures": [],
+      "solutions": [],
+      "notes": "Portal 2 NPUB31077 install-output regression. First broken commit equals PR #19169 merge commit. Failure concerns generated HDD files, so gameplay log corroboration is not required. Older build is evidence for installation recovery only, not a general runtime rollback."
+    },
+    {
+      "id": "gh-19381-19896",
+      "kind": "Regression",
+      "evidenceClass": "DeveloperConfirmedFix",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19381",
+        "title": "[Regression] MacOS: `/dev/urandom` misdetected as optical device post BD changes",
+        "number": 19381,
+        "date": "2026-09-02"
+      },
+      "scope": "PLATFORM_GLOBAL",
+      "applies": {
+        "titleIds": [],
+        "platform": "macOS",
+        "architecture": "arm64"
+      },
+      "lastGoodBuild": 19894,
+      "firstBrokenBuild": 19896,
+      "fixedBuild": 19912,
+      "causingPr": 19233,
+      "fixPr": 19382,
+      "categories": [
+        "FatalError"
+      ],
+      "signatures": [
+        {
+          "id": "s1:472b0b9bc9fb",
+          "subsystem": "SIG",
+          "level": "F",
+          "pattern": "Thread terminated due to fatal error: sys_ss_random_number_generator(): Failed to generate pseudo-random numbers"
+        }
+      ],
+      "solutions": [],
+      "notes": "Not game-specific. Do not generalize outside macOS/arm64 evidence."
+    },
+    {
+      "id": "gh-19433-19958",
+      "kind": "Regression",
+      "evidenceClass": "DeveloperConfirmedFix",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19433",
+        "title": "[Regression] Shader Quality: Low broken after #19410 (Rewrite how blending works)",
+        "number": 19433,
+        "date": "2026-09-08"
+      },
+      "scope": "SETTING_MULTI_GAME",
+      "applies": {
+        "titleIds": [
+          "BCUS98106"
+        ]
+      },
+      "lastGoodBuild": 19938,
+      "firstBrokenBuild": 19958,
+      "fixedBuild": 19961,
+      "causingPr": 19410,
+      "fixPr": 19438,
+      "categories": [],
+      "signatures": [],
+      "solutions": [],
+      "notes": "Shader Quality Low regression affects multiple titles. Twisted Metal is corroborating evidence, not exclusive scope."
+    },
+    {
+      "id": "gh-19448-19958",
+      "kind": "Regression",
+      "evidenceClass": "CorroboratedRegression",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19448",
+        "title": "[Regression] Rock Band 2 [BLUS30147] freezing when joining a band (solo tour)",
+        "number": 19448,
+        "date": "2026-09-09"
+      },
+      "scope": "GAME_SPECIFIC",
+      "applies": {
+        "titleIds": [
+          "BLUS30147"
+        ],
+        "platform": "Windows",
+        "architecture": "x64"
+      },
+      "lastGoodBuild": 19938,
+      "firstBrokenBuild": 19958,
+      "causingPr": 19410,
+      "categories": [
+        "FatalError",
+        "RsxError",
+        "RenderingError",
+        "ShaderCompilationEvent"
+      ],
+      "signatures": [
+        {
+          "id": "s1:2ffa0669c1d2",
+          "subsystem": "SIG",
+          "level": "F",
+          "pattern": "Thread terminated due to fatal error: Failed to compile fragment shader"
+        },
+        {
+          "id": "s1:dd8991f6fb2a",
+          "subsystem": "RSX",
+          "level": "E",
+          "pattern": "ERROR: #:#: 'round_to_8bit' : no matching overloaded function found"
+        }
+      ],
+      "solutions": [],
+      "notes": "Rollback candidate only when game/platform/context match. No confirmed fix transferred from other #19410 regressions."
+    },
+    {
+      "id": "gh-19465-19958",
+      "kind": "Regression",
+      "evidenceClass": "CorroboratedRegression",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19465",
+        "title": "[Regression] Prototype [BLUS30145] (#19410)",
+        "number": 19465,
+        "date": "2026-09-12"
+      },
+      "scope": "GAME_SPECIFIC",
+      "applies": {
+        "titleIds": [
+          "BLUS30145"
+        ],
+        "platform": "Windows",
+        "architecture": "x64"
+      },
+      "lastGoodBuild": 19938,
+      "firstBrokenBuild": 19958,
+      "causingPr": 19410,
+      "categories": [
+        "FatalError",
+        "Assertion"
+      ],
+      "signatures": [
+        {
+          "id": "s1:3150db7a325e",
+          "subsystem": "SIG",
+          "level": "F",
+          "pattern": "Thread terminated due to fatal error: Verification failed (object: 0x#)"
+        }
+      ],
+      "solutions": [],
+      "notes": "Game-specific report for Prototype BLUS30145. No confirmed fix."
+    },
+    {
+      "id": "gh-19483-19988",
+      "kind": "Regression",
+      "evidenceClass": "CorroboratedRegression",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19483",
+        "title": "[Regression] Socom crashes after update (#19467)",
+        "number": 19483,
+        "date": "2026-09-13"
+      },
+      "scope": "GAME_SPECIFIC",
+      "applies": {
+        "titleIds": [
+          "BCUS98152"
+        ],
+        "platform": "Windows",
+        "architecture": "x64"
+      },
+      "lastGoodBuild": 19985,
+      "firstBrokenBuild": 19988,
+      "causingPr": 19467,
+      "fixPr": 19482,
+      "categories": [
+        "Crash",
+        "FatalError",
+        "MemoryError"
+      ],
+      "signatures": [
+        {
+          "id": "s1:8eb1968def8a",
+          "subsystem": "VM",
+          "level": "F",
+          "pattern": "Access violation writing location 0x# (unmapped memory)"
+        }
+      ],
+      "solutions": [],
+      "notes": "19986 initial Build RPCS3 run was cancelled; later rerun succeeded after snapshot. 19989 fix CI artifacts exist but snapshot predates merge."
+    },
+    {
+      "id": "gh-19484-19529",
+      "kind": "Regression",
+      "evidenceClass": "CorroboratedRegression",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19484",
+        "title": "[Regression] Kingdom Hearts HD 2.5 ReMIX (BLUS31460) shows black screen/crashes when loading intro video and following cutscene (#18962)",
+        "number": 19484,
+        "date": "2026-09-13"
+      },
+      "scope": "GAME_PLATFORM_SPECIFIC",
+      "applies": {
+        "titleIds": [
+          "BLUS31460"
+        ],
+        "platform": "macOS",
+        "architecture": "arm64"
+      },
+      "lastGoodBuild": 19528,
+      "firstBrokenBuild": 19529,
+      "causingPr": 18962,
+      "categories": [],
+      "signatures": [],
+      "solutions": [],
+      "notes": "Only applicable to macOS arm64 evidence. Never generalize to Windows/Linux."
+    },
+    {
+      "id": "gh-19511-19593",
+      "kind": "Regression",
+      "evidenceClass": "CorroboratedRegression",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19511",
+        "title": "[Regression] 14% SPU Performance Lost - Red Dead Redemption",
+        "number": 19511,
+        "date": "2026-09-16"
+      },
+      "scope": "GAME_MULTI_STAGE",
+      "applies": {
+        "titleIds": [
+          "NPEB00833"
+        ],
+        "platform": "Windows",
+        "architecture": "x64"
+      },
+      "lastGoodBuild": 19583,
+      "firstBrokenBuild": 19593,
+      "causingPr": 18979,
+      "categories": [],
+      "signatures": [],
+      "solutions": [],
+      "notes": "Performance regression stage 1. Do not collapse with stage 2."
+    },
+    {
+      "id": "gh-19511-19759",
+      "kind": "Regression",
+      "evidenceClass": "CorroboratedRegression",
+      "source": {
+        "class": "GITHUB_ISSUE",
+        "url": "https://github.com/RPCS3/rpcs3/issues/19511",
+        "title": "[Regression] 14% SPU Performance Lost - Red Dead Redemption",
+        "number": 19511,
+        "date": "2026-09-16"
+      },
+      "scope": "GAME_MULTI_STAGE",
+      "applies": {
+        "titleIds": [
+          "NPEB00833"
+        ],
+        "platform": "Windows",
+        "architecture": "x64"
+      },
+      "lastGoodBuild": 19593,
+      "firstBrokenBuild": 19759,
+      "causingPr": 19221,
+      "categories": [],
+      "signatures": [],
+      "solutions": [],
+      "notes": "19593 is only baseline for second performance loss; it is already regressed versus 19583."
+    }
+  ]
+}

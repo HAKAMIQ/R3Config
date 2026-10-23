@@ -209,7 +209,7 @@ public sealed class Rpcs3MutationGuard(
 
     private static readonly object WriterSync = new();
 
-    private static readonly Dictionary<string, Mutex> WriterLocks =
+    private static readonly HashSet<string> WriterLocks =
         new(StringComparer.OrdinalIgnoreCase);
 
     public void CheckCan(
@@ -243,9 +243,15 @@ public sealed class Rpcs3MutationGuard(
                 targetPath,
                 isDirectory: false);
 
+            // `target` is canonical, so compare it with the canonical
+            // patches directory too; the declared one differs when the
+            // RPCS3 root is reached through a junction.
             if (Paths(
                     target,
-                    Path.Combine(roots.PatPath, "patch.yml")))
+                    Path.Combine(roots.PatPath, "patch.yml")) ||
+                Paths(
+                    target,
+                    Path.Combine(roots.DataRoot, "patches", "patch.yml")))
             {
                 throw Unsafe(
                     "RPCS3's official patch.yml catalog is read-only.");
@@ -286,7 +292,7 @@ public sealed class Rpcs3MutationGuard(
     {
         lock (WriterSync)
         {
-            if (WriterLocks.ContainsKey(dataRoot))
+            if (WriterLocks.Contains(dataRoot))
             {
                 return;
             }
@@ -301,22 +307,31 @@ public sealed class Rpcs3MutationGuard(
                 ? $@"Global\HAKAMIQ.R3Config.Writer.{rootHash}"
                 : $"HAKAMIQ.R3Config.Writer.{rootHash}";
 
-            Mutex writerLock;
+            HoldWriterLock(mutexName);
+            WriterLocks.Add(dataRoot);
+        }
+    }
+
+    // A mutex is owned by the thread that acquired it and is abandoned when
+    // that thread exits. CheckCan often runs on a thread-pool thread, so the
+    // lock is acquired and held by a dedicated background thread that lives
+    // as long as the process.
+    private static void HoldWriterLock(string mutexName)
+    {
+        Exception? failure = null;
+        var acquired = false;
+        using var ready = new ManualResetEventSlim();
+        var holder = new Thread(() =>
+        {
+            // Every failure goes back to CheckCan: an exception escaping this
+            // thread would terminate the process, and a missed Set would
+            // block CheckCan forever.
+            Mutex? writerLock = null;
             try
             {
                 writerLock = new Mutex(
                     initiallyOwned: false,
                     mutexName);
-            }
-            catch (Exception ex) when (
-                ex is UnauthorizedAccessException or IOException)
-            {
-                throw Locked(ex);
-            }
-
-            var acquired = false;
-            try
-            {
                 try
                 {
                     acquired = writerLock.WaitOne(
@@ -327,23 +342,42 @@ public sealed class Rpcs3MutationGuard(
                 {
                     acquired = true;
                 }
-
-                if (!acquired)
-                {
-                    throw Locked();
-                }
-
-                WriterLocks.Add(dataRoot, writerLock);
             }
-            catch
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
+            finally
             {
                 if (!acquired)
                 {
-                    writerLock.Dispose();
+                    writerLock?.Dispose();
                 }
 
-                throw;
+                ready.Set();
             }
+
+            if (acquired)
+            {
+                Thread.Sleep(Timeout.Infinite);
+                GC.KeepAlive(writerLock);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "R3Config RPCS3 writer lock"
+        };
+        holder.Start();
+        ready.Wait();
+
+        if (failure is not null)
+        {
+            throw Locked(failure);
+        }
+
+        if (!acquired)
+        {
+            throw Locked();
         }
     }
 

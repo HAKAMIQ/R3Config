@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using R3Config.Lang;
 using R3Config.Mdl;
+using R3Config.Svc;
 
 namespace R3Config.Vm;
 
@@ -19,10 +20,23 @@ public sealed class PlanVm : VmBase
     private bool _syncingSelection;
     private bool _batchingSelection;
     private CfgPlan? _plan;
+    private GameSettingsModel? _model;
 
     public event EventHandler? SelState;
 
+    // Flat list: selection, apply, and remove all operate on this.
     public ObservableCollection<PlanItVm> Items { get; } = [];
+
+    // The same rows grouped by RPCS3 Settings tab. Internal metadata only
+    // (mapping, ordering, validation); the view never shows tab headers.
+    public ObservableCollection<PlanSectionVm> Sections { get; } = [];
+
+    // The one flat, actionable list the view binds to, in RPCS3 tab order.
+    public ObservableCollection<PlanItVm> Rows { get; } = [];
+
+    public bool HasRows => Rows.Count > 0;
+
+    public GameEvidenceVm Evidence { get; } = new();
 
     public string Title
     {
@@ -50,9 +64,13 @@ public sealed class PlanVm : VmBase
 
     public bool HasChg => Items.Any(item => item.IsSel && item.IsDiff && item.IsAction);
 
-    public bool CanDel => _plan?.Items.Any(item => item.CurVal is not null) == true;
+    public bool CanDel => _plan?.Items.Any(item => item.HasCustomOverride) == true;
 
     public bool IsEmpty => Items.Count == 0;
+
+    // Notes or online evidence are content too: the empty state must not
+    // cover a game that has Wiki notes but no settings.
+    public bool ShowEmpty => IsEmpty && !Evidence.HasAny;
 
     public string EmptyTxt
     {
@@ -90,6 +108,13 @@ public sealed class PlanVm : VmBase
         {
             item.SetLang();
         }
+
+        foreach (var section in Sections)
+        {
+            section.SetLang();
+        }
+
+        Evidence.SetLang();
     }
 
     public void Clear()
@@ -97,6 +122,10 @@ public sealed class PlanVm : VmBase
         Unsub();
 
         Items.Clear();
+        Sections.Clear();
+        Rows.Clear();
+        Evidence.Clear();
+        _model = null;
         Title = UiText.GetText("Plan.Title");
         Serial = string.Empty;
         Summary = UiText.GetText("Plan.SelectGame");
@@ -105,16 +134,21 @@ public sealed class PlanVm : VmBase
         _plan = null;
 
         OnChange(nameof(IsEmpty));
+        OnChange(nameof(ShowEmpty));
         OnChange(nameof(CanDel));
         RaiseSel();
     }
 
-    public void Load(CfgPlan plan)
+    public void Load(CfgPlan plan, GameSettingsModel? model = null)
     {
         Unsub();
         Items.Clear();
+        Sections.Clear();
+        Rows.Clear();
 
         _plan = plan;
+        _model = model;
+        Evidence.Load(model);
         Title = plan.GameName;
         Serial = plan.GameSer;
         TgtCfg = plan.CfgPath;
@@ -168,10 +202,14 @@ public sealed class PlanVm : VmBase
 
         Unsub();
         Items.Clear();
+        Sections.Clear();
+        Rows.Clear();
 
         if (_plan is null)
         {
             OnChange(nameof(IsEmpty));
+            OnChange(nameof(HasRows));
+            OnChange(nameof(ShowEmpty));
             OnChange(nameof(CanDel));
             SetSum();
             RaiseSel();
@@ -179,19 +217,48 @@ public sealed class PlanVm : VmBase
         }
 
         var visibleItems = _plan.Items.Where(ShowItem);
+        var rows = new Dictionary<CfgEntry, GameSettingRow>(
+            ReferenceEqualityComparer.Instance);
+        foreach (var row in _model?.Sections.SelectMany(section => section.Rows) ?? [])
+        {
+            rows[row.Entry] = row;
+        }
 
         foreach (var item in visibleItems)
         {
             var isSelected = preserveSelection &&
                              selectedKeys.Contains(ItemKey(item));
 
-            var viewModel = new PlanItVm(item, isSelected);
+            var viewModel = new PlanItVm(
+                item,
+                isSelected,
+                rows.GetValueOrDefault(item));
             viewModel.PropChg += OnItem;
             Items.Add(viewModel);
         }
 
+        foreach (var group in Items
+                     .GroupBy(item => item.SectionKind)
+                     .OrderBy(group => group.Key))
+        {
+            var section = new PlanSectionVm(group.Key);
+            foreach (var item in group)
+            {
+                section.Items.Add(item);
+            }
+
+            Sections.Add(section);
+            foreach (var item in section.Items)
+            {
+                Rows.Add(item);
+            }
+        }
+
+        OnChange(nameof(HasRows));
+
         EmptyTxt = GetEmpty(_plan);
         OnChange(nameof(IsEmpty));
+        OnChange(nameof(ShowEmpty));
         OnChange(nameof(CanDel));
         SetSum();
         RaiseSel();
@@ -284,6 +351,12 @@ public sealed class PlanVm : VmBase
         }
 
         var state = _plan.RecState;
+        if (state.Pending == 0 && state.Applied != state.Total)
+        {
+            Summary = UiText.Fmt("Plan.SummaryReviewFormat", state.Total, state.Applied);
+            return;
+        }
+
         Summary = state.Pending == 0
             ? UiText.Fmt("Plan.SummaryCompleteFormat", state.Total)
             : state.Applied == 0

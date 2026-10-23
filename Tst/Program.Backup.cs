@@ -96,26 +96,49 @@ internal static partial class Program
         Assert(Directory.Exists(outside),
             "Expected rejected backup deletion to leave the outside directory untouched.");
 
+        for (var index = 0; index < 5; index++)
+        {
+            var extra = BackupSnapshot(
+                backupService,
+                backupRoot,
+                [target]);
+            BackupManifest(
+                extra.DirPath,
+                new BackupManifest(
+                    new DateTimeOffset(2026, 8, 1, 1, index, 0, TimeSpan.Zero),
+                    extra.Files));
+        }
+
         var beforeCleanup = useCase.List(install);
-        var expectedRemaining = beforeCleanup
+        var managedBefore = beforeCleanup
+            .Where(snapshot => !snapshot.IsLegacy)
+            .ToArray();
+        var legacyBefore = beforeCleanup
+            .Where(snapshot => snapshot.IsLegacy)
+            .Select(snapshot => Path.GetFullPath(snapshot.DirPath))
+            .ToArray();
+        var expectedRemaining = managedBefore
             .Take(BackupUseCase.DefaultRetentionCount)
             .Select(snapshot => Path.GetFullPath(snapshot.DirPath))
+            .Concat(legacyBefore)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var expectedDeleteCount = beforeCleanup.Count -
+        var expectedDeleteCount = managedBefore.Length -
                                   BackupUseCase.DefaultRetentionCount;
         var deleted = useCase.DeleteOld(install);
         var remaining = useCase.List(install);
 
-        Assert(deleted == expectedDeleteCount &&
-               remaining.Count == BackupUseCase.DefaultRetentionCount &&
+        Assert(legacyBefore.Length == 5 &&
+               expectedDeleteCount > 0 &&
+               deleted == expectedDeleteCount &&
+               remaining.Count == expectedRemaining.Count &&
                remaining.All(snapshot => expectedRemaining.Contains(
                    Path.GetFullPath(snapshot.DirPath))),
-            "Expected backup cleanup to delete only snapshots older than the newest retention set.");
+            "Expected backup cleanup to delete only managed snapshots older than the newest retention set and keep legacy snapshots.");
         Assert(File.ReadAllBytes(target).SequenceEqual(targetBefore),
             "Expected backup cleanup to leave RPCS3 target files unchanged.");
 
         Assert(useCase.DeleteOld(install) == 0 &&
-               useCase.List(install).Count == BackupUseCase.DefaultRetentionCount,
+               useCase.List(install).Count == expectedRemaining.Count,
             "Expected backup cleanup to be idempotent once the retention count is reached.");
 
         Console.WriteLine("Backup deletion and retention regressions PASS.");

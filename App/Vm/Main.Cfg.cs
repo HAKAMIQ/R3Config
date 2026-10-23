@@ -66,7 +66,7 @@ public sealed partial class MainVm : VmBase
             var selectedChanges = selectedItems.Select(item => item.Change).ToArray();
             var result = _flow.ApplyCfg(_curPlan, selectedChanges, _install);
 
-            Log(UiText.Fmt("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
+            Log(UiText.Fmt("Msg.BkpSaved", UiDate.Inline(result.Backup.MadeAt)));
 
             foreach (var item in selectedItems)
             {
@@ -109,7 +109,7 @@ public sealed partial class MainVm : VmBase
             }
 
             var removableChanges = _curPlan.Items
-                .Where(item => item.CurVal is not null)
+                .Where(item => item.HasCustomOverride)
                 .Select(item => item.Change)
                 .ToArray();
 
@@ -138,7 +138,7 @@ public sealed partial class MainVm : VmBase
 
             var result = _flow.DelCfg(_curPlan, removableChanges, _install);
 
-            Log(UiText.Fmt("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
+            Log(UiText.Fmt("Msg.BkpSaved", UiDate.Inline(result.Backup.MadeAt)));
 
             foreach (var change in removableChanges)
             {
@@ -168,6 +168,8 @@ public sealed partial class MainVm : VmBase
             Preview.Clear();
             ClearGameSetup();
             Advanced.TgtCfg = UiText.GetText("Ui.EmptyValue");
+            _gameSettings = null;
+            RefreshRuntimeContext();
             LoadGame();
             RaiseCmd();
             return;
@@ -177,11 +179,15 @@ public sealed partial class MainVm : VmBase
             _install,
             GameList.SelGame.Game,
             GameList.SelGame.Rec,
-            _hwInfo);
+            _hwInfo,
+            _buildIdentity);
 
         GameList.SelGame.RecState = _curPlan.RecState;
-        Plan.Load(_curPlan);
+        Plan.Load(
+            _curPlan,
+            ProjectGameSettings(GameList.SelGame, _curPlan));
         Advanced.TgtCfg = _curPlan.CfgPath;
+        RefreshRuntimeContext();
 
         MakePrev();
         RefreshGameSetupPlan();

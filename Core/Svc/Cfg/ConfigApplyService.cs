@@ -88,6 +88,7 @@ public sealed class ConfigApplyService
         {
             if (!commitAttempted)
             {
+                _BkpSvc.DiscardUnused(backupRootPath, backup);
                 throw;
             }
 
@@ -177,6 +178,7 @@ public sealed class ConfigApplyService
         {
             if (!commitAttempted)
             {
+                _BkpSvc.DiscardUnused(backupRootPath, backup);
                 throw;
             }
 
@@ -215,8 +217,19 @@ public sealed class ConfigApplyService
                     $"Config change '{change.Section}/{change.Key}' was not part of the reviewed plan.");
             }
 
-            var current = R3Yaml.ReadVal(
+            if (reviewed.StateIt.Binding != WikiGameIdRole.Primary)
+            {
+                throw new InvalidOperationException(
+                    $"Config change '{change.Section}/{change.Key}' has no exact game binding.");
+            }
+
+            // The reviewed value is the effective RPCS3 value, resolved through
+            // custom config -> global config -> built-in default. Resolve the
+            // same way here: reading only the custom config reports a key the
+            // custom config never overrode as an external change.
+            var current = PlanService.ResolveEffective(
                 plan.CfgPath,
+                plan.GlobalCfgPath,
                 change.Section,
                 change.Key);
 

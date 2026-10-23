@@ -710,6 +710,63 @@ internal static partial class Program
                exactGlobalPreview.Items.Single().IsOn,
             "Expected an enabled All/All/All patch to remain visible on a game page with exact runtime-hash evidence.");
 
+        // Reproduces the real BLUS31465 / 01.00 case: no title-specific
+        // Official patch exists, but the resident patch.yml still carries
+        // All/All wildcard SPU entries (e.g. "Disable SPU MLAA - ...") with no
+        // local hash evidence captured for this never-booted game.
+        var noEvidenceGlobalMatch = matchService.Match(allTargetPatch, [rogue]);
+        Assert(noEvidenceGlobalMatch.Status == MatStat.Unknown,
+            "Expected an All/All/All Official patch with no local hash evidence to resolve to Unknown.");
+
+        var noTitleSpecificPreview = new PatPrev();
+        noTitleSpecificPreview.Load(
+            [noEvidenceGlobalMatch],
+            isEnabledResolver: _ => false);
+        Assert(noTitleSpecificPreview.OfclList.Count == 0,
+            "Expected an unattributable All/All wildcard Unknown match to stay off the visible Official list.");
+        Assert(noTitleSpecificPreview.OfclEmptyText == UiText.GetText("Patch.Empty.Official.None"),
+            "Expected a game with no title-specific Official patch to show the plain no-patches empty state, not NeedsVerification, when the only candidates are unattributable All/All wildcards.");
+
+        var titleSpecificUnknownMatch = matchService.Match(
+            multiTargetPatch with { Title = "Title Specific Unresolved Hash Patch" },
+            [rogue with { Version = "01.00" }]);
+        Assert(titleSpecificUnknownMatch.Status == MatStat.Unknown,
+            "Expected a genuine title-specific Official patch with no local hash evidence to resolve to Unknown.");
+        Assert(titleSpecificUnknownMatch.Cmp?.Verdict == PatchCompatibilityVerdict.Guarded,
+            "Expected a genuine serial/version match with unresolved hash to remain RuntimeGuarded rather than Blocked.");
+
+        var mixedAttributionPreview = new PatPrev();
+        mixedAttributionPreview.Load(
+            [titleSpecificUnknownMatch, noEvidenceGlobalMatch],
+            isEnabledResolver: _ => false);
+        Assert(mixedAttributionPreview.OfclList.Count == 1 &&
+               mixedAttributionPreview.OfclList.Single().Match == titleSpecificUnknownMatch,
+            "Expected a genuine title-specific Unknown match to stay visible alongside excluded All/All wildcard noise.");
+        Assert(!mixedAttributionPreview.IsOfcl,
+            "Expected the Official list to report non-empty once a genuine attributable patch is visible, so the UI never displays the empty-state text at all.");
+
+        var versionMismatchPatch = multiTargetPatch with
+        {
+            Title = "Version Specific Patch",
+            GameTgt = [new R3PatTgt("Contract Game", rogue.Serial, ["09.99"])]
+        };
+        var versionMismatchMatch = matchService.Match(
+            versionMismatchPatch,
+            [rogue with { Version = "01.00" }]);
+        Assert(versionMismatchMatch.Status == MatStat.VerBad,
+            "Expected an installed version different from the sole target version to resolve to VerBad.");
+
+        var versionMismatchPreview = new PatPrev();
+        versionMismatchPreview.Load(
+            [versionMismatchMatch, noEvidenceGlobalMatch],
+            isEnabledResolver: _ => false);
+        Assert(versionMismatchPreview.OfclEmptyTextFragments.Any(fragment =>
+                fragment.Text.Contains("09.99", StringComparison.Ordinal)),
+            "Expected the version-mismatch empty-state text to list the required version even with unattributable All/All wildcard noise present.");
+        Assert(!versionMismatchPreview.OfclEmptyTextFragments.Any(fragment =>
+                fragment.Text == UiText.GetText("Patch.Empty.NeedsVerification")),
+            "Expected wildcard Unknown noise to not override a distinct genuine version-mismatch empty-state message.");
+
         const string extendedHashCatalog = """
     Version: 1.2
     PRX-QoiFRPF8j00N996aQMthtWqEUG0Y-0:

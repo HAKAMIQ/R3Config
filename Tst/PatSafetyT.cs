@@ -99,8 +99,8 @@ internal static class PatSafetyT
             UiText.SetLang(previousLanguage);
         }
 
-        var patchView = File.ReadAllText(Path.Combine(appRoot, "Ctrl", "Pat.xaml"));
-        var patchTemplate = File.ReadAllText(Path.Combine(appRoot, "Ctrl", "PTmp.xaml"));
+        var patchView = File.ReadAllText(Path.Combine(appRoot, "Ctrl", "PatchView.xaml"));
+        var patchTemplate = File.ReadAllText(Path.Combine(appRoot, "Ctrl", "PatchTemplates.xaml"));
         var patchVm = File.ReadAllText(Path.Combine(appRoot, "Vm", "Main.Pat.cs"));
         var setupVm = File.ReadAllText(Path.Combine(appRoot, "Vm", "Main.Setup.cs"));
         var setupPlanner = File.ReadAllText(Path.Combine(

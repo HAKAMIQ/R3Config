@@ -13,7 +13,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="HSty.xaml" />
+                <ResourceDictionary Source="HCanStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -247,7 +247,9 @@
 
                                 <TextBlock Grid.Column="0"
                                            Text="&#xE7BA;"
-                                           FontFamily="Segoe Fluent Icons"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           TextAlignment="Center"
+                                           FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
                                            FontSize="16"
                                            Foreground="{DynamicResource Status.Warning}"
                                            HorizontalAlignment="Center"
@@ -366,10 +368,17 @@
                            Style="{StaticResource HCanLocalizedSectionCaptionText}"
                            TextWrapping="Wrap" />
 
-                <TextBlock Text="{lang:TextExt Key=HCanary.Instructions.Example}"
-                           Margin="0,4,0,0"
-                           Style="{StaticResource HCanTechnicalTextBlock}"
-                           TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal"
+                            Margin="0,4,0,0"
+                            FlowDirection="{DynamicResource App.FlowDirection}">
+                    <TextBlock Text="{lang:TextExt Key=HCanary.Instructions.ExampleLabel}"
+                               Style="{StaticResource HCanLocalizedSectionCaptionText}"
+                               Margin="0,0,6,0"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{lang:TextExt Key=HCanary.Instructions.Example}"
+                               Style="{StaticResource HCanTechnicalTextBlock}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
             </StackPanel>
         </Border>
 
@@ -759,7 +768,9 @@
 
                                                     <TextBlock Grid.Column="0"
                                                                Text="&#xE7BA;"
-                                                               FontFamily="Segoe Fluent Icons"
+                                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                               TextAlignment="Center"
+                                                               FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
                                                                FontSize="16"
                                                                Foreground="{DynamicResource Status.Warning}"
                                                                HorizontalAlignment="Center"

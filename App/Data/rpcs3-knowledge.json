@@ -1,0 +1,2455 @@
+{
+  "schema": 1,
+  "dataVersion": "2026-09-20.1",
+  "sources": [
+    {
+      "id": "wiki-history-removals",
+      "kind": "HistoricalWiki",
+      "name": "Historical-Removal-Classification.csv",
+      "sha256": "07f64264e0d470deb1a445bed039fddef25931ccb187721f11f933003276645d",
+      "date": "2026-09-20",
+      "note": "Editor-claimed removals only; ClaimedFixed is not verified and never a build boundary. Bulk cleanups and unclassified removals are not shipped."
+    },
+    {
+      "id": "rpcs3-source-lifecycle",
+      "kind": "Rpcs3Source",
+      "name": "lifecycle.csv",
+      "sha256": "c18c807c099c4b4bb04336bfab766961722ee604ae4b416841c2397b21cea921",
+      "date": null,
+      "note": "Frozen RPCS3 source 9e86f165d1711b9429d48b0487e7bc5ba0cc9c6c. Build numbers are git commit counts. Lifecycle only."
+    },
+    {
+      "id": "cpu-workbook-thread-scaling",
+      "kind": "HardwareData",
+      "name": "05-Thread-Scaling.csv",
+      "sha256": "00a0f136f5d6ec5f77b8d40292422f51e5b44fce0a2b56d1d795633b1d77ee9b",
+      "date": "2026-06-06",
+      "note": "Community workbook. Informational hardware evidence; never applied."
+    },
+    {
+      "id": "cpu-workbook-tiers",
+      "kind": "HardwareData",
+      "name": "03-Desktop-Cpu-Tiers.csv",
+      "sha256": "d404ba12c59fddd559b8f83365fca1b63af43ef332556deef732c8d5cff68467",
+      "date": "2025-07-08",
+      "note": "Desktop and mobile tier lists (mobile file hashed in the note). Informational hardware evidence; never applied. Mobile list SHA-256 925675291eb25c588920a95b21b6e74c111d152c77d12fa6cbb3635e56701833."
+    }
+  ],
+  "settings": [
+    {
+      "wikiKey": "bind spu threads to secondary cores",
+      "displayName": "Bind SPU threads to secondary cores",
+      "declaredAtFrozenHead": false,
+      "lastChangeBuild": null,
+      "lastChangeCommit": null,
+      "evidence": "NO_HISTORY_FOUND_UNDER_THIS_NAME"
+    },
+    {
+      "wikiKey": "delay each odd mfc command",
+      "displayName": "Delay Each Odd MFC",
+      "declaredAtFrozenHead": false,
+      "lastChangeBuild": null,
+      "lastChangeCommit": null,
+      "evidence": "NO_HISTORY_FOUND_UNDER_THIS_NAME"
+    },
+    {
+      "wikiKey": "disable native float16 support",
+      "displayName": "Disable Native float16 Support",
+      "declaredAtFrozenHead": false,
+      "lastChangeBuild": 14251,
+      "lastChangeCommit": "d246a37b1108ec5579f05e8d9fa509310d6e17ec",
+      "evidence": "LAST_TOUCH_IS_REMOVAL_COMMIT"
+    },
+    {
+      "wikiKey": "enable spu events busy loop",
+      "displayName": "Enable SPU Events Busy Loop",
+      "declaredAtFrozenHead": false,
+      "lastChangeBuild": null,
+      "lastChangeCommit": null,
+      "evidence": "NO_HISTORY_FOUND_UNDER_THIS_NAME"
+    },
+    {
+      "wikiKey": "lower spu thread priority",
+      "displayName": "Lower SPU thread priority",
+      "declaredAtFrozenHead": false,
+      "lastChangeBuild": 12824,
+      "lastChangeCommit": "df96be199b26d01ef13e88d45c75e83ec94e34e7",
+      "evidence": "LAST_TOUCH_IS_REMOVAL_COMMIT"
+    },
+    {
+      "wikiKey": "tsx instructions",
+      "displayName": "Enable TSX",
+      "declaredAtFrozenHead": false,
+      "lastChangeBuild": 18350,
+      "lastChangeCommit": "5893851029134f303b933a6b4b42fc71bfbd0ce6",
+      "evidence": "LAST_TOUCH_IS_REMOVAL_COMMIT"
+    },
+    {
+      "wikiKey": "xfloat accuracy / accurate xfloat",
+      "displayName": "Accurate xfloat",
+      "declaredAtFrozenHead": false,
+      "lastChangeBuild": 15452,
+      "lastChangeCommit": "343ba8733b17deec84fc189a1f348aeeb275d7d1",
+      "evidence": "LAST_TOUCH_IS_REMOVAL_COMMIT"
+    }
+  ],
+  "historicalRemovals": [
+    {
+      "page": "Atelier Ayesha: The Alchemist of Dusk",
+      "wikiKey": "anisotropic filter",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2019-10-29T11:46:45Z",
+      "editComment": "Fixed user error of accidentally added info to AF when they wanted to change AA."
+    },
+    {
+      "page": "Atelier Ayesha: The Alchemist of Dusk",
+      "wikiKey": "anti-aliasing",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2019-10-29T21:21:06Z",
+      "editComment": "turns out it isn\u0027t Navi-specific but a new AMD bug for all its GPUs. should be fixed soon."
+    },
+    {
+      "page": "Catherine",
+      "wikiKey": "anisotropic filter",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2018-03-18T18:16:12Z",
+      "editComment": "Fixed the configuration for Catherine. Still could be wrong though."
+    },
+    {
+      "page": "Catherine",
+      "wikiKey": "lower spu thread priority",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2018-03-18T18:16:12Z",
+      "editComment": "Fixed the configuration for Catherine. Still could be wrong though."
+    },
+    {
+      "page": "Catherine",
+      "wikiKey": "renderer",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2018-03-18T18:16:12Z",
+      "editComment": "Fixed the configuration for Catherine. Still could be wrong though."
+    },
+    {
+      "page": "Disney Universe",
+      "wikiKey": "firmware libraries",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2026-03-10T00:12:15Z",
+      "editComment": "Remove unnecessary setting as the issue was fixed"
+    },
+    {
+      "page": "Formula One Championship Edition",
+      "wikiKey": "enable buffering",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2026-09-15T05:56:25Z",
+      "editComment": "audio issue has been fixed"
+    },
+    {
+      "page": "Formula One Championship Edition",
+      "wikiKey": "silence all logs",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2026-04-04T04:58:40Z",
+      "editComment": "log spam issue has been fixed and this setting is no longer required."
+    },
+    {
+      "page": "Gran Turismo 5 Prologue",
+      "wikiKey": "strict rendering mode",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2022-12-29T01:56:12Z",
+      "editComment": "Flickering text without SRM has been fixed by PR #13136"
+    },
+    {
+      "page": "Grand Theft Auto V",
+      "wikiKey": "disable zcull occlusion queries",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2023-02-01T16:09:27Z",
+      "editComment": "Flickering rainbow glitches are now fixed. Water still looks wrong."
+    },
+    {
+      "page": "Helldivers",
+      "wikiKey": "spu decoder",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2024-12-26T07:09:15Z",
+      "editComment": "Fixed grammar and removed unnecessary settings"
+    },
+    {
+      "page": "Kingdom Hearts HD 2.5 ReMIX",
+      "wikiKey": "force cpu blit emulation",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2025-12-08T21:08:03Z",
+      "editComment": "/* Configuration */ roxas performance issue is now fixed, some settings are no longer required"
+    },
+    {
+      "page": "Kingdom Hearts HD 2.5 ReMIX",
+      "wikiKey": "read color buffers",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2025-12-08T21:08:03Z",
+      "editComment": "/* Configuration */ roxas performance issue is now fixed, some settings are no longer required"
+    },
+    {
+      "page": "LittleBigPlanet 2",
+      "wikiKey": "write color buffers",
+      "reason": "Replaced",
+      "basis": "EDIT_COMMENT_CLAIMS_REPLACED",
+      "observedUntil": "2018-07-25T23:01:29Z",
+      "editComment": "Using the new CPU blit option instead of mentioning it under notes"
+    },
+    {
+      "page": "Lollipop Chainsaw",
+      "wikiKey": "tsx instructions",
+      "reason": "SettingRemoved",
+      "basis": "FIELD_ABSENT_FROM_TEMPLATE_CONFIG_SCHEMA_AT_REMOVAL",
+      "observedUntil": "2025-11-21T17:11:56Z",
+      "editComment": "TSX code was removed in #17702"
+    },
+    {
+      "page": "Metal Gear Solid HD Collection",
+      "wikiKey": "tsx instructions",
+      "reason": "SettingRemoved",
+      "basis": "FIELD_ABSENT_FROM_TEMPLATE_CONFIG_SCHEMA_AT_REMOVAL",
+      "observedUntil": "2025-11-21T17:12:23Z",
+      "editComment": "TSX code was removed in #17702"
+    },
+    {
+      "page": "NCAA Football 13",
+      "wikiKey": "disable async shader compiler",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2020-06-02T22:23:40Z",
+      "editComment": "Fixed shader mode write-up"
+    },
+    {
+      "page": "NCAA Football 14",
+      "wikiKey": "disable async shader compiler",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2020-06-02T22:24:26Z",
+      "editComment": "Fixed shader mode write-up"
+    },
+    {
+      "page": "NHL: Legacy Edition",
+      "wikiKey": "preferred spu threads",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2020-03-11T16:32:03Z",
+      "editComment": "Added basic info and fixed formatting"
+    },
+    {
+      "page": "NHL: Legacy Edition",
+      "wikiKey": "spu block size",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2020-03-11T16:32:03Z",
+      "editComment": "Added basic info and fixed formatting"
+    },
+    {
+      "page": "Plants vs. Zombies",
+      "wikiKey": "enable buffering",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2026-09-15T05:49:51Z",
+      "editComment": "missing audio issue has been fixed"
+    },
+    {
+      "page": "Ratchet \u0026 Clank: Into the Nexus",
+      "wikiKey": "disable on-disk shader cache",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2023-03-10T20:47:25Z",
+      "editComment": "The issue is fixed"
+    },
+    {
+      "page": "Rayman Legends",
+      "wikiKey": "framelimit",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2020-03-13T13:56:07Z",
+      "editComment": "Added basic info and fixed template"
+    },
+    {
+      "page": "Red Dead Redemption",
+      "wikiKey": "relaxed zcull sync",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2021-09-13T13:42:43Z",
+      "editComment": "Fixed relaxed ZCULL option"
+    },
+    {
+      "page": "Red Dead Redemption",
+      "wikiKey": "tsx instructions",
+      "reason": "SettingRemoved",
+      "basis": "FIELD_ABSENT_FROM_TEMPLATE_CONFIG_SCHEMA_AT_REMOVAL",
+      "observedUntil": "2025-11-21T17:13:11Z",
+      "editComment": "TSX code was removed in #17702"
+    },
+    {
+      "page": "Red Dead Redemption: Undead Nightmare",
+      "wikiKey": "tsx instructions",
+      "reason": "SettingRemoved",
+      "basis": "FIELD_ABSENT_FROM_TEMPLATE_CONFIG_SCHEMA_AT_REMOVAL",
+      "observedUntil": "2025-11-21T17:13:27Z",
+      "editComment": null
+    },
+    {
+      "page": "Resistance: Fall of Man",
+      "wikiKey": "anti-aliasing",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2020-10-16T00:08:40Z",
+      "editComment": "VRAM does not infact affect vram usage in this title. Fixed mistake. Also place in vblank note."
+    },
+    {
+      "page": "Resistance: Fall of Man",
+      "wikiKey": "anti-aliasing",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2020-10-22T16:12:06Z",
+      "editComment": "AA note fixed, with details added to the special notes section. Max resolution based on VRAM adjusted with new info."
+    },
+    {
+      "page": "Saints Row IV",
+      "wikiKey": "renderer",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2023-02-06T20:01:42Z",
+      "editComment": "/* Configuration */ Blue fog when clusters are on screen is now fixed."
+    },
+    {
+      "page": "Saints Row: Gat out of Hell",
+      "wikiKey": "renderer",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2022-09-22T13:15:49Z",
+      "editComment": "/* Configuration */ Broken graphics in OpenGL are now fixed."
+    },
+    {
+      "page": "Shift 2 Unleashed",
+      "wikiKey": "firmware libraries",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2022-10-15T00:01:09Z",
+      "editComment": "The game no longer hangs with libsysutil_np_trophy.sprx HLE anymore. Not sure which PR fixed this, but it was somewhere around the 0.0.22 range."
+    },
+    {
+      "page": "Sly Cooper: Thieves in Time",
+      "wikiKey": "asynchronous texture streaming",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2025-10-12T04:03:03Z",
+      "editComment": "Fixed wrong settings that were approved"
+    },
+    {
+      "page": "Sonic \u0026 All-Stars Racing Transformed",
+      "wikiKey": "accurate rsx reservation access",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2025-02-26T07:38:00Z",
+      "editComment": "Two things to note, 1.- the game is now stable, no need for those settings, 2.- the audio issue with the 1.2 update is now fixed"
+    },
+    {
+      "page": "Sonic \u0026 All-Stars Racing Transformed",
+      "wikiKey": "driver wake-up delay",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2025-02-26T07:38:00Z",
+      "editComment": "Two things to note, 1.- the game is now stable, no need for those settings, 2.- the audio issue with the 1.2 update is now fixed"
+    },
+    {
+      "page": "Sonic Unleashed",
+      "wikiKey": "maximum spurs threads",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2024-10-08T20:15:07Z",
+      "editComment": "The setting Maximum SPURS threads no longer works due to regression/some changes, will be added again when its fixed."
+    },
+    {
+      "page": "Sonic Unleashed",
+      "wikiKey": "tsx instructions",
+      "reason": "SettingRemoved",
+      "basis": "FIELD_ABSENT_FROM_TEMPLATE_CONFIG_SCHEMA_AT_REMOVAL",
+      "observedUntil": "2025-11-21T17:13:42Z",
+      "editComment": "TSX code was removed in #17702"
+    },
+    {
+      "page": "The Orange Box",
+      "wikiKey": "spu decoder",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2026-04-08T07:05:52Z",
+      "editComment": "spu llvm issue was fixed"
+    },
+    {
+      "page": "Transformers: War for Cybertron",
+      "wikiKey": "output scaling",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2025-07-12T02:14:17Z",
+      "editComment": "Fixed the settings, was not clear enough before."
+    },
+    {
+      "page": "Worms Ultimate Mayhem",
+      "wikiKey": "firmware settings",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2020-05-08T17:03:44Z",
+      "editComment": "Video image is now fixed without LLEing libvdec.sprx."
+    },
+    {
+      "page": "Yakuza Kenzan!",
+      "wikiKey": "framelimit",
+      "reason": "ClaimedFixed",
+      "basis": "EDIT_COMMENT_CLAIMS_FIXED",
+      "observedUntil": "2021-02-04T15:47:16Z",
+      "editComment": "Removed the fixed issues, there are no known issues. Removed framelimit suggestion (its now auto by default)."
+    }
+  ],
+  "threadScaling": [
+    {
+      "game": "Catherine",
+      "wikiPage": "Catherine",
+      "fpsTarget": "30",
+      "coreThreadConfig": "2C/4T",
+      "cores": 2,
+      "threads": 4,
+      "grade": "GOOD",
+      "sourceLink": "https://youtu.be/0hrSO76g_Zs",
+      "note": null
+    },
+    {
+      "game": "Fist of the North Star: Ken\u0027s Rage",
+      "wikiPage": "Fist of the North Star: Ken\u0027s Rage",
+      "fpsTarget": "30",
+      "coreThreadConfig": "2C/4T",
+      "cores": 2,
+      "threads": 4,
+      "grade": "GOOD",
+      "sourceLink": "https://discord.com/channels/272035812277878785/272875751773306881/1475931670002663546",
+      "note": null
+    },
+    {
+      "game": "God of War 3 / Ascension",
+      "wikiPage": null,
+      "fpsTarget": "30-60",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=13",
+      "note": null
+    },
+    {
+      "game": "Gran Turismo 5 / 6",
+      "wikiPage": null,
+      "fpsTarget": "60",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "BAD",
+      "sourceLink": null,
+      "note": "Set SPU Threads to 1, to play at full speed."
+    },
+    {
+      "game": "Gran Turismo 5 / 6",
+      "wikiPage": null,
+      "fpsTarget": "60",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=91",
+      "note": null
+    },
+    {
+      "game": "Hatsune Miku Games",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "1C/2T",
+      "cores": 1,
+      "threads": 2,
+      "grade": "GOOD",
+      "sourceLink": "https://youtu.be/vzRLWIos9X8",
+      "note": null
+    },
+    {
+      "game": "Infamous",
+      "wikiPage": null,
+      "fpsTarget": "20-30",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/s9sHtMOiy6I?t=282",
+      "note": null
+    },
+    {
+      "game": "Infamous",
+      "wikiPage": null,
+      "fpsTarget": "20-30",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=316",
+      "note": null
+    },
+    {
+      "game": "Killzone 2",
+      "wikiPage": "Killzone 2",
+      "fpsTarget": "30",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/s9sHtMOiy6I?t=196",
+      "note": null
+    },
+    {
+      "game": "Killzone 2",
+      "wikiPage": "Killzone 2",
+      "fpsTarget": "30",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=228",
+      "note": null
+    },
+    {
+      "game": "Killzone 3",
+      "wikiPage": "Killzone 3",
+      "fpsTarget": "30",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "OK",
+      "sourceLink": "https://youtu.be/s9sHtMOiy6I?t=238",
+      "note": null
+    },
+    {
+      "game": "Killzone 3",
+      "wikiPage": "Killzone 3",
+      "fpsTarget": "30",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=278",
+      "note": null
+    },
+    {
+      "game": "Lollipop Chainsaw",
+      "wikiPage": "Lollipop Chainsaw",
+      "fpsTarget": "30",
+      "coreThreadConfig": "4C/4T",
+      "cores": 4,
+      "threads": 4,
+      "grade": "GOOD",
+      "sourceLink": "https://youtu.be/Oov0-PmyeQY",
+      "note": null
+    },
+    {
+      "game": "Metal Gear Solid 4",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=43",
+      "note": null
+    },
+    {
+      "game": "Midnight Club: Los Angeles",
+      "wikiPage": "Midnight Club: Los Angeles",
+      "fpsTarget": "30",
+      "coreThreadConfig": "4C/8T",
+      "cores": 4,
+      "threads": 8,
+      "grade": "GOOD",
+      "sourceLink": "https://youtu.be/WH3TzVtd32w",
+      "note": null
+    },
+    {
+      "game": "Motorstorm",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "1C/2T",
+      "cores": 1,
+      "threads": 2,
+      "grade": "UNPLAYABLE",
+      "sourceLink": null,
+      "note": null
+    },
+    {
+      "game": "Motorstorm",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "2C/4T",
+      "cores": 2,
+      "threads": 4,
+      "grade": "GOOD",
+      "sourceLink": "https://discord.com/channels/272035812277878785/272875751773306881/1475919005024784415",
+      "note": null
+    },
+    {
+      "game": "Motorstorm Apocalypse",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "GOOD",
+      "sourceLink": "https://youtu.be/6VQHWReYEpQ",
+      "note": null
+    },
+    {
+      "game": "Motorstorm Apocalypse",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=187",
+      "note": null
+    },
+    {
+      "game": "Motorstorm Pacific Rift",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "2C/4T",
+      "cores": 2,
+      "threads": 4,
+      "grade": "GOOD",
+      "sourceLink": "https://discord.com/channels/272035812277878785/272875751773306881/1475926890500984994",
+      "note": null
+    },
+    {
+      "game": "Persona 5",
+      "wikiPage": "Persona 5",
+      "fpsTarget": "30",
+      "coreThreadConfig": "4C/4T",
+      "cores": 4,
+      "threads": 4,
+      "grade": "OK",
+      "sourceLink": "https://youtu.be/Zh_bRbJs2SQ?t=327",
+      "note": null
+    },
+    {
+      "game": "Ratchet \u0026 Clank Future: Tools of Destruction",
+      "wikiPage": "Ratchet \u0026 Clank Future: Tools of Destruction",
+      "fpsTarget": "60",
+      "coreThreadConfig": "1C/2T",
+      "cores": 1,
+      "threads": 2,
+      "grade": "UNPLAYABLE",
+      "sourceLink": null,
+      "note": null
+    },
+    {
+      "game": "Ratchet \u0026 Clank Future: Tools of Destruction",
+      "wikiPage": "Ratchet \u0026 Clank Future: Tools of Destruction",
+      "fpsTarget": "60",
+      "coreThreadConfig": "4C/4T",
+      "cores": 4,
+      "threads": 4,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/oehFVhuiuVA?t=294",
+      "note": null
+    },
+    {
+      "game": "Ratchet \u0026 Clank Future: Tools of Destruction",
+      "wikiPage": "Ratchet \u0026 Clank Future: Tools of Destruction",
+      "fpsTarget": "60",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=214",
+      "note": null
+    },
+    {
+      "game": "Red Dead Redemption",
+      "wikiPage": "Red Dead Redemption",
+      "fpsTarget": "30",
+      "coreThreadConfig": "4C/4T",
+      "cores": 4,
+      "threads": 4,
+      "grade": "UNPLAYABLE",
+      "sourceLink": "https://youtu.be/oehFVhuiuVA?t=224",
+      "note": null
+    },
+    {
+      "game": "Red Dead Redemption",
+      "wikiPage": "Red Dead Redemption",
+      "fpsTarget": "30",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "GOOD",
+      "sourceLink": "https://youtu.be/s9sHtMOiy6I?t=60",
+      "note": null
+    },
+    {
+      "game": "Red Dead Redemption",
+      "wikiPage": "Red Dead Redemption",
+      "fpsTarget": "30",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=58",
+      "note": null
+    },
+    {
+      "game": "Skate 2",
+      "wikiPage": "Skate 2",
+      "fpsTarget": "60",
+      "coreThreadConfig": "2C/4T",
+      "cores": 2,
+      "threads": 4,
+      "grade": "UNPLAYABLE",
+      "sourceLink": null,
+      "note": "24/02/2026 - 13900K - Crashes. Tested SPU Threads and SPURS."
+    },
+    {
+      "game": "Skate 3",
+      "wikiPage": "Skate 3",
+      "fpsTarget": "60",
+      "coreThreadConfig": "2C/4T",
+      "cores": 2,
+      "threads": 4,
+      "grade": "BAD",
+      "sourceLink": null,
+      "note": null
+    },
+    {
+      "game": "Skate 3",
+      "wikiPage": "Skate 3",
+      "fpsTarget": "60",
+      "coreThreadConfig": "4C/4T",
+      "cores": 4,
+      "threads": 4,
+      "grade": "BAD",
+      "sourceLink": null,
+      "note": null
+    },
+    {
+      "game": "Skate 3",
+      "wikiPage": "Skate 3",
+      "fpsTarget": "60",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "BAD",
+      "sourceLink": null,
+      "note": null
+    },
+    {
+      "game": "Skate 3",
+      "wikiPage": "Skate 3",
+      "fpsTarget": "60",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=157",
+      "note": null
+    },
+    {
+      "game": "Sonic Unleashed",
+      "wikiPage": "Sonic Unleashed",
+      "fpsTarget": "10 to 50",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/s9sHtMOiy6I?t=339",
+      "note": null
+    },
+    {
+      "game": "Sonic Unleashed",
+      "wikiPage": "Sonic Unleashed",
+      "fpsTarget": "10 to 50",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=112",
+      "note": null
+    },
+    {
+      "game": "The Last of Us",
+      "wikiPage": "The Last of Us",
+      "fpsTarget": "30",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "BAD",
+      "sourceLink": null,
+      "note": "The Game seems to crash a lot."
+    },
+    {
+      "game": "The Last of Us",
+      "wikiPage": "The Last of Us",
+      "fpsTarget": "30",
+      "coreThreadConfig": "8C/8T",
+      "cores": 8,
+      "threads": 8,
+      "grade": "GREAT",
+      "sourceLink": "https://youtu.be/6zgjwyctY8c?t=142",
+      "note": null
+    },
+    {
+      "game": "Uncharted",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "GOOD",
+      "sourceLink": "https://youtu.be/iLnePrbJGCk?t=1031",
+      "note": null
+    },
+    {
+      "game": "Uncharted 2",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "GOOD",
+      "sourceLink": "https://youtu.be/iLnePrbJGCk?t=1193",
+      "note": "SPU Threads 2"
+    },
+    {
+      "game": "Uncharted 3",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "BAD",
+      "sourceLink": null,
+      "note": "The Game seems to crash a lot."
+    },
+    {
+      "game": "Wipeout HD",
+      "wikiPage": null,
+      "fpsTarget": "60",
+      "coreThreadConfig": "2C/4T",
+      "cores": 2,
+      "threads": 4,
+      "grade": "OK",
+      "sourceLink": null,
+      "note": null
+    },
+    {
+      "game": "Yakuza: Dead Souls \u0026 Older",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "1C/2T",
+      "cores": 1,
+      "threads": 2,
+      "grade": "UNPLAYABLE",
+      "sourceLink": null,
+      "note": null
+    },
+    {
+      "game": "Yakuza: Dead Souls \u0026 Older",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "4C/4T",
+      "cores": 4,
+      "threads": 4,
+      "grade": "GOOD",
+      "sourceLink": "https://youtu.be/Zh_bRbJs2SQ?t=356",
+      "note": null
+    },
+    {
+      "game": "Yakuza: Dead Souls \u0026 Older",
+      "wikiPage": null,
+      "fpsTarget": "30",
+      "coreThreadConfig": "6C/6T",
+      "cores": 6,
+      "threads": 6,
+      "grade": "GOOD",
+      "sourceLink": "https://youtu.be/jEROzyH5p_c",
+      "note": null
+    }
+  ],
+  "cpuTiers": [
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "R5 7600X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "U5 245K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "i5-12600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "i5-12600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "i5-13600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "i5-14600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "i7-11700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "i7-12700"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "i7-12700"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "i7-12700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "i9-12900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "A",
+      "cpu": "i9-12900KS"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "B",
+      "cpu": "R7 5800X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "B",
+      "cpu": "R7 5800X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "B",
+      "cpu": "R9 5900X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "B",
+      "cpu": "R9 5950X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "B",
+      "cpu": "i3-12100"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "B",
+      "cpu": "i5-11600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "B",
+      "cpu": "i5-12400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "B",
+      "cpu": "i7-10700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "B",
+      "cpu": "i9-10900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "B",
+      "cpu": "i9-9900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "R5 3600"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "R5 5600G"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "R5 5600X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "R7 3700X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "R7 3800X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "R7 5700G"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "R9 3900X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "R9 3950X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "i3-12100"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "i5-10400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "i5-10600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "C",
+      "cpu": "i7-8700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "D",
+      "cpu": "Intel 7000 - 4000 4c/8t"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "D",
+      "cpu": "R7 2700X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "D",
+      "cpu": "Ryzen 1000 - 2000 8c/16t"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "D",
+      "cpu": "i5-8400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "D",
+      "cpu": "i5-8600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "D",
+      "cpu": "i5-9400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "D",
+      "cpu": "i5-9600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "D",
+      "cpu": "i7-4790K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "D",
+      "cpu": "i7-7700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "E",
+      "cpu": "Any 4c/4t CPU"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "E",
+      "cpu": "R5 2600"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "E",
+      "cpu": "R5 3400G"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "E",
+      "cpu": "R7 1700"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "E",
+      "cpu": "Ryzen 1000 - 2000 6c/12t or worse"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "E",
+      "cpu": "i5-4690"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "E",
+      "cpu": "i5-4690K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "E",
+      "cpu": "i5-6600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "E",
+      "cpu": "i5-7600k"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "R7 7700X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "R7 7800X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "R9 7900X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "R9 7950X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "R9 7950X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "U7 265K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "U9 285K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "i7-13700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "i7-14700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "i9-11900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "i9-13900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "i9-13900KS"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S",
+      "cpu": "i9-14900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S\u002B",
+      "cpu": "R7 9800X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S\u002B",
+      "cpu": "R9 9950X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S\u002B",
+      "cpu": "i7-12700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Overclocked",
+      "tier": "S\u002B",
+      "cpu": "i9-12900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "A",
+      "cpu": "R5 7500F"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "A",
+      "cpu": "R5 7600X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "A",
+      "cpu": "R5 9600X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "A",
+      "cpu": "U5 245K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "A",
+      "cpu": "i5-13600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "A",
+      "cpu": "i5-14600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "A",
+      "cpu": "i7-12700"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "A",
+      "cpu": "i9-12900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "A",
+      "cpu": "i9-12900KS"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "B",
+      "cpu": "R7 5800X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "B",
+      "cpu": "R9 5900X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "B",
+      "cpu": "R9 5950X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "B",
+      "cpu": "i5-12400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "B",
+      "cpu": "i5-12600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "B",
+      "cpu": "i5-12600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "B",
+      "cpu": "i7-11700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "B",
+      "cpu": "i7-12700"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "B",
+      "cpu": "i7-12700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "B",
+      "cpu": "i9-11900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R5 3600"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R5 5600X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R5-5600G"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R7 3700X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R7 3800X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R7 5700G"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R7 5700X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R7 5700X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R7 5800X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R9 3900X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "R9 3950X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i3-12100"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i3-12100"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i5-10400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i5-10600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i5-11400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i5-11600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i5-12400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i5-13400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i5-13500"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i5-14400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i7-10700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i7-8700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i9-10900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "C",
+      "cpu": "i9-9900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "D",
+      "cpu": "Intel 7000 - 4000 4c/8t"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "D",
+      "cpu": "R7 1700"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "D",
+      "cpu": "R7 2700X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "D",
+      "cpu": "Ryzen 1000 - 2000 8c/16t"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "D",
+      "cpu": "i5-8400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "D",
+      "cpu": "i5-8600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "D",
+      "cpu": "i5-9400"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "D",
+      "cpu": "i5-9600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "D",
+      "cpu": "i7-4790K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "D",
+      "cpu": "i7-7700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "E",
+      "cpu": "Any 4c/4t CPU"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "E",
+      "cpu": "R5 1600AF"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "E",
+      "cpu": "R5 2600"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "E",
+      "cpu": "R5 3400G"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "E",
+      "cpu": "Ryzen 1000 - 2000 6c/12t or worse"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "E",
+      "cpu": "i5-4690"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "E",
+      "cpu": "i5-4690K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "E",
+      "cpu": "i5-6600K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "E",
+      "cpu": "i5-7600k"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "F",
+      "cpu": "AMD FX CPUs"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "F",
+      "cpu": "Anything Older"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "F",
+      "cpu": "Intel\u0027s 2nd and 3rd Gen"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "R7 7700X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "R7 7800X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "R7 9700X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "R9 7900X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "R9 7950X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "R9 7950X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "R9 9900X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "R9 9950X"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "U7 265K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "U9 285K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "i7-13700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "i7-14700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "i9-13900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "i9-13900KS"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "i9-14900K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S",
+      "cpu": "i9-14900KS"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S\u002B",
+      "cpu": "R7 9800X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S\u002B",
+      "cpu": "R7 9850X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S\u002B",
+      "cpu": "R9 9950X3D"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S\u002B",
+      "cpu": "i7-12700K"
+    },
+    {
+      "list": "DESKTOP",
+      "block": "Stock",
+      "tier": "S\u002B",
+      "cpu": "i9-12900K"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "4 Cores / 8 Threads"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "4 Cores / 8 Threads"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "6 P-Cores / 8-Ecores (?) / 22 Threads"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "8 Cores / 16 Threads"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "8 Cores / 16 Threads"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "8 Cores / 16 Threads"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "8 Cores / 16 Threads"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "Cores / Threads"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "R9-7945HX"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "i9-13980HX"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "A",
+      "cpu": "i9-14900HX"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "B",
+      "cpu": "I7-13620H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "B",
+      "cpu": "i7-11800H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "B",
+      "cpu": "i7-11850H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "B",
+      "cpu": "i7-12650H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "B",
+      "cpu": "i7-14650HX"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "B",
+      "cpu": "i9-11900H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "B",
+      "cpu": "i9-11950H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "B",
+      "cpu": "i9-11980HK"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "B",
+      "cpu": "i9-12900HX"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "16 GB - 5500 MT/s quad 32-bit channels"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "16 GB - 6400 MT/s"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "16 GB - 6400 MT/s Dual Channel"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "16 GB - 6400 MT/s quad 32-bit channels"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "16 GB - 7500 MT/s"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "2x12 GB - (?) 7500 MT/s Dual Channel"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "32 / 64 GB - 7500 MT/s"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "GPD Win Max 2"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "Legion Go"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R5-5600H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R5-5600HS"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R7-4800H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R7-5800H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R7-5800HS"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R7-6800H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R7-7840U"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R7-8840U"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R9-5900HX"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R9-5980HS"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R9-5980HX"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "R9-6900HX"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "RAM"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "ROG Ally"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "ROG Ally X"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "i5-11400H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "i5-11600H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "i7-10850H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "i7-10870H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "C",
+      "cpu": "i7-10875H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "D",
+      "cpu": "R7-6800U"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "D",
+      "cpu": "Steam Deck LCD"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "D",
+      "cpu": "Steam Deck OLED"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "D",
+      "cpu": "i5-8300H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "D",
+      "cpu": "i7-1165G7 (?)"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "D",
+      "cpu": "i7-7700HQ"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "D",
+      "cpu": "i7-8750H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "AMD Radeon 780M"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "AMD Radeon\u2122 Graphics"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "Any 4c/4t CPU"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "GPU"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "Intel\u00AE Arc\u2122 Graphics"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "RDNA 2, 8 CUs @ 1.6GHz"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "RDNA 2, 8 CUs @ 1.6GHz"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "RDNA 3, 12 CUs @ 2.7GHz"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "RDNA 3, 12 CUs @ 2.7GHz"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "i3-N305"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "i5-1035G1"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "i5-7300HQ"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "i5-8250U"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "E",
+      "cpu": "i7-4700MQ"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "10 - 25w (?)"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "4 - 15w"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "4 - 15w"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "9 - 30w"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "9 - 30w"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "?"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "? - 65w (?)"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "AMD FX CPUs"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "Anything Older"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "Intel 7000 - 100 U Series"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "Intel\u0027s 2nd and 3rd Gen"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "N100"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "N200"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "N50"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "Power"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "i3-1005G1"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "i3-10110U"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "F",
+      "cpu": "i5-4300M"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S",
+      "cpu": "6nm Zen 2"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S",
+      "cpu": "7nm Zen 2"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S",
+      "cpu": "CPU"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S",
+      "cpu": "R7-7840U"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S",
+      "cpu": "R7-7840U"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S",
+      "cpu": "R7-7840U"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S",
+      "cpu": "R7-8840U"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S",
+      "cpu": "Ultra 7 155H"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S\u002B",
+      "cpu": "GPD Win Max 2"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S\u002B",
+      "cpu": "Handheld"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S\u002B",
+      "cpu": "Legion Go"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S\u002B",
+      "cpu": "MSI CLAW A1M"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S\u002B",
+      "cpu": "Rog Ally"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S\u002B",
+      "cpu": "Rog Ally X"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S\u002B",
+      "cpu": "Steam Deck LCD"
+    },
+    {
+      "list": "MOBILE_WIP",
+      "block": "Main",
+      "tier": "S\u002B",
+      "cpu": "Steam Deck OLED"
+    }
+  ]
+}

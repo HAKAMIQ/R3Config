@@ -21,6 +21,8 @@ internal static class WikiCorpusT
             "CF42617F57C76BB17DCAB8859141ACBF5C446A0A7D1B7114C60E3C596AA0BC61",
             "C8DF0F2998310104DD3B30ED115D7A41CE1BDA7C1B594B2C4B5DA684BD1E36A1"
         };
+    // Historical June ZIP regression has its own identity, independent of the
+    // currently shipped September catalog. Its archive/count pins stay unchanged.
     private const string ExpectedXmlHash =
         "254A0A41870C54048C94F61B2FF5AE9CEEFE7CC55F246C331DF9382B564BE452";
     private const string EntryName = "RPCS3+Wiki-20260613075133.xml";
@@ -35,6 +37,11 @@ internal static class WikiCorpusT
     public static void Fixture(string tempRoot)
     {
         HistoryAndRoleAwareBindings(tempRoot);
+        MappingSchemaRegression(tempRoot);
+        ShippedSchema(Path.Combine(AppContext.BaseDirectory, "Data", "cat.json"), tempRoot);
+        SemanticRecommendationInvariants(tempRoot);
+        TemplateDefaultsDoNotBecomeRecommendations(tempRoot);
+        RuntimeCatalogLoadKeepsProvenanceSeparate(tempRoot);
 
         var path = Path.Combine(tempRoot, "wiki-corpus-fixture.xml");
         File.WriteAllText(
@@ -118,9 +125,13 @@ internal static class WikiCorpusT
         var patchDependentSetting = compatibilityAnalysis.Recommendations.Single(entry =>
             entry.WikiKey == "write depth buffers");
         Assert(
-            patchDependentSetting.IncludedInCatalog &&
-            patchDependentSetting.Classification == WikiRecommendationClass.GeneralRecommendation,
-            "Expected configuration required unless a patch is used to remain in the safe catalog for downstream PatchDependent handling.");
+            !patchDependentSetting.IncludedInCatalog &&
+            patchDependentSetting.Classification == WikiRecommendationClass.PatchSpecific &&
+            RecPol.Classify(
+                patchDependentSetting.WikiKey,
+                patchDependentSetting.RawWikiValue,
+                patchDependentSetting.Notes) == RecRisk.PatDep,
+            "Patch-dependent configuration must stay PatchSpecific and excluded from Game Defaults while retaining PatDep risk semantics.");
         var loaded = WikiSvc.Load(compatibilityPath);
         Assert(loaded.Find("BLUS31465") is not null &&
                loaded.Find("BLES02061") is not null &&
@@ -138,6 +149,46 @@ internal static class WikiCorpusT
 
         Assert(conflictRejected,
             "Expected the WikiSvc.Load compatibility facade to retain fail-closed conflict behavior.");
+    }
+
+    private static void RuntimeCatalogLoadKeepsProvenanceSeparate(string tempRoot)
+    {
+        var root = Path.Combine(tempRoot, "RuntimeCatalogProvenance");
+        var dataDirectory = Path.Combine(root, "Data");
+        Directory.CreateDirectory(dataDirectory);
+
+        var evidenceCatalog = RecSvc.FromRec(
+            "RPCS3 Wiki snapshot",
+            "2026-09-07",
+            [
+                new WikiRec(
+                    "BLUS39000",
+                    "Runtime Evidence Fixture",
+                    [
+                        new CfgChg(
+                            "Video",
+                            "Write Color Buffers",
+                            "true",
+                            "write color buffers",
+                            null,
+                            RecRisk.Required,
+                            WikiRecommendationClass.MandatoryGameConfig)
+                    ])
+            ],
+            new DateTimeOffset(2026, 9, 7, 0, 0, 0, TimeSpan.Zero),
+            "410AACCBD9A77637671D6DEB6768CD1D7E7506FF83C8197265BEEA34CACB2097");
+        evidenceCatalog.Save(Path.Combine(dataDirectory, "cat.json"));
+
+        var result = new RecommendationCatalogUseCase(new CatSvc())
+            .LoadData(root);
+
+        Assert(result.Cat is not null &&
+               result.Error is null &&
+               result.Cat.DataVer == "2026-09-07" &&
+               result.Cat.SrcHash.Equals(
+                   "410AACCBD9A77637671D6DEB6768CD1D7E7506FF83C8197265BEEA34CACB2097",
+                   StringComparison.OrdinalIgnoreCase),
+            "Runtime catalog loading must validate the catalog structurally without rewriting or enforcing canonical provenance; canonical identity belongs to parity/release gates.");
     }
 
     private static void HistoryAndRoleAwareBindings(string tempRoot)
@@ -208,6 +259,11 @@ internal static class WikiCorpusT
             ==Configuration==
             {{config|renderer=<!-- OpenGL, Vulkan, Disabled -->}}
             ]]></text></revision></page>
+              <page><title>Primary and Demo</title><ns>0</ns><id>708</id><revision><id>13</id><timestamp>2024-12-14T00:00:00Z</timestamp><text><![CDATA[
+            {{vginfobox|gameid={{gameid|id=BLUS30004}}<br>'''''Demo'''''<br>{{gameid|id=NPUB90228}}}}
+            ==Configuration==
+            {{config|write color buffers=On}}
+            ]]></text></revision></page>
               <page><title>History Game</title><ns>0</ns><id>900</id><revision><id>100</id><timestamp>2024-01-01T00:00:00Z</timestamp><text><![CDATA[
             {{vginfobox|gameid={{gameid|id=BLUS39990}}}}
             ==Configuration==
@@ -252,8 +308,24 @@ internal static class WikiCorpusT
             "Expected the dedicated Dynasty Warriors 8: Xtreme Legends primary binding to beat the related-edition reference.");
         Assert(dynasty.GameIdBindings.Single(binding => binding.Serial == "BLUS31541").Role ==
                WikiGameIdRole.Unknown &&
-               analysis.CatalogRecommendations.All(item => item.Serial != "BLUS31541"),
-            "Expected an unrecognized variant label to remain Unknown and excluded from config binding.");
+               analysis.CatalogRecommendations.Single(item => item.Serial == "BLUS31541").Changes.Count == 1,
+            "An unfamiliar release label must not erase a serial explicitly covered by unrestricted page configuration.");
+
+        var demonsSoulsPrimary = analysis.CatalogRecommendations
+            .Single(item => item.Serial == "BLES00932");
+        Assert(analysis.CatalogRecommendations.Single(item => item.Serial == "BLUD80018").Changes.Count == 1 &&
+               !demonsSoulsPrimary.IsInherited &&
+               demonsSoulsPrimary.Binding == WikiGameIdRole.Primary,
+            "An explicit Trade Demo GameID is covered by unrestricted page configuration; its source role remains intact.");
+
+        var primaryAndDemo = analysis.Pages.Single(page => page.Title == "Primary and Demo");
+        Assert(primaryAndDemo.GameIdBindings.Single(binding => binding.Serial == "BLUS30004").Role ==
+                   WikiGameIdRole.Primary &&
+               primaryAndDemo.GameIdBindings.Single(binding => binding.Serial == "NPUB90228").Role ==
+                   WikiGameIdRole.Demo &&
+               analysis.CatalogRecommendations.Single(item => item.Serial == "BLUS30004").Changes.Count == 1 &&
+               analysis.CatalogRecommendations.Single(item => item.Serial == "NPUB90228").Changes.Count == 1,
+            "Explicit Demo GameIDs share unrestricted page recommendations without changing their source release role.");
 
         var lightning = analysis.Pages.Single(page => page.Title == "Lightning Returns: Final Fantasy XIII");
         var lightningPlayView = analysis.Pages.Single(page => page.Title == "Lightning Returns Final FantasyXIII PlayView");
@@ -302,9 +374,593 @@ internal static class WikiCorpusT
                analysis.Pages.All(page =>
                    !page.Serials.Contains("BLUS39990", StringComparer.OrdinalIgnoreCase) &&
                    !page.Serials.Contains("BLUS39991", StringComparer.OrdinalIgnoreCase)) &&
-               analysis.Stats.HistoricalPageBlocks == 16 &&
-               analysis.Stats.TotalRevisions == 16,
+               analysis.Stats.HistoricalPageBlocks == 17 &&
+               analysis.Stats.TotalRevisions == 17,
             "Expected timestamp then revision-id ordering across repeated PageId blocks to retain only the newest revision.");
+    }
+
+// Independent acceptance snapshot reviewed against RPCS3 54014a7de4b2ccec98c9c0cb7dbebec0606c5cd6.
+    // Source declarations, formatter lines and build conditions: docs/CatalogSchemaAudit-2026-09-09.md.
+    // This validates the shipped catalog without assigning its provenance canonical authority.
+    public static void ShippedSchema(string catalogPath, string tempRoot)
+    {
+        const string schema = """
+            Audio|Audio Format|enum|Stereo;Surround 5.1;Surround 7.1;Automatic;Manual|audio format
+            Audio|Desired Audio Buffer Duration|int|4;250|audio buffer duration
+            Audio|Enable Buffering|bool|true;false|enable buffering
+            Audio|Enable Time Stretching|bool|true;false|enable time stretching
+            Audio|Microphone Type|enum|Null;Standard;SingStar;Real SingStar;Rocksmith|microphone type
+            Core|Accurate PPU 128-byte Reservation Op Max Length|int|-1;14|accurate ppu 128 reservations
+            Core|Accurate RSX reservation access|bool|true;false|accurate rsx reservation access
+            Core|Accurate SPU DMA|bool|true;false|accurate spu dma
+            Core|Debug Console Mode|bool|true;false|debug console mode
+            Core|Disable SPU GETLLAR Spin Optimization|bool|true;false|disable spu getllar spin optimization
+            Core|Libraries Control|list|<name>.sprx:lle|firmware libraries
+            Core|Max SPURS Threads|int|1;6|maximum spurs threads
+            Core|PPU Decoder|enum|Interpreter (static);Recompiler (LLVM)|ppu decoder
+            Core|PPU Threads|int|1;8|ppu thread count
+            Core|Preferred SPU Threads|int|0;6|preferred spu threads
+            Core|RSX FIFO Fetch Accuracy|enum|Fast;Atomic;Ordered & Atomic;PS3|rsx fifo accuracy
+            Core|Sleep Timers Accuracy|enum|As Host;Usleep Only;All Timers|sleep timers accuracy
+            Core|SPU Block Size|enum|Safe;Mega;Giga|spu block size
+            Core|SPU Decoder|enum|Interpreter (static);Interpreter (dynamic);Recompiler (ASMJIT);Recompiler (LLVM)|spu decoder
+            Core|SPU loop detection|bool|true;false|enable spu loop detection
+            Core|SPU XFloat Accuracy|enum|Accurate;Approximate;Relaxed;Inaccurate|spu xfloat accuracy;xfloat accuracy
+            Input/Output|Camera|enum|Null;Fake;Qt;SDL|camera settings
+            Input/Output|Camera type|enum|Unknown;EyeToy;PS Eye;UVC 1.1|camera input
+            Input/Output|Keyboard|enum|Null;Basic|keyboard handler
+            Input/Output|Mouse|enum|Null;Basic;Raw|mouse handler
+            Input/Output|Move|enum|Null;Real;Fake;Mouse;Raw Mouse|move handler
+            Net|Internet enabled|enum|Disconnected;Connected|network status
+            Net|PSN status|enum|Disconnected;Simulated;RPCN|psn status
+            Video|Accurate ZCULL stats|bool|true;false|zcull accuracy
+            Video|Allow Host GPU Labels|bool|true;false|allow host gpu labels
+            Video|Anisotropic Filter Override|int|0;16|anisotropic filter
+            Video|Disable Asynchronous Memory Manager|bool|true;false|disable asynchronous memory manager
+            Video|Disable Vertex Cache|bool|true;false|disable vertex cache
+            Video|Disable ZCull Occlusion Queries|bool|true;false|disable zcull occlusion queries
+            Video|Driver Wake-Up Delay|int|0;16667|driver wake-up delay
+            Video|Emulate Special Depth Comparison|bool|true;false|emulate special depth comparison
+            Video|Force CPU Blit|bool|true;false|force cpu blit emulation
+            Video|Frame limit|enum|Off;30;50;60;120;Display;Auto;PS3 Native;Infinite|framelimit
+            Video|Handle RSX Memory Tiling|bool|true;false|handle rsx memory tiling
+            Video|Minimum Scalable Dimension|int|1;1024|resolution scale threshold
+            Video|MSAA|enum|Disabled;Auto|anti-aliasing
+            Video|Multithreaded RSX|bool|true;false|multithreaded rsx
+            Video|Read Color Buffers|bool|true;false|read color buffers
+            Video|Read Depth Buffer|bool|true;false|read depth buffers
+            Video|Relaxed ZCULL Sync|bool|true;false|zcull accuracy
+            Video|Renderer|enum|Null;OpenGL;Vulkan|renderer
+            Video|Resolution|enum|1920x1080;1920x1080i;1280x720;720x480;720x480i;720x576;720x576i;1600x1080;1440x1080;1280x1080;960x1080|default resolution
+            Video|Resolution Scale|int|25;800|resolution scale
+            Video|Shader Mode|enum|Legacy Recompiler (single-threaded);Async Recompiler (multi-threaded);Async Recompiler with Shader Interpreter;Shader Interpreter only|shader mode
+            Video|Shader Precision|enum|Auto;Ultra;High;Low|shader quality
+            Video|Strict Rendering Mode|bool|true;false|strict rendering mode
+            Video|Texture LOD Bias Addend|float|-32;32|lod bias offset
+            Video|Vblank NTSC Fixup|bool|true;false|vblank ntsc fixup
+            Video|Vblank Rate|int|1;6000|vblank rate
+            Video|VSync Mode|enum|Disabled;Adaptive;Full|vsync
+            Video|Vulkan.Asynchronous Texture Streaming|bool|true;false|asynchronous texture streaming
+            Video|Write Color Buffers|bool|true;false|write color buffers
+            Video|Write Depth Buffer|bool|true;false|write depth buffers
+            """;
+        var rules = schema.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim().Split('|'))
+            .ToDictionary(parts => (parts[0], parts[1]));
+        var catalog = RecSvc.Load(catalogPath);
+        var changes = catalog.Rec.SelectMany(game => game.Changes).ToArray();
+        var distinct = changes.DistinctBy(change => (change.Section, change.Key, change.Value))
+            .OrderBy(change => change.Section, StringComparer.Ordinal)
+            .ThenBy(change => change.Key, StringComparer.Ordinal)
+            .ThenBy(change => change.Value, StringComparer.Ordinal)
+            .ToArray();
+        var failures = new List<string>();
+        var unknown = 0;
+        var invalid = 0;
+        var ranges = 0;
+        var ambiguous = 0;
+        var composite = 0;
+        foreach (var game in catalog.Rec.OrderBy(game => game.Serial, StringComparer.Ordinal))
+        {
+            foreach (var duplicate in game.Changes.GroupBy(change => (change.Section, change.Key))
+                         .Where(group => group.Count() != 1))
+            {
+                ambiguous++;
+                failures.Add($"{game.Serial}: duplicate/conflicting setting {duplicate.Key}.");
+            }
+
+            foreach (var change in game.Changes)
+            {
+                var identity = $"{game.Serial}; version=unspecified; {change.WikiKey}/{change.Class}; " +
+                               $"{change.Section}/{change.Key}={change.Value}";
+                if (!rules.TryGetValue((change.Section, change.Key), out var rule))
+                {
+                    unknown++;
+                    failures.Add($"{identity}: UNKNOWN_KEY; no pinned canonical mapping; NO ACTION.");
+                    continue;
+                }
+
+                if (!rule[4].Split(';').Contains(change.WikiKey, StringComparer.Ordinal) ||
+                    change.Class is not (WikiRecommendationClass.MandatoryGameConfig or
+                        WikiRecommendationClass.GeneralRecommendation))
+                {
+                    ambiguous++;
+                    failures.Add($"{identity}: source alias/category is not an actionable catalog mapping; NO ACTION.");
+                }
+
+                var allowed = rule[3].Split(';');
+                var valid = rule[2] switch
+                {
+                    "bool" or "enum" => allowed.Contains(change.Value, StringComparer.Ordinal),
+                    "int" => long.TryParse(change.Value,
+                        System.Globalization.NumberStyles.AllowLeadingSign,
+                        System.Globalization.CultureInfo.InvariantCulture, out var integer) &&
+                        integer >= long.Parse(allowed[0], System.Globalization.CultureInfo.InvariantCulture) &&
+                        integer <= long.Parse(allowed[1], System.Globalization.CultureInfo.InvariantCulture),
+                    "float" => decimal.TryParse(change.Value,
+                        System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out var number) &&
+                        number >= decimal.Parse(allowed[0], System.Globalization.CultureInfo.InvariantCulture) &&
+                        number <= decimal.Parse(allowed[1], System.Globalization.CultureInfo.InvariantCulture),
+                    // Libraries Control is RPCS3's cfg::set_entry: a sorted,
+                    // de-duplicated list of "<name>.sprx:lle" entries.
+                    "list" => change.Value.Split(", ").Length > 0 &&
+                        change.Value.Split(", ").All(entry =>
+                            System.Text.RegularExpressions.Regex.IsMatch(entry, @"^[A-Za-z0-9_.-]+.sprx:lle$")) &&
+                        change.Value.Split(", ").SequenceEqual(
+                            change.Value.Split(", ").Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)),
+                    _ => false
+                };
+                if (!valid)
+                {
+                    invalid++;
+                    if (rule[2] is "int" or "float")
+                    {
+                        ranges++;
+                    }
+
+                    failures.Add($"{identity}: expected {rule[2]} [{rule[3]}]; INVALID_VALUE; NO ACTION.");
+                }
+            }
+
+            var zcull = game.Changes.Where(change => change.WikiKey == "zcull accuracy").ToArray();
+            if (zcull.Length > 0)
+            {
+                composite++;
+                var relaxed = zcull.SingleOrDefault(change => change.Key == "Relaxed ZCULL Sync")?.Value;
+                var accurate = zcull.SingleOrDefault(change => change.Key == "Accurate ZCULL stats")?.Value;
+                if (zcull.Length != 2 ||
+                    (relaxed, accurate) is not (("false", "true") or ("false", "false") or ("true", "false")))
+                {
+                    ambiguous++;
+                    failures.Add($"{game.Serial}: ZCULL must retain exactly one supported two-setting pair; NO ACTION.");
+                }
+            }
+        }
+
+        var serialization = 0;
+        var yamlPath = Path.Combine(tempRoot, "shipped-schema-roundtrip.yml");
+        foreach (var change in distinct)
+        {
+            // One setting per prepared document avoids hiding conflicts through last-write-wins.
+            var prepared = R3Yaml.Build(yamlPath, [change]);
+            var yaml = new YamlDotNet.RepresentationModel.YamlStream();
+            yaml.Load(new StringReader(prepared));
+            var root = (YamlDotNet.RepresentationModel.YamlMappingNode)yaml.Documents.Single().RootNode;
+            var section = (YamlDotNet.RepresentationModel.YamlMappingNode)root.Children[
+                new YamlDotNet.RepresentationModel.YamlScalarNode(change.Section)];
+            YamlDotNet.RepresentationModel.YamlNode value = section;
+            foreach (var segment in change.Key.Split('.'))
+            {
+                value = ((YamlDotNet.RepresentationModel.YamlMappingNode)value).Children[
+                    new YamlDotNet.RepresentationModel.YamlScalarNode(segment)];
+            }
+
+            if (change.Section == "Core" && change.Key == "Libraries Control")
+            {
+                if (value is not YamlDotNet.RepresentationModel.YamlSequenceNode sequence ||
+                    !string.Join(", ", sequence.Children
+                        .OfType<YamlDotNet.RepresentationModel.YamlScalarNode>()
+                        .Select(node => node.Value)).Equals(change.Value, StringComparison.Ordinal))
+                {
+                    serialization++;
+                    failures.Add($"{change.Path}={change.Value}: canonical YAML sequence mismatch; NO ACTION.");
+                }
+
+                continue;
+            }
+
+            if (value is not YamlDotNet.RepresentationModel.YamlScalarNode scalar ||
+                scalar.Value != change.Value ||
+                (change.Key.Contains('.') && section.Children.ContainsKey(
+                    new YamlDotNet.RepresentationModel.YamlScalarNode(change.Key))))
+            {
+                serialization++;
+                failures.Add($"{change.Path}={change.Value}: canonical scalar/nested YAML mismatch; NO ACTION.");
+            }
+        }
+
+        ShippedMappingRoundTrip(changes.DistinctBy(change =>
+            (change.WikiKey, change.Section, change.Key, change.Value)).ToArray(), tempRoot);
+        Console.WriteLine(
+            $"CATALOG_SCHEMA_AUDIT CATALOG_SERIALS={catalog.Count} CATALOG_CHANGES={changes.Length} " +
+            $"DISTINCT_SETTINGS={changes.DistinctBy(change => (change.Section, change.Key)).Count()} " +
+            $"KNOWN_KEYS={changes.Select(change => (change.Section, change.Key)).Distinct().Count(rules.ContainsKey)} " +
+            $"UNKNOWN_KEYS={unknown} VALID_VALUES={changes.Length - invalid - unknown} INVALID_VALUES={invalid} " +
+            $"RANGE_VIOLATIONS={ranges} SERIALIZATION_MISMATCHES={serialization} " +
+            $"COMPOSITE_MAPPING_CASES={composite} AMBIGUOUS_CASES={ambiguous} " +
+            $"DISTINCT_SETTING_VALUES={distinct.Length}");
+        Assert(failures.Count == 0, string.Join(Environment.NewLine, failures));
+    }
+
+    private static void ShippedMappingRoundTrip(IReadOnlyList<CfgChg> changes, string tempRoot)
+    {
+        var cases = changes.Where(change => change.WikiKey != "zcull accuracy").ToList();
+        var xml = new StringBuilder("<mediawiki>");
+        for (var i = 0; i < cases.Count; i++)
+        {
+            var change = cases[i];
+            var value = change.Value switch
+            {
+                "true" => "On",
+                "false" => "Off",
+                _ => change.Value
+            };
+            if (change.WikiKey == "accurate ppu 128 reservations")
+            {
+                value = change.Value == "-1" ? "Always Enabled" : "Disabled";
+            }
+
+            if (change.WikiKey is "renderer" or "audio out windows" or "microphone type" &&
+                change.Value == "Null")
+            {
+                value = "Disabled";
+            }
+
+            xml.Append("<page><title>Shipped Mapping ").Append(i)
+                .Append("</title><ns>0</ns><revision><id>").Append(i + 1)
+                .Append("</id><text>{{gameid|id=BLUS")
+                .Append((60000 + i).ToString(System.Globalization.CultureInfo.InvariantCulture))
+                .Append("}}{{config|").Append(System.Net.WebUtility.HtmlEncode(change.WikiKey))
+                .Append('=').Append(System.Net.WebUtility.HtmlEncode(value))
+                .Append("}}</text></revision></page>");
+        }
+
+        xml.Append("</mediawiki>");
+        var xmlPath = Path.Combine(tempRoot, "shipped-schema-mapping.xml");
+        File.WriteAllText(xmlPath, xml.ToString(), new UTF8Encoding(false));
+        var analysis = WikiSvc.Analyze(xmlPath, WikiSvc.CanonicalSnapshotDate);
+        for (var i = 0; i < cases.Count; i++)
+        {
+            var expected = cases[i];
+            var entry = analysis.Recommendations.Single(item => item.Page == $"Shipped Mapping {i}");
+            Assert(entry.ParserStatus == WikiParserStatus.Mapped &&
+                   entry.MappedSettings.Count == 1 &&
+                   entry.MappedSettings[0] == new WikiMappedSetting(expected.Section, expected.Key, expected.Value),
+                $"Shipped alias/value failed canonical parser mapping: {expected.WikiKey} -> " +
+                $"{expected.Path}={expected.Value}.");
+        }
+    }
+
+    private static void MappingSchemaRegression(string tempRoot)
+    {
+        var path = Path.Combine(tempRoot, "wiki-schema-regression.xml");
+        File.WriteAllText(
+            path,
+            """
+            <mediawiki>
+              <page><title>Schema Max</title><ns>0</ns><revision><id>201</id><timestamp>2026-06-12T00:00:00Z</timestamp><text><![CDATA[
+            {{gameid|id=BLUS30100}}
+            {{config
+            |ppu llvm java mode handling=On
+            |allow host gpu labels=On
+            |emulate special depth comparison=On
+            |ppu thread count=8
+            |disable asynchronous memory manager=On
+            |output scaling=FidelityFX Super Resolution
+            |force hardware msaa resolve=On
+            |vblank rate=6000
+            |driver wake-up delay=16667
+            |resolution scale=800
+            |maximum spurs threads=6
+            |renderer=Disabled
+            |audio out windows=Disabled
+            |microphone type=Disabled
+            |rsx fifo accuracy=PS3
+            |zcull accuracy=Precise
+            }}
+            ]]></text></revision></page>
+              <page><title>Schema Min</title><ns>0</ns><revision><id>202</id><timestamp>2026-06-12T00:00:00Z</timestamp><text><![CDATA[
+            {{gameid|id=BLUS30101}}
+            {{config
+            |vblank rate=1
+            |driver wake-up delay=0
+            |resolution scale=25
+            |maximum spurs threads=1
+            |ppu thread count=1
+            |zcull accuracy=Approximate
+            }}
+            ]]></text></revision></page>
+              <page><title>Schema Invalid Low</title><ns>0</ns><revision><id>203</id><timestamp>2026-06-12T00:00:00Z</timestamp><text><![CDATA[
+            {{gameid|id=BLUS30102}}
+            {{config
+            |vblank rate=0
+            |driver wake-up delay=-1
+            |resolution scale=24
+            |maximum spurs threads=0
+            |ppu thread count=0
+            |ppu decoder=Interpreter (dynamic)
+            |zcull accuracy=Approximate or Relaxed
+            |preferred spu threads=1-2
+            }}
+            ]]></text></revision></page>
+              <page><title>Schema Invalid High</title><ns>0</ns><revision><id>204</id><timestamp>2026-06-12T00:00:00Z</timestamp><text><![CDATA[
+            {{gameid|id=BLUS30103}}
+            {{config
+            |vblank rate=6001
+            |driver wake-up delay=16668
+            |resolution scale=801
+            |maximum spurs threads=7
+            |ppu thread count=9
+            |3d rendering mode=Anaglyph
+            }}
+            ]]></text></revision></page>
+            </mediawiki>
+            """,
+            new UTF8Encoding(false));
+
+        var analysis = WikiSvc.Analyze(path);
+
+        WikiCorpusEntry Entry(string page, string key) =>
+            analysis.Recommendations.Single(entry =>
+                entry.Page == page && entry.WikiKey == key);
+
+        void AssertMapped(
+            string key,
+            string section,
+            string targetKey,
+            string value)
+        {
+            var entry = Entry("Schema Max", key);
+            Assert(entry.ParserStatus == WikiParserStatus.Mapped &&
+                   entry.MappedSettings.Count == 1 &&
+                   entry.MappedSettings[0].Section == section &&
+                   entry.MappedSettings[0].Key == targetKey &&
+                   entry.MappedSettings[0].Value == value,
+                $"Expected exact RPCS3 schema mapping for '{key}'.");
+        }
+
+        AssertMapped(
+            "ppu llvm java mode handling",
+            "Core",
+            "PPU Accurate Non-Java Mode",
+            "true");
+        AssertMapped("allow host gpu labels", "Video", "Allow Host GPU Labels", "true");
+        AssertMapped(
+            "emulate special depth comparison",
+            "Video",
+            "Emulate Special Depth Comparison",
+            "true");
+        AssertMapped("ppu thread count", "Core", "PPU Threads", "8");
+        AssertMapped(
+            "disable asynchronous memory manager",
+            "Video",
+            "Disable Asynchronous Memory Manager",
+            "true");
+        AssertMapped("output scaling", "Video", "Output Scaling Mode", "FidelityFX Super Resolution");
+        AssertMapped(
+            "force hardware msaa resolve",
+            "Video",
+            "Force Hardware MSAA Resolve",
+            "true");
+        AssertMapped("renderer", "Video", "Renderer", "Null");
+        AssertMapped("audio out windows", "Audio", "Renderer", "Null");
+        AssertMapped("microphone type", "Audio", "Microphone Type", "Null");
+        AssertMapped("rsx fifo accuracy", "Core", "RSX FIFO Fetch Accuracy", "PS3");
+        foreach (var (page, precise) in new[] { ("Schema Max", "true"), ("Schema Min", "false") })
+        {
+            var zcull = Entry(page, "zcull accuracy");
+            Assert(zcull.ParserStatus == WikiParserStatus.Mapped &&
+                   zcull.MappedSettings.SequenceEqual(new[]
+                   {
+                       new WikiMappedSetting("Video", "Relaxed ZCULL Sync", "false"),
+                       new WikiMappedSetting("Video", "Accurate ZCULL stats", precise)
+                   }), "Precise and Approximate ZCULL mappings must preserve both canonical booleans in order.");
+        }
+
+        foreach (var (page, key) in new[]
+                 {
+                     ("Schema Invalid Low", "ppu decoder"),
+                     ("Schema Invalid Low", "zcull accuracy"),
+                     ("Schema Invalid High", "3d rendering mode")
+                 })
+        {
+            var rejected = Entry(page, key);
+            Assert(rejected.ParserStatus == WikiParserStatus.Rejected &&
+                   !rejected.IncludedInCatalog && rejected.MappedSettings.Count == 0,
+                $"Removed/ambiguous schema value for {key} must fail closed.");
+        }
+
+        var ambiguousThreads = Entry("Schema Invalid Low", "preferred spu threads");
+        Assert(ambiguousThreads.ParserStatus == WikiParserStatus.Ambiguous &&
+               !ambiguousThreads.IncludedInCatalog && ambiguousThreads.MappedSettings.Count == 0,
+            "A thread-count range must not silently select one number.");
+
+        foreach (var key in new[]
+                 {
+                     "vblank rate",
+                     "driver wake-up delay",
+                     "resolution scale",
+                     "maximum spurs threads",
+                     "ppu thread count"
+                 })
+        {
+            Assert(Entry("Schema Min", key).ParserStatus == WikiParserStatus.Mapped &&
+                   Entry("Schema Max", key).ParserStatus == WikiParserStatus.Mapped,
+                $"Expected RPCS3 numeric boundary values for '{key}' to be accepted.");
+            Assert(Entry("Schema Invalid Low", key).ParserStatus == WikiParserStatus.Rejected &&
+                   !Entry("Schema Invalid Low", key).IncludedInCatalog &&
+                   Entry("Schema Invalid High", key).ParserStatus == WikiParserStatus.Rejected &&
+                   !Entry("Schema Invalid High", key).IncludedInCatalog,
+                $"Expected out-of-range RPCS3 values for '{key}' to fail closed.");
+        }
+    }
+
+    private static void SemanticRecommendationInvariants(string tempRoot)
+    {
+        var root = Path.Combine(tempRoot, "WikiSemanticInvariants");
+        var configPath = Path.Combine(root, "config");
+        var customPath = Path.Combine(configPath, "custom_configs");
+        Directory.CreateDirectory(customPath);
+
+        var changes = new[]
+        {
+            new CfgChg(
+                "Video", "Write Color Buffers", "true", "write color buffers",
+                "Required to fix rendering.", RecRisk.Required,
+                WikiRecommendationClass.MandatoryGameConfig),
+            new CfgChg(
+                "Video", "Read Color Buffers", "true", "read color buffers",
+                "Recommended for rendering.", RecRisk.Rec,
+                WikiRecommendationClass.GeneralRecommendation),
+            new CfgChg(
+                "Video", "Write Depth Buffer", "true", "write depth buffers",
+                "Required unless using FPS patch.", RecRisk.PatDep,
+                WikiRecommendationClass.PatchSpecific),
+            new CfgChg(
+                "Video", "Read Depth Buffer", "true", "read depth buffers",
+                "Required for game versions above 1.05.", RecRisk.Required,
+                WikiRecommendationClass.VersionSpecific),
+            new CfgChg(
+                "Video", "Strict Rendering Mode", "true", "strict rendering mode",
+                "Informational note only.", RecRisk.Unknown,
+                WikiRecommendationClass.InformationalNote),
+            new CfgChg(
+                "Video", "Allow Host GPU Labels", "true", "allow host gpu labels",
+                null, RecRisk.Unknown,
+                WikiRecommendationClass.Unsupported),
+            new CfgChg(
+                "Video", "Emulate Special Depth Comparison", "true",
+                "emulate special depth comparison", null, RecRisk.Unknown,
+                WikiRecommendationClass.Ambiguous)
+        };
+
+        var original = RecSvc.FromRec(
+            "RPCS3 Wiki snapshot",
+            WikiSvc.CanonicalSnapshotDate,
+            [new WikiRec("BLUS30200", "Semantic Fixture", changes)],
+            new DateTimeOffset(2026, 6, 13, 0, 0, 0, TimeSpan.Zero),
+            WikiSvc.CanonicalSnapshotSha256);
+        var catalogPath = Path.Combine(root, "semantic-cat.json");
+        original.Save(catalogPath);
+        var loaded = RecSvc.Load(catalogPath);
+        var recommendation = loaded.Find("BLUS30200")
+            ?? throw new InvalidOperationException("Semantic fixture catalog entry is missing.");
+
+        Assert(recommendation.Changes.Select(change => change.Class).SequenceEqual(
+                changes.Select(change => change.Class)),
+            "RecommendationClass must survive CfgChg -> catalog serialization -> load unchanged.");
+
+        var game = new Rpcs3GameDescriptor(
+            "BLUS30200",
+            "Semantic Fixture",
+            Path.Combine(root, "game"),
+            "01.00",
+            null,
+            null);
+        var state = new StateSvc().Evaluate(
+            game,
+            [recommendation],
+            (_, _) => "false");
+
+        Assert(state.Items.Count == changes.Length &&
+               state.Items.Select(item => item.Class).SequenceEqual(
+                   recommendation.Changes.Select(change => change.Class)),
+            "RecommendationClass must survive planning/state evaluation.");
+
+        var general = state.Items.Single(item =>
+            item.Class == WikiRecommendationClass.GeneralRecommendation);
+        Assert(general.Class != WikiRecommendationClass.MandatoryGameConfig,
+            "GENERAL_RECOMMENDATION must not be promoted to MandatoryGameConfig.");
+
+        var failClosedClasses = new[]
+        {
+            WikiRecommendationClass.PatchSpecific,
+            WikiRecommendationClass.VersionSpecific,
+            WikiRecommendationClass.InformationalNote,
+            WikiRecommendationClass.Unsupported,
+            WikiRecommendationClass.Ambiguous
+        };
+        Assert(state.Items
+                .Where(item => failClosedClasses.Contains(item.Class))
+                .All(item =>
+                    item.State == RecState.Blocked &&
+                    !item.IsAction &&
+                    !item.IsSel),
+            "Patch/version/informational/unsupported/ambiguous classes must remain fail-closed and non-actionable.");
+
+        var install = new Rpcs3InstallDescriptor(
+            root,
+            Path.Combine(root, "rpcs3.exe"),
+            configPath,
+            customPath,
+            Path.Combine(root, "patches"),
+            Path.Combine(configPath, "patch_config.yml"));
+        var plan = new PlanService().BuildCfg(
+            install,
+            game,
+            recommendation);
+        Assert(plan.Items.Count == changes.Length &&
+               plan.Items.All(item =>
+                   item.Class == item.Change.Class &&
+                   item.Class == item.StateIt.Class),
+            "Game Setup planning must retain RecommendationClass at the decision boundary.");
+        Assert(plan.Items
+                .Where(item => failClosedClasses.Contains(item.Class))
+                .All(item => !item.IsAction),
+            "Game Setup must not emit automatic config actions for fail-closed recommendation classes.");
+
+        var inherited = new WikiRec(
+            game.Serial,
+            "Inherited Demo",
+            [changes[0]],
+            WikiGameIdRole.Demo,
+            "Demo");
+        var inheritedState = new StateSvc().Evaluate(
+            game,
+            [inherited],
+            (_, _) => "false");
+        var inheritedPlan = new PlanService().BuildCfg(
+            install,
+            game,
+            inherited);
+        Assert(inheritedState.Total == 0 && inheritedPlan.Items.Count == 0,
+            "A stale non-primary catalog binding must fail closed instead of surfacing inherited config actions.");
+    }
+
+    private static void TemplateDefaultsDoNotBecomeRecommendations(string tempRoot)
+    {
+        var path = Path.Combine(tempRoot, "wiki-template-defaults.xml");
+        File.WriteAllText(
+            path,
+            """
+            <mediawiki>
+              <page><title>Template:Config</title><ns>10</ns><revision><id>301</id><timestamp>2026-06-12T00:00:00Z</timestamp><text><![CDATA[
+            {{config|write color buffers=Off|renderer=Vulkan|resolution scale=100}}
+            ]]></text></revision></page>
+              <page><title>No Game Deviation</title><ns>0</ns><revision><id>302</id><timestamp>2026-06-12T00:00:00Z</timestamp><text><![CDATA[
+            {{gameid|id=BLUS30300}}
+            {{config}}
+            ]]></text></revision></page>
+            </mediawiki>
+            """,
+            new UTF8Encoding(false));
+
+        var analysis = WikiSvc.Analyze(path);
+        var game = analysis.CatalogRecommendations.Single(item => item.Serial == "BLUS30300");
+        Assert(game.Changes.Count == 0 &&
+               analysis.Recommendations.Count == 0,
+            "Template:Config documentation/default values must not become game-specific CfgChg entries.");
     }
 
     public static WikiHistoryAudit RunHistoryAudit(string xmlPath)
@@ -469,12 +1125,17 @@ internal static class WikiCorpusT
             var analysis = WikiSvc.Analyze(xmlPath);
             var oldCatalog = RecSvc.Load(oldCatalogPath);
             var comparison = WikiSvc.Compare(oldCatalog, analysis);
-            var generatedAt = new DateTimeOffset(2026, 6, 13, 0, 0, 0, TimeSpan.Zero);
+            var generatedAt = DateTimeOffset.ParseExact(
+                analysis.SnapshotDate,
+                "yyyy-MM-dd",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.AssumeUniversal |
+                System.Globalization.DateTimeStyles.AdjustToUniversal);
             var firstPath = Path.Combine(tempRoot, "candidate-1.json");
             var secondPath = Path.Combine(tempRoot, "candidate-2.json");
             var generated = RecSvc.FromRec(
                 "RPCS3 Wiki snapshot",
-                "2026-06-13",
+                analysis.SnapshotDate,
                 analysis.CatalogRecommendations,
                 generatedAt,
                 analysis.SourceSha256);

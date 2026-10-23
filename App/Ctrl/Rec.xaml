@@ -1,6 +1,7 @@
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:lang="clr-namespace:R3Config.Lang"
+             xmlns:ctrl="clr-namespace:R3Config.Ctrl"
              x:Class="R3Config.Ctrl.RecView"
              AutomationProperties.AutomationId="Settings.Root"
              FlowDirection="{DynamicResource App.FlowDirection}"
@@ -11,8 +12,261 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="RSty.xaml" />
+                <ResourceDictionary Source="RecommendationStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <DataTemplate x:Key="WikiNoteTemplate">
+                <StackPanel Orientation="Vertical"
+                            Margin="0,8,0,0"
+                            HorizontalAlignment="Stretch">
+
+                    <TextBlock Text="{Binding Header}"
+                               Style="{StaticResource RecToolTipSectionLabelText}"
+                               TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                    <TextBlock Text="{Binding DisplayText}"
+                               Style="{StaticResource RecLocalizedBodyText}"
+                               FlowDirection="{DynamicResource App.TextFlowDirection}"
+                               Margin="0,2,0,0" />
+
+                    <Expander Style="{StaticResource RecDetailsExpander}"
+                              Margin="0,4,0,0">
+                        <Expander.Header>
+                            <TextBlock Text="{Binding DetailsLabel}"
+                                       Style="{StaticResource RecDetailsHeaderText}" />
+                        </Expander.Header>
+                        <StackPanel Margin="0,4,0,0">
+                            <TextBlock Text="{Binding OriginalText}"
+                                       Style="{StaticResource RecLocalizedBodyText}"
+                                       FlowDirection="LeftToRight"
+                                       Language="en-US" />
+                            <TextBlock ctrl:LinkText.Text="{Binding SourceUrl}"
+                                       ctrl:LinkText.Target="{Binding SourceUrl}"
+                                       Style="{StaticResource RecLocalizedSubtitleText}"
+                                       FlowDirection="LeftToRight"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </DataTemplate>
+
+            <DataTemplate x:Key="OnlineRowTemplate">
+                <Grid Margin="0,2,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Label}"
+                               Style="{StaticResource RecToolTipSectionLabelText}"
+                               TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                    <TextBlock Grid.Column="1"
+                               ctrl:LinkText.Text="{Binding Value}"
+                               ctrl:LinkText.Target="{Binding Url}"
+                               Style="{StaticResource RecToolTipTechnicalValueText}" />
+
+                    <TextBlock Grid.Column="2"
+                               ctrl:LinkText.Text="{Binding ActionLabel}"
+                               ctrl:LinkText.Target="{Binding ActionUrl}"
+                               Style="{StaticResource RecLocalizedSubtitleText}"
+                               Margin="12,0,0,0"
+                               Visibility="{Binding HasAction,
+                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+                </Grid>
+            </DataTemplate>
+
+            <DataTemplate x:Key="OnlineTemplate">
+                <StackPanel Orientation="Vertical"
+                            Margin="0,8,0,0"
+                            HorizontalAlignment="Stretch">
+
+                    <ItemsControl ItemsSource="{Binding SummaryRows}"
+                                  ItemTemplate="{StaticResource OnlineRowTemplate}"
+                                  HorizontalContentAlignment="Stretch" />
+
+                    <Expander Style="{StaticResource RecDetailsExpander}"
+                              Margin="0,8,0,0"
+                              Visibility="{Binding HasDetails,
+                                                   Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Expander.Header>
+                            <TextBlock Text="{Binding DetailsLabel}"
+                                       Style="{StaticResource RecDetailsHeaderText}" />
+                        </Expander.Header>
+
+                        <StackPanel Orientation="Vertical"
+                                    Margin="0,6,0,0">
+                            <ItemsControl ItemsSource="{Binding DetailRows}"
+                                          ItemTemplate="{StaticResource OnlineRowTemplate}"
+                                          HorizontalContentAlignment="Stretch" />
+
+                            <TextBlock ctrl:LinkText.Text="{Binding Notes}"
+                                       Style="{StaticResource RecLocalizedBodyText}"
+                                       FlowDirection="{Binding Notes, Converter={StaticResource ContentTextFlowConverter}}"
+                                       Language="{Binding Notes, Converter={StaticResource ContentTextLanguageConverter}, ConverterCulture=en-US}"
+                                       Margin="0,6,0,0"
+                                       Visibility="{Binding HasNotes,
+                                                            Converter={StaticResource BoolToVisibilityConverter}}" />
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </DataTemplate>
+
+            <DataTemplate x:Key="PlanRowTemplate">
+
+                <Border Style="{StaticResource RecSettingRow}"
+                        FlowDirection="{DynamicResource App.FlowDirection}"
+                        HorizontalAlignment="Stretch">
+
+                    <Border.ToolTip>
+                        <ToolTip Style="{StaticResource ChecklistDetailToolTip}"
+                                 DataContext="{Binding PlacementTarget.DataContext,
+                                                      RelativeSource={RelativeSource Self}}">
+
+                            <Border Padding="2"
+                                    CornerRadius="{StaticResource Radius.None}"
+                                    FlowDirection="{DynamicResource App.FlowDirection}">
+
+                                <StackPanel Orientation="Vertical"
+                                            HorizontalAlignment="Stretch">
+
+                                    <TextBlock Text="{Binding Key}"
+                                               Style="{StaticResource ChecklistToolTipTitleText}"
+                                               FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
+                                               Language="{DynamicResource TechnicalText.Language}"
+                                               TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
+                                               HorizontalAlignment="Stretch"
+                                               TextWrapping="Wrap" />
+
+                                    <StackPanel Orientation="Vertical"
+                                                Margin="0,10,0,0"
+                                                HorizontalAlignment="Stretch">
+
+                                        <TextBlock Text="{lang:TextExt Key=Plan.Current}"
+                                                   Style="{StaticResource RecToolTipSectionLabelText}"
+                                                   TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                                        <TextBlock Text="{Binding CurDsp}"
+                                                   Style="{StaticResource RecToolTipTechnicalValueText}"
+                                                   Margin="0,3,0,10" />
+
+                                        <TextBlock Text="{lang:TextExt Key=Plan.Proposed}"
+                                                   Style="{StaticResource RecToolTipSectionLabelText}"
+                                                   TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                                        <TextBlock Text="{Binding Val}"
+                                                   Style="{StaticResource RecToolTipTechnicalValueText}"
+                                                   Margin="0,3,0,0" />
+                                    </StackPanel>
+
+                                    <Border Height="1"
+                                            Background="{DynamicResource Stroke.Subtle}"
+                                            Margin="0,12,0,10"
+                                            Visibility="{Binding HasNote,
+                                                                 Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                    <TextBlock Text="{lang:TextExt Key=Plan.WikiInstructions}"
+                                               Style="{StaticResource RecToolTipWikiHeadingText}"
+                                               TextAlignment="{DynamicResource App.TextAlignment}"
+                                               Visibility="{Binding HasNote,
+                                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                    <TextBlock Text="{Binding LocBody}"
+                                               Style="{StaticResource RecLocalizedBodyText}"
+                                               FlowDirection="{Binding NoteFlow}"
+                                               TextAlignment="{Binding NoteText}"
+                                               Margin="0,4,0,0"
+                                               TextWrapping="Wrap"
+                                               Visibility="{Binding HasNote,
+                                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+                                </StackPanel>
+                            </Border>
+                        </ToolTip>
+                    </Border.ToolTip>
+
+                    <Grid FlowDirection="{DynamicResource App.FlowDirection}"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Center">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="184" />
+                            <ColumnDefinition Width="104" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding Key}"
+                                   Style="{StaticResource ChecklistOptionText}"
+                                   FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
+                                   TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
+                                   Language="{DynamicResource TechnicalText.Language}"
+                                   HorizontalAlignment="Stretch"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="NoWrap"
+                                   TextTrimming="CharacterEllipsis" />
+
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Val}"
+                                   Style="{StaticResource RecRowValueText}"
+                                   HorizontalAlignment="Stretch"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="NoWrap"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="12,0" />
+
+                        <Grid Grid.Column="2"
+                              MinWidth="96"
+                              Height="28"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Center">
+
+                            <CheckBox Style="{StaticResource IconCheckBox}"
+                                      IsChecked="{Binding IsSel,
+                                                          Mode=TwoWay,
+                                                          UpdateSourceTrigger=PropertyChanged}"
+                                      IsEnabled="{Binding IsAction}"
+                                      AutomationProperties.Name="{Binding Key}"
+                                      Visibility="{Binding ShowSelection,
+                                                           Converter={StaticResource BoolToVisibilityConverter}}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Margin="0"
+                                      TextBlock.TextAlignment="{DynamicResource App.TextAlignment}" />
+
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FlowDirection="LeftToRight"
+                                        Visibility="{Binding IsApply,
+                                                             Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Viewbox Width="14"
+                                         Height="14"
+                                         Stretch="Uniform"
+                                         FlowDirection="LeftToRight"
+                                         VerticalAlignment="Center">
+                                    <Path Data="M 1,6.5 L 2.6,4.9 L 4.7,7 L 9.6,2.1 L 11.2,3.7 L 4.7,10.2 Z"
+                                          Fill="{DynamicResource Status.Success}"
+                                          Stretch="Uniform" />
+                                </Viewbox>
+
+                                <TextBlock Text="{Binding StatDsp}"
+                                           Style="{StaticResource RecAppliedStatusText}"
+                                           Margin="6,0,0,0"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <TextBlock Text="{Binding StatDsp}"
+                                       Style="{StaticResource RecInactiveStatusText}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding ShowNonActionState,
+                                                            Converter={StaticResource BoolToVisibilityConverter}}" />
+                        </Grid>
+                    </Grid>
+                </Border>
+            </DataTemplate>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -28,12 +282,34 @@
               VerticalAlignment="Stretch">
 
             <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-
+            <!-- Primary action first; Restore Defaults closes the list below. -->
             <Grid Grid.Row="0"
+                  FlowDirection="{DynamicResource App.FlowDirection}"
+                  HorizontalAlignment="Stretch">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="1"
+                        Margin="0,0,0,10"
+                        AutomationProperties.AutomationId="Settings.ApplyButton"
+                        Content="{lang:TextExt Key=Plan.ApplySection}"
+                        ToolTip="{lang:TextExt Key=Plan.ApplySectionTip}"
+                        Command="{Binding ApplyCmd}"
+                        Style="{StaticResource RecPrimaryActionButton}"
+                        Visibility="{Binding Plan.HasChg,
+                                             Converter={StaticResource BoolToVisibilityConverter}}"
+                        FlowDirection="{DynamicResource App.TextFlowDirection}"
+                        TextBlock.TextAlignment="Center" />
+            </Grid>
+
+            <Grid Grid.Row="1"
                   FlowDirection="{DynamicResource App.FlowDirection}"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch">
@@ -46,178 +322,124 @@
                               VerticalAlignment="Stretch"
                               Padding="{DynamicResource App.ScrollPadding4}">
 
-                    <ItemsControl AutomationProperties.AutomationId="Settings.List"
-                                  ItemsSource="{Binding Plan.Items}"
-                                  FlowDirection="{DynamicResource App.FlowDirection}"
-                                  HorizontalAlignment="Stretch"
-                                  HorizontalContentAlignment="Stretch">
+                    <StackPanel Orientation="Vertical"
+                                FlowDirection="{DynamicResource App.FlowDirection}"
+                                HorizontalAlignment="Stretch">
 
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Vertical"
-                                            FlowDirection="{DynamicResource App.FlowDirection}"
-                                            HorizontalAlignment="Stretch" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
+                        <!-- 1. Actionable settings: one flat compact list; no column titles, no tab headers. -->
+                        <ItemsControl AutomationProperties.AutomationId="Settings.List"
+                                      ItemsSource="{Binding Plan.Rows}"
+                                      ItemTemplate="{StaticResource PlanRowTemplate}"
+                                      FlowDirection="{DynamicResource App.FlowDirection}"
+                                      HorizontalAlignment="Stretch"
+                                      HorizontalContentAlignment="Stretch" />
 
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                        <!-- 2. Warnings and instructions applicable to this game. -->
+                        <Border Style="{StaticResource RecEvidenceCard}"
+                                AutomationProperties.AutomationId="Settings.Notes"
+                                Margin="0,14,0,10"
+                                Visibility="{Binding Plan.Evidence.HasNotes,
+                                                     Converter={StaticResource BoolToVisibilityConverter}}">
 
-                                <Border Style="{StaticResource RecSettingRow}"
-                                        FlowDirection="{DynamicResource App.FlowDirection}"
+                            <StackPanel Orientation="Vertical"
                                         HorizontalAlignment="Stretch">
 
-                                    <Border.ToolTip>
-                                        <ToolTip Style="{StaticResource ChecklistDetailToolTip}"
-                                                 DataContext="{Binding PlacementTarget.DataContext,
-                                                                      RelativeSource={RelativeSource Self}}">
+                                <TextBlock Text="{lang:TextExt Key=Wiki.Notes.Title}"
+                                           Style="{StaticResource RecToolTipWikiHeadingText}"
+                                           TextAlignment="{DynamicResource App.TextAlignment}" />
 
-                                            <Border Padding="2"
-                                                    CornerRadius="{StaticResource Radius.None}"
-                                                    FlowDirection="{DynamicResource App.FlowDirection}">
+                                <TextBlock Text="{lang:TextExt Key=Wiki.OriginalText}"
+                                           Style="{StaticResource RecLocalizedSubtitleText}"
+                                           Visibility="{Binding Plan.Evidence.ShowOriginalCaption,
+                                                                Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                                                <StackPanel Orientation="Vertical"
-                                                            HorizontalAlignment="Stretch">
+                                <ItemsControl ItemsSource="{Binding Plan.Evidence.Notes}"
+                                              ItemTemplate="{StaticResource WikiNoteTemplate}"
+                                              HorizontalContentAlignment="Stretch" />
+                            </StackPanel>
+                        </Border>
 
-                                                    <TextBlock Text="{Binding Key}"
-                                                               Style="{StaticResource ChecklistToolTipTitleText}"
-                                                               FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
-                                                               Language="{DynamicResource TechnicalText.Language}"
-                                                               TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
-                                                               HorizontalAlignment="Stretch"
-                                                               TextWrapping="Wrap" />
+                        <!-- 3. Compact RPCN information for the installed game version. -->
+                        <Border Style="{StaticResource RecEvidenceCard}"
+                                AutomationProperties.AutomationId="Settings.Online"
+                                Visibility="{Binding Plan.Evidence.HasOnline,
+                                                     Converter={StaticResource BoolToVisibilityConverter}}">
 
-                                                    <StackPanel Orientation="Vertical"
-                                                                Margin="0,10,0,0"
-                                                                HorizontalAlignment="Stretch">
+                            <StackPanel Orientation="Vertical"
+                                        HorizontalAlignment="Stretch">
 
-                                                        <TextBlock Text="{lang:TextExt Key=Plan.Current}"
-                                                                   Style="{StaticResource RecToolTipSectionLabelText}"
-                                                                   TextAlignment="{DynamicResource App.TextAlignment}" />
+                                <TextBlock Text="{lang:TextExt Key=Wiki.Online.Title}"
+                                           Style="{StaticResource RecToolTipWikiHeadingText}"
+                                           TextAlignment="{DynamicResource App.TextAlignment}" />
 
-                                                        <TextBlock Text="{Binding CurDsp}"
-                                                                   Style="{StaticResource RecToolTipTechnicalValueText}"
-                                                                   Margin="0,3,0,10" />
+                                <ItemsControl ItemsSource="{Binding Plan.Evidence.Online}"
+                                              ItemTemplate="{StaticResource OnlineTemplate}"
+                                              HorizontalContentAlignment="Stretch" />
+                            </StackPanel>
+                        </Border>
 
-                                                        <TextBlock Text="{lang:TextExt Key=Plan.Proposed}"
-                                                                   Style="{StaticResource RecToolTipSectionLabelText}"
-                                                                   TextAlignment="{DynamicResource App.TextAlignment}" />
+                        <TextBlock Text="{Binding Plan.Evidence.OnlineMismatchText}"
+                                   AutomationProperties.AutomationId="Settings.OnlineNoMatch"
+                                   Style="{StaticResource RecLocalizedSubtitleText}"
+                                   Margin="0,4,0,10"
+                                   Visibility="{Binding Plan.Evidence.HasOnlineMismatch,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                                                        <TextBlock Text="{Binding Val}"
-                                                                   Style="{StaticResource RecToolTipTechnicalValueText}"
-                                                                   Margin="0,3,0,0" />
-                                                    </StackPanel>
+                        <TextBlock Text="{Binding Plan.Evidence.OnlineUnknownVersionText}"
+                                   AutomationProperties.AutomationId="Settings.OnlineUnknownVersion"
+                                   Style="{StaticResource RecLocalizedSubtitleText}"
+                                   Margin="0,4,0,10"
+                                   Visibility="{Binding Plan.Evidence.HasOnlineUnknownVersion,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                                                    <Border Height="1"
-                                                            Background="{DynamicResource Stroke.Subtle}"
-                                                            Margin="0,12,0,10"
-                                                            Visibility="{Binding HasNote,
-                                                                                 Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <!-- 3b. History and community hardware evidence: informational lines only. -->
+                        <Border Style="{StaticResource RecEvidenceCard}"
+                                AutomationProperties.AutomationId="Settings.Knowledge"
+                                Visibility="{Binding Plan.Evidence.HasKnowledge,
+                                                     Converter={StaticResource BoolToVisibilityConverter}}">
 
-                                                    <TextBlock Text="{lang:TextExt Key=Plan.WikiInstructions}"
-                                                               Style="{StaticResource RecToolTipWikiHeadingText}"
-                                                               TextAlignment="{DynamicResource App.TextAlignment}"
-                                                               Visibility="{Binding HasNote,
-                                                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <StackPanel Orientation="Vertical"
+                                        HorizontalAlignment="Stretch">
 
-                                                    <TextBlock Text="{Binding LocBody}"
-                                                               Style="{StaticResource RecLocalizedBodyText}"
-                                                               FlowDirection="{Binding NoteFlow}"
-                                                               TextAlignment="{Binding NoteText}"
-                                                               Margin="0,4,0,0"
-                                                               TextWrapping="Wrap"
-                                                               Visibility="{Binding HasNote,
-                                                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
-                                                </StackPanel>
-                                            </Border>
-                                        </ToolTip>
-                                    </Border.ToolTip>
+                                <TextBlock Text="{Binding Plan.Evidence.KnowledgeTitle}"
+                                           Style="{StaticResource RecToolTipWikiHeadingText}"
+                                           TextAlignment="{DynamicResource App.TextAlignment}" />
 
-                                    <Grid FlowDirection="{DynamicResource App.FlowDirection}"
-                                          HorizontalAlignment="Stretch"
-                                          VerticalAlignment="Center">
+                                <ItemsControl ItemsSource="{Binding Plan.Evidence.KnowledgeLines}"
+                                              HorizontalContentAlignment="Stretch">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}"
+                                                       Style="{StaticResource RecLocalizedSubtitleText}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,2,0,2" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
 
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="104" />
-                                            <ColumnDefinition Width="12" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="16" />
-                                            <ColumnDefinition Width="168" />
-                                        </Grid.ColumnDefinitions>
+                        <!-- 4. Restore Defaults belongs after the settings and information. -->
+                        <Grid FlowDirection="{DynamicResource App.FlowDirection}"
+                              Margin="0,14,0,4"
+                              HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                                        <Grid Grid.Column="0"
-                                              MinWidth="96"
-                                              Height="28"
-                                              HorizontalAlignment="Stretch"
-                                              VerticalAlignment="Center">
-
-                                            <CheckBox Style="{StaticResource IconCheckBox}"
-                                                      IsChecked="{Binding IsSel,
-                                                                          Mode=TwoWay,
-                                                                          UpdateSourceTrigger=PropertyChanged}"
-                                                      IsEnabled="{Binding IsAction}"
-                                                      AutomationProperties.Name="{Binding Key}"
-                                                      Visibility="{Binding ShowSelection,
-                                                                           Converter={StaticResource BoolToVisibilityConverter}}"
-                                                      HorizontalAlignment="Center"
-                                                      VerticalAlignment="Center"
-                                                      Margin="0"
-                                                      TextBlock.TextAlignment="{DynamicResource App.TextAlignment}" />
-
-                                            <StackPanel Orientation="Horizontal"
-                                                        HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center"
-                                                        FlowDirection="LeftToRight"
-                                                        Visibility="{Binding IsApply,
-                                                                             Converter={StaticResource BoolToVisibilityConverter}}">
-                                                <Viewbox Width="14"
-                                                         Height="14"
-                                                         Stretch="Uniform"
-                                                         FlowDirection="LeftToRight"
-                                                         VerticalAlignment="Center">
-                                                    <Path Data="M 1,6.5 L 2.6,4.9 L 4.7,7 L 9.6,2.1 L 11.2,3.7 L 4.7,10.2 Z"
-                                                          Fill="{DynamicResource Status.Success}"
-                                                          Stretch="Uniform" />
-                                                </Viewbox>
-
-                                                <TextBlock Text="{Binding StatDsp}"
-                                                           Style="{StaticResource RecAppliedStatusText}"
-                                                           Margin="6,0,0,0"
-                                                           VerticalAlignment="Center" />
-                                            </StackPanel>
-
-                                            <TextBlock Text="{Binding StatDsp}"
-                                                       Style="{StaticResource RecInactiveStatusText}"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       Visibility="{Binding ShowNonActionState,
-                                                                            Converter={StaticResource BoolToVisibilityConverter}}" />
-                                        </Grid>
-
-                                        <TextBlock Grid.Column="2"
-                                                   Text="{Binding Key}"
-                                                   Style="{StaticResource ChecklistOptionText}"
-                                                   FlowDirection="{DynamicResource TechnicalText.FlowDirection}"
-                                                   TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
-                                                   Language="{DynamicResource TechnicalText.Language}"
-                                                   HorizontalAlignment="Stretch"
-                                                   VerticalAlignment="Center"
-                                                   TextWrapping="NoWrap"
-                                                   TextTrimming="CharacterEllipsis" />
-
-                                        <TextBlock Grid.Column="4"
-                                                   Text="{Binding Val}"
-                                                   Style="{StaticResource RecRowValueText}"
-                                                   HorizontalAlignment="Stretch"
-                                                   VerticalAlignment="Center"
-                                                   TextWrapping="NoWrap"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   Margin="0" />
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                            <Button Grid.Column="1"
+                                    AutomationProperties.AutomationId="Settings.RestoreDefaults"
+                                    Content="{lang:TextExt Key=Plan.RemoveWikiSettings}"
+                                    ToolTip="{lang:TextExt Key=Plan.RemoveWikiSettingsTip}"
+                                    Command="{Binding DelSet}"
+                                    Style="{StaticResource RecSecondaryActionButton}"
+                                    Visibility="{Binding Plan.CanDel,
+                                                         Converter={StaticResource BoolToVisibilityConverter}}"
+                                    FlowDirection="{DynamicResource App.TextFlowDirection}"
+                                    TextBlock.TextAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
                 </ScrollViewer>
 
                 <Border Style="{StaticResource ViewportEmptyStatePanel}"
@@ -225,7 +447,7 @@
                         FlowDirection="{DynamicResource App.FlowDirection}"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        Visibility="{Binding Plan.IsEmpty,
+                        Visibility="{Binding Plan.ShowEmpty,
                                              Converter={StaticResource BoolToVisibilityConverter}}">
 
                     <TextBlock Text="{Binding Plan.EmptyTxt}"
@@ -237,41 +459,6 @@
                                TextAlignment="{DynamicResource App.TextAlignment}"
                                TextWrapping="Wrap" />
                 </Border>
-            </Grid>
-
-            <Grid Grid.Row="1"
-                  FlowDirection="{DynamicResource App.FlowDirection}"
-                  HorizontalAlignment="Stretch">
-
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <Button Grid.Column="2"
-                        Margin="0,12,0,0"
-                        Content="{lang:TextExt Key=Plan.RemoveWikiSettings}"
-                        ToolTip="{lang:TextExt Key=Plan.RemoveWikiSettingsTip}"
-                        Command="{Binding DelSet}"
-                        Style="{StaticResource RecSecondaryActionButton}"
-                        Visibility="{Binding Plan.CanDel,
-                                             Converter={StaticResource BoolToVisibilityConverter}}"
-                        FlowDirection="{DynamicResource App.TextFlowDirection}"
-                        TextBlock.TextAlignment="Center" />
-
-                <Button Grid.Column="4"
-                        Margin="0,12,0,0"
-                        Content="{lang:TextExt Key=Plan.ApplySection}"
-                        ToolTip="{lang:TextExt Key=Plan.ApplySectionTip}"
-                        Command="{Binding ApplyCmd}"
-                        Style="{StaticResource RecPrimaryActionButton}"
-                        Visibility="{Binding Plan.HasChg,
-                                             Converter={StaticResource BoolToVisibilityConverter}}"
-                        FlowDirection="{DynamicResource App.TextFlowDirection}"
-                        TextBlock.TextAlignment="Center" />
             </Grid>
         </Grid>
     </Border>

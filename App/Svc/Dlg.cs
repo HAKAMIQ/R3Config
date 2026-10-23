@@ -54,6 +54,32 @@ public static class UiDlg
             : null;
     }
 
+    // Only the external NCL source ever browses. The bundled corpus lives inside
+    // the application and is never a browsing target, so this opens where the
+    // user last took an NCL from and otherwise in their Documents folder.
+    public static string? PickNcl(string currentPath)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = UiText.GetText("Patch.Ncl.FileFilter"),
+            Title = UiText.GetText("Patch.Ncl.ChooseFile"),
+            CheckFileExists = true,
+            CheckPathExists = true,
+            Multiselect = false,
+            DefaultExt = ".ncl"
+        };
+
+        SetDir(
+            dialog,
+            string.IsNullOrWhiteSpace(currentPath)
+                ? Environment.GetFolderPath(
+                    Environment.SpecialFolder.MyDocuments)
+                : currentPath);
+
+        return dialog.ShowDialog(Owner()) == true
+            ? dialog.FileName
+            : null;
+    }
     public static string? PickExp()
     {
         var dialog = new SaveFileDialog

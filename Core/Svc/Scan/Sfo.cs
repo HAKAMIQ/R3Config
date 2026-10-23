@@ -10,11 +10,6 @@ namespace R3Config.Svc;
 
 public static class SfoRead
 {
-    public static SfoInfo? TryGame(string gamePath)
-    {
-        return ReadFor(gamePath).Info;
-    }
-
     public static SfoInfo? TryRead(string sfoPath)
     {
         return Read(sfoPath).Info;
@@ -62,13 +57,15 @@ public static class SfoRead
             values.TryGetValue("TITLE_ID", out var titleId);
             values.TryGetValue("APP_VER", out var appVersion);
             values.TryGetValue("VERSION", out var discVersion);
+            values.TryGetValue("CATEGORY", out var category);
 
             return SfoProbe.Success(
                 new SfoInfo(
                     string.IsNullOrWhiteSpace(title) ? null : title,
                     string.IsNullOrWhiteSpace(titleId) ? null : titleId,
                     string.IsNullOrWhiteSpace(appVersion) ? null : appVersion,
-                    string.IsNullOrWhiteSpace(discVersion) ? null : discVersion));
+                    string.IsNullOrWhiteSpace(discVersion) ? null : discVersion,
+                    string.IsNullOrWhiteSpace(category) ? null : category));
         }
         catch (Exception ex) when (
             ex is ArgumentException or

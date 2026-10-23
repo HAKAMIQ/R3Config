@@ -1,0 +1,71 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Selected-game identity header (Fluent 2): an icon tile, the game title
+         in its own content direction anchored to the interface start edge, and
+         the serial/version as technical chips. The combined SelGame string is
+         the accessible name. Readiness state stays inside the patch surfaces. -->
+    <DataTemplate x:Key="GameIdentity">
+        <Border Style="{StaticResource GameHeaderCard}"
+                HorizontalAlignment="Stretch"
+                AutomationProperties.AutomationId="Shell.GameIdentity"
+                AutomationProperties.Name="{Binding SelGame}"
+                ToolTip="{Binding SelGame}">
+
+            <Grid Language="{DynamicResource App.XmlLanguage}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Center">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Style="{StaticResource IdentityTile}">
+                    <TextBlock Text="&#xE7FC;"
+                               Style="{StaticResource IdentityTileGlyph}" />
+                </Border>
+
+                <StackPanel x:Name="GameIdentityText"
+                            Grid.Column="2"
+                            VerticalAlignment="Center">
+
+                    <TextBlock x:Name="GameIdentityTitle"
+                               Text="{Binding SelTitle}"
+                               Style="{StaticResource HeroTitleText}"
+                               FlowDirection="{Binding SelTitle, Converter={StaticResource ContentTextFlowConverter}}"
+                               TextAlignment="{DynamicResource App.TextAlignment}"
+                               Language="{Binding SelTitle, Converter={StaticResource ContentTextLanguageConverter}, ConverterCulture=en-US}"
+                               AutomationProperties.AutomationId="Shell.GameIdentity.Title"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Center"
+                               TextWrapping="NoWrap"
+                               TextTrimming="CharacterEllipsis" />
+
+                    <StackPanel x:Name="GameIdentityChips"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Left"
+                                Margin="0,6,0,0">
+
+                        <Border Style="{StaticResource IdentityChip}"
+                                Margin="0,0,6,0">
+                            <TextBlock Text="{Binding SelSerial}"
+                                       Style="{StaticResource IdentityChipText}"
+                                       AutomationProperties.AutomationId="Shell.GameIdentity.Serial" />
+                        </Border>
+
+                        <Border Style="{StaticResource IdentityChip}"
+                                Visibility="{Binding HasSelVersion, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{Binding SelVersion}"
+                                       Style="{StaticResource IdentityChipText}"
+                                       AutomationProperties.AutomationId="Shell.GameIdentity.Version" />
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </DataTemplate>
+
+</ResourceDictionary>

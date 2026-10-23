@@ -44,7 +44,8 @@ public sealed class PatchMatchService(
                 item.Binding))
             .ToArray();
 
-        return PreferResidentCanary(matches);
+        return CanaryArtemisPolicy.Apply(
+            PreferResidentCanary(matches));
     }
 
     public Mdl.PatMatch Match(

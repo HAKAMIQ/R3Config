@@ -44,7 +44,8 @@ public partial class AdvDlg : Window
     {
         if (HCanaryWorkspace is null ||
             RecoveryWorkspace is null ||
-            DiagnosticsWorkspace is null)
+            DiagnosticsWorkspace is null ||
+            RecSyncWorkspace is null)
         {
             return;
         }
@@ -53,6 +54,7 @@ public partial class AdvDlg : Window
         HCanaryWorkspace.Visibility = selectedIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
         RecoveryWorkspace.Visibility = selectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
         DiagnosticsWorkspace.Visibility = selectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
+        RecSyncWorkspace.Visibility = selectedIndex == 3 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void HCanaryWorkspace_Loaded(object sender, RoutedEventArgs e)

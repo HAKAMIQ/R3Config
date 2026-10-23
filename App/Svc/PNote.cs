@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using R3Config.Lang;
+using R3Config.Mdl;
 
 namespace R3Config.Svc;
 
@@ -34,11 +36,27 @@ public sealed record NoteRes(
 
 public static partial class NoteSvc
 {
+    private static IReadOnlyDictionary<string, string> _syncedWikiArabic =
+        new Dictionary<string, string>(StringComparer.Ordinal);
+
     public static int ReviewedPatchArabicTranslationCount =>
         ArByEn.Count;
 
     public static int ReviewedWikiArabicTranslationCount =>
         WikiArByEn.Count;
+
+    // Local data exporter only. The returned snapshot prevents callers from
+    // mutating the reviewed translation table used by the application.
+    public static IReadOnlyDictionary<string, string> ExportReviewedWikiArabic() =>
+        new Dictionary<string, string>(WikiArByEn, StringComparer.Ordinal);
+
+    public static void SetSyncedWikiArabic(IEnumerable<RecSyncGitHubNote>? notes)
+    {
+        var snapshot = notes is null
+            ? new Dictionary<string, string>(StringComparer.Ordinal)
+            : notes.ToDictionary(note => note.SourceEnglish, note => note.NoteArabic, StringComparer.Ordinal);
+        Interlocked.Exchange(ref _syncedWikiArabic, snapshot);
+    }
 
     public static int ReviewedOfficialPatchArabicTranslationCount =>
         OfficialArByEn.Count;
@@ -338,6 +356,12 @@ public static partial class NoteSvc
         string original,
         out string localized)
     {
+        var synced = Volatile.Read(ref _syncedWikiArabic);
+        if (synced.TryGetValue(normalized, out localized!) || synced.TryGetValue(original, out localized!))
+        {
+            return true;
+        }
+
         return OfficialArByEn.TryGetValue(normalized, out localized!) ||
                OfficialArByEn.TryGetValue(original, out localized!) ||
                ArByEn.TryGetValue(normalized, out localized!) ||
@@ -712,6 +736,14 @@ public static partial class NoteSvc
             .Trim()
             .TrimEnd('.', '。', '،', '؛', ':')
             .Trim();
+    }
+
+    // R3Config's own hash-diagnostic codes are never upstream note content,
+    // so no presentation may fall back to showing them verbatim.
+    public static bool IsInternalDiagnostic(string? raw)
+    {
+        return !string.IsNullOrWhiteSpace(raw) &&
+               ContainsInternalDiagnostic(raw);
     }
 
     private static bool ContainsInternalDiagnostic(string value)

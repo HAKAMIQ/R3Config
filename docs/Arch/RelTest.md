@@ -15,20 +15,125 @@
 كل mutation test يستخدم temp RPCS3 tree. المسار الحقيقي، إن مُرر للـ runner،
 مخصص لعقد integration read-only فقط.
 
-## أوامر القبول
+## عقد toolchain
+
+`global.json` ملف مصدر دائم وليس ملفا مؤقتا للاختبارات. هو مصدر الحقيقة لنسخة
+SDK الدقيقة ويستخدم `rollForward=disable`. كل سكربت .NET داخل المستودع يعمل من
+repo root حتى يكون حل SDK حتميا. `Script/R3Toolchain.ps1` يملك التحقق من SDK
+وتشغيل dotnet وتشغيل PowerShell child processes وتشغيل executables؛ لا تكرر هذه
+الوظائف في كل سكربت.
+
+عقد R3Config الحالي workload-free: المشاريع تستخدم `net8.0` و
+`net8.0-windows`/WPF فقط. لذلك `R3Toolchain.ps1` يعطل
+`MSBuildEnableWorkloadResolver` داخل كل استدعاء dotnet فقط ثم يعيد قيمة البيئة
+السابقة في `finally`. هذا يعزل المشروع عن workload manifests المثبتة على الجهاز
+لمشاريع اخرى. قبل التعطيل يفحص الـtoolchain كل `*.csproj` ويفشل اذا ظهر
+MAUI/Android/iOS/macCatalyst/tvOS/browser/WASM؛ عندها يتغير العقد صراحة بدل اخفاء
+workload حقيقي.
+
+`NameChk` اداة build-time وليست منتجا منشورا. يبنى الى DLL ثابت `net8.0` مع
+`UseAppHost=false` ثم يشغل بواسطة `dotnet exec`. build output وintermediate output
+يوجهان الى system temp بواسطة MSBuild properties ثم يحذفان بعد التنفيذ. قيم
+MSBuild directory properties تمر حصرا عبر
+`Get-R3MsBuildDirectoryPropertyValue` في `R3Toolchain.ps1` حتى تكون absolute وتنتهي
+بـdirectory separator كما يفرض MSBuild. لا تبن هذه القيم يدويا داخل gate ولا تستخدم
+`--artifacts-path` لهذا gate لان مسار apphost قد ينفصل عن output الفعلي للمشروع.
+
+## بوابات corpus وprovenance
+
+مصدر الإنتاج canonical للـWiki هو `RPCS3+Wiki-20260920160231.xml` بتاريخ
+`2026-09-20` وبصمة SHA-256
+`7977CA26176E12DD167241CDE77D68E6CC64CE24CB39C2682FD5E686CA7936C5`
+(المثبتة في `WikiSvc.CanonicalSnapshotSha256`). رُقّي Current Wiki من 2026-09-07
+بطلب مالك المشروع بعد إثبات الفرق بالـgenerator ومطابقة توليدين بايتًا ببايت.
+`App/Data/cat.json` و`App/Data/wiki-notes.json` مولدان معًا من هذا الملف؛
+parity الحالية: 8542 سيريالًا و7794 إعدادًا و0 فروق. القيم الملتبسة الأربع وتعارضا
+السيريال مستبعدة من الإعدادات. انظر [ملاحظات الويكي](WikiEvidence.md).
+أي snapshot أحدث يبقى `NEWER_EVIDENCE` فقط ولا يصبح canonical بمجرد تمريره إلى gate.
+
+`RelTest` يفصل المسارين:
+
+- `-WikiXml <path>` يشغل `R3Test.exe --wiki-verify <path>`. إن لم يمرر يستخدم
+  `RelTest.ps1` تلقائيًا مصدر الإنتاج المثبت
+  `F:\Downloaded-Websites\rpcs3\Wiki-Snapshots\Candidate\RPCS3+Wiki-20260920160231.xml` بعد التحقق من SHA-256.
+  هذا الوضع يرفض أي XML لا يطابق هوية September pinned، ويتحقق أن `App/Data/cat.json`
+  يحمل September `DataVersion`/`SourceHash`/`GeneratedAt` قبل مقارنة parity، ثم
+  يتحقق أن `App/Data/wiki-notes.json` يحمل المصدر نفسه (hash وتاريخ واسم الملف) ويطابق
+  بايتًا ببايت ما يولده هذا المصدر. اختلاف واحد يفشل `WIKI_CANONICAL_PARITY_GATE`.
+- `-WikiEvidenceXml <path>` يشغل `R3Test.exe --wiki-delta <path>`. يجب أن يكون
+  المصدر أحدث من September وألا يملك hash المصدر canonical. النتيجة تقرير delta فقط؛
+  لا يشترط `Differences=0` ولا يعدل provenance أو baseline.
+
+إذا لم يوجد ملف مصدر الإنتاج في مساره الافتراضي ولم يمرر `-WikiXml` يطبع `RelTest`
+`WIKI_CANONICAL_PARITY_GATE: BLOCKED/SKIPPED` صراحة لأن غياب September XML يمنع
+byte-for-byte regeneration. لا يجوز استخدام snapshot مختلف بدلا منه، ولا يعني نجاح
+باقي الاختبارات أن shipped catalog canonical.
+
+إعادة بناء catalog canonical تتم فقط من snapshot يمر بهوية September:
 
 ```powershell
-dotnet restore .\R3Cfg.slnx
-dotnet build .\R3Cfg.slnx -c Release --no-restore --nologo
-dotnet run --project .\Tst\R3Test.csproj -c Release --no-build
-powershell -ExecutionPolicy Bypass -File .\Script\SrcChk.ps1
+.\Tst\bin\Release\net8.0-windows\R3Test.exe --wiki-rebuild <september-snapshot.xml> <out.json>
 ```
 
-اختبار إصدار:
+`--wiki-rebuild` و`--wiki-verify` و`--wiki-delta` لا يعدلان ملفات المستودع؛ rebuild
+يكتب فقط إلى مسار output الممرر.
+
+بوابتا الباتشات الرسمية منفصلتان:
+
+- `OFFICIAL_RUNTIME_COMPATIBILITY_GATE` **إلزامية**. يشغلها `RelTest` دائمًا عبر
+  `R3Test.exe --official-runtime-only` ولا تحتاج corpus خارجيًا ولا تقرأ `patch.yml`
+  المثبت على الجهاز. تتحقق من الضمانات الحالية للإنتاج: `patch.yml` الخاص بـRPCS3
+  للقراءة فقط، وتحليل schema 1.2 يفشل مغلقًا، والبنى غير المدعومة/المجهولة صريحة، وتطابق
+  Serial/الإصدار/الـhash صارم، وUnknown لا يساوي Mismatch، وحالة `patch_config.yml`
+  محفوظة، والباتشات الرسمية معزولة عن Wiki وCanary وArtemis والمستوردة.
+- `OFFICIAL_HISTORICAL_CORPUS_REPLAY` **اختيارية**. `OfficialCorpusT` له identity pinned
+  مستقلة (`ExpectedSnapshotDate=2026-08-25`, 897858 bytes، SHA-256
+  `45F746AFC3D4EEA2450F32F92769BB555029807497CFF3512B633428EF74E8AD`).
+  `RelTest -OfficialPatch <path>` يشغله فقط عند توفير المصدر المطابق. الملف التاريخي
+  غير متوفر حاليًا، فتطبع `OFFICIAL_HISTORICAL_CORPUS_REPLAY: NOT_AVAILABLE` وغيابه
+  لا يمنع الإصدار. ملف `patch.yml` من
+RPCS3 المثبت أو الأحدث لا يصبح canonical تلقائيا ولا يحدّث baseline.
+
+## بيانات بناءات RPCS3 وبيئة التشغيل
+
+- `Rpcs3BuildCatalogT` يتحقق من `App/Data/rpcs3-builds.json` من مخرجات البناء وحدها (لا مجلد تطوير ولا شبكة): صف واحد لكل
+  Version+Build وفئة مصدر، كل صف GitHub رابط رسمي يحل إلى نفسه، وكل صف Archive مرجع موثق بلا تنزيل، والتحكم الحقيقي
+  `0.0.30-16004` و`0.0.29-15565` (OFFICIAL_URL_MATCH)، وغياب أي مسار محرك تطوير. الأعداد تُطبع ولا تُثبَّت كأرقام في الاختبار.
+- `RuntimeContextT` و`RuntimeViewUiT` يغطيان المجال الخامس (حالات الدليل، شروط العتاد، تدفق السياق إلى إعدادات اللعبة، العربية/الإنجليزية،
+  الإخفاء الافتراضي للتفاصيل، ومالك واحد لفحص العتاد).
+- `HostCpuT` يغطي سياق المعالج بـfixtures اصطناعية (x64 Intel/AMD وهجين وARM64 وبيانات ناقصة والمحاكاة وتحليل بنية النوى وانطباق
+  إعدادات RPCS3 وتكامل السياق والعربية)، و`HostCpuT.RunRealHost` اختبار مفصول يقرأ الجهاز الحقيقي ويؤكد invariants فقط.
+- `LogDiagT` (المحلل والتوقيعات وقواعد التشخيص والقراءة للقراءة فقط وقاعدة الحالات المشحونة) و`LogDiagViewUiT` (تبويبات
+  العرض الأربعة بالعربية والإنجليزية) يغطيان تشخيص السجل؛ `R3Test.exe --log-diag-only` يشغل الأول وحده،
+  و`R3Test.exe --log-diag-real <log|log.gz> [serial]` يحلل سجلًا حقيقيًا للقراءة فقط ويطبع الأحداث والتشخيص، و
+  `R3Test.exe --gen-diagnostics-kb <indexes> <attachments> <out.json>` يولد قاعدة الحالات (تطوير فقط).
+- توليد الكتالوج (تطوير فقط): `R3Test.exe --gen-build-catalog <master.json> <github.csv> <out.json>`.
+- قبول قراءة فقط على تثبيت حقيقي: `R3Test.exe --runtime-context-real <rpcs3.exe> [serial]` يشغل مسار التحليل الإنتاجي ويطبع لقطة
+  السياق، ويفشل إذا تغير أي ملف config/patches أثناء التشغيل.
+
+## اوامر القبول
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\Script\RelTest.ps1 -Configuration Release
+.\Script\RelTest.cmd -Configuration Release
 ```
+
+`R3Cfg.slnx` هو solution metadata وليس CLI acceptance target تحت SDK المثبت حاليا.
+`Tst/R3Test.csproj` هو جذر verification graph: يشير الى App وCore وArtImport، وApp
+يشير الى Core وLangPack. عقد المعمارية يثبت ان هذا الـclosure يساوي مشاريع
+`R3Cfg.slnx` حتى لا يسقط مشروع من البناء بصمت.
+
+اختبار اصدار كامل:
+
+```powershell
+.\Script\RelTest.cmd -Configuration Release
+```
+
+`RelTest` يشغل restore/build على `Tst/R3Test.csproj` ثم `R3Test.exe` الفعلي ثم
+`SrcChk`. لا يستخدم `dotnet run` لتشغيل test harness ولا يمرر `R3Cfg.slnx` الى
+.NET CLI تحت الـSDK المثبت. wrappers بصيغة CMD هي واجهة Windows المفضلة
+لانها تطبق `-NoProfile -ExecutionPolicy Bypass` بصورة ثابتة على PowerShell 5.1.
+`PortPub.ps1` لا يعيد اختراع acceptance sequence؛ يستدعي `RelTest.ps1` اولا مع
+مسار RPCS3 الحقيقي للقراءة فقط، ثم ينتقل الى restore الخاص بالـruntime وpublish.
 
 portable release يحتاج `-Rpcs3Path` لتشغيل عقد التثبيت الحقيقي read-only.
 
@@ -68,6 +173,17 @@ portable release يحتاج `-Rpcs3Path` لتشغيل عقد التثبيت ال
 - exclusive staging مع فحص canonical/reparse متكرر؛
 - منع XML DTD/entity expansion؛
 - إلزام release signing وRFC 3161 وsigned manifest.
+
+`RunSecurityClosure` (`Tst/Program.SecurityClosure.cs`، ويمكن تشغيله منفردًا بـ
+`R3Test.exe --security-closure-only`) يثبت:
+
+- `patch.yml` يبقى read-only عند فتح جذر RPCS3 عبر junction؛
+- writer lock يبقى مملوكًا بعد انتهاء الـthread الذي فحص أول mutation، ويحجب مالكًا
+  آخر أو object بنفس الاسم بـ`MutBlock.Locked` دون إسقاط العملية؛
+- فشل config/patch قبل commit لا يترك backup snapshot يتيمًا؛
+- تصدير الكتالوج يكتب `.json` فقط ولا يكتب عبر hardlink؛
+- `PortChk.ps1` يشترط كل ملف منشور في `App/R3App.csproj` ونص GPL-3.0 في `LICENSE`؛
+- سكربتات المستودع لا تحمل مسار user profile أو drive ثابتًا.
 
 ## Matrix
 
@@ -109,10 +225,18 @@ portable release يحتاج `-Rpcs3Path` لتشغيل عقد التثبيت ال
 
 لا تعدل verifier لإخفاء provenance ناقص.
 
+المصدر يرفض أيضًا مواد المفاتيح والأسرار: `.pem/.pfx/.p12/.p8/.key/.snk`، وملفات `.env`/`.dev.vars`،
+و`node_modules`، وأي PEM لمفتاح خاص بمحتواه.
+
+`SrcExp.ps1` يستبعد ZIP files عامة، لكن `App/Data/ncl.zip` استثناء shipped وحيد
+ومثبت بالـhash/provenance. source handoff يجب ان يحتويه؛ اي ZIP اخر يبقى مرفوضا.
+
 ## Portable verifier
 
 يتحقق من required files، executable version، غياب source/debug/emulator payload،
-language parity، catalog non-empty، cheats notice، و`SHA256SUMS`. فحص الـmanifest
+language parity، catalog non-empty، cheats notice، و`SHA256SUMS`.
+ويرفض مفاتيح خاصة أو قواعد بيانات محلية أو ملفات المستخدم (`settings.json`، `ui.json`، `hdis.json`)،
+ومسارات المطور. فحص الـmanifest
 ثنائي الاتجاه: كل سطر يشير إلى ملف داخل مجلد الإصدار وبصمة صحيحة بلا تكرار، وكل
 ملف إصدار عدا manifest نفسه يجب أن يكون مدرجًا.
 

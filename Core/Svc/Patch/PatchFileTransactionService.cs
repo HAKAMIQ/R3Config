@@ -195,20 +195,20 @@ public sealed class PatchFileTransactionService(
                 backupRootPath,
                 targets);
 
-            ValidateStages(staged);
-            ValidateExpectedState(files);
-
-            validatePaths?.Invoke(
-                PatPhase.Commit,
-                backupRootPath,
-                targets);
-            ValidateStages(staged);
-            ValidateExpectedState(files);
-
             var attemptedFiles = new List<PatchPreparedFile>(
                 staged.Count);
             try
             {
+                ValidateStages(staged);
+                ValidateExpectedState(files);
+
+                validatePaths?.Invoke(
+                    PatPhase.Commit,
+                    backupRootPath,
+                    targets);
+                ValidateStages(staged);
+                ValidateExpectedState(files);
+
                 foreach (var file in staged)
                 {
                     ValidateStage(file);
@@ -227,18 +227,22 @@ public sealed class PatchFileTransactionService(
                     }
                 }
 
+                ValidateCommittedState(files);
                 return backup;
             }
             catch (Exception commitException)
             {
+                if (attemptedFiles.Count == 0)
+                {
+                    _BkpSvc.DiscardUnused(backupRootPath, backup);
+                    throw;
+                }
+
                 try
                 {
-                    if (attemptedFiles.Count > 0)
-                    {
-                        RollbackCommitted(
-                            backup,
-                            attemptedFiles);
-                    }
+                    RollbackCommitted(
+                        backup,
+                        attemptedFiles);
                 }
                 catch (Exception restoreException)
                 {

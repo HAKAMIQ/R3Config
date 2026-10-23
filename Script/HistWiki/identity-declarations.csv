@@ -1,0 +1,7 @@
+"SourceFieldKey","CanonicalFieldKey","EvidenceRevision","Kind","Evidence"
+"write color buffer","write color buffers","3354","SAME_REVISION_SWAP","Template:Config revision 3354 (2019-05-01) removes 'write color buffer' and adds 'write color buffers' together with their notes parameters."
+"maximum number of spurs threads","maximum spurs threads","8855","SAME_REVISION_SWAP","Template:Config revision 8855 (2020-01-03), comment: Remove 'number of'."
+"xfloat accuracy","spu xfloat accuracy","27080","SAME_REVISION_SWAP","Template:Config revision 27080 (2022-04-10) swaps 'xfloat accuracy' for 'spu xfloat accuracy'."
+"accurate llvm dfma","accurate dfma","58538","SAME_REVISION_SWAP","Template:Config revision 58538 (2026-04-09) swaps 'accurate llvm dfma' for 'accurate dfma'."
+"read depth buffer","read depth buffers","57775","SAME_REVISION_SWAP_REVERT","'read depth buffers' (since 2019-08-16) was temporarily renamed 'read depth buffer' on 2026-02-26; revision 57775 (2026-03-17) switches back: 'Switched the parameter name back to old name'."
+"write depth buffer","write depth buffers","57775","SAME_REVISION_SWAP_REVERT","'write depth buffers' (since 2019-08-16) was temporarily renamed 'write depth buffer' on 2026-02-26; revision 57775 (2026-03-17) switches back: 'Switched the parameter name back to old name'."

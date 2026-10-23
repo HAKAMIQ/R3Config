@@ -15,6 +15,8 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ASty.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <lang:UiDateConverter x:Key="UiDateConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -116,7 +118,7 @@
                     <DataGridTextColumn Header="{lang:TextExt Key=Adv.Date}"
                                         HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
                                         Binding="{Binding MadeAt,
-                                                          StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                                                          Converter={StaticResource UiDateConverter}}"
                                         Width="Auto"
                                         MinWidth="140"
                                         MaxWidth="170"

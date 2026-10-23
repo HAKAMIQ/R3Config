@@ -68,7 +68,7 @@ public sealed partial class MainVm : VmBase
             var confirmed = _confirm(
                 UiText.Fmt(
                     "Msg.RestoreConfirm",
-                    backup.MadeAt.LocalDateTime,
+                    UiDate.Inline(backup.MadeAt),
                     backup.Files.Count),
                 UiText.GetText("Dialog.RestoreTitle"));
 
@@ -118,7 +118,7 @@ public sealed partial class MainVm : VmBase
             if (!_confirm(
                     UiText.Fmt(
                         "Msg.DeleteBackupConfirm",
-                        backup.MadeAt.LocalDateTime),
+                        UiDate.Inline(backup.MadeAt)),
                     UiText.GetText("Dialog.DeleteBackupTitle")))
             {
                 Log(UiText.GetText("Msg.UserCancelDeleteBackup"));
@@ -159,7 +159,7 @@ public sealed partial class MainVm : VmBase
 
             var deleteCount = Math.Max(
                 0,
-                Advanced.Backups.Count -
+                Advanced.Backups.Count(backup => !backup.IsLegacy) -
                 BackupUseCase.DefaultRetentionCount);
             if (deleteCount == 0)
             {

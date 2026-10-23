@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:lang="clr-namespace:R3Config.Lang">
+                    xmlns:lang="clr-namespace:R3Config.Lang"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <Style x:Key="AdvLocalizedTitleText"
            TargetType="{x:Type TextBlock}"
@@ -11,6 +12,10 @@
                 Value="{DynamicResource App.TextAlignment}" />
         <Setter Property="HorizontalAlignment"
                 Value="Stretch" />
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+        <Setter Property="TextTrimming"
+                Value="None" />
     </Style>
 
     <Style x:Key="AdvLocalizedRowTitleText"
@@ -22,6 +27,10 @@
                 Value="{DynamicResource App.TextAlignment}" />
         <Setter Property="HorizontalAlignment"
                 Value="Stretch" />
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+        <Setter Property="TextTrimming"
+                Value="None" />
     </Style>
 
     <Style x:Key="AdvLocalizedDescriptionText"
@@ -33,6 +42,10 @@
                 Value="{DynamicResource App.TextAlignment}" />
         <Setter Property="HorizontalAlignment"
                 Value="Stretch" />
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+        <Setter Property="TextTrimming"
+                Value="None" />
     </Style>
 
     <Style x:Key="AdvLocalizedLabelText"
@@ -44,6 +57,10 @@
                 Value="{DynamicResource App.TextAlignment}" />
         <Setter Property="HorizontalAlignment"
                 Value="Stretch" />
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+        <Setter Property="TextTrimming"
+                Value="None" />
     </Style>
 
     <Style x:Key="AdvLocalizedEmptyStateText"
@@ -55,6 +72,10 @@
                 Value="{DynamicResource App.TextAlignment}" />
         <Setter Property="HorizontalAlignment"
                 Value="Stretch" />
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+        <Setter Property="TextTrimming"
+                Value="None" />
     </Style>
 
     <Style x:Key="AdvLocalizedDataGridHeader"
@@ -69,9 +90,9 @@
         <Setter Property="VerticalContentAlignment"
                 Value="Center" />
         <Setter Property="Height"
-                Value="32" />
+                Value="{StaticResource DataGrid.HeaderHeight}" />
         <Setter Property="MinHeight"
-                Value="32" />
+                Value="{StaticResource DataGrid.HeaderHeight}" />
         <Setter Property="Padding"
                 Value="8,0" />
         <Setter Property="TextBlock.TextAlignment"
@@ -84,13 +105,13 @@
         <Setter Property="FlowDirection"
                 Value="{DynamicResource App.TextFlowDirection}" />
         <Setter Property="MinWidth"
-                Value="96" />
+                Value="{StaticResource Button.MinWidth.Standard}" />
         <Setter Property="Height"
-                Value="32" />
+                Value="{StaticResource Control.Height.Standard}" />
         <Setter Property="MinHeight"
-                Value="32" />
+                Value="{StaticResource Control.Height.Standard}" />
         <Setter Property="Padding"
-                Value="12,4" />
+                Value="{StaticResource Button.Padding.Standard}" />
         <Setter Property="HorizontalContentAlignment"
                 Value="Center" />
         <Setter Property="VerticalContentAlignment"
@@ -101,19 +122,42 @@
                 Value="Center" />
     </Style>
 
+    <!-- Inline Fluent MessageBar equivalent: it takes layout space next to
+         the surface it describes and never floats over other content. The
+         intent (Info by default) is text + glyph + color, never color alone. -->
+    <Style x:Key="AdvInlineNotice"
+           TargetType="{x:Type Border}">
+        <Setter Property="Background"
+                Value="{DynamicResource Status.InfoSurface}" />
+        <Setter Property="BorderBrush"
+                Value="{DynamicResource Stroke.Subtle}" />
+        <Setter Property="BorderThickness"
+                Value="{StaticResource Stroke.Thickness.Default}" />
+        <Setter Property="CornerRadius"
+                Value="{StaticResource Radius.Medium}" />
+        <Setter Property="Padding"
+                Value="12,8" />
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+    </Style>
+
+    <!-- Readable width of a single-line field and its action: the column
+         fills narrower surfaces and stops growing on wide ones. -->
+    <sys:Double x:Key="AdvField.MaxWidth">480</sys:Double>
+
     <Style x:Key="AdvDangerActionButton"
            TargetType="{x:Type Button}"
            BasedOn="{StaticResource FluentButton.Danger}">
         <Setter Property="FlowDirection"
                 Value="{DynamicResource App.TextFlowDirection}" />
         <Setter Property="MinWidth"
-                Value="96" />
+                Value="{StaticResource Button.MinWidth.Standard}" />
         <Setter Property="Height"
-                Value="32" />
+                Value="{StaticResource Control.Height.Standard}" />
         <Setter Property="MinHeight"
-                Value="32" />
+                Value="{StaticResource Control.Height.Standard}" />
         <Setter Property="Padding"
-                Value="12,4" />
+                Value="{StaticResource Button.Padding.Standard}" />
         <Setter Property="HorizontalContentAlignment"
                 Value="Center" />
         <Setter Property="VerticalContentAlignment"
@@ -130,13 +174,13 @@
         <Setter Property="FlowDirection"
                 Value="{DynamicResource App.TextFlowDirection}" />
         <Setter Property="MinWidth"
-                Value="64" />
+                Value="{StaticResource Button.MinWidth.Compact}" />
         <Setter Property="Height"
-                Value="32" />
+                Value="{StaticResource Control.Height.Standard}" />
         <Setter Property="MinHeight"
-                Value="32" />
+                Value="{StaticResource Control.Height.Standard}" />
         <Setter Property="Padding"
-                Value="12,4" />
+                Value="{StaticResource Button.Padding.Standard}" />
         <Setter Property="HorizontalContentAlignment"
                 Value="Center" />
         <Setter Property="VerticalContentAlignment"

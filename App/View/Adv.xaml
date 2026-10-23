@@ -59,15 +59,15 @@
                     MouseLeftButtonDown="DragWin">
 
                 <Grid Height="32"
-                      FlowDirection="LeftToRight"
+                      FlowDirection="{DynamicResource App.CaptionButtonsFlowDirection}"
                       ClipToBounds="True">
 
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="46" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="46" />
                     </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0"
+                    <Button Grid.Column="1"
                             AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
                             ToolTip="{lang:TextExt Key=Window.CloseTip}"
                             Click="CloseWin"
@@ -96,7 +96,7 @@
                               UseLayoutRounding="True">
 
                             <TextBlock Text=""
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="10"
                                        Foreground="{Binding Foreground,
                                                             RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
@@ -109,13 +109,13 @@
                         </Grid>
                     </Button>
 
-                    <TextBlock Grid.Column="1"
+                    <TextBlock Grid.Column="0"
                                Text="{lang:TextExt Key=Adv.Title}"
                                Style="{StaticResource AdvLocalizedTitleText}"
                                FlowDirection="{DynamicResource App.TextFlowDirection}"
                                Language="{DynamicResource App.XmlLanguage}"
-                               Margin="0,0,14,0"
-                               HorizontalAlignment="{DynamicResource App.HorizontalAlignment}"
+                               Margin="14,0"
+                               HorizontalAlignment="Stretch"
                                VerticalAlignment="Center"
                                TextAlignment="{DynamicResource App.TextAlignment}"
                                TextTrimming="CharacterEllipsis"
@@ -153,9 +153,22 @@
                                      HorizontalContentAlignment="Stretch"
                                      VerticalContentAlignment="Center">
 
-                            <TextBlock Text="{lang:TextExt Key=HCanary.Title}"
-                                       Style="{StaticResource AdvLocalizedRowTitleText}"
-                                       TextTrimming="CharacterEllipsis" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           Text="&#xE945;"
+                                           Style="{StaticResource IconGlyphText}" />
+
+                                <TextBlock Grid.Column="2"
+                                           Text="{lang:TextExt Key=HCanary.Title}"
+                                           Style="{StaticResource AdvLocalizedRowTitleText}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </Grid>
                         </ListBoxItem>
 
                         <ListBoxItem MinHeight="32"
@@ -163,9 +176,22 @@
                                      HorizontalContentAlignment="Stretch"
                                      VerticalContentAlignment="Center">
 
-                            <TextBlock Text="{lang:TextExt Key=Adv.Recovery}"
-                                       Style="{StaticResource AdvLocalizedRowTitleText}"
-                                       TextTrimming="CharacterEllipsis" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           Text="&#xE777;"
+                                           Style="{StaticResource IconGlyphText}" />
+
+                                <TextBlock Grid.Column="2"
+                                           Text="{lang:TextExt Key=Adv.Recovery}"
+                                           Style="{StaticResource AdvLocalizedRowTitleText}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </Grid>
                         </ListBoxItem>
 
                         <ListBoxItem MinHeight="32"
@@ -173,10 +199,47 @@
                                      HorizontalContentAlignment="Stretch"
                                      VerticalContentAlignment="Center">
 
-                            <TextBlock Text="{lang:TextExt Key=Adv.Diagnostics}"
-                                       Style="{StaticResource AdvLocalizedRowTitleText}"
-                                       TextTrimming="CharacterEllipsis" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           Text="&#xE9D9;"
+                                           Style="{StaticResource IconGlyphText}" />
+
+                                <TextBlock Grid.Column="2"
+                                           Text="{lang:TextExt Key=Adv.Diagnostics}"
+                                           Style="{StaticResource AdvLocalizedRowTitleText}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </Grid>
                         </ListBoxItem>
+
+                        <ListBoxItem MinHeight="32"
+                                     FlowDirection="{DynamicResource App.FlowDirection}"
+                                     HorizontalContentAlignment="Stretch"
+                                     VerticalContentAlignment="Center">
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           Text="&#xE895;"
+                                           Style="{StaticResource IconGlyphText}" />
+
+                                <TextBlock Grid.Column="2"
+                                           Text="{lang:TextExt Key=Adv.RecSync}"
+                                           Style="{StaticResource AdvLocalizedRowTitleText}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </ListBoxItem>
+
                     </ListBox>
                 </Border>
 
@@ -197,6 +260,10 @@
 
                     <local:ADiagView x:Name="DiagnosticsWorkspace"
                                      Visibility="Collapsed" />
+
+                    <local:ARecSyncView x:Name="RecSyncWorkspace"
+                                        Visibility="Collapsed" />
+
                 </Grid>
             </Grid>
         </Grid>

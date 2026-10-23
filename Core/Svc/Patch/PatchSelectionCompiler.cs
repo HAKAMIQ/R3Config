@@ -31,6 +31,70 @@ public sealed partial class PatchSelectionCompiler
 
     private readonly ReadSvc _reader = new();
 
+    // Selection compilation validates executable definitions, but is a projection:
+    // it cannot persist a shared managed document without losing unselected or
+    // unknown YAML nodes. NCL adds one definition to the original document.
+    public static string MergeGeneratedNcl(string existingText, string generatedText)
+    {
+        var generated = R3Bound.LoadYaml(generatedText, "Generated NCL definition");
+        var existing = R3Bound.LoadYaml(existingText, "Managed NCL definitions");
+        if (generated.Documents.Count != 1 || existing.Documents.Count != 1 ||
+            generated.Documents[0].RootNode is not YamlMappingNode addition ||
+            existing.Documents[0].RootNode is not YamlMappingNode root)
+        {
+            throw new InvalidDataException("NCL merge requires single mapping documents.");
+        }
+
+        var hashes = addition.Children.Where(pair =>
+            RunKey.TryParse(Scalar2(pair.Key), out _)).ToArray();
+        if (hashes.Length != 1 || hashes[0].Value is not YamlMappingNode patches || patches.Children.Count != 1)
+        {
+            throw new InvalidDataException("NCL merge requires one generated runtime identity.");
+        }
+
+        var hash = Scalar2(hashes[0].Key);
+        var entry = patches.Children.Single();
+        var title = Scalar2(entry.Key);
+        var residentHashes = root.Children.Where(pair =>
+            ReadSvc.Decode2(Scalar2(pair.Key)).Equals(hash, StringComparison.OrdinalIgnoreCase)).ToArray();
+        if (residentHashes.Length > 1)
+        {
+            throw new InvalidDataException("Duplicate managed NCL runtime container.");
+        }
+
+        if (residentHashes.Length == 0)
+        {
+            root.Add(hashes[0].Key, hashes[0].Value);
+        }
+        else
+        {
+            if (residentHashes[0].Value is not YamlMappingNode resident)
+                throw new InvalidDataException("Managed NCL runtime container is not a mapping.");
+            var siblings = resident.Children.Where(pair =>
+                ReadSvc.Decode(Scalar2(pair.Key)).Equals(title, StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (siblings.Length > 1)
+                throw new InvalidDataException("Duplicate managed NCL cheat identity.");
+            if (siblings.Length == 1)
+            {
+                if (siblings[0].Value is not YamlMappingNode oldDetails || entry.Value is not YamlMappingNode newDetails ||
+                    ReadSvc.CalcDef(TryGet(oldDetails, "Games")) != ReadSvc.CalcDef(TryGet(newDetails, "Games")) ||
+                    ReadSvc.CalcDef(TryGet(oldDetails, "Patch")) != ReadSvc.CalcDef(TryGet(newDetails, "Patch")) ||
+                    Scalar(TryGet(oldDetails, "Patch Version")) != Scalar(TryGet(newDetails, "Patch Version")))
+                {
+                    throw new InvalidDataException("Managed NCL identity conflicts with existing target metadata or instructions.");
+                }
+
+                // The existing entry owns its metadata; reapply does not replace
+                // its Author, provenance, extension fields, or formatting.
+                return existingText;
+            }
+
+            resident.Add(entry.Key, entry.Value);
+        }
+
+        return Save(root);
+    }
+
     public SelRes Compile(
         string sourceText,
         IReadOnlyList<Mdl.PatMatch> selectedMatches,

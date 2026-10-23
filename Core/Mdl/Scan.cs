@@ -90,7 +90,8 @@ public sealed record Rpcs3GameDescriptor(
     IReadOnlyList<string>? OvlRaw = null,
     IReadOnlyList<string>? AuthPpu = null,
     IReadOnlyList<string>? HCanPpu = null,
-    IReadOnlyList<string>? HCanSpu = null)
+    IReadOnlyList<string>? HCanSpu = null,
+    string? Category = null)
 {
     public IReadOnlyList<string> Hashes => Merge(PpuHash, PpuRaw);
 
@@ -180,7 +181,8 @@ public sealed record SfoInfo(
     string? Title,
     string? TitleId,
     string? AppVer,
-    string? DiscVer = null)
+    string? DiscVer = null,
+    string? Category = null)
 {
     public string? EffectiveVersion =>
         !string.IsNullOrWhiteSpace(AppVer) &&

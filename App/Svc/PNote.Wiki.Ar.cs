@@ -118,10 +118,16 @@ public static partial class NoteSvc
                 "يعتمد على GPU. يحسن الأداء عادة، لكنه قد يعطل الرسوم في بعض الأقسام مثل Boat Ride.",
             ["Depends on GPU. It usually improves performance. It can produce some flickering on some objects (e.g. on the big red flags). The flickering seems related to \"ZCULL Accuracy\" value (more evident with \"Relaxed\")."] =
                 "يعتمد على GPU ويحسن الأداء عادة. قد يسبب وميضا في بعض العناصر، مثل الأعلام الحمراء الكبيرة. يبدو أن الوميض مرتبط بقيمة ZCull Accuracy ويظهر بوضوح أكبر مع Relaxed.",
+            ["Disables crowd rendering. Current workaround to <i>RPCS3 issue #12059</i>"] =
+                "يعطل رسم الحشود. حل مؤقت حالي لـ<i>RPCS3 issue #12059</i>.",
             ["Enable this if the game crashes on boot."] =
                 "فعله إذا انهارت اللعبة عند الإقلاع.",
             ["Enable this when Write color buffers is enabled, if enabling Write color buffers results in effects like smoke appearing/clipping through objects that should block their visibility."] =
                 "فعله مع Write Color Buffers إذا تسبب تفعيلها في ظهور مؤثرات مثل الدخان عبر عناصر يفترض أن تحجبها.",
+            ["Enable to fix flat water and missing wave graphics"] =
+                "فعله لإصلاح الماء المسطح واختفاء رسوم الأمواج.",
+            ["Enable to fix glitches in the wave height map structure"] =
+                "فعله لإصلاح الخلل في بنية خريطة ارتفاع الأمواج.",
             ["Enable to fix glitching with textures of water and skybox textures"] =
                 "فعله لإصلاح الخلل في خامات الماء وخامات Skybox.",
             ["Enable to fix stuttering and freezing in-game"] =
@@ -146,6 +152,8 @@ public static partial class NoteSvc
                 "يصلح 95% من تلف شعار اللاعب وتلف خامات AC.",
             ["Fixes a black screen caused by Force CPU Blit Emulation"] =
                 "يصلح الشاشة السوداء الناتجة عن Force CPU Blit Emulation.",
+            ["Fixes an issue causing missing or broken text in menus and loading screens"] =
+                "يصلح مشكلة تسبب اختفاء النصوص أو تلفها في القوائم وشاشات التحميل.",
             ["Fixes artifacts on bloom when using resolution scaling."] =
                 "يصلح تشوهات Bloom عند استخدام Resolution Scale.",
             ["Fixes artifacts when damaged by electricity."] =
@@ -158,6 +166,8 @@ public static partial class NoteSvc
                 "يصلح طقطقة الصوت.",
             ["Fixes bad vignette effect (gradient made of bars) in game and on menus visible if upscaling at 200% or above."] =
                 "يصلح تأثير Vignette السيئ، وهو تدرج على شكل أشرطة يظهر داخل اللعبة والقوائم عند رفع الدقة إلى 200% أو أكثر.",
+            ["Fixes black artifacts"] =
+                "يصلح التشوهات السوداء.",
             ["Fixes black box around camera, visible wider areas and hallways"] =
                 "يصلح المربع الأسود حول الكاميرا ويتيح رؤية مناطق وممرات أوسع.",
             ["Fixes black boxes in cutscenes with Lucifer and Beatrice."] =
@@ -212,6 +222,8 @@ public static partial class NoteSvc
                 "يصلح التشوهات المتكتلة عند الدقات الأعلى.",
             ["Fixes blocky shadows when Resolution Scale is over 100%."] =
                 "يصلح الظلال المتكتلة عندما تتجاوز Resolution Scale نسبة 100%.",
+            ["Fixes bloom and lighting when using Resolution scaling above 100%."] =
+                "يصلح Bloom والإضاءة عند استخدام Resolution Scale فوق 100%.",
             ["Fixes bloom artifacts when using resolution scaling."] =
                 "يصلح تشوهات Bloom عند استخدام Resolution Scale.",
             ["Fixes bloom being too bright."] =
@@ -222,8 +234,12 @@ public static partial class NoteSvc
                 "يصلح تأثير الضبابية على الحافتين العلوية والسفلية.",
             ["Fixes blurry screen in some chapters."] =
                 "يصلح ضبابية الشاشة في بعض الفصول.",
+            ["Fixes bright flickering colors"] =
+                "يصلح وميض الألوان الساطع.",
             ["Fixes bright scenes while in-game, but expect a small performance hit."] =
                 "يصلح المشاهد شديدة السطوع أثناء اللعب، مع انخفاض بسيط متوقع في الأداء.",
+            ["Fixes bright screen ingame"] =
+                "يصلح سطوع الشاشة الزائد داخل اللعبة.",
             ["Fixes bright screen ingame."] =
                 "يصلح سطوع الشاشة الزائد داخل اللعبة.",
             ["Fixes brightness in some scenes."] =
@@ -256,6 +272,8 @@ public static partial class NoteSvc
                 "يصلح Chromatic Aberration المعطل في نمط Split-Screen Co-op.",
             ["Fixes broken collision with ragdolls."] =
                 "يصلح الاصطدامات المعطلة مع Ragdolls.",
+            ["Fixes broken collision with ragdolls. Reduces performance."] =
+                "يصلح تصادم الأجسام المترهلة، لكنه يخفض الأداء.",
             ["Fixes broken crowd graphics"] =
                 "يصلح رسوم الجمهور المعطلة.",
             ["Fixes broken effect in pause menu and broken lighting in night-time scenarios."] =
@@ -270,6 +288,8 @@ public static partial class NoteSvc
                 "يصلح الإضاءة المعطلة.",
             ["Fixes Broken Lighting And Missing Graphics"] =
                 "يصلح الإضاءة المعطلة والعناصر الرسومية المفقودة.",
+            ["Fixes broken lighting."] =
+                "يصلح الإضاءة التالفة.",
             ["Fixes broken Map menu in Cellphone (Select Button)."] =
                 "يصلح قائمة Map المعطلة في Cellphone عبر زر Select.",
             ["Fixes broken Map menu in Cellphone (Select Button). | Fixes flickering in the map menu."] =
@@ -278,6 +298,10 @@ public static partial class NoteSvc
                 "يصلح القائمة المعطلة.",
             ["Fixes broken menus."] =
                 "يصلح القوائم المعطلة.",
+            ["Fixes broken ocean rendering when using Resolution Scaling."] =
+                "يصلح رسم المحيط عند استخدام Resolution Scale.",
+            ["Fixes broken ocean wave logic."] =
+                "يصلح منطق أمواج المحيط التالف.",
             ["Fixes broken pause menu and blood effects."] =
                 "يصلح قائمة الإيقاف وتأثيرات الدم المعطلة.",
             ["Fixes broken player's character textures in cutscenes."] =
@@ -314,6 +338,8 @@ public static partial class NoteSvc
                 "يصلح العرض المعطل، لكنه يقلل الاستقرار بدرجة كبيرة.",
             ["Fixes broken warp effect in Temple Trouble. May reduce performance."] =
                 "يصلح تأثير Warp المعطل في Temple Trouble، وقد يخفض الأداء.",
+            ["Fixes broken water reflections."] =
+                "يصلح انعكاسات الماء التالفة.",
             ["Fixes broken water texture when upscaling."] =
                 "يصلح خامة الماء المعطلة عند رفع الدقة.",
             ["Fixes bug present on some sections (e.g. \"Holar Tower, Iceland\") consisting on the appearance of smoke (not present on PS3) when running and disappearing when walking."] =
@@ -342,8 +368,12 @@ public static partial class NoteSvc
                 "يصلح الانهيار قبل تحميل شاشة العنوان. إذا استمر الانهيار فجرب 7.1 أو 5.1.",
             ["Fixes crashes caused by RSX desyncs. Increase to 100 if still occurring."] =
                 "يصلح الانهيارات الناتجة عن عدم تزامن RSX. زد القيمة إلى 100 إذا استمرت المشكلة.",
+            ["Fixes crashes on drag and time attack races, but crashes still happens during grip races."] =
+                "يصلح الانهيار في سباقات Drag وTime Attack، لكن الانهيار ما زال يحدث في سباقات Grip.",
             ["Fixes crashes when using Resolution scaling."] =
                 "يصلح الانهيارات عند استخدام Resolution Scale.",
+            ["Fixes crashes that can happen when blit engine upscaling is enabled due to data overlap in the engine itself."] =
+                "يصلح الانهيارات التي قد تحدث عند تفعيل رفع الدقة عبر محرك Blit بسبب تداخل البيانات داخل المحرك نفسه.",
             ["Fixes crashing/freezing"] =
                 "يصلح الانهيار والتجمد.",
             ["Fixes dark screen."] =
@@ -356,18 +386,30 @@ public static partial class NoteSvc
                 "يصلح اختفاء الأعداء وانهيار اللعبة عند قتل Giant Conduit.",
             ["Fixes dynamic lighting bloom."] =
                 "يصلح Bloom الخاص بالإضاءة الديناميكية.",
+            ["Fixes environment lighting and materials"] =
+                "يصلح إضاءة البيئة وخاماتها.",
             ["Fixes excessive brightness."] =
                 "يصلح السطوع المفرط.",
             ["Fixes fire/smoke effects."] =
                 "يصلح تأثيرات النار والدخان.",
             ["Fixes flashing image between transitions. | Fixes flashing image on transitions."] =
                 "يصلح وميض الصورة أثناء الانتقالات.",
+            ["Fixes flickering artifacts in some areas of the game."] =
+                "يصلح تشوهات الوميض في بعض مناطق اللعبة.",
+            ["Fixes flickering artifacts in some areas of the game. Can greatly reduce performance, especially when resolution scaling."] =
+                "يصلح تشوهات الوميض في بعض مناطق اللعبة، لكنه قد يقلل الأداء بشدة، خاصة عند رفع Resolution Scale.",
             ["Fixes flickering bloom."] =
                 "يصلح وميض Bloom.",
+            ["Fixes flickering foliage"] =
+                "يصلح وميض الأشجار والنباتات.",
+            ["Fixes flickering foliage."] =
+                "يصلح وميض الأشجار والنباتات في المشهد.",
             ["Fixes flickering glitches on robots."] =
                 "يصلح خلل الوميض على الروبوتات.",
             ["Fixes flickering HUD."] =
                 "يصلح وميض HUD.",
+            ["Fixes HUD meter rendering issues where only one meter can be displayed at a time causing the health/weapon XP bars to render incorrectly and the mini-map to flicker"] =
+                "يصلح مشكلات عرض عدادات HUD التي لا يظهر فيها إلا عداد واحد في كل مرة، مما يؤدي إلى عرض أشرطة الصحة وخبرة السلاح (XP) بشكل غير صحيح ووميض الخريطة المصغرة.",
             ["Fixes flickering in the main menu."] =
                 "يصلح الوميض في القائمة الرئيسية.",
             ["Fixes flickering issue."] =
@@ -378,12 +420,18 @@ public static partial class NoteSvc
                 "يصلح وميض شاشة التحميل قبل بدء المرحلة.",
             ["Fixes flickering loading screens."] =
                 "يصلح وميض شاشات التحميل.",
+            ["Fixes flickering shadows."] =
+                "يصلح وميض الظلال.",
             ["Fixes flickering texture."] =
                 "يصلح وميض الخامات.",
             ["Fixes flickering. Required only if you are using Async Texture Streaming."] =
                 "يصلح الوميض. لا يلزم إلا عند استخدام Async Texture Streaming.",
+            ["Fixes flickering/tearing textures usually present on top left part of screen."] =
+                "يصلح وميض الخامات وتمزقها الذي يظهر عادة في الجزء العلوي الأيسر من الشاشة.",
             ["Fixes flood."] =
                 "يصلح عرض الفيضان.",
+            ["Fixes foliage graphics."] =
+                "يصلح رسوم الأشجار والنباتات.",
             ["Fixes frequent crashes."] =
                 "يصلح الانهيارات المتكررة.",
             ["Fixes Frequent Freezes"] =
@@ -398,6 +446,10 @@ public static partial class NoteSvc
                 "يصلح نص القوائم المشوه عند استخدام Vulkan.",
             ["Fixes glitches with golfers clothing"] =
                 "يصلح الخلل في ملابس لاعبي الغولف.",
+            ["Fixes graininess when resolution scaling."] =
+                "يصلح خشونة الصورة عند رفع Resolution Scale.",
+            ["Fixes grainy effects when resolution scaling."] =
+                "يصلح التأثيرات المحببة في الصورة عند رفع Resolution Scale.",
             ["Fixes graphical glitches on the golfer's clothing"] =
                 "يصلح الخلل الرسومي في ملابس لاعب الغولف.",
             ["Fixes graphical glitches with golfers clothing"] =
@@ -408,6 +460,8 @@ public static partial class NoteSvc
                 "يصلح تكرار الرسوم.",
             ["Fixes graphics."] =
                 "يصلح الرسوم.",
+            ["Fixes green artifacts and scales bloom when using Resolution Scaling."] =
+                "يصلح التشوهات الخضراء ويضبط تحجيم Bloom عند استخدام Resolution Scale.",
             ["Fixes grey/untextured player mech"] =
                 "يصلح ظهور Mech الخاص باللاعب رماديا أو بلا خامات.",
             ["Fixes helmets not rendering properly"] =
@@ -446,12 +500,18 @@ public static partial class NoteSvc
                 "يصلح مشكلات الإضاءة، وخصوصا في Chapter 4.",
             ["Fixes lines on the sky on NVIDIA Turing GPUs or newer."] =
                 "يصلح الخطوط في السماء على بطاقات NVIDIA Turing GPU أو الأحدث.",
+            ["Fixes long loading times. Also fixes broken audio during loading screens."] =
+                "يصلح طول زمن التحميل، ويصلح كذلك تلف الصوت في شاشات التحميل.",
+            ["Fixes low performance"] =
+                "يصلح انخفاض الأداء.",
             ["Fixes low performance in-game."] =
                 "يصلح ضعف الأداء داخل اللعبة.",
             ["fixes low performance ingame"] =
                 "يصلح ضعف الأداء داخل اللعبة.",
             ["Fixes menu glitches when combined with Force CPU Blit"] =
                 "يصلح خلل القوائم عند استخدامه مع Force CPU Blit.",
+            ["Fixes minor graphical bug on electric gates."] =
+                "يصلح خللا رسوميا بسيطا في البوابات الكهربائية.",
             ["Fixes minor graphical bug on electric gates. Only use if you're not using resolution scaling."] =
                 "يصلح خللا رسوميا بسيطا في البوابات الكهربائية. استخدمه فقط إذا لم تكن تستخدم Resolution Scale.",
             ["Fixes missing AC graphics."] =
@@ -462,6 +522,8 @@ public static partial class NoteSvc
                 "يصلح الصوت المفقود في المشهد الأخير.",
             ["Fixes missing audio in intro videos."] =
                 "يصلح الصوت المفقود في فيديوهات المقدمة.",
+            ["Fixes missing audio."] =
+                "يصلح اختفاء الصوت.",
             ["Fixes missing bloom and random overly bright sky in Radiator Springs."] =
                 "يصلح Bloom المفقود والسطوع العشوائي الزائد للسماء في Radiator Springs.",
             ["Fixes missing car and \"speed zone\" textures"] =
@@ -470,12 +532,18 @@ public static partial class NoteSvc
                 "يصلح طلاء السيارات المفقود.",
             ["Fixes missing collision. Requires SPU LLVM recompiler. Expect audio stutter."] =
                 "يصلح الاصطدامات المفقودة. يتطلب SPU Decoder بالقيمة Recompiler (LLVM)، مع توقع تقطع الصوت.",
+            ["Fixes missing font characters in menus"] =
+                "يصلح اختفاء بعض حروف الخط في القوائم.",
+            ["Fixes missing geometry caused by Force CPU Blit Emulation"] =
+                "يصلح اختفاء المجسمات الناتج عن Force CPU Blit.",
             ["Fixes missing graphics while in-game."] =
                 "يصلح العناصر الرسومية المفقودة أثناء اللعب.",
             ["Fixes missing ground and lighting."] =
                 "يصلح الأرض والإضاءة المفقودتين.",
             ["Fixes missing ground. Breaks resolution scale."] =
                 "يصلح الأرض المفقودة، لكنه يعطل Resolution Scale.",
+            ["Fixes missing image when saving costumes and black image when saving pictures as stickers"] =
+                "يصلح اختفاء الصورة عند حفظ الأزياء وسواد الصورة عند حفظ اللقطات كملصقات.",
             ["Fixes missing in-game visuals."] =
                 "يصلح العناصر البصرية المفقودة داخل اللعبة.",
             ["Fixes missing lighting in the main menu."] =
@@ -516,6 +584,8 @@ public static partial class NoteSvc
                 "يصلح سقوط العناصر داخل الأرض وظهورها المفاجئ، مقابل بعض الأداء.",
             ["Fixes ocean and rainbow colors on land"] =
                 "يصلح ألوان المحيط وألوان قوس قزح على اليابسة.",
+            ["Fixes offscreen Z-Fighting."] =
+                "يصلح ظاهرة Z-Fighting خارج حدود الشاشة.",
             ["Fixes overbright graphics in some tracks."] =
                 "يصلح السطوع الزائد للرسوم في بعض الحلبات.",
             ["Fixes overbright graphics."] =
@@ -536,6 +606,10 @@ public static partial class NoteSvc
                 "يصلح مشكلات الأداء في القوائم.",
             ["Fixes permanent border around the screen."] =
                 "يصلح الإطار الدائم حول الشاشة.",
+            ["Fixes permanent vignette effect on screen."] =
+                "يصلح بقاء تأثير Vignette الدائم على الشاشة.",
+            ["Fixes permanent vignette on screen."] =
+                "يصلح بقاء تأثير Vignette الدائم على الشاشة.",
             ["Fixes pitching bug"] =
                 "يصلح خلل Pitching.",
             ["Fixes pixelated bloom when upscaling."] =
@@ -588,6 +662,8 @@ public static partial class NoteSvc
                 "يصلح بعض مشكلات الإضاءة في حالات معينة.",
             ["Fixes some loud noises during gameplay."] =
                 "يصلح بعض الأصوات المرتفعة أثناء اللعب.",
+            ["Fixes some minor graphical issues."] =
+                "يصلح بعض المشكلات الرسومية البسيطة.",
             ["Fixes some missing visuals."] =
                 "يصلح بعض العناصر البصرية المفقودة.",
             ["Fixes some overly bright scenes."] =
@@ -618,6 +694,8 @@ public static partial class NoteSvc
                 "يصلح Shaders المفقودة عند الإقلاع الأول.",
             ["Fixes the ocean being invisible"] =
                 "يصلح اختفاء المحيط.",
+            ["Fixes the X on mission markers flickering."] =
+                "يصلح وميض علامة X على مؤشرات المهام.",
             ["Fixes tiling artifacts"] =
                 "يصلح تشوهات Tiling.",
             ["Fixes tiling artifacts seen in some areas of the game"] =
@@ -626,6 +704,8 @@ public static partial class NoteSvc
                 "يصلح مشكلة التوقيت.",
             ["Fixes unloaded textures on npcs."] =
                 "يصلح الخامات غير المحملة على NPCs.",
+            ["Fixes various cases of Z-Fighting."] =
+                "يصلح حالات متعددة من ظاهرة Z-Fighting.",
             ["Fixes videos and blurry gameboard"] =
                 "يصلح الفيديوهات وضبابية لوحة اللعب.",
             ["Fixes visual issues in the main menu and while in-game."] =
@@ -640,6 +720,8 @@ public static partial class NoteSvc
                 "يصلح المشكلات البصرية، مثل ظهور القائمة الرئيسية باللون الأحمر.",
             ["Fixes visual issues when using resolution scale."] =
                 "يصلح المشكلات البصرية عند استخدام Resolution Scale.",
+            ["Fixes visual issues when using resolution scaling."] =
+                "يصلح المشكلات المرئية عند استخدام Resolution Scale.",
             ["Fixes visual issues while in-game."] =
                 "يصلح المشكلات البصرية أثناء اللعب.",
             ["Fixes visual issues with surfaces e.g mud."] =
@@ -648,6 +730,8 @@ public static partial class NoteSvc
                 "يصلح المشكلات البصرية.",
             ["Fixes visual problems in-game."] =
                 "يصلح المشكلات البصرية داخل اللعبة.",
+            ["Fixes water graphics when upscaling."] =
+                "يصلح رسوم الماء عند رفع دقة العرض.",
             ["Fixes water on the distance."] =
                 "يصلح عرض الماء في المسافات البعيدة.",
             ["Fixes water/sky artifacts while in-game."] =
@@ -666,6 +750,10 @@ public static partial class NoteSvc
                 "يصلح ظهور مربعات بيضاء مفاجئة عند انخفاض الصحة.",
             ["Fixes white squares pop in when ingame"] =
                 "يصلح ظهور مربعات بيضاء مفاجئة داخل اللعبة.",
+            ["Fixes Z-Fighting on geometry."] =
+                "يصلح ظاهرة Z-Fighting في المجسمات.",
+            ["Fixes Z-Fighting on some parts of the game. Currently causes some visual issues."] =
+                "يصلح ظاهرة Z-Fighting في بعض أجزاء اللعبة، لكنه يسبب حاليا بعض المشكلات المرئية.",
             ["Forcing AF causes graphical issues with sprites"] =
                 "يسبب فرض AF مشكلات رسومية في Sprites.",
             ["Forcing Anisotropic filtering causes red artifacts, use Auto"] =
@@ -712,6 +800,8 @@ public static partial class NoteSvc
                 "يساعد على تقليل الخلل الرسومي البسيط.",
             ["Helps with broken graphics."] =
                 "يساعد على إصلاح الرسوم المعطلة.",
+            ["Helps with preventing crashes, but murders performance."] =
+                "يساعد على منع الانهيار لكنه يخفض الأداء بشدة.",
             ["Helps with stability, reduces crashes."] =
                 "يحسن الاستقرار ويقلل الانهيارات.",
             ["Highly suggested: Allows you to type in the chat box with your keyboard instead of your controller."] =
@@ -788,6 +878,8 @@ public static partial class NoteSvc
                 "اضبط حد FPS على 60 إذا واجهت مشكلة في عدم عمل ألغاز Decryptor.",
             ["Linux users are required to change to \"Usleep Only\" since it defaults to \"As Host\" there. Setting to \"Usleep Only\" improves performance."] =
                 "يجب على مستخدمي Linux تغيير القيمة إلى Usleep Only لأنها تكون As Host افتراضيا هناك. يؤدي ضبطها على Usleep Only إلى تحسين الأداء.",
+            ["LLVM is more prone to freezing."] =
+                "خيار LLVM أكثر عرضة للتجمد.",
             ["Login required when Network Status is set to Connected. Prevents the game from hanging on boot."] =
                 "يلزم تسجيل الدخول عند ضبط Network Status على Connected. يمنع ذلك تعليق اللعبة عند الإقلاع.",
             ["Lower values will cause severe, striped visual artifacting in the sky if the render resolution is upscaled beyond 100%."] =
@@ -796,6 +888,10 @@ public static partial class NoteSvc
                 "تحسن كبير في الأداء.",
             ["Makes smear in multiplayer look a bit better as well as fixing some incorrectly rendered graphics"] =
                 "يحسن مظهر تأثير Smear في Multiplayer قليلا، ويصلح بعض الرسوم المعروضة بصورة غير صحيحة.",
+            ["Massive performance improvement."] =
+                "تحسن كبير جدا في الأداء.",
+            ["Maximum FPS is equal to half your Vblank rate."] =
+                "أقصى FPS يساوي نصف قيمة Vblank Rate لديك.",
             ["May allow to get ingame, expect bad performance."] =
                 "قد يتيح الدخول إلى اللعبة، مع توقع أداء ضعيف.",
             ["May be needed when using asynchronous texture streaming for some hardware to upkeep performance."] =
@@ -820,6 +916,8 @@ public static partial class NoteSvc
                 "تبدو Mega أبطأ قليلا مع تقلب أكبر في FPS.",
             ["Mesh Trimming and broken menu graphics are made visible. Stick to 100."] =
                 "تظهر مشكلات Mesh Trimming ورسوم القوائم المعطلة؛ استخدم القيمة 100.",
+            ["Minor Performance Increase"] =
+                "زيادة طفيفة في الأداء.",
             ["Minor performance increase."] =
                 "تحسن بسيط في الأداء.",
             ["Mostly fixes pixelated bloom when using resolution scaling."] =
@@ -832,6 +930,8 @@ public static partial class NoteSvc
                 "مطلوب مع Write Color Buffers لحل مشكلة الشاشة السوداء.",
             ["Needed for Creat Engine games"] =
                 "مطلوب لألعاب Creat Engine.",
+            ["Needed for digital edition to not crash on boot"] =
+                "يلزم للنسخة الرقمية حتى لا تنهار عند الإقلاع.",
             ["Needed for graphics to display"] =
                 "مطلوب لعرض الرسوم.",
             ["Needed for some mission that refuse to start with required equipment in MGS:PW"] =
@@ -846,6 +946,8 @@ public static partial class NoteSvc
                 "مطلوب فقط مع بطاقات RTX 20 أو 30 أو 40 أو 50، وهو حل مؤقت لمشكلة RPCS3 رقم 14113.",
             ["Needed in order to fix [https://github.com/RPCS3/rpcs3/issues/6861/ black field glitch during day games], which is present in various NCAA Football and Madden NFL games. After building up a shader cache using Async with Shader Interpreter mode, users can switch back to Async (multithreaded) for subsequent boots if required."] =
                 "مطلوب لإصلاح خلل الملعب الأسود أثناء المباريات النهارية الموضح في https://github.com/RPCS3/rpcs3/issues/6861/، والموجود في عدة ألعاب NCAA Football وMadden NFL. بعد إنشاء Shader Cache باستخدام Async with Shader Interpreter يمكن الرجوع إلى Async (multithreaded) في مرات الإقلاع التالية عند الحاجة.",
+            ["Needed otherwise trainer is missing"] =
+                "يلزم تفعيله، وإلا اختفت شاشة التدريب.",
             ["Needed to fix game-breaking walls of broken geometry in the races."] =
                 "مطلوب لإصلاح جدران الأشكال الهندسية المعطلة التي تمنع مواصلة السباقات.",
             ["Needed to fix graphical issues in-game."] =
@@ -900,6 +1002,8 @@ public static partial class NoteSvc
                 "يصلح جزئيا مشكلة نصف الشاشة ومشكلات أخرى.",
             ["Past 60 Hz, vocals detection works erratically and online play has connection issues."] =
                 "عند تجاوز 60 Hz يصبح اكتشاف الصوت غير مستقر وتظهر مشكلات اتصال في اللعب عبر الإنترنت.",
+            ["Prevents artifacts and scales bloom when using Resolution Scaling."] =
+                "يمنع التشوهات ويضبط تحجيم Bloom عند استخدام Resolution Scale.",
             ["Prevents artifacts."] =
                 "يمنع التشوهات.",
             ["Prevents characters and bolts from turning invisible."] =
@@ -914,8 +1018,12 @@ public static partial class NoteSvc
                 "يمنع عدم التزامن أثناء اللعب.",
             ["Prevents freezes during loading screens."] =
                 "يمنع التجمد أثناء شاشات التحميل.",
+            ["Prevents game from freezing"] =
+                "يمنع تجمد اللعبة.",
             ["Prevents game from freezing."] =
                 "يمنع تجمد اللعبة.",
+            ["Prevents hanging on boot on the game launcher. (Disc Versions only)"] =
+                "يمنع التعليق عند الإقلاع في مشغل اللعبة (نسخ الأقراص فقط).",
             ["Prevents long pauses when choosing songs."] =
                 "يمنع التوقفات الطويلة عند اختيار الأغاني.",
             ["Prevents vertex explosions out of the ground up to the sky"] =
@@ -924,16 +1032,26 @@ public static partial class NoteSvc
                 "يمنع تلف الخامات الغريب في خلفية Tailfin Pass وربما مشكلات رسومية أخرى.",
             ["Properly renders bloom when using Resolution Scaling."] =
                 "يعرض Bloom بصورة صحيحة عند استخدام Resolution Scale.",
+            ["Properly scale bloom when using Resolution Scaling."] =
+                "يضبط تحجيم Bloom بصورة صحيحة عند استخدام Resolution Scale.",
             ["Properly scales bloom and shadows when using Resolution Scaling."] =
                 "يضبط Bloom والظلال بصورة صحيحة عند استخدام Resolution Scale.",
             ["Properly scales bloom effects when using resolution scaling."] =
                 "يضبط تأثيرات Bloom بصورة صحيحة عند استخدام Resolution Scale.",
+            ["Properly scales Depth of Field seen in the pause menu and cutscenes when using Resolution Scaling."] =
+                "يضبط تحجيم Depth of Field الظاهر في قائمة الإيقاف والمشاهد السينمائية عند استخدام Resolution Scale.",
             ["Properly scales Depth of Field when using Resolution Scaling."] =
                 "يضبط Depth of Field بصورة صحيحة عند استخدام Resolution Scale.",
             ["Properly scales lighting effects when resolution scaling is set above 100%."] =
                 "يضبط تأثيرات الإضاءة بصورة صحيحة عند ضبط Resolution Scale فوق 100%.",
+            ["Properly scales shadows when using Resolution Scaling."] =
+                "يضبط تحجيم الظلال بصورة صحيحة عند استخدام Resolution Scale.",
+            ["Properly scales some bloom when using Resolution Scaling (eg: certain lights in the Citadel.)"] =
+                "يضبط تحجيم بعض Bloom عند استخدام Resolution Scale (مثل بعض الأضواء في Citadel).",
             ["Properly scales the depth of field effect when doing resolution scaling above 100%."] =
                 "يضبط تأثير Depth of Field بصورة صحيحة عند استخدام Resolution Scale فوق 100%.",
+            ["Properly scales the sky in Jak 2 and 3 when using Resolution Scaling."] =
+                "يضبط تحجيم السماء في Jak 2 و3 عند استخدام Resolution Scale.",
             ["Provides good accuracy (slightly less than on PS3) almost across all the game. \"Relaxed\" is broken. It provides worse performance than Approximate and causes big FPS drop when aiming."] =
                 "توفر Approximate دقة جيدة أقل قليلا من PS3 في معظم اللعبة. قيمة Relaxed معطلة؛ فهي تقدم أداء أسوأ من Approximate وتسبب انخفاضا كبيرا في FPS عند التصويب.",
             ["Raises the game's FPS limit. Can go higher. Causes the camera's speed in the Garage and Car Lot to increase."] =
@@ -972,10 +1090,18 @@ public static partial class NoteSvc
                 "يعرض الإضاءة وBloom بصورة صحيحة.",
             ["Renders missing fog (currently broken)"] =
                 "يعرض الضباب المفقود، لكنه معطل حاليا.",
+            ["Renders missing fog."] =
+                "يعرض الضباب المفقود.",
+            ["Renders the skybox with correct colors"] =
+                "يعرض Skybox بألوان صحيحة.",
             ["Required alongside Force CPU blit emulation to fix broken graphics."] =
                 "مطلوب مع Force CPU Blit Emulation لإصلاح الرسوم المعطلة.",
             ["Required for 2D UI elements which are otherwise missing."] =
                 "مطلوب لعناصر 2D UI التي تكون مفقودة من دونه.",
+            ["Required for Core Temp mechanic to properly work"] =
+                "مطلوب حتى تعمل آلية Core Temp بصورة صحيحة.",
+            ["Required for correct graphics rendering"] =
+                "مطلوب لعرض الرسوم بصورة صحيحة.",
             ["Required for Creat Engine games."] =
                 "مطلوب لألعاب Creat Engine.",
             ["Required for liquid physics to function properly."] =
@@ -1028,12 +1154,16 @@ public static partial class NoteSvc
                 "مطلوب لعرض الخلفية بصورة صحيحة أثناء الحوارات. من دون Write Color Buffers لن تظهر إلا خلفية سوداء.",
             ["Required to correctly display the background when interacting with shopkeepers. Without Write color buffers, only a black background will be visible."] =
                 "مطلوب لعرض الخلفية بصورة صحيحة عند التفاعل مع البائعين. من دون Write Color Buffers لن تظهر إلا خلفية سوداء.",
+            ["Required to display some graphical effects"] =
+                "مطلوب لعرض بعض المؤثرات الرسومية.",
             ["Required to fix black ingame graphics and broken geometry in races."] =
                 "مطلوب لإصلاح الرسوم السوداء داخل اللعبة والأشكال الهندسية المعطلة في السباقات.",
             ["Required to fix black screen in-game."] =
                 "مطلوب لإصلاح الشاشة السوداء داخل اللعبة.",
             ["Required to fix black screen."] =
                 "مطلوب لإصلاح الشاشة السوداء.",
+            ["Required to fix broken graphics and properly scales bloom when using Resolution Scaling."] =
+                "مطلوب لإصلاح الرسوم التالفة، ويضبط تحجيم Bloom عند استخدام Resolution Scale.",
             ["Required to fix broken graphics when using resolution scaling. Reduces performance."] =
                 "مطلوب لإصلاح الرسوم المعطلة عند استخدام Resolution Scale، ويخفض الأداء.",
             ["Required to fix broken text and graphics."] =
@@ -1066,8 +1196,12 @@ public static partial class NoteSvc
                 "مطلوب للدخول إلى اللعبة.",
             ["Required to get ingame, expect bad performance."] =
                 "مطلوب للدخول إلى اللعبة، مع توقع أداء ضعيف.",
+            ["Required to get past intro screen"] =
+                "مطلوب لتجاوز شاشة المقدمة.",
             ["Required to get past intro screen, \"Delay each odd MFC Command\" must be checked as well"] =
                 "مطلوب لتجاوز شاشة المقدمة، ويجب أيضا تفعيل Delay each odd MFC Command.",
+            ["Required to get past main menu"] =
+                "مطلوب لتجاوز القائمة الرئيسية.",
             ["Required to get past main menu, \"Delay each odd MFC Command\" must be checked as well"] =
                 "مطلوب لتجاوز القائمة الرئيسية، ويجب أيضا تفعيل Delay each odd MFC Command.",
             ["Required to go ingame."] =
@@ -1088,6 +1222,10 @@ public static partial class NoteSvc
                 "مطلوب لعرض الرسوم بصورة صحيحة.",
             ["Required to resolve flickering graphics."] =
                 "مطلوب لحل وميض الرسوم.",
+            ["Required unless using FPS Patch due to 2x game speed at 60 FPS."] =
+                "مطلوب ما لم تستخدم FPS Patch بسبب تضاعف سرعة اللعبة 2x عند 60 FPS.",
+            ["Required when analyzing the flask and nightmare stages. Also fixes permanent vignette effect on screen."] =
+                "مطلوب عند فحص القارورة ومراحل الكوابيس، ويصلح كذلك بقاء تأثير Vignette الدائم على الشاشة.",
             ["Required when using resolution scaling."] =
                 "مطلوب عند استخدام Resolution Scale.",
             ["Requires to fixes broken black rain from the menu when using resolution scaling."] =
@@ -1150,6 +1288,8 @@ public static partial class NoteSvc
                 "هذه لعبة PS3 تعمل بدقة 1080p أصلية.",
             ["This is a native 1080p title on PS3."] =
                 "هذه لعبة تعمل بدقة 1080p أصلية على PS3.",
+            ["This is a native 1080p title."] =
+                "هذه اللعبة بدقة أصلية 1080p.",
             ["This is needed to fix a graphical issue during the Kakashi bell test boss fight."] =
                 "هذا مطلوب لإصلاح مشكلة رسومية أثناء مواجهة Kakashi Bell Test.",
             ["This is to remove red hue from in game"] =
@@ -1222,6 +1362,8 @@ public static partial class NoteSvc
                 "يسبب Vulkan عرض بعض رسوم 2D بصورة غير صحيحة. يؤثر OpenGL في الأداء لكنه يصلحها.",
             ["Vulkan works until you reach Chapter 2. Once in Chapter 2 the game will randomly hang unless you use OpenGL."] =
                 "يعمل Vulkan حتى الوصول إلى Chapter 2. بعد دخول Chapter 2 تعلق اللعبة عشوائيا ما لم تستخدم OpenGL.",
+            ["When enabled, outlines seen on characters and objects under shadows and water will be visible. Additionally, buildings in the distance are not rendered correctly."] =
+                "عند تفعيله تظهر حدود حول الشخصيات والعناصر الواقعة تحت الظلال وفي الماء، كما لا تعرض المباني البعيدة بصورة صحيحة.",
             ["When enabled, outlines seen on characters and objects under shadows will be visible. Additionally, buildings in the distance are not rendered correctly."] =
                 "عند تفعيله تظهر حدود حول الشخصيات والعناصر الواقعة تحت الظلال، كما لا تعرض المباني البعيدة بصورة صحيحة.",
             ["When using Resolution scaling above 100%, this must be set to 160x160. Otherwise bloom will appear pixelated."] =
@@ -1232,5 +1374,50 @@ public static partial class NoteSvc
                 "من دون تعطيله تختفي بعض النصوص.",
             ["Write color buffers and higher resolution scale cause vertex explosions. Especially noticeable during Thunder run mission."] =
                 "يسبب Write Color Buffers مع رفع Resolution Scale انفجار Vertex، ويظهر ذلك بوضوح في مهمة Thunder Run.",
+            // Notes on the Core / Libraries Control rows shipped from the 2026-09-07 snapshot.
+            ["Fixes blackscreen on boot"] =
+                "يصلح الشاشة السوداء عند التشغيل.",
+            ["Fixes crash on intro"] =
+                "يصلح التعطل عند المقدمة.",
+            ["Fixes cutscene videos"] =
+                "يصلح مقاطع المشاهد السينمائية.",
+            ["Fixes missing logos intro"] =
+                "يصلح اختفاء شعارات المقدمة.",
+            ["Fixes some videos that appear distorted."] =
+                "يصلح بعض مقاطع الفيديو التي تظهر مشوهة.",
+            ["Fixes Videos not playing"] =
+                "يصلح عدم تشغيل مقاطع الفيديو.",
+            ["Needed to get ingame"] =
+                "مطلوب للوصول إلى اللعب الفعلي.",
+            ["Needs to be enabled to fix the freezing at the EA logo screen when you boot the game."] =
+                "يجب تفعيله لإصلاح التجمد عند شاشة شعار EA أثناء تشغيل اللعبة.",
+            ["Needs to be enabled to fix the freezing at the EA Sports logo screen when you boot the game."] =
+                "يجب تفعيله لإصلاح التجمد عند شاشة شعار EA Sports أثناء تشغيل اللعبة.",
+            ["Needs to be enabled to stop freezing at EA Sports logo screen"] =
+                "يجب تفعيله لإيقاف التجمد عند شاشة شعار EA Sports.",
+            ["Needs to be LLE'd to fix cutscene crash."] =
+                "يجب تحميله بوضع LLE لإصلاح تعطل المشهد السينمائي.",
+            ["Needs to be switched to LLE to stop looping through intro screens"] =
+                "يجب تبديله إلى LLE لإيقاف التكرار المستمر لشاشات المقدمة.",
+            ["Required for videos to play."] =
+                "مطلوب لتشغيل مقاطع الفيديو.",
+            ["Required to fix an error about unsupported interlaced video"] =
+                "مطلوب لإصلاح خطأ فيديو interlaced غير المدعوم.",
+            ["Required to fix black videos"] =
+                "مطلوب لإصلاح مقاطع الفيديو السوداء.",
+            ["Required to fix cutscene that plays on title screen in Chain of Memories freezing at last frame."] =
+                "مطلوب لإصلاح تجمد المشهد السينمائي في شاشة العنوان في Chain of Memories عند الإطار الأخير.",
+            ["Required to improve stability"] =
+                "مطلوب لتحسين الاستقرار.",
+            ["Required to prevent a crash during the credits."] =
+                "مطلوب لمنع التعطل أثناء عرض الاعتمادات.",
+            ["Required to prevent the game from freezing in menus. <i>RPCS3 issue #12406</i>"] =
+                "مطلوب لمنع تجمد اللعبة في القوائم. RPCS3 issue #12406",
+            ["Required to properly play FMV cutscenes"] =
+                "مطلوب لتشغيل مشاهد FMV بشكل صحيح.",
+            ["Required to properly play some videos"] =
+                "مطلوب لتشغيل بعض مقاطع الفيديو بشكل صحيح.",
+            ["This game will freeze at the EA logo if it's not loaded - RPCS3 issue #14192"] =
+                "ستتجمد اللعبة عند شعار EA إذا لم يتم تحميلها. RPCS3 issue #14192",
         };
 }

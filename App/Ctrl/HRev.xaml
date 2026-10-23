@@ -13,7 +13,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="HSty.xaml" />
+                <ResourceDictionary Source="HCanStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -47,7 +47,7 @@
                        Text="{lang:TextExt Key=HCanary.Review.PreviewTitle}"
                        Style="{StaticResource HCanLocalizedSectionTitleText}" />
 
-            <TextBox Grid.Row="2"
+            <TextBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Review.PreviewTitle}" Grid.Row="2"
                      Text="{Binding HCanary.Preview,
                                     Mode=OneWay}"
                      Style="{StaticResource HCanTechnicalTextBox}"
@@ -63,7 +63,7 @@
                        Text="{lang:TextExt Key=HCanary.Review.ValidationTitle}"
                        Style="{StaticResource HCanLocalizedSectionTitleText}" />
 
-            <TextBox Grid.Row="6"
+            <TextBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Review.ValidationTitle}" Grid.Row="6"
                      Text="{Binding HCanary.VldSum,
                                     Mode=OneWay}"
                      Style="{StaticResource HCanLocalizedTextBox}"

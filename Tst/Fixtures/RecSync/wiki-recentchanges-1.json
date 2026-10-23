@@ -1,0 +1,31 @@
+{
+  "batchcomplete": true,
+  "continue": {
+    "rccontinue": "20261018120000|91002",
+    "continue": "-||"
+  },
+  "query": {
+    "recentchanges": [
+      {
+        "type": "edit",
+        "ns": 0,
+        "title": "Grand Theft Auto IV",
+        "pageid": 829,
+        "revid": 61001,
+        "old_revid": 59358,
+        "rcid": 91001,
+        "timestamp": "2026-10-18T10:00:00Z"
+      },
+      {
+        "type": "edit",
+        "ns": 0,
+        "title": "Demon's Souls",
+        "pageid": 4,
+        "revid": 61002,
+        "old_revid": 48043,
+        "rcid": 91002,
+        "timestamp": "2026-10-18T12:00:00Z"
+      }
+    ]
+  }
+}

@@ -377,6 +377,297 @@ public sealed class BundledCheatPatchService
         }
     }
 
+    public LibStRes PrepGenerated(
+        string patchesPath,
+        string generatedText)
+    {
+        string targetPath = string.Empty;
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(generatedText))
+            {
+                return new LibStRes(
+                    false,
+                    targetPath,
+                    null,
+                    0,
+                    string.Empty,
+                    "The generated NCL RPCS3 patch text is empty.",
+                    []);
+            }
+
+            var generatedRead = _reader.ReadText(
+                generatedText,
+                PatSrc.ManagedArtemis,
+                sourcePath: null);
+
+            if (!generatedRead.IsOk ||
+                generatedRead.Catalog.Entries.Count != 1)
+            {
+                return new LibStRes(
+                    false,
+                    targetPath,
+                    null,
+                    0,
+                    string.Empty,
+                    generatedRead.Error ??
+                    "Generated NCL patch preparation requires exactly one validated RPCS3 definition.",
+                    []);
+            }
+
+            var generatedMatch =
+                ExactManaged(
+                    generatedRead.Catalog.Entries[0]);
+
+            if (string.IsNullOrWhiteSpace(
+                    generatedMatch.Patch.DefPrint) ||
+                !PatAct.Can(generatedMatch))
+            {
+                return new LibStRes(
+                    false,
+                    targetPath,
+                    null,
+                    0,
+                    string.Empty,
+                    "The generated NCL RPCS3 definition did not retain an exact compatible identity.",
+                    []);
+            }
+
+            if (!TryTgt(
+                    patchesPath,
+                    [generatedMatch],
+                    out targetPath,
+                    out var targetError))
+            {
+                return new LibStRes(
+                    false,
+                    targetPath,
+                    null,
+                    0,
+                    string.Empty,
+                    targetError,
+                    []);
+            }
+
+            var targetState =
+                PatchFileTransactionService.CaptureExpectedState(
+                    targetPath,
+                    R3Limits.PatCatBy,
+                    "managed title-specific NCL patch");
+
+            var sourceTexts = new List<string>();
+            var selections = new List<PatMatch>();
+            var existingText = string.Empty;
+
+            if (File.Exists(targetPath))
+            {
+                existingText = R3Bound.ReadUtf8(
+                    targetPath,
+                    R3Limits.PatCatBy,
+                    "managed title-specific NCL patch");
+
+                if (!existingText.StartsWith(
+                        ManMark,
+                        StringComparison.Ordinal))
+                {
+                    return new LibStRes(
+                        false,
+                        targetPath,
+                        null,
+                        0,
+                        string.Empty,
+                        "The title-specific RPCS3 patch file exists but is not managed by R3Config.",
+                        []);
+                }
+
+                var existingRead = _reader.ReadText(
+                    existingText,
+                    PatSrc.ManagedArtemis,
+                    targetPath);
+
+                if (!existingRead.IsOk)
+                {
+                    return new LibStRes(
+                        false,
+                        targetPath,
+                        null,
+                        0,
+                        string.Empty,
+                        existingRead.Error ??
+                        "The existing managed title-specific patch failed validation.",
+                        []);
+                }
+
+                var existingMatches =
+                    existingRead.Catalog.Entries
+                        .Select(ExactManaged)
+                        .ToArray();
+
+                var generatedId = GetId(generatedMatch);
+                var resident = existingMatches.FirstOrDefault(
+                    match => GetId(match).Equals(
+                        generatedId,
+                        StringComparison.OrdinalIgnoreCase));
+
+                if (resident is not null &&
+                    !string.Equals(
+                        resident.Patch.DefPrint,
+                        generatedMatch.Patch.DefPrint,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return new LibStRes(
+                        false,
+                        targetPath,
+                        null,
+                        existingRead.Catalog.Entries.Count,
+                        string.Empty,
+                        $"Managed NCL definition '{generatedMatch.Patch.Title}' already exists with different content.",
+                        []);
+                }
+
+                sourceTexts.Add(existingText);
+                selections.AddRange(existingMatches);
+            }
+
+            sourceTexts.Add(generatedText);
+            selections.Add(generatedMatch);
+
+            selections =
+            [
+                .. selections
+                    .GroupBy(
+                        GetId,
+                        StringComparer.OrdinalIgnoreCase)
+                    .Select(group => group.First())
+            ];
+
+            var compiled = _comp.Compile(
+                sourceTexts,
+                selections,
+                [generatedMatch]);
+
+            if (!compiled.IsOk)
+            {
+                return new LibStRes(
+                    false,
+                    targetPath,
+                    null,
+                    0,
+                    string.Empty,
+                    compiled.Error ??
+                    "The generated NCL managed patch failed selection compilation.",
+                    []);
+            }
+
+            var mergedText = string.IsNullOrEmpty(existingText)
+                ? compiled.PatText
+                : PatchSelectionCompiler.MergeGeneratedNcl(existingText, generatedText);
+            var finalText = mergedText.StartsWith(ManMark, StringComparison.Ordinal)
+                ? mergedText
+                : ManMark + "\r\n" + mergedText;
+
+            var validation = _reader.ReadText(
+                finalText,
+                PatSrc.ManagedArtemis,
+                targetPath);
+
+            if (!validation.IsOk ||
+                validation.Catalog.Entries.Count != compiled.SelNum)
+            {
+                return new LibStRes(
+                    false,
+                    targetPath,
+                    null,
+                    0,
+                    string.Empty,
+                    validation.Error ??
+                    "The generated NCL managed patch failed read-back validation.",
+                    []);
+            }
+
+            var generatedEntry =
+                validation.Catalog.Entries.FirstOrDefault(entry =>
+                    entry.RunKey.Equals(
+                        generatedMatch.EffectiveRunKey,
+                        StringComparison.OrdinalIgnoreCase) &&
+                    entry.Title.Equals(
+                        generatedMatch.Patch.Title,
+                        StringComparison.OrdinalIgnoreCase));
+
+            if (generatedEntry is null ||
+                !string.Equals(
+                    generatedEntry.DefPrint,
+                    generatedMatch.Patch.DefPrint,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return new LibStRes(
+                    false,
+                    targetPath,
+                    null,
+                    0,
+                    string.Empty,
+                    "The generated NCL definition changed during managed patch compilation.",
+                    []);
+            }
+
+            if (File.Exists(targetPath) &&
+                string.Equals(
+                    existingText,
+                    finalText,
+                    StringComparison.Ordinal))
+            {
+                return new LibStRes(
+                    true,
+                    targetPath,
+                    new PatchPreparedFile(
+                        targetPath,
+                        existingText,
+                        PrepKind.PatCat,
+                        PatSrc.ManagedArtemis,
+                        compiled.SelNum,
+                        ExpectedExists: targetState.Exists,
+                        ExpectedSha256: targetState.Sha256),
+                    compiled.SelNum,
+                    "The verified NCL definition is already present in the managed title patch.",
+                    null,
+                    []);
+            }
+
+            return new LibStRes(
+                true,
+                targetPath,
+                new PatchPreparedFile(
+                    targetPath,
+                    finalText,
+                    PrepKind.PatCat,
+                    PatSrc.ManagedArtemis,
+                    compiled.SelNum,
+                    ExpectedExists: targetState.Exists,
+                    ExpectedSha256: targetState.Sha256),
+                compiled.SelNum,
+                "The verified NCL definition is prepared for the managed title patch transaction.",
+                null,
+                []);
+        }
+        catch (Exception ex) when (
+            ex is IOException or
+            YamlDotNet.Core.YamlException or
+            UnauthorizedAccessException or
+            ArgumentException or
+            InvalidDataException or
+            InvalidOperationException)
+        {
+            return new LibStRes(
+                false,
+                targetPath,
+                null,
+                0,
+                string.Empty,
+                ex.Message,
+                []);
+        }
+    }
     public LibStRes PrepRemove(
         string patchesPath,
         IReadOnlyList<PatMatch> selectedMatches)
@@ -496,6 +787,22 @@ public sealed class BundledCheatPatchService
         }
     }
 
+    private static PatMatch ExactManaged(
+        Rpcs3PatchEntry entry)
+    {
+        var match = Exact(entry);
+        return match with
+        {
+            Patch = match.Patch with
+            {
+                Source = PatSrc.ManagedArtemis,
+                Risk = PatRisk.Cheat,
+                PatType = "Cheat"
+            },
+            Reason =
+                "Verified managed definition generated from an exact NCL conversion."
+        };
+    }
     private static PatMatch Exact(
         Rpcs3PatchEntry entry)
     {

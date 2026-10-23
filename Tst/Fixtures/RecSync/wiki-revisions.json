@@ -1,0 +1,64 @@
+{
+  "batchcomplete": true,
+  "query": {
+    "pages": [
+      {
+        "pageid": 829,
+        "ns": 0,
+        "title": "Grand Theft Auto IV",
+        "revisions": [
+          {
+            "revid": 61001,
+            "parentid": 59358,
+            "timestamp": "2026-10-18T10:00:00Z",
+            "slots": {
+              "main": {
+                "contentmodel": "wikitext",
+                "contentformat": "text/x-wiki",
+                "content": "{{vginfobox\n|gameid    = {{gameid|id=BLES00229, BLUS30127, NPEB00882, NPUB30702|oid=BLES00258, BLJM60093|ird=Yes}}<br>'''''The Complete Edition'''''<br>{{gameid|id=BLES01128, BLUS30682|oid=BLJM60346|ird=Yes}}\n}}\n==Configuration==\n{{config\n\n|spu xfloat accuracy                   = Accurate\n|spu xfloat accuracy notes             = Fixes missing collision. Requires SPU LLVM recompiler. Expect audio stutter.\n\n|anti-aliasing                         = Disabled\n|anti-aliasing notes                   = When enabled, outlines seen on characters and objects under shadows and water will be visible. Additionally, buildings in the distance are not rendered correctly.\n|zcull accuracy                        = Relaxed\n|zcull accuracy notes                  = Improves performance without any noticeable issues.\n|resolution scale threshold            = 320x320\n|resolution scale threshold notes      = Properly scales bloom when using Resolution Scaling.\n|write color buffers                   = On \n|write color buffers notes             = Fixes missing reflections.\n|multithreaded rsx                     = On \n|multithreaded rsx notes               = Improves performance.\n|asynchronous texture streaming        = On \n|asynchronous texture streaming notes  = If you have a stronger GPU, this can give substantial performance boost.\n\n\n\n\n|spu block size                        = Mega\n|spu block size notes                  = Improves performance.\n|rsx fifo accuracy notes               = Helps to reduce crashes.\n\n\n}}"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "pageid": 4,
+        "ns": 0,
+        "title": "Demon's Souls",
+        "revisions": [
+          {
+            "revid": 61002,
+            "parentid": 48043,
+            "timestamp": "2026-10-18T12:00:00Z",
+            "slots": {
+              "main": {
+                "contentmodel": "wikitext",
+                "contentformat": "text/x-wiki",
+                "content": "{{vginfobox\n|gameid    = {{gameid|id=BLES00932, BLUS30443, BCJS30022, NPEB01202, NPUB30910, NPJA00102|oid=BCAS20071|ird=Yes}}<br>'''''Trade Demo'''''<br>{{gameid|id=BLUD80018|ird=Yes}}\n}}\nDemon's Souls runs well.\n==Configuration==\n{{config\n\n|spu block size                        = Safe\n|spu block size notes                  = Mega and Giga are unstable with Demon's Souls at the moment.\n\n|resolution scale threshold            = 640 x 640 \n|resolution scale threshold notes      = Properly scales the depth of field effect at resolution scales higher than the default 1280x720.\n|write color buffers                   = On \n|write color buffers notes             = Fixes missing graphics ingame.\n\n\n\n\n|maximum spurs threads                 = 3 \n|maximum spurs threads notes           = Helps with performance. Don’t mess with this if you have a CPU with more than 6 cores and 12 threads as you may experience performance loss.\n\n\n|highly recommended patch              = Unlock FPS\n|highly recommended patch notes        = Can make certain shortcuts/skips more difficult to do.\n|recommended patch                     = Skip Intro Videos, Disable Motion Blur\n}}"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "pageid": 99901,
+        "ns": 0,
+        "title": "Fixture New Game",
+        "revisions": [
+          {
+            "revid": 61003,
+            "parentid": 0,
+            "timestamp": "2026-10-19T08:00:00Z",
+            "slots": {
+              "main": {
+                "contentmodel": "wikitext",
+                "contentformat": "text/x-wiki",
+                "content": "{{vginfobox\n|gameid    = {{gameid|id=BLUS99901|ird=Yes}}\n}}\n==Configuration==\n{{config\n|write color buffers                   = On\n|write color buffers notes             = Fixes black screen.\n}}"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

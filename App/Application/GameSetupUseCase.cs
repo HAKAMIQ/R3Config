@@ -33,35 +33,22 @@ public sealed class GameSetupUseCase(
     private readonly string _appBaseDirectory =
         appBaseDirectory ?? AppContext.BaseDirectory;
 
-    private static readonly HashSet<string> ConflictingWikiSerials = new(
-        [
-            "BCES02043",
-            "BLES00309",
-            "BLUS31402",
-            "NPJB60186",
-            "NPUB90227"
-        ],
-        StringComparer.OrdinalIgnoreCase);
-
     public GameSetupPlan Build(
         Rpcs3InstallDescriptor install,
         Rpcs3GameDescriptor game,
         RecSvc recommendationCatalog,
         PatCat patchCatalog,
         HwInfo? hardware = null,
-        IReadOnlyList<PatchRequirementRule>? requirementRules = null)
+        IReadOnlyList<PatchRequirementRule>? requirementRules = null,
+        Rpcs3RuntimeBuild? build = null)
     {
         ArgumentNullException.ThrowIfNull(recommendationCatalog);
 
         var recommendation = recommendationCatalog.Find(game.Serial);
 
-        if (ConflictingWikiSerials.Contains(game.Serial) &&
-            recommendation is not null)
-        {
-            throw new InvalidDataException(
-                $"Recommendation source conflict for serial {game.Serial}.");
-        }
-
+        // Wiki generation resolves ownership from this catalog's source snapshot
+        // and excludes conflicting bindings. A serial-only blacklist cannot
+        // represent evidence that differs between snapshots or resolved pages.
         var configStateBefore =
             PatchFileTransactionService.CaptureExpectedState(
                 Path.Combine(
@@ -74,7 +61,8 @@ public sealed class GameSetupUseCase(
             install,
             game,
             recommendation,
-            hardware);
+            hardware,
+            build);
 
         var configState =
             PatchFileTransactionService.CaptureExpectedState(
@@ -128,19 +116,7 @@ public sealed class GameSetupUseCase(
                 enabled)
         };
 
-        if (!ConflictingWikiSerials.Contains(game.Serial))
-        {
-            return plan;
-        }
-
-        return plan with
-        {
-            Warnings =
-            [
-                .. plan.Warnings,
-                $"Recommendation source conflict for serial {game.Serial}; Wiki settings are not actionable."
-            ]
-        };
+        return plan;
     }
 
     public GameSetupPreview Preview(
@@ -222,6 +198,14 @@ public sealed class GameSetupUseCase(
         ArgumentNullException.ThrowIfNull(install);
         ArgumentNullException.ThrowIfNull(preview);
 
+        return ApplyGuarded(install, preview, phaseObserver);
+    }
+
+    private GameSetupResult ApplyGuarded(
+        Rpcs3InstallDescriptor install,
+        GameSetupPreview preview,
+        Action<PatPhase, string, IReadOnlyList<string>>? phaseObserver)
+    {
         if (!preview.CanApply)
         {
             throw new InvalidOperationException(

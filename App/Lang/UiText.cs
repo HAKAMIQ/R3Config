@@ -249,38 +249,41 @@ public sealed class UiText : INotifyPropertyChanged
         };
     }
 
-    public static string HwStatus(HwInfo info)
+    public static string Rpcs3BuildTip(Rpcs3BuildIdentity? identity)
     {
-        ArgumentNullException.ThrowIfNull(info);
+        if (identity is null)
+        {
+            return GetText("Status.Rpcs3Tip");
+        }
 
-        var tier = GetText($"HwTier.{info.Tier}");
-
-        var cpu = info.CpuNum > 0
-            ? Fmt("Hw.CpuThreads", info.CpuNum)
-            : GetText("Hw.CpuUnknown");
-
-        return Fmt(
-            "Hw.Status",
-            tier,
-            cpu,
-            info.Display);
-    }
-
-    public static string HwTip(HwInfo info)
-    {
-        ArgumentNullException.ThrowIfNull(info);
-
-        return Fmt(
-            "Hw.Tip",
-            info.CpuName,
-            info.Display,
-            info.GpuName,
-            info.Tier,
-            info.ProbeMsg);
+        return identity.State switch
+        {
+            Rpcs3BuildIdentityState.Exact => Fmt(
+                "Status.Rpcs3BuildTip.Exact",
+                identity.VersionText,
+                identity.BuildNumber,
+                identity.Commit,
+                identity.Branch),
+            Rpcs3BuildIdentityState.Partial => Fmt(
+                "Status.Rpcs3BuildTip.Partial",
+                identity.VersionText,
+                identity.BuildNumber,
+                identity.Commit,
+                identity.Diagnostic),
+            Rpcs3BuildIdentityState.Conflict => Fmt(
+                "Status.Rpcs3BuildTip.Conflict",
+                identity.Diagnostic),
+            _ => Fmt(
+                "Status.Rpcs3BuildTip.Unavailable",
+                identity.Diagnostic ?? GetText("Ui.Unknown"))
+        };
     }
 
     private static UiText Build()
     {
+        // Before the first Apply replaces the Windows Region culture.
+        UiDate.CaptureUserCulture();
+
         var text = LoadText(
             ArabLang,
             out var effectiveLang);

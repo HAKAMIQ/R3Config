@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.ExceptionServices;
@@ -123,8 +124,48 @@ public sealed class BackupService(
                 "The selected backup snapshot does not match its manifest.json file.");
         }
 
+        var owned = persisted.Files
+            .Where(entry => entry.Existed &&
+                            string.Equals(
+                                Path.GetFileName(entry.BkpPath),
+                                MakeBkp(entry.TgtPath),
+                                StringComparison.OrdinalIgnoreCase))
+            .Select(entry => Path.GetFileName(entry.BkpPath))
+            .Append(ManName)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (Directory.EnumerateDirectories(snapshotPath).Any() ||
+            Directory.EnumerateFiles(snapshotPath)
+                .Any(path => !owned.Contains(Path.GetFileName(path))))
+        {
+            throw new InvalidDataException(
+                "The selected backup snapshot contains files that R3Config did not create.");
+        }
+
         Directory.Delete(snapshotPath, recursive: true);
         return true;
+    }
+
+    // Removes a snapshot taken for a write that failed before any target was
+    // touched. Best effort: DeleteSnapshot keeps a snapshot that holds files
+    // R3Config did not create, and a failed cleanup never hides the original
+    // write error.
+    public void DiscardUnused(
+        string backupRootPath,
+        BackupManifest manifest)
+    {
+        try
+        {
+            DeleteSnapshot(
+                backupRootPath,
+                new BackupSnapshot(
+                    GetMan(manifest),
+                    manifest.MadeAt,
+                    manifest.Files));
+        }
+        catch (Exception ex) when (
+            ex is IOException or UnauthorizedAccessException or InvalidDataException or ArgumentException)
+        {
+        }
     }
 
     public BackupManifest BuildBkp(
@@ -149,9 +190,15 @@ public sealed class BackupService(
 
         Directory.CreateDirectory(backupRootPath);
 
+        // The folder name is an opaque identifier, Gregorian for every
+        // interface language and Region calendar. Nothing parses it: order,
+        // newest and retention read the manifest CreatedAt, so Hijri-named
+        // folders from earlier builds stay valid as they are.
         var backupPath = Path.Combine(
             backupRootPath,
-            $"{DateTime.Now:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}");
+            string.Create(
+                CultureInfo.InvariantCulture,
+                $"{DateTime.Now:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}"));
 
         Directory.CreateDirectory(backupPath);
 

@@ -87,14 +87,15 @@ public sealed partial class MainVm : VmBase
             var result = _flow.ApplyTxn(
                 plan,
                 _install,
-                selectedMatches);
+                selectedMatches,
+                Preview.AllMatches());
 
             foreach (var message in result.Messages)
             {
                 Log(message);
             }
 
-            Log(UiText.Fmt("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
+            Log(UiText.Fmt("Msg.BkpSaved", UiDate.Inline(result.Backup.MadeAt)));
 
             foreach (var change in result.ChgList)
             {
@@ -204,7 +205,7 @@ public sealed partial class MainVm : VmBase
                 _install,
                 selectedMatches);
 
-            Log(UiText.Fmt("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
+            Log(UiText.Fmt("Msg.BkpSaved", UiDate.Inline(result.Backup.MadeAt)));
 
             foreach (var change in result.ChgList)
             {
@@ -258,7 +259,7 @@ public sealed partial class MainVm : VmBase
                 Preview.Enabled(),
                 Preview.AllMatches());
             var result = _flow.RemoveArtemis(plan, _install, selected);
-            Log(UiText.Fmt("Msg.BkpSaved", result.Backup.MadeAt.LocalDateTime));
+            Log(UiText.Fmt("Msg.BkpSaved", UiDate.Inline(result.Backup.MadeAt)));
             LoadBkp();
             LoadPat();
             MakePrev();

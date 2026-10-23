@@ -13,7 +13,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="HSty.xaml" />
+                <ResourceDictionary Source="HCanStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -51,7 +51,7 @@
                     <TextBlock Text="{lang:TextExt Key=HCanary.Field.PatchName}"
                                Style="{StaticResource HCanLocalizedLabelText}" />
 
-                    <TextBox Text="{Binding HCanary.PatName,
+                    <TextBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Field.PatchName}" Text="{Binding HCanary.PatName,
                                             Mode=TwoWay,
                                             UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource HCanLocalizedTextBox}" />
@@ -66,7 +66,7 @@
                     <TextBlock Text="{lang:TextExt Key=HCanary.Field.PatchVersion}"
                                Style="{StaticResource HCanLocalizedLabelText}" />
 
-                    <TextBox Text="{Binding HCanary.PatVer,
+                    <TextBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Field.PatchVersion}" Text="{Binding HCanary.PatVer,
                                             Mode=TwoWay,
                                             UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource HCanTechnicalTextBox}" />
@@ -81,7 +81,7 @@
                     <TextBlock Text="{lang:TextExt Key=HCanary.Field.Author}"
                                Style="{StaticResource HCanLocalizedLabelText}" />
 
-                    <TextBox Text="{Binding HCanary.Author,
+                    <TextBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Field.Author}" Text="{Binding HCanary.Author,
                                             Mode=TwoWay,
                                             UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource HCanLocalizedTextBox}" />
@@ -94,7 +94,7 @@
                                Style="{StaticResource HCanLocalizedLabelText}"
                                ToolTip="{lang:TextExt Key=HCanary.Tooltip.Group}" />
 
-                    <TextBox Text="{Binding HCanary.Group,
+                    <TextBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Field.Group}" Text="{Binding HCanary.Group,
                                             Mode=TwoWay,
                                             UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource HCanTechnicalTextBox}"
@@ -108,7 +108,7 @@
                     <TextBlock Text="{lang:TextExt Key=HCanary.Field.Notes}"
                                Style="{StaticResource HCanLocalizedLabelText}" />
 
-                    <TextBox Text="{Binding HCanary.Notes,
+                    <TextBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Field.Notes}" Text="{Binding HCanary.Notes,
                                             Mode=TwoWay,
                                             UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource HCanLocalizedTextBox}"
@@ -125,7 +125,7 @@
                     <TextBlock Text="{lang:TextExt Key=HCanary.Field.Category}"
                                Style="{StaticResource HCanLocalizedLabelText}" />
 
-                    <ComboBox SelectedValue="{Binding HCanary.Category,
+                    <ComboBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Field.Category}" SelectedValue="{Binding HCanary.Category,
                                                       Mode=TwoWay,
                                                       UpdateSourceTrigger=PropertyChanged}"
                               SelectedValuePath="Tag"
@@ -150,7 +150,7 @@
                     <TextBlock Text="{lang:TextExt Key=HCanary.Field.Status}"
                                Style="{StaticResource HCanLocalizedLabelText}" />
 
-                    <ComboBox ItemsSource="{Binding HCanary.Statuses}"
+                    <ComboBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Field.Status}" ItemsSource="{Binding HCanary.Statuses}"
                               SelectedValue="{Binding HCanary.Status,
                                                       Mode=TwoWay}"
                               SelectedValuePath="Value"

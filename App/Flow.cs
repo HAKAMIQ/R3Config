@@ -25,6 +25,60 @@ public sealed class AppFlow
         return _cases.Recommendations.LoadData(baseDir);
     }
 
+    public RecSyncLocalState? ReadRecSync(RecSvc baseline)
+    {
+        return _cases.RecommendationSync?.ReadLocal(baseline);
+    }
+
+    public RecSyncPreferences LoadRecSyncPreferences()
+    {
+        return _cases.RecommendationSync?.LoadPreferences() ??
+            RecSyncPreferences.Default with { AutoUpdate = false };
+    }
+
+    public bool SaveRecSyncPreferences(RecSyncPreferences preferences)
+    {
+        return _cases.RecommendationSync?.SavePreferences(preferences) ?? false;
+    }
+
+    public bool IsRecSyncAvailable => _cases.RecommendationSync is not null;
+
+    public bool IsRecSyncRunning => _cases.RecommendationSync?.IsRunning ?? false;
+
+    public Task<RecSyncReport> SyncRecommendationsAsync(
+        RecSvc baseline,
+        bool manual,
+        Rpcs3InstallDescriptor? install,
+        CancellationToken cancellationToken = default)
+    {
+        return _cases.RecommendationSync?.SyncAsync(
+                baseline,
+                manual,
+                install,
+                cancellationToken) ??
+            Task.FromResult(new RecSyncReport(
+                RecSyncRunStatus.Failed,
+                [],
+                [],
+                baseline.Count,
+                baseline.Count,
+                0,
+                0,
+                DateTimeOffset.UtcNow));
+    }
+
+    public Task<bool> MarkRecSyncNotifiedAsync(
+        RecSvc baseline,
+        IReadOnlyCollection<string> ids,
+        CancellationToken cancellationToken = default)
+    {
+        return _cases.RecommendationSync?.MarkNotifiedAsync(
+                baseline,
+                ids,
+                cancellationToken) ??
+            Task.FromResult(false);
+    }
+
     public Task<AnalyzeResult> DoAsync(
         string rpcs3ExePath,
         RecSvc cat,
@@ -51,13 +105,15 @@ public sealed class AppFlow
         Rpcs3InstallDescriptor install,
         Rpcs3GameDescriptor game,
         WikiRec? rec,
-        HwInfo? hw)
+        HwInfo? hw,
+        Rpcs3BuildIdentity? build = null)
     {
         return _cases.Config.Build(
             install,
             game,
             rec,
-            hw);
+            hw,
+            Rpcs3RuntimeBuild.From(build));
     }
 
     public CfgRes ApplyCfg(
@@ -162,12 +218,14 @@ public sealed class AppFlow
     public PatRes ApplyTxn(
         PatchApplyPlan plan,
         Rpcs3InstallDescriptor install,
-        IReadOnlyList<PatMatch> selectedMatches)
+        IReadOnlyList<PatMatch> selectedMatches,
+        IReadOnlyList<PatMatch> allMatches)
     {
         return _cases.PatchMutation.ApplyTxn(
             plan,
             install,
-            selectedMatches);
+            selectedMatches,
+            allMatches);
     }
 
     public PatRes ApplyPat(
@@ -198,6 +256,106 @@ public sealed class AppFlow
         return _cases.PatchMutation.RemoveArtemis(disablePlan, install, matches);
     }
 
+    public NclCorpusLookupResult DiscoverBundledNcl(
+        string serial,
+        string version,
+        string? title = null)
+    {
+        var useCase = _cases.NclManagedPatch ??
+            throw new InvalidOperationException(
+                "NCL managed patch services are not configured.");
+
+        return useCase.DiscoverBundled(
+            serial,
+            version,
+            title);
+    }
+
+    public NclManagedPatchInspection InspectNcl(
+        string nclPath,
+        NclDialect dialect,
+        string serial,
+        string version)
+    {
+        var useCase = _cases.NclManagedPatch ??
+            throw new InvalidOperationException(
+                "NCL managed patch services are not configured.");
+
+        return useCase.Inspect(
+            nclPath,
+            dialect,
+            serial,
+            version);
+    }
+
+    public NclManagedPatchPreview PrepareNclManagedPatch(
+        NclPpuConversionFileRequest request,
+        Rpcs3InstallDescriptor install,
+        IReadOnlyList<PatMatch>? enabledMatches = null)
+    {
+        var useCase = _cases.NclManagedPatch ??
+            throw new InvalidOperationException(
+                "NCL managed patch services are not configured.");
+
+        return useCase.Prepare(
+            request,
+            install,
+            enabledMatches);
+    }
+
+    public NclManagedPatchPreview PrepareBundledNclManagedPatch(
+        NclBundledManagedPatchRequest request,
+        Rpcs3InstallDescriptor install,
+        IReadOnlyList<PatMatch>? enabledMatches = null)
+    {
+        var useCase = _cases.NclManagedPatch ??
+            throw new InvalidOperationException(
+                "NCL managed patch services are not configured.");
+
+        return useCase.PrepareBundled(
+            request,
+            install,
+            enabledMatches);
+    }
+
+    public NclRunKeyEligibilityResult DescribeBundledNclRunKeys(
+        NclBundledManagedPatchRequest request,
+        IReadOnlyList<string> candidateRunKeys)
+    {
+        var useCase = _cases.NclManagedPatch ??
+            throw new InvalidOperationException(
+                "NCL managed patch services are not configured.");
+
+        return useCase.DescribeBundledRunKeys(
+            request,
+            candidateRunKeys);
+    }
+
+    public NclRunKeyEligibilityResult DescribeNclRunKeys(
+        NclPpuConversionFileRequest request,
+        IReadOnlyList<string> candidateRunKeys)
+    {
+        var useCase = _cases.NclManagedPatch ??
+            throw new InvalidOperationException(
+                "NCL managed patch services are not configured.");
+
+        return useCase.DescribeRunKeys(
+            request,
+            candidateRunKeys);
+    }
+
+    public PatRes ApplyNclManagedPatch(
+        NclManagedPatchPreview preview,
+        Rpcs3InstallDescriptor install)
+    {
+        var useCase = _cases.NclManagedPatch ??
+            throw new InvalidOperationException(
+                "NCL managed patch services are not configured.");
+
+        return useCase.Apply(
+            preview,
+            install);
+    }
     public bool CanRead(
         Rpcs3InstallDescriptor install)
     {
@@ -220,6 +378,98 @@ public sealed class AppFlow
     public string CatText(CatInfo info)
     {
         return _cases.Recommendations.FmtInf(info);
+    }
+
+    public WikiEvidenceLoadResult LoadWikiEvidence(string baseDir)
+    {
+        return WikiEvidenceCases().Load(baseDir);
+    }
+
+    public Rpcs3BuildCatalog LoadRpcs3Builds(string baseDir)
+    {
+        return WikiEvidenceCases().LoadBuildCatalog(baseDir);
+    }
+
+    public DiagnosticEvidenceLoadResult LoadDiagnosticEvidence(string baseDir)
+    {
+        return WikiEvidenceCases().LoadDiagnosticEvidence(baseDir);
+    }
+
+    public KnowledgeLoadResult LoadKnowledge(string baseDir)
+    {
+        return WikiEvidenceCases().LoadKnowledge(baseDir);
+    }
+
+    public GameSettingsModel GameSettings(
+        CfgPlan? plan,
+        Rpcs3GameDescriptor game,
+        WikiRec? rec,
+        WikiEvidenceCatalog evidence,
+        Rpcs3BuildIdentity? build,
+        HwInfo? hardware = null,
+        Rpcs3BuildCatalog? builds = null,
+        Rpcs3KnowledgeCatalog? knowledge = null)
+    {
+        return WikiEvidenceCases().Project(
+            plan,
+            game,
+            rec,
+            evidence,
+            build,
+            hardware,
+            builds,
+            knowledge);
+    }
+
+    public RuntimeContextSnapshot RuntimeContext(
+        HwInfo? hardware,
+        Rpcs3InstallDescriptor? install,
+        Rpcs3BuildIdentity? build,
+        Rpcs3GameDescriptor? game,
+        GameSettingsModel? settings,
+        Rpcs3BuildCatalog? builds,
+        DiagnosticEvidenceCatalog? evidence = null)
+    {
+        // Stateless and read-only, like the Wiki evidence use case.
+        return (_cases.RuntimeContext ?? new RuntimeContextUseCase()).Build(
+            hardware,
+            install,
+            build,
+            game,
+            settings,
+            builds,
+            evidence);
+    }
+
+    public DiagnosticKnowledgeBase LoadDiagnosticsKnowledge(string baseDir, out string? error)
+    {
+        return LogDiagnosticsCases().LoadKnowledge(baseDir, out error);
+    }
+
+    public LogDiagnosticsResult AnalyzeLogs(
+        Rpcs3InstallDescriptor install,
+        string? selectedSerial,
+        HwInfo? hardware,
+        Rpcs3BuildIdentity? build,
+        DiagnosticKnowledgeBase knowledge,
+        string? knowledgeError = null,
+        CancellationToken cancellationToken = default)
+    {
+        return LogDiagnosticsCases().Analyze(install, selectedSerial, hardware, build, knowledge, knowledgeError, cancellationToken);
+    }
+
+    private LogDiagnosticsUseCase LogDiagnosticsCases()
+    {
+        // Stateless and read-only, like the other evidence use cases.
+        return _cases.LogDiagnostics ?? new LogDiagnosticsUseCase();
+    }
+
+    private WikiEvidenceUseCase WikiEvidenceCases()
+    {
+        // Stateless and read-only, so a composition root that predates this
+        // use case can still serve notes.
+        return _cases.WikiEvidence ??
+            new WikiEvidenceUseCase();
     }
 
 #pragma warning disable CA1822
@@ -416,7 +666,8 @@ public sealed class AppFlow
         RecSvc recommendationCatalog,
         PatCat patchCatalog,
         HwInfo? hardware = null,
-        IReadOnlyList<PatchRequirementRule>? requirementRules = null)
+        IReadOnlyList<PatchRequirementRule>? requirementRules = null,
+        Rpcs3BuildIdentity? buildIdentity = null)
     {
         return _cases.GameSetup.Build(
             install,
@@ -424,7 +675,8 @@ public sealed class AppFlow
             recommendationCatalog,
             patchCatalog,
             hardware,
-            requirementRules);
+            requirementRules,
+            Rpcs3RuntimeBuild.From(buildIdentity));
     }
 
     public GameSetupPreview PreviewGameSetup(

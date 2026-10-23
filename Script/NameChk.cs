@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
@@ -12,6 +13,57 @@ if (args.Length != 1)
 
 var root = Path.GetFullPath(args[0]);
 var errors = new List<string>();
+
+var toolchainPath = Path.Combine(root, "Script", "R3Toolchain.ps1");
+if (!File.Exists(toolchainPath))
+{
+    errors.Add("Required repository toolchain helper 'Script/R3Toolchain.ps1' is missing.");
+}
+
+var globalJsonPath = Path.Combine(root, "global.json");
+if (!File.Exists(globalJsonPath))
+{
+    errors.Add("Required repository SDK pin 'global.json' is missing.");
+}
+else
+{
+    try
+    {
+        using var globalJson = JsonDocument.Parse(File.ReadAllText(globalJsonPath));
+        var sdk = globalJson.RootElement.GetProperty("sdk");
+        var version = sdk.GetProperty("version").GetString();
+        var rollForward = sdk.GetProperty("rollForward").GetString();
+        if (string.IsNullOrWhiteSpace(version) ||
+            !Regex.IsMatch(version, @"^8\.0\.[0-9]+$", RegexOptions.CultureInvariant) ||
+            !string.Equals(rollForward, "disable", StringComparison.Ordinal))
+        {
+            errors.Add(
+                $"global.json must pin one exact .NET 8 SDK with rollForward=disable; actual version='{version}', rollForward='{rollForward}'.");
+        }
+    }
+    catch (Exception exception) when (
+        exception is JsonException or InvalidOperationException or KeyNotFoundException)
+    {
+        errors.Add($"global.json toolchain contract is invalid: {exception.Message}");
+    }
+}
+var projectFiles = Directory
+    .EnumerateFiles(root, "*.csproj", SearchOption.AllDirectories)
+    .Where(path => !IsBuild(path))
+    .Order(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+var workloadProjectRule = new Regex(
+    @"Microsoft\.NET\.Sdk\.(?:Maui|BlazorWebAssembly)|<UseMaui>\s*true\s*</UseMaui>|net\d+(?:\.\d+)?-(?:android|ios|maccatalyst|tvos|browser|wasm)(?:[-.]|<)",
+    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+foreach (var projectFile in projectFiles)
+{
+    if (workloadProjectRule.IsMatch(File.ReadAllText(projectFile)))
+    {
+        errors.Add(
+            $"Repository workload-free build contract violated by: {Path.GetRelativePath(root, projectFile)}.");
+    }
+}
+
 string[] sourceAreas = ["App", "Core", "Tst", "Script"];
 var sourceFiles = sourceAreas
     .SelectMany(area => Directory.EnumerateFiles(
@@ -346,6 +398,37 @@ foreach (var file in policyFiles.Distinct(StringComparer.OrdinalIgnoreCase).Wher
     if (numericNameRule.IsMatch(File.ReadAllText(file)))
     {
         errors.Add($"Numeric identifier-length policy remains in {Path.GetRelativePath(root, file)}.");
+    }
+}
+
+var verificationContractFiles = docs.Concat(new[]
+{
+    Path.Combine(root, "Script", "RelTest.ps1"),
+    Path.Combine(root, "Script", "R3Toolchain.ps1")
+});
+var unsupportedSlnxCliRule = new Regex(
+    @"dotnet\s+(?:restore|build)\s+\.\\R3Cfg\.slnx",
+    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+foreach (var file in verificationContractFiles
+             .Distinct(StringComparer.OrdinalIgnoreCase)
+             .Where(File.Exists))
+{
+    if (unsupportedSlnxCliRule.IsMatch(File.ReadAllText(file)))
+    {
+        errors.Add(
+            $"Pinned SDK verification must use Tst/R3Test.csproj instead of invoking R3Cfg.slnx through dotnet ({Path.GetRelativePath(root, file)}).");
+    }
+}
+
+var rawDotNetAcceptanceRule = new Regex(
+    @"dotnet\s+(?:restore|build)\s+\.\\Tst\\R3Test\.csproj",
+    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+foreach (var file in docs.Where(File.Exists))
+{
+    if (rawDotNetAcceptanceRule.IsMatch(File.ReadAllText(file)))
+    {
+        errors.Add(
+            $"Canonical verification documentation must use Script/RelTest.cmd so the repository toolchain owns the scoped workload-resolver environment ({Path.GetRelativePath(root, file)}).");
     }
 }
 

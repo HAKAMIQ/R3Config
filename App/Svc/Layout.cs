@@ -48,6 +48,12 @@ public sealed class UiLaySt
     public TextAlignment TechAlgn { get; } =
         TextAlignment.Left;
 
+    // Left-to-right content (canonical English titles) that may wrap keeps
+    // every line on the interface start edge: physical right in Arabic.
+    public TextAlignment TechStartAlign => IsRtl
+        ? TextAlignment.Right
+        : TextAlignment.Left;
+
     public HorizontalAlignment HorAlign => IsRtl
         ? HorizontalAlignment.Right
         : HorizontalAlignment.Left;
@@ -184,6 +190,9 @@ public static class UiLaySvc
 
         app.Resources["TechnicalText.TextAlignment"] =
             layout.TechAlgn;
+
+        app.Resources["TechnicalText.StartTextAlignment"] =
+            layout.TechStartAlign;
 
         app.Resources["TechnicalText.HorizontalAlignment"] =
             HorizontalAlignment.Left;

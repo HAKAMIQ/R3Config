@@ -1,0 +1,366 @@
+{
+    "return_code": 0,
+    "timestamp": 1792479016,
+    "games": {
+        "BCAS20014": {
+            "config": "Core:\n  Libraries Control:\n    - libvdec.sprx:lle"
+        },
+        "BCAS20016": {
+            "config": "Video:\n  MSAA: Disabled"
+        },
+        "BCAS20024": {
+            "config": "Video:\n  Emulate Special Depth Comparison: true\n  MSAA: Disabled\n  Write Color Buffers: true\n  Write Depth Buffer: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: false\nCore:\n  SPU Block Size: Mega"
+        },
+        "BCAS20050": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCAS20052": {
+            "config": "Audio:\n  Enable Buffering: false\nVideo:\n  MSAA: Disabled"
+        },
+        "BCAS20055": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCAS20066": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: false\n  Multithreaded RSX: false\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU Block Size: Mega"
+        },
+        "BCAS20074": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Multithreaded RSX: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU Block Size: Mega\n  SPU XFloat Accuracy: Accurate\n  Sleep Timers Accuracy: As Host"
+        },
+        "BCAS20078": {
+            "config": "Video:\n  MSAA: Auto\n  Write Color Buffers: true"
+        },
+        "BCAS20087": {
+            "config": "Video:\n  Strict Rendering Mode: true\n  Write Color Buffers: true"
+        },
+        "BCAS20097": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Read Depth Buffer: true\n  Write Color Buffers: true\n  Accurate ZCULL stats: true\n  Relaxed ZCULL Sync: false"
+        },
+        "BCAS20100": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCAS20107": {
+            "config": "Video:\n  Emulate Special Depth Comparison: true\n  Write Color Buffers: true"
+        },
+        "BCAS20108": {
+            "config": "Core:\n  Accurate RSX reservation access: true\n  SPU Block Size: Mega\n  Sleep Timers Accuracy: As Host\nVideo:\n  Disable Blit Engine Upscaling: true"
+        },
+        "BCAS20113": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCAS20270": {
+            "config": "Core:\n  Accurate RSX reservation access: true\nVideo:\n  Handle RSX Memory Tiling: true\n  Read Color Buffers: true\n  Read Depth Buffer: true\n  Write Color Buffers: true\n  Write Depth Buffer: true"
+        },
+        "BCAS20272": {
+            "config": "Video:\n  Emulate Special Depth Comparison: true\n  Read Color Buffers: true"
+        },
+        "BCAS20281": {
+            "config": "Video:\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true"
+        },
+        "BCAS20292": {
+            "config": "Video:\n  Anisotropic Filter Override: 0"
+        },
+        "BCAS20310": {
+            "config": "Video:\n  MSAA: Disabled"
+        },
+        "BCAS20311": {
+            "config": "Video:\n  Anisotropic Filter Override: 0"
+        },
+        "BCAS20333": {
+            "config": "Video:\n  Allow Host GPU Labels: true\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Multithreaded RSX: true\n  Strict Rendering Mode: true"
+        },
+        "BCAS25003": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Shader Precision: Ultra\n  Write Color Buffers: true\nCore:\n  SPU Block Size: Mega"
+        },
+        "BCAS25009": {
+            "config": "Core:\n  Accurate RSX reservation access: true\nVideo:\n  Handle RSX Memory Tiling: true\n  Read Color Buffers: true\n  Write Color Buffers: true\n  Write Depth Buffer: true\n  Accurate ZCULL stats: true\n  Relaxed ZCULL Sync: false"
+        },
+        "BCAS25014": {
+            "config": "Core:\n  Accurate RSX reservation access: true\nVideo:\n  Handle RSX Memory Tiling: true\n  Read Color Buffers: true\n  Write Color Buffers: true\n  Write Depth Buffer: true\n  Accurate ZCULL stats: true\n  Relaxed ZCULL Sync: false"
+        },
+        "BCAS25017": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCAS25018": {
+            "config": "Core:\n  Accurate RSX reservation access: true\nVideo:\n  Read Color Buffers: true\n  Write Color Buffers: true"
+        },
+        "BCED01448": {
+            "config": "Core:\n  SPU XFloat Accuracy: Approximate"
+        },
+        "BCES00004": {
+            "config": "Core:\n  Libraries Control:\n    - libvdec.sprx:lle"
+        },
+        "BCES00005": {
+            "config": "Audio:\n  Enable Buffering: false\nVideo:\n  Write Color Buffers: true"
+        },
+        "BCES00006": {
+            "config": "Video:\n  Read Color Buffers: true\n  Write Color Buffers: true"
+        },
+        "BCES00009": {
+            "config": "VFS:\n  Emulate BD-ROM Read Speed: true\n  Emulate HDD Read Speed: true\nVideo:\n  Write Color Buffers: true"
+        },
+        "BCES00011": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00030": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00031": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00032": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00050": {
+            "config": "Video:\n  Frame limit: Auto"
+        },
+        "BCES00051": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00052": {
+            "config": "Video:\n  Frame limit: 60\n  MSAA: Disabled\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: false\nCore:\n  SPU Block Size: Mega"
+        },
+        "BCES00057": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES00065": {
+            "config": "Video:\n  Emulate Special Depth Comparison: true\n  MSAA: Disabled\n  Write Color Buffers: true\n  Write Depth Buffer: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: false\nCore:\n  SPU Block Size: Mega"
+        },
+        "BCES00068": {
+            "config": "Core:\n  SPU loop detection: true"
+        },
+        "BCES00078": {
+            "config": "Video:\n  MSAA: Disabled"
+        },
+        "BCES00081": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: false\n  Multithreaded RSX: false\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU Block Size: Mega"
+        },
+        "BCES00129": {
+            "config": "Video:\n  MSAA: Disabled\n  Read Color Buffers: true\n  Write Color Buffers: true\nCore:\n  SPU XFloat Accuracy: Relaxed"
+        },
+        "BCES00141": {
+            "config": "Video:\n  MSAA: Auto\n  Write Color Buffers: true"
+        },
+        "BCES00185": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00216": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00220": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Multithreaded RSX: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU Block Size: Mega\n  SPU XFloat Accuracy: Accurate\n  Sleep Timers Accuracy: As Host"
+        },
+        "BCES00226": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES00233": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00234": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00235": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00265": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00266": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00267": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar"
+        },
+        "BCES00301": {
+            "config": "Audio:\n  Enable Buffering: false\nVideo:\n  MSAA: Disabled"
+        },
+        "BCES00381": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar\nCore:\n  Libraries Control:\n    - libvdec.sprx:lle"
+        },
+        "BCES00423": {
+            "config": "Audio:\n  Enable Buffering: false\n  Microphone Type: SingStar\nCore:\n  Libraries Control:\n    - libvdec.sprx:lle"
+        },
+        "BCES00440": {
+            "config": "Core:\n  SPU XFloat Accuracy: Relaxed"
+        },
+        "BCES00483": {
+            "config": "Input/Output:\n  Camera: Qt\n  Camera type: PS Eye\n  Move: Mouse"
+        },
+        "BCES00484": {
+            "config": "Video:\n  Allow Host GPU Labels: true\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true"
+        },
+        "BCES00509": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Read Depth Buffer: true\n  Write Color Buffers: true\n  Accurate ZCULL stats: true\n  Relaxed ZCULL Sync: false"
+        },
+        "BCES00510": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Shader Precision: Ultra\n  Write Color Buffers: true\nCore:\n  SPU Block Size: Mega"
+        },
+        "BCES00511": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: false\n  Read Color Buffers: true"
+        },
+        "BCES00569": {
+            "config": "Core:\n  Accurate RSX reservation access: true\n  SPU Block Size: Mega\n  Sleep Timers Accuracy: As Host\nVideo:\n  Disable Blit Engine Upscaling: true"
+        },
+        "BCES00591": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Multithreaded RSX: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU Block Size: Mega\n  SPU XFloat Accuracy: Accurate\n  Sleep Timers Accuracy: As Host"
+        },
+        "BCES00609": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Multithreaded RSX: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU Block Size: Mega\n  SPU XFloat Accuracy: Accurate\n  Sleep Timers Accuracy: As Host"
+        },
+        "BCES00611": {
+            "config": "Video:\n  MSAA: Auto\n  Write Color Buffers: true"
+        },
+        "BCES00644": {
+            "config": "Core:\n  SPU XFloat Accuracy: Relaxed"
+        },
+        "BCES00645": {
+            "config": "Core:\n  SPU XFloat Accuracy: Relaxed"
+        },
+        "BCES00647": {
+            "config": "Core:\n  SPU XFloat Accuracy: Relaxed"
+        },
+        "BCES00664": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES00701": {
+            "config": "Video:\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true"
+        },
+        "BCES00726": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: false\n  Read Color Buffers: true"
+        },
+        "BCES00727": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Read Depth Buffer: true\n  Write Color Buffers: true\n  Accurate ZCULL stats: true\n  Relaxed ZCULL Sync: false"
+        },
+        "BCES00748": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: false\n  Read Color Buffers: true"
+        },
+        "BCES00757": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Read Depth Buffer: true\n  Write Color Buffers: true\n  Accurate ZCULL stats: true\n  Relaxed ZCULL Sync: false"
+        },
+        "BCES00764": {
+            "config": "Video:\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true"
+        },
+        "BCES00791": {
+            "config": "Video:\n  Frame limit: 60"
+        },
+        "BCES00797": {
+            "config": "Video:\n  Emulate Special Depth Comparison: true\n  Write Color Buffers: true"
+        },
+        "BCES00799": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Shader Precision: Ultra\n  Write Color Buffers: true\nCore:\n  SPU Block Size: Mega"
+        },
+        "BCES00800": {
+            "config": "Video:\n  Frame limit: 60"
+        },
+        "BCES00802": {
+            "config": "Video:\n  Emulate Special Depth Comparison: true\n  Write Color Buffers: true"
+        },
+        "BCES00819": {
+            "config": "Video:\n  Anisotropic Filter Override: 0"
+        },
+        "BCES00850": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES00864": {
+            "config": "Input/Output:\n  Camera: Qt\n  Camera type: PS Eye\n  Move: Mouse"
+        },
+        "BCES00865": {
+            "config": "Input/Output:\n  Camera: Qt\n  Camera type: PS Eye\n  Move: Mouse"
+        },
+        "BCES00907": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES00935": {
+            "config": "Video:\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true"
+        },
+        "BCES00938": {
+            "config": "Video:\n  Emulate Special Depth Comparison: true"
+        },
+        "BCES00956": {
+            "config": "Input/Output:\n  Move: Fake"
+        },
+        "BCES00968": {
+            "config": "Video:\n  Frame limit: 60"
+        },
+        "BCES00982": {
+            "config": "Video:\n  Frame limit: 60"
+        },
+        "BCES01007": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Multithreaded RSX: true\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU Block Size: Mega"
+        },
+        "BCES01010": {
+            "config": "Core:\n  SPU Block Size: Mega\n  Sleep Timers Accuracy: As Host\nVideo:\n  Strict Rendering Mode: true"
+        },
+        "BCES01070": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES01086": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES01104": {
+            "config": "Video:\n  Allow Host GPU Labels: true\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true"
+        },
+        "BCES01118": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Multithreaded RSX: true\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: false\nCore:\n  SPU Block Size: Mega"
+        },
+        "BCES01121": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES01122": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES01123": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES01141": {
+            "config": "Core:\n  SPU XFloat Accuracy: Approximate"
+        },
+        "BCES01143": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Strict Rendering Mode: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU Block Size: Mega\n  Sleep Timers Accuracy: As Host"
+        },
+        "BCES01144": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  Strict Rendering Mode: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU Block Size: Mega\n  Sleep Timers Accuracy: As Host"
+        },
+        "BCES01175": {
+            "config": "Core:\n  Accurate RSX reservation access: true\nVideo:\n  Handle RSX Memory Tiling: true\n  Read Color Buffers: true\n  Write Color Buffers: true\n  Write Depth Buffer: true\n  Accurate ZCULL stats: true\n  Relaxed ZCULL Sync: false"
+        },
+        "BCES01176": {
+            "config": "Core:\n  Accurate RSX reservation access: true\nVideo:\n  Handle RSX Memory Tiling: true\n  Read Color Buffers: true\n  Write Color Buffers: true\n  Write Depth Buffer: true\n  Accurate ZCULL stats: true\n  Relaxed ZCULL Sync: false"
+        },
+        "BCES01234": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BCES01277": {
+            "config": "Video:\n  Resolution: 1920x1080"
+        },
+        "BLES00229": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  MSAA: Disabled\n  Multithreaded RSX: true\n  Shader Precision: Low\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU XFloat Accuracy: Accurate\n  Sleep Timers Accuracy: As Host"
+        },
+        "BLES00932": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BLES00978": {
+            "config": "VFS:\n  Emulate BD-ROM Read Speed: true"
+        },
+        "BLES01128": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  MSAA: Disabled\n  Multithreaded RSX: true\n  Shader Precision: Low\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU XFloat Accuracy: Accurate\n  Sleep Timers Accuracy: As Host"
+        },
+        "BLES01236": {
+            "config": "Core:\n  MFC Commands Shuffling Limit: 1"
+        },
+        "BLUS30127": {
+            "config": "Video:\n  Vulkan:\n    Asynchronous Texture Streaming: true\n  MSAA: Disabled\n  Multithreaded RSX: true\n  Shader Precision: Low\n  Write Color Buffers: true\n  Accurate ZCULL stats: false\n  Relaxed ZCULL Sync: true\nCore:\n  SPU XFloat Accuracy: Accurate\n  Sleep Timers Accuracy: As Host"
+        },
+        "BLUS30443": {
+            "config": "Video:\n  Write Color Buffers: true"
+        },
+        "BLUS31465": {
+            "config": "Core:\n  PPU Decoder: Interpreter (static)\nVideo:\n  Read Color Buffers: true\n  Write Color Buffers: true"
+        },
+        "NPUA70112": {
+            "config": "Video:\n  Emulate Special Depth Comparison: true\n  Write Color Buffers: true"
+        },
+        "NPUA70218": {
+            "config": "Core:\n  Libraries Control:\n    - libvdec.sprx:lle\n  SPU Block Size: Mega\n  Sleep Timers Accuracy: As Host"
+        }
+    }
+}

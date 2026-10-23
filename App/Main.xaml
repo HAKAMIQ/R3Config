@@ -31,6 +31,10 @@
                             UseAeroCaptionButtons="False" />
     </shell:WindowChrome.WindowChrome>
 
+    <Window.Resources>
+        <ResourceDictionary Source="Ctrl/GameIdentityTemplate.xaml" />
+    </Window.Resources>
+
     <Border Style="{StaticResource FluentSurface.Dialog}"
             Margin="0"
             BorderThickness="0"
@@ -193,7 +197,8 @@
                                   ToolTipService.Placement="Bottom"
                                   AutomationProperties.Name="{lang:TextExt Key=App.ThemeToggleTip}"
                                   AutomationProperties.AutomationId="App.ThemeToggle"
-                                  Click="ToggleTheme"
+                                  Checked="ToggleTheme"
+                                  Unchecked="ToggleTheme"
                                   Panel.ZIndex="20"
                                   shell:WindowChrome.IsHitTestVisibleInChrome="True">
 
@@ -289,7 +294,7 @@
                               UseLayoutRounding="True">
 
                             <TextBlock Text=""
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="10"
                                        Foreground="{Binding Foreground,
                                                             RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
@@ -336,7 +341,7 @@
                               UseLayoutRounding="True">
 
                             <TextBlock Text=""
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="10"
                                        Foreground="{Binding Foreground,
                                                             RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
@@ -400,38 +405,18 @@
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
-                            <Border Grid.Row="0"
-                                    Style="{StaticResource GameHeaderCard}"
-                                    HorizontalAlignment="Stretch"
-                                    Margin="0,0,0,8">
-
-                                <Grid Language="{DynamicResource App.XmlLanguage}"
-                                      HorizontalAlignment="Stretch"
-                                      VerticalAlignment="Center">
-
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <TextBlock Grid.Column="0"
-                                               Text="{Binding SelGame}"
-                                               Style="{StaticResource HeroTitleText}"
-                                               FlowDirection="{Binding SelGame, Converter={StaticResource ContentTextFlowConverter}}"
-                                               TextAlignment="{DynamicResource App.TextAlignment}"
-                                               Language="{Binding SelGame, Converter={StaticResource ContentTextLanguageConverter}, ConverterCulture=en-US}"
-                                               HorizontalAlignment="Stretch"
-                                               VerticalAlignment="Center"
-                                               TextWrapping="NoWrap"
-                                               TextTrimming="CharacterEllipsis"
-                                               ToolTip="{Binding SelGame}" />
-
-                                </Grid>
-                            </Border>
+                            <ContentControl Grid.Row="0"
+                                            Content="{Binding}"
+                                            ContentTemplate="{StaticResource GameIdentity}"
+                                            Focusable="False"
+                                            IsTabStop="False"
+                                            HorizontalContentAlignment="Stretch"
+                                            Margin="0,0,0,8" />
 
                             <TabControl x:Name="Tabs"
                                         Grid.Row="1"
-                                        Style="{StaticResource FluentTabControl}"
-                                        ItemContainerStyle="{StaticResource FluentTabItem}"
+                                        Style="{StaticResource FluentTabControl.Fit}"
+                                        ItemContainerStyle="{StaticResource FluentTabItem.Fit}"
                                         Margin="0"
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Stretch"
@@ -439,6 +424,7 @@
 
                                 <TabItem Header="{lang:TextExt Key=Tab.Settings}"
                                          AutomationProperties.AutomationId="Settings.Tab"
+                                         Tag="&#xE713;"
                                          TextBlock.TextAlignment="Left">
 
                                     <controls:RecView HorizontalAlignment="Stretch"
@@ -448,9 +434,10 @@
                                 <TabItem x:Name="PatTab"
                                          Header="{lang:TextExt Key=Tab.Patches}"
                                          AutomationProperties.AutomationId="Patches.Tab"
+                                         Tag="&#xE90F;"
                                          TextBlock.TextAlignment="Left">
 
-                                    <controls:PatView Mode="Patches"
+                                    <controls:PatchView Mode="Patches"
                                                       HorizontalAlignment="Stretch"
                                                       VerticalAlignment="Stretch" />
                                 </TabItem>
@@ -458,9 +445,10 @@
                                 <TabItem x:Name="CanTab"
                                          Header="{lang:TextExt Key=Tab.Canary}"
                                          AutomationProperties.AutomationId="Canary.Tab"
+                                         Tag="&#xE945;"
                                          TextBlock.TextAlignment="Left">
 
-                                    <controls:PatView Mode="Canary"
+                                    <controls:PatchView Mode="Canary"
                                                       HorizontalAlignment="Stretch"
                                                       VerticalAlignment="Stretch" />
                                 </TabItem>
@@ -468,11 +456,22 @@
                                 <TabItem x:Name="ChtTab"
                                          Header="{lang:TextExt Key=Tab.Cheats}"
                                          AutomationProperties.AutomationId="Artemis.Tab"
+                                         Tag="&#xE943;"
                                          TextBlock.TextAlignment="Left">
 
-                                    <controls:PatView Mode="Cheat"
+                                    <controls:PatchView Mode="Cheat"
                                                       HorizontalAlignment="Stretch"
                                                       VerticalAlignment="Stretch" />
+                                </TabItem>
+
+                                <TabItem x:Name="RtmTab"
+                                         Header="{lang:TextExt Key=Tab.Runtime}"
+                                         AutomationProperties.AutomationId="Runtime.Tab"
+                                         Tag="&#xE9D9;"
+                                         TextBlock.TextAlignment="Left">
+
+                                    <controls:RuntimeView HorizontalAlignment="Stretch"
+                                                          VerticalAlignment="Stretch" />
                                 </TabItem>
 
                             </TabControl>
@@ -506,16 +505,22 @@
 
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                     <RowDefinition Height="8" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0"
+                                           Text="&#xE7FC;"
+                                           Style="{StaticResource EmptyStateGlyph}"
+                                           HorizontalAlignment="Left" />
+
+                                <TextBlock Grid.Row="1"
                                            Text="{lang:TextExt Key=Shell.NoGameTitle}"
                                            Style="{StaticResource Type.Title}"
                                            TextAlignment="Left" />
 
-                                <TextBlock Grid.Row="2"
+                                <TextBlock Grid.Row="3"
                                            Text="{lang:TextExt Key=Shell.NoGameHint}"
                                            Style="{StaticResource SectionCaptionText}"
                                            TextAlignment="Left" />

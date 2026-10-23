@@ -75,6 +75,9 @@ internal static partial class Program
             nameof(PatchText_SourceKindsSharePresentationBoundary),
             PatchText_SourceKindsSharePresentationBoundary);
         runner.RunCase(
+            nameof(PatchText_OfficialUpstreamFallback),
+            PatchText_OfficialUpstreamFallback);
+        runner.RunCase(
             nameof(PatchText_RequestedGameFamiliesHaveArabicCoverage),
             PatchText_RequestedGameFamiliesHaveArabicCoverage);
         runner.RunCase(
@@ -1013,9 +1016,7 @@ internal static partial class Program
                        required.HasOrig &&
                        required.OrigBody == requiredRaw,
                     "An unknown required instruction exposed an internal fallback or lost its semantic classification and secondary original reference.");
-                Assert(!requiredItem.HasIns &&
-                       string.IsNullOrEmpty(requiredItem.InsText),
-                    "An unknown required instruction exposed untranslated content on the primary Arabic surface.");
+                PatchText_AssertUnknownOfficialRequirement(requiredItem, requiredRaw);
                 Assert(instruction.Kind == NoteKind.Instruction &&
                        instruction.IsInstruction &&
                        string.IsNullOrEmpty(instruction.Body) &&
@@ -1103,7 +1104,7 @@ internal static partial class Program
                 }
 
                 var patchTemplate = File.ReadAllText(
-                    Path.Combine(RepoRoot(), "App", "Ctrl", "PTmp.xaml"));
+                    Path.Combine(RepoRoot(), "App", "Ctrl", "PatchTemplates.xaml"));
                 Assert(patchTemplate.Contains(
                            "Text=\"{Binding NoteBody}\"",
                            StringComparison.Ordinal) &&

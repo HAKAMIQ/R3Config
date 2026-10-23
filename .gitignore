@@ -17,3 +17,9 @@ obj/
 artifacts/
 publish/
 *.zip
+!App/Data/ncl.zip
+
+# Local secrets (never commit)
+.env*
+.dev.vars*
+node_modules/

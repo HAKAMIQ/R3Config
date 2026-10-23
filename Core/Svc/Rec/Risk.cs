@@ -55,6 +55,11 @@ public static class RecPol
     {
         var haystack = $"{wikiKey} {value} {notes}".ToLowerInvariant();
 
+        if (IsPatDep(haystack))
+        {
+            return Mdl.RecRisk.PatDep;
+        }
+
         if (Keys.Contains(wikiKey) ||
             Contains(haystack, "60 fps", "60fps", "timing", "physics"))
         {
@@ -64,11 +69,6 @@ public static class RecPol
         if (IsExpert(wikiKey) || Contains(haystack, "experimental", "debug"))
         {
             return Mdl.RecRisk.Only;
-        }
-
-        if (IsPatDep(haystack))
-        {
-            return Mdl.RecRisk.PatDep;
         }
 
         if (IsPerf(wikiKey, value, haystack))

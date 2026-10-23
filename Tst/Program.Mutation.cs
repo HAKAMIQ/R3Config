@@ -176,7 +176,8 @@ internal static partial class Program
             Path.Combine(
                 install.CustPath,
                 "config_BLUS43000.yml"),
-            [new CfgEntry(change, "false", state)],
+            Path.Combine(install.CfgPath, "config.yml"),
+            [new CfgEntry(change, "false", state) { HasCustomOverride = true }],
             new RecSum(
                 "BLUS43000",
                 1,
@@ -421,7 +422,7 @@ internal static partial class Program
         var configOnlyState = new RecItem(
             "TEST00002",
             configOnlyChange.Path,
-            null,
+            "false",
             configOnlyChange.Value,
             configOnlyChange.Risk,
             RecState.Pending,
@@ -433,7 +434,8 @@ internal static partial class Program
             "TEST00002",
             "Config Only Game",
             configOnlyTarget,
-            [new CfgEntry(configOnlyChange, null, configOnlyState)],
+            Path.Combine(configOnly.CfgPath, "config.yml"),
+            [new CfgEntry(configOnlyChange, "false", configOnlyState)],
             new RecSum(
                 "TEST00002",
                 1,

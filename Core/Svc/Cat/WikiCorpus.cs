@@ -45,13 +45,13 @@ public sealed partial class WikiSvc
     private static readonly Regex VersionCondition = new(
         @"\bno longer required\b|\b(?:older|newer) versions?\b|" +
         @"\b(?:RPCS3|emulator|game) (?:versions?|builds?)\b|\bversions?\s+(?:above|below|before|after|prior to|through)\s+\d|" +
-        @"\bversion\s+\d|\bbuild\s+\d|" +
+        @"\bversions?\s+\d|\bbuild\s+\d|" +
         @"\buntil\s+RPCS3\s+(?:PR|pull request|build|version)\b|" +
         @"\b(?:fixed|regression|removed)\b[^.]{0,80}\b(?:RPCS3|emulator|version|build|PR)\b",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     private static readonly Regex PatchCondition = new(
-        @"\bcanary\b|\bunpatched\b|\bunlock fps\b|" +
+        @"\bcanary\b|\bunpatched\b|\bunlock fps\b|\bpatch\s+[^.;]{1,64}\s+only\b|" +
         @"\b(?:the|a|an|fps|mlaa|recommended|disable [a-z0-9 -]+)\s+patch(?:es)?\b|" +
         @"\bpatch(?:es)?\s+(?:is|are|enabled|disabled|required|available|notes)\b|" +
         @"\busing\b[^.]{0,80}\bpatch(?:es)?\b|\b(?:30|60|120)\s*fps patch\b",
@@ -152,6 +152,15 @@ public sealed partial class WikiSvc
             "accurate dfma"
         };
 
+    // Wiki keys whose setting does not exist in current RPCS3 (verified in
+    // docs/WikiParityAudit-2026-09-07.md), so there is nothing to apply.
+    private static readonly HashSet<string> NoRpcs3Setting =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "delay each odd mfc command",
+            "enable spu events busy loop"
+        };
+
     private static readonly HashSet<string> LegacyConfigKeys =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -185,37 +194,39 @@ public sealed partial class WikiSvc
     private static readonly Dictionary<string, HashSet<string>> CorpusValues =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            ["ppu decoder"] = Values("Interpreter (static)", "Interpreter (dynamic)", "Recompiler (LLVM)"),
+            ["ppu decoder"] = Values("Interpreter (static)", "Recompiler (LLVM)"),
             ["spu decoder"] = Values("Interpreter (static)", "Interpreter (dynamic)", "Recompiler (ASMJIT)", "Recompiler (LLVM)"),
             ["thread scheduler"] = Values("Operating System", "RPCS3 Scheduler", "RPCS3 Alternative Scheduler"),
-            ["spu xfloat accuracy"] = Values("Accurate", "Approximate", "Relaxed"),
-            ["xfloat accuracy"] = Values("Accurate", "Approximate", "Relaxed"),
+            ["spu xfloat accuracy"] = Values("Accurate", "Approximate", "Relaxed", "Inaccurate"),
+            ["xfloat accuracy"] = Values("Accurate", "Approximate", "Relaxed", "Inaccurate"),
             ["spu block size"] = Values("Safe", "Mega", "Giga"),
-            ["rsx fifo accuracy"] = Values("Fast", "Atomic", "Ordered & Atomic"),
+            ["rsx fifo accuracy"] = Values("Fast", "Atomic", "Ordered & Atomic", "PS3"),
             ["sleep timers accuracy"] = Values("As Host", "Usleep Only", "All Timers"),
             ["renderer"] = Values("OpenGL", "Vulkan", "Disabled"),
             ["aspect ratio"] = Values("4:3", "16:9"),
-            ["framelimit"] = Values("Off", "50", "60", "30", "Auto", "PS3 Native", "Infinite"),
+            ["framelimit"] = Values("Off", "50", "60", "30", "120", "Display", "Auto", "PS3 Native", "Infinite"),
             ["anti-aliasing"] = Values("Auto", "Disabled"),
             ["shader quality"] = Values("Ultra", "High", "Low", "Auto"),
             ["3d rendering mode"] = Values(
-                "Disabled", "Anaglyph", "Anaglyph Red-Green", "Anaglyph Red-Blue", "Anaglyph Red-Cyan",
-                "Anaglyph Magenta-Cyan", "Anaglyph Trioscopic", "Anaglyph Amber-Blue", "Side-by-Side",
-                "Over-Under", "Interlaced"),
+                "Disabled", "Anaglyph Red-Green", "Anaglyph Red-Blue", "Anaglyph Red-Cyan",
+                "Anaglyph Magenta-Cyan", "Anaglyph Trioscopic", "Anaglyph Amber-Blue", "Anaglyph Custom",
+                "Side-by-Side", "Over-Under", "Interlaced"),
             ["default resolution"] = Values(
-                "1920x1080", "1280x720", "720x480", "720x576", "1600x1080", "1440x1080", "1280x1080", "960x1080"),
+                "1920x1080", "1920x1080i", "1280x720", "720x480", "720x480i", "720x576", "720x576i",
+                "1600x1080", "1440x1080", "1280x1080", "960x1080"),
             ["shader mode"] = Values(
                 "Legacy Recompiler (single-threaded)", "Async Recompiler (multi-threaded)",
                 "Async Recompiler with Shader Interpreter", "Shader Interpreter only"),
             ["vsync"] = Values("Disabled", "Adaptive", "Full"),
-            ["audio out windows"] = Values("Cubeb", "XAudio2", "Disabled"),
+            ["output scaling"] = Values("Nearest", "Bilinear", "FidelityFX Super Resolution"),
+            ["audio out windows"] = Values("Cubeb", "XAudio2", "FAudio", "Disabled"),
             ["audio format"] = Values("Stereo", "Surround 5.1", "Surround 7.1", "Automatic", "Manual"),
             ["microphone type"] = Values("Disabled", "Standard", "SingStar", "Real SingStar", "Rocksmith"),
             ["keyboard handler"] = Values("Null", "Basic"),
-            ["mouse handler"] = Values("Null", "Basic"),
+            ["mouse handler"] = Values("Null", "Basic", "Raw"),
             ["camera input"] = Values("Unknown", "EyeToy", "PS Eye", "UVC 1.1"),
             ["camera settings"] = Values("Null", "Fake", "Qt", "SDL"),
-            ["move handler"] = Values("Null", "Real", "Fake", "Mouse", "Gun"),
+            ["move handler"] = Values("Null", "Real", "Fake", "Mouse", "Raw Mouse", "Gun"),
             ["network status"] = Values("Disconnected", "Connected"),
             ["psn status"] = Values("Disconnected", "Simulated", "RPCN")
         };
@@ -234,6 +245,8 @@ public sealed partial class WikiSvc
         .. CorpusValues.Values
             .SelectMany(values => values)
             .Concat(["On", "true", "false", "LLVM"])
+            // Library selections the shipped catalog carries for Libraries Control.
+            .Concat(["libaudio.sprx:lle", "libvdec.sprx:lle"])
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
     ];
@@ -561,16 +574,11 @@ public sealed partial class WikiSvc
                             page.RedirectTarget is null &&
                             gameIdBlocks.Count > 0 &&
                             configBlocks.Count > 0;
-        var gameIds = isGameContent
+        var gameIds = page.Namespace == 0 && page.RedirectTarget is null && gameIdBlocks.Count > 0
             ? ParseGameIds(page.PageId, title, page.Text, gameIdBlocks, findings)
             : GameIdParseResult.Empty;
-        var primarySerials = gameIds.Bindings
-            .Where(binding => binding.Role == WikiGameIdRole.Primary)
-            .Select(binding => binding.Serial)
-            .OrderBy(serial => serial, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
         var (entries, notes) = isGameContent
-            ? ParseConfig(title, gameIds.Serials, primarySerials, configBlocks, findings)
+            ? ParseConfig(title, gameIds.Serials, gameIds.Bindings, configBlocks, findings)
             : (Array.Empty<WikiCorpusEntry>(), Array.Empty<WikiCorpusNote>());
         var patchReferences = ExtractPatchReferences(page.Text, entries);
 
@@ -604,6 +612,7 @@ public sealed partial class WikiSvc
         var bindings = new Dictionary<string, WikiGameIdBinding>(StringComparer.OrdinalIgnoreCase);
         var sawCandidate = false;
         var rawReferences = 0;
+        string? previousLabel = null;
 
         for (var blockIndex = 0; blockIndex < blocks.Count; blockIndex++)
         {
@@ -612,6 +621,15 @@ public sealed partial class WikiSvc
             var label = blockIndex == 0
                 ? null
                 : FindVariantLabel(text, blocks[blockIndex - 1].End, block.Start);
+            // Adjacent GameID templates separated only by a comma/line break
+            // are still under the same explicit release heading (e.g. EyePet).
+            if (label is null && blockIndex > 0 && Regex.IsMatch(
+                    text[blocks[blockIndex - 1].End..block.Start], @"^[\s,]*(?:<br\s*/?>[\s,]*)*$",
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            {
+                label = previousLabel;
+            }
+            previousLabel = label;
             var role = ClassifyGameIdRole(blockIndex, label);
             foreach (var parameter in SplitTemplateParameters(block, page, findings))
             {
@@ -769,7 +787,7 @@ public sealed partial class WikiSvc
     private static (IReadOnlyList<WikiCorpusEntry> Entries, IReadOnlyList<WikiCorpusNote> Notes) ParseConfig(
         string page,
         IReadOnlyList<string> serials,
-        IReadOnlyList<string> primarySerials,
+        IReadOnlyList<WikiGameIdBinding> bindings,
         IReadOnlyList<TemplateBlock> blocks,
         List<WikiCorpusFinding> findings)
     {
@@ -849,7 +867,7 @@ public sealed partial class WikiSvc
             entries.Add(ClassifyEntry(
                 page,
                 serials,
-                primarySerials,
+                bindings,
                 wikiKey,
                 rawValue,
                 rawNote,
@@ -863,7 +881,7 @@ public sealed partial class WikiSvc
     private static WikiCorpusEntry ClassifyEntry(
         string page,
         IReadOnlyList<string> pageSerials,
-        IReadOnlyList<string> primarySerials,
+        IReadOnlyList<WikiGameIdBinding> bindings,
         string wikiKey,
         string rawValue,
         string? rawNote,
@@ -877,7 +895,7 @@ public sealed partial class WikiSvc
         var applicableSerials = ResolveApplicableSerials(
             page,
             pageSerials,
-            primarySerials,
+            bindings,
             wikiKey,
             note,
             findings,
@@ -988,11 +1006,13 @@ public sealed partial class WikiSvc
                 [],
                 LegacyConfigKeys.Contains(wikiKey)
                     ? "Legacy Wiki key."
-                    : "No verified R3Config mapping.");
+                    : NoRpcs3Setting.Contains(wikiKey)
+                        ? "No matching setting exists in current RPCS3; the evidence is preserved and not applied."
+                        : "No verified R3Config mapping.");
         }
 
         var classification = ClassifyRecommendation(wikiKey, note);
-        var included = !regionAmbiguous &&
+        var included = !regionAmbiguous && applicableSerials.Length > 0 &&
                        classification is WikiRecommendationClass.MandatoryGameConfig or
                            WikiRecommendationClass.GeneralRecommendation;
         return Entry(
@@ -1001,7 +1021,7 @@ public sealed partial class WikiSvc
             included,
             targets,
             regionAmbiguous
-                ? "The note refers to a serial outside the page's GameID set."
+                ? "The recommendation scope could not be resolved to explicit page GameIDs."
                 : null);
 
         WikiCorpusEntry Entry(
@@ -1038,7 +1058,7 @@ public sealed partial class WikiSvc
         if (!string.IsNullOrWhiteSpace(note) &&
             PatchDependencyCondition.IsMatch(note))
         {
-            return WikiRecommendationClass.GeneralRecommendation;
+            return WikiRecommendationClass.PatchSpecific;
         }
 
         if (!string.IsNullOrWhiteSpace(note) &&
@@ -1060,10 +1080,39 @@ public sealed partial class WikiSvc
         return WikiRecommendationClass.GeneralRecommendation;
     }
 
+    private static readonly Regex LibraryName = new(
+        @"^(?<name>[A-Za-z0-9_.\-]+\.sprx)(?::lle)?$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    // The Wiki lists the LLE libraries to select, comma separated. The
+    // canonical value is the sorted, de-duplicated "<name>.sprx:lle" list that
+    // RPCS3 writes to Libraries Control; anything else is not deterministic.
+    private static string? ConvertLibraries(string value)
+    {
+        var libraries = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var part in value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            var match = LibraryName.Match(part);
+            if (!match.Success)
+            {
+                return null;
+            }
+
+            libraries.Add(match.Groups["name"].Value + ":lle");
+        }
+
+        return libraries.Count == 0 ? null : string.Join(", ", libraries);
+    }
+
     private static string? ConvertCorpusValue(
         string wikiKey,
         string value)
     {
+        if (wikiKey.Equals("firmware libraries", StringComparison.OrdinalIgnoreCase))
+        {
+            return ConvertLibraries(value);
+        }
+
         if (CorpusValues.TryGetValue(wikiKey, out var allowed) && !allowed.Contains(value))
         {
             return null;
@@ -1077,7 +1126,7 @@ public sealed partial class WikiSvc
         }
 
         if (wikiKey.Equals("resolution scale", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 50, 800))
+            !TryNumeric(value, 25, 800))
         {
             return null;
         }
@@ -1101,13 +1150,13 @@ public sealed partial class WikiSvc
         }
 
         if (wikiKey.Equals("driver wake-up delay", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 0, 7000))
+            !TryNumeric(value, 0, 16667))
         {
             return null;
         }
 
         if (wikiKey.Equals("vblank rate", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 1, 3000))
+            !TryNumeric(value, 1, 6000))
         {
             return null;
         }
@@ -1119,8 +1168,13 @@ public sealed partial class WikiSvc
         }
 
         if (wikiKey.Equals("maximum spurs threads", StringComparison.OrdinalIgnoreCase) &&
-            !value.Equals("Unlimited", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 0, 5))
+            !TryNumeric(value, 1, 6))
+        {
+            return null;
+        }
+
+        if (wikiKey.Equals("ppu thread count", StringComparison.OrdinalIgnoreCase) &&
+            !TryNumeric(value, 1, 8))
         {
             return null;
         }
@@ -1144,44 +1198,83 @@ public sealed partial class WikiSvc
         return new HashSet<string>(values, StringComparer.OrdinalIgnoreCase);
     }
 
-    private static IReadOnlyList<string> ResolveApplicableSerials(
+    private static string[] ResolveApplicableSerials(
         string page,
         IReadOnlyList<string> pageSerials,
-        IReadOnlyList<string> primarySerials,
+        IReadOnlyList<WikiGameIdBinding> bindings,
         string wikiKey,
         string? note,
         List<WikiCorpusFinding> findings,
         out bool ambiguous)
     {
         ambiguous = false;
+        // GameID role describes the release label, not the scope of the page's
+        // configuration. Explicit GameIDs share an unrestricted recommendation.
+        // Non-game media listed beside releases is not executable game evidence.
+        var explicitSerials = bindings
+            .Where(binding => !Regex.IsMatch(binding.VariantLabel ?? string.Empty,
+                @"\b(?:soundtrack|concept movie|video|theme|avatar)\b",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            .Select(binding => binding.Serial)
+            .ToArray();
         if (string.IsNullOrWhiteSpace(note))
         {
-            return primarySerials;
+            return explicitSerials;
         }
 
         var referenced = SnapshotSerial.Matches(note)
             .Select(match => match.Value.ToUpperInvariant())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
-        if (referenced.Length == 0)
+        var labelApplicable = explicitSerials;
+        var scopeMatches = Regex.Matches(note,
+            @"\b(?:for|on|in)\s+(?:the\s+)?(?<scope>(?:[\w'-]+\s+){0,3}(?:edition|version|region))\b|" +
+            @"\b(?<scope>(?:[\w'-]+\s+){0,3}(?:editions?|versions?|regions?))\s+only\b|" +
+            @"\b(?<scope>PAL|NTSC|US|EU|USA|Europe|Japan|Japanese|European|North American)\s+only\b|" +
+            @"\b(?<scope>(?:edition|region)\s+[\w'-]+)\s+only\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (scopeMatches.Count > 1)
         {
-            return pageSerials;
+            ambiguous = true;
+            findings.Add(new WikiCorpusFinding(WikiFindingCode.RegionAmbiguous, page, null, wikiKey,
+                "Multiple release scope clauses require explicit resolution."));
+            return [];
+        }
+        if (scopeMatches.Count == 1 && !VersionCondition.IsMatch(note) && !PatchCondition.IsMatch(note))
+        {
+            var label = scopeMatches[0].Groups["scope"].Value.Trim();
+            var scoped = bindings.Where(binding => MatchesReleaseScope(label, binding))
+                .Select(binding => binding.Serial)
+                .Intersect(explicitSerials, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            if (scoped.Length > 0)
+            {
+                labelApplicable = Regex.IsMatch(note, @"\b(?:not(?:\s+required)?|except|excluding)\s+(?:for\s+)?(?:the\s+)?" + Regex.Escape(label),
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)
+                    ? explicitSerials.Except(scoped, StringComparer.OrdinalIgnoreCase).ToArray()
+                    : scoped;
+            }
+
+            else
+            {
+                ambiguous = true;
+                findings.Add(new WikiCorpusFinding(WikiFindingCode.RegionAmbiguous, page, null, wikiKey,
+                    $"Recommendation scope '{label}' has no explicit matching GameID release label."));
+                return [];
+            }
         }
 
+        if (referenced.Length == 0) return labelApplicable;
+
         var applicable = referenced
-            .Where(serial => primarySerials.Contains(serial, StringComparer.OrdinalIgnoreCase))
+            .Where(serial => explicitSerials.Contains(serial, StringComparer.OrdinalIgnoreCase))
             .OrderBy(serial => serial, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         var outside = referenced
             .Where(serial => !pageSerials.Contains(serial, StringComparer.OrdinalIgnoreCase))
             .ToArray();
 
-        var nonPrimary = referenced
-            .Where(serial => pageSerials.Contains(serial, StringComparer.OrdinalIgnoreCase) &&
-                             !primarySerials.Contains(serial, StringComparer.OrdinalIgnoreCase))
-            .ToArray();
-
-        if (outside.Length > 0 || nonPrimary.Length > 0 || applicable.Length == 0)
+        if (outside.Length > 0 || applicable.Length == 0)
         {
             ambiguous = true;
             findings.Add(new WikiCorpusFinding(
@@ -1191,11 +1284,61 @@ public sealed partial class WikiSvc
                 wikiKey,
                 outside.Length > 0
                     ? $"Note references serial(s) outside the page GameID set: {string.Join(", ", outside)}."
-                    : $"Note references non-primary GameID binding(s): {string.Join(", ", nonPrimary)}."));
+                    : "Note references a non-game media GameID binding."));
             return [];
         }
 
-        return applicable;
+        var excluded = applicable.Where(serial => Regex.IsMatch(note,
+            @"\b(?:not(?:\s+required)?\s+for|except|excluding)\s+(?:the\s+)?" + Regex.Escape(serial) + @"\b",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)).ToArray();
+        if (excluded.Length > 0 && excluded.Length != applicable.Length)
+        {
+            ambiguous = true;
+            findings.Add(new WikiCorpusFinding(WikiFindingCode.RegionAmbiguous, page, null, wikiKey,
+                "Mixed positive and negative serial scope requires manual resolution."));
+            return [];
+        }
+        var serialApplicable = excluded.Length > 0
+            ? explicitSerials.Except(applicable, StringComparer.OrdinalIgnoreCase).ToArray()
+            : applicable;
+        return serialApplicable.Intersect(labelApplicable, StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
+    private static string NormalizeScopeLabel(string? label)
+    {
+        var normalized = Regex.Replace(label ?? string.Empty, @"\s+", " ").Trim();
+        return normalized.StartsWith("The ", StringComparison.OrdinalIgnoreCase) ? normalized[4..] : normalized;
+    }
+
+    private static bool MatchesReleaseScope(string scope, WikiGameIdBinding binding)
+    {
+        var normalizedScope = NormalizeScopeLabel(scope);
+        var normalizedLabel = NormalizeScopeLabel(binding.VariantLabel);
+        if (string.Equals(normalizedLabel, normalizedScope, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (normalizedScope.EndsWith(" Edition", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(normalizedLabel, normalizedScope + " Demo", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (Regex.IsMatch(normalizedScope, @"^digital (?:edition|versions?)$",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            return binding.Serial.StartsWith("N", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (Regex.IsMatch(normalizedScope, @"^(?:disc|blu-ray) (?:edition|versions?)$",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            return binding.Serial.StartsWith("B", StringComparison.OrdinalIgnoreCase) ||
+                   binding.Serial.StartsWith("M", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
     }
 
     private static List<WikiRec> BuildRecommendations(
@@ -1233,25 +1376,29 @@ public sealed partial class WikiSvc
                 continue;
             }
 
-            if (primaryCandidates.Length == 0)
+            if (primaryCandidates.Length == 0 && candidates.Length > 1)
             {
-                if (candidates.Length > 1)
-                {
-                    findings.Add(new WikiCorpusFinding(
-                        WikiFindingCode.DuplicateSerialConflict,
-                        string.Join(" | ", candidates.Select(page => page.Title)),
-                        group.Key,
-                        null,
-                        "The same non-primary serial is referenced by multiple Wiki pages; no winner was selected."));
-                }
-
+                findings.Add(new WikiCorpusFinding(
+                    WikiFindingCode.DuplicateSerialConflict,
+                    string.Join(" | ", candidates.Select(page => page.Title)),
+                    group.Key,
+                    null,
+                    "The same non-primary serial is referenced by multiple Wiki pages; no winner was selected."));
                 continue;
             }
 
-            var page = primaryCandidates[0];
+            // Page ownership and configuration evidence are separate. A dedicated
+            // page with no settings must not hide a uniquely evidenced shared page.
+            var applicablePages = candidates.Where(candidate => candidate.Recommendations.Any(entry =>
+                entry.IncludedInCatalog && entry.ApplicableSerials.Contains(group.Key, StringComparer.OrdinalIgnoreCase))).ToArray();
+            var page = applicablePages.Length == 1 ? applicablePages[0]
+                : primaryCandidates.Length == 1 ? primaryCandidates[0] : candidates[0];
+            var binding = group.First(item => PageIdentity(item.Page) == PageIdentity(page)).Binding;
             var mapped = page.Recommendations
                 .Where(entry => entry.IncludedInCatalog &&
-                                entry.ApplicableSerials.Contains(group.Key, StringComparer.OrdinalIgnoreCase))
+                                entry.ApplicableSerials.Contains(
+                                    group.Key,
+                                    StringComparer.OrdinalIgnoreCase))
                 .SelectMany(entry => entry.MappedSettings.Select(target => (Entry: entry, Target: target)))
                 .ToArray();
             var changes = new List<CfgChg>();
@@ -1287,7 +1434,8 @@ public sealed partial class WikiSvc
                     RecPol.Classify(
                         selected.Entry.WikiKey,
                         selected.Target.Value,
-                        selected.Entry.Notes)));
+                        selected.Entry.Notes),
+                    selected.Entry.Classification));
             }
 
             output.Add(new WikiRec(
@@ -1296,7 +1444,9 @@ public sealed partial class WikiSvc
                 changes
                     .OrderBy(change => change.Section, StringComparer.Ordinal)
                     .ThenBy(change => change.Key, StringComparer.Ordinal)
-                    .ToArray()));
+                    .ToArray(),
+                changes.Count > 0 ? WikiGameIdRole.Primary : binding.Role,
+                binding.VariantLabel));
         }
 
         return output;
@@ -1369,6 +1519,15 @@ public sealed partial class WikiSvc
             if (start < 0)
             {
                 break;
+            }
+
+            var commentStart = text.LastIndexOf("<!--", start, StringComparison.Ordinal);
+            if (commentStart >= 0 && text.LastIndexOf("-->", start, StringComparison.Ordinal) < commentStart)
+            {
+                var commentEnd = text.IndexOf("-->", start, StringComparison.Ordinal);
+                if (commentEnd < 0) break;
+                from = commentEnd + 3;
+                continue;
             }
 
             var afterName = start + needle.Length;

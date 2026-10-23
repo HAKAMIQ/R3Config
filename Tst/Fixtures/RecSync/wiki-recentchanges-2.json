@@ -1,0 +1,27 @@
+{
+  "batchcomplete": true,
+  "query": {
+    "recentchanges": [
+      {
+        "type": "edit",
+        "ns": 0,
+        "title": "Demon's Souls",
+        "pageid": 4,
+        "revid": 61002,
+        "old_revid": 48043,
+        "rcid": 91002,
+        "timestamp": "2026-10-18T12:00:00Z"
+      },
+      {
+        "type": "new",
+        "ns": 0,
+        "title": "Fixture New Game",
+        "pageid": 99901,
+        "revid": 61003,
+        "old_revid": 0,
+        "rcid": 91003,
+        "timestamp": "2026-10-19T08:00:00Z"
+      }
+    ]
+  }
+}

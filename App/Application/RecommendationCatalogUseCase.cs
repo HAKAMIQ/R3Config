@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Globalization;
 using R3Config.Mdl;
@@ -64,6 +65,19 @@ public sealed class RecommendationCatalogUseCase(
         Svc.RecSvc catalog,
         string path)
     {
+        // The export is a user-chosen file write outside the mutation guard.
+        // It only produces .json names, and RecSvc.Save replaces the name
+        // instead of writing through it, so an RPCS3 YAML file such as
+        // patch.yml is never overwritten, even through a hardlink.
+        if (!string.Equals(
+                Path.GetExtension(path),
+                ".json",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException(
+                "The recommendation catalog can only be exported to a .json file.");
+        }
+
         catalog.Save(path);
     }
 }

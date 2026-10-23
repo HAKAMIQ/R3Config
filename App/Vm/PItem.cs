@@ -369,6 +369,9 @@ public sealed class PatItVm : VmBase
                 PatchCompatibilityReasonCode.CanaryBindingAmbiguous
                     when IsCanary =>
                     "Patch.Direct.CanaryBindingAmbiguous",
+                PatchCompatibilityReasonCode.CanaryEquivalent
+                    when IsArtemis =>
+                    "Patch.Direct.CanaryEquivalent",
                 PatchCompatibilityReasonCode.Hash =>
                     "Patch.Direct.GlobalNeedsExactHash",
                 _ => null
@@ -447,14 +450,20 @@ public sealed class PatItVm : VmBase
         ? UiText.Fmt(
             "Patch.State.Current",
             UiText.GetText("Patch.State.Enabled"))
+        : Decision.Code == PatchCompatibilityReasonCode.CanaryEquivalent
+            ? UiText.GetText("Patch.State.CanaryOwned")
         : CanOn
             ? UiText.Fmt(
                 "Patch.State.Current",
                 UiText.GetText("Patch.State.Disabled"))
             : MatchDsp;
 
+    // A Canary-equivalent Artemis row is informational (use the Canary
+    // version), not a warning; genuinely blocked rows keep the warning tone.
     public string StateTon => IsOn
         ? "Game"
+        : Decision.Code == PatchCompatibilityReasonCode.CanaryEquivalent
+            ? "Auto"
         : CanOn
             ? "Muted"
             : "Warning";
@@ -609,7 +618,43 @@ public sealed class PatItVm : VmBase
 
     public string MsgType => PatText.PatMsg(Match.Patch.Notes).Type;
 
-    public string LocMsg => PatText.PatMsg(Match.Patch.Notes).Body;
+    public string LocMsg => IsOfficialNoteFallback
+        ? PatText.PatMsg(Match.Patch.Notes).OrigBody
+        : PatText.PatMsg(Match.Patch.Notes).Body;
+
+    // An upstream RPCS3 Official note with no reviewed Arabic presentation.
+    // NoteSvc returns no body for it (it never machine-translates), so the
+    // upstream text is shown verbatim and labelled as Official content.
+    // Scoped to Official patch.yml notes only: R3Config-owned messages and
+    // Artemis, Canary and local notes keep their reviewed-only behaviour.
+    public bool IsOfficialNoteFallback
+    {
+        get
+        {
+            if (!IsOfcl)
+            {
+                return false;
+            }
+
+            var note = PatText.PatMsg(Match.Patch.Notes);
+            return string.IsNullOrWhiteSpace(note.Body) &&
+                   !NoteSvc.IsInternalDiagnostic(Match.Patch.Notes) &&
+                   note.HasOrig &&
+                   !string.IsNullOrWhiteSpace(note.OrigBody);
+        }
+    }
+
+    public string OfficialNoteSourceLabel =>
+        UiText.GetText("Patch.Note.OfficialOriginal");
+
+    public bool ShowOfficialNoteSource =>
+        IsOfficialNoteFallback && HasIns;
+
+    // Upstream English keeps its own left-to-right order inside an Arabic
+    // surface; reviewed text follows the interface direction.
+    public FlowDirection InsFlow => IsOfficialNoteFallback
+        ? FlowDirection.LeftToRight
+        : UiLaySvc.Current.TextFlow;
 
     public string OrigMsg => PatText.PatMsg(Match.Patch.Notes).OrigBody;
 
@@ -757,6 +802,10 @@ public sealed class PatItVm : VmBase
         OnChange(nameof(LocNote));
         OnChange(nameof(MsgType));
         OnChange(nameof(LocMsg));
+        OnChange(nameof(IsOfficialNoteFallback));
+        OnChange(nameof(OfficialNoteSourceLabel));
+        OnChange(nameof(ShowOfficialNoteSource));
+        OnChange(nameof(InsFlow));
         OnChange(nameof(OrigMsg));
         OnChange(nameof(HasOrig));
         OnChange(nameof(TitleFlow));

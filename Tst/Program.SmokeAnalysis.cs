@@ -106,8 +106,11 @@ internal static partial class Program
             "Expected analysis to report the real busy stages in deterministic order.");
         Assert(result.Games.Single(row => row.Game.Serial == "BLUS31465").InR3,
             "Expected games.yml discoveries to be marked as detected.");
-        Assert(result.Games.Single(row => row.Game.Serial == "BLES02061").InR3,
-            "Expected an existing custom config to mark a catalog game as detected without UI filesystem probing.");
+        Assert(!result.Games.Single(row => row.Game.Serial == "BLES02061").InR3,
+            "Expected a custom config without RPCS3 game-library identity evidence to remain undetected.");
+        Assert(result.Games.Single(row => row.Game.Serial == "BLES02061")
+            .RecState.Items.All(item => !item.IsAction),
+            "Expected a custom-config-only catalog game to remain non-actionable until the serial is detected in the RPCS3 game library.");
         Assert(!result.Games.Single(row => row.Game.Serial == "NPUB31547").InR3,
             "Expected catalog-only games without local evidence to remain undetected.");
         Assert(result.Games.Single(row => row.Game.Serial == "NPUB31547")
@@ -115,6 +118,8 @@ internal static partial class Program
             "Expected catalog-only recommendation state to remain non-actionable.");
         Assert(result.Games.Single(row => row.Game.Serial == "NPUB00001").Rec is null,
             "Expected locally detected games without recommendations to remain visible.");
+        Assert(result.BuildIdentity is { State: Rpcs3BuildIdentityState.Unavailable },
+            "Expected AnalysisUseCase to wire Build Identity into AnalyzeResult end to end through the real composition root, reporting Unavailable for this fixture's RPCS3.log-less install rather than leaving the field null.");
 
         Console.WriteLine("Analysis read-path responsiveness smoke PASS.");
     }
@@ -205,16 +210,13 @@ internal static partial class Program
         Assert(manualItem.State == RecState.Manual && !manualItem.IsSel,
             "Expected ManualTiming to be Manual and not auto-selectable.");
 
-        var lowEndState = recStateService.Evaluate(
-            rogue,
-            [LowRec()],
-            (_, _) => "100",
-            lowEndHardware);
-        var lowEndItem = lowEndState.Items.Single();
-        Assert(lowEndItem.State is RecState.Blocked or RecState.Manual,
-            "Expected LowEnd visual/performance recommendation to be blocked or manual.");
-        Assert(!lowEndItem.IsSel,
-            "Expected LowEnd visual/performance recommendation not to be auto-selectable.");
+        var lowEndPlan = new PlanService().BuildCfg(install, rogue, LowRec(), lowEndHardware);
+        var lowEndItem = lowEndPlan.Items.Single();
+        var noHardwarePlan = new PlanService().BuildCfg(install, rogue, LowRec());
+        Assert(lowEndItem.State == RecState.Manual && lowEndItem.IsAction && !lowEndItem.IsSel,
+            "Expected a hardware-dependent documented recommendation to stay Manual (actionable, not auto-selected) on Low hardware.");
+        Assert(noHardwarePlan.Items.Single().State == lowEndItem.State && noHardwarePlan.Items.Single().IsSel == lowEndItem.IsSel,
+            "Expected the hardware tier not to change the state of a documented recommendation.");
 
         return new PlanStat(plan, selectedChanges);
     }
@@ -245,6 +247,7 @@ internal static partial class Program
             "TEST00001",
             "Applied Smoke Game",
             "config.yml",
+            string.Empty, // Presentation-only plan; no installation or mutation.
             [new CfgEntry(change, "true", state)],
             new RecSum("TEST00001", 1, 1, 0, 0, 0, 0, [state]),
             false);

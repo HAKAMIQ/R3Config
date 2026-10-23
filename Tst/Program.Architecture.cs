@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Threading;
 using System.Xml;
@@ -23,6 +24,19 @@ using R3Config.Tests;
 
 internal static partial class Program
 {
+    private static readonly string[] ExpectedTestProjectReferences =
+    {
+        "../App/R3App.csproj",
+        "../Core/R3Core.csproj",
+        "../Script/ArtImport/R3ArtImport.csproj"
+    };
+
+    private static readonly string[] ExpectedAppProjectReferences =
+    {
+        "../Core/R3Core.csproj",
+        "../Script/LangPack/R3LangPack.csproj"
+    };
+
     static void Arch_Svc()
     {
         var repoRoot = RepoRoot();
@@ -347,6 +361,154 @@ internal static partial class Program
                    StringComparison.Ordinal),
             "Expected repository-wide compiler and NuGet audit hardening.");
 
+        var globalJson = File.ReadAllText(Path.Combine(
+            repoRoot,
+            "global.json"));
+        var toolchainSource = File.ReadAllText(Path.Combine(
+            repoRoot,
+            "Script",
+            "R3Toolchain.ps1"));
+        var nameCheckScript = File.ReadAllText(Path.Combine(
+            repoRoot,
+            "Script",
+            "NameChk.ps1"));
+        var releaseScript = File.ReadAllText(Path.Combine(
+            repoRoot,
+            "Script",
+            "RelTest.ps1"));
+        var sourceExportScript = File.ReadAllText(Path.Combine(
+            repoRoot,
+            "Script",
+            "SrcExp.ps1"));
+        Assert(globalJson.Contains(
+                   "\"version\":",
+                   StringComparison.Ordinal) &&
+               globalJson.Contains(
+                   "\"rollForward\": \"disable\"",
+                   StringComparison.Ordinal) &&
+               toolchainSource.Contains(
+                   "Assert-R3DotNetSdk",
+                   StringComparison.Ordinal) &&
+               toolchainSource.Contains(
+                   "Assert-R3WorkloadFreeProjectGraph",
+                   StringComparison.Ordinal) &&
+               toolchainSource.Contains(
+                   "MSBuildEnableWorkloadResolver",
+                   StringComparison.Ordinal) &&
+               toolchainSource.Contains(
+                   "Remove-Item Env:MSBuildEnableWorkloadResolver",
+                   StringComparison.Ordinal) &&
+               toolchainSource.Contains(
+                   "DOTNET_WORKLOAD_RESOLVER=DISABLED_BY_REPOSITORY_CONTRACT",
+                   StringComparison.Ordinal) &&
+               toolchainSource.Contains(
+                   "powershell.exe",
+                   StringComparison.OrdinalIgnoreCase) &&
+               toolchainSource.Contains(
+                   "Get-R3MsBuildDirectoryPropertyValue",
+                   StringComparison.Ordinal) &&
+               nameCheckScript.Contains(
+                   "Get-R3MsBuildDirectoryPropertyValue -Path",
+                   StringComparison.Ordinal) &&
+               nameCheckScript.Contains(
+                   "'exec'",
+                   StringComparison.Ordinal) &&
+               nameCheckScript.Contains(
+                   "BaseOutputPath",
+                   StringComparison.Ordinal) &&
+               nameCheckScript.Contains(
+                   "BaseIntermediateOutputPath",
+                   StringComparison.Ordinal) &&
+               !nameCheckScript.Contains(
+                   "--artifacts-path",
+                   StringComparison.Ordinal) &&
+               releaseScript.Contains(
+                   "R3Test.exe",
+                   StringComparison.Ordinal) &&
+               releaseScript.Contains(
+                   ".\\Tst\\R3Test.csproj",
+                   StringComparison.Ordinal) &&
+               !releaseScript.Contains(
+                   "R3Cfg.slnx",
+                   StringComparison.Ordinal) &&
+               !releaseScript.Contains(
+                   "'run', '--project', '.\\Tst\\R3Test.csproj'",
+                   StringComparison.Ordinal) &&
+               sourceExportScript.Contains(
+                   "App/Data/ncl.zip",
+                   StringComparison.Ordinal),
+            "Expected one pinned repository toolchain with a scoped workload-resolver boundary, canonical MSBuild directory-property normalization, a workload-free project graph, a CLI root compatible with the pinned SDK, direct R3Test execution, deterministic PowerShell gates, and preservation of the pinned NCL corpus in source export.");
+
+        var sourceCheckScript = File.ReadAllText(Path.Combine(
+            repoRoot,
+            "Script",
+            "SrcChk.ps1"));
+        Assert(sourceCheckScript.Contains(
+                   "ls-files --cached --others --exclude-standard",
+                   StringComparison.Ordinal),
+            "Expected source verification at repository root to include tracked and untracked nonignored working-tree files.");
+
+        var solution = System.Xml.Linq.XDocument.Load(Path.Combine(
+            repoRoot,
+            "R3Cfg.slnx"));
+        var solutionProjects = solution.Root?
+            .Elements("Project")
+            .Select(element => ((string?)element.Attribute("Path") ?? string.Empty)
+                .Replace('\\', '/'))
+            .Where(path => path.Length > 0)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase) ??
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var expectedSolutionProjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Tst/R3Test.csproj",
+            "App/R3App.csproj",
+            "Core/R3Core.csproj",
+            "Script/ArtImport/R3ArtImport.csproj",
+            "Script/LangPack/R3LangPack.csproj"
+        };
+        var testProject = System.Xml.Linq.XDocument.Load(Path.Combine(
+            repoRoot,
+            "Tst",
+            "R3Test.csproj"));
+        var testProjectReferences = testProject
+            .Descendants("ProjectReference")
+            .Select(element => ((string?)element.Attribute("Include") ?? string.Empty)
+                .Replace('\\', '/'))
+            .Where(path => path.Length > 0)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var appProject = System.Xml.Linq.XDocument.Load(Path.Combine(
+            repoRoot,
+            "App",
+            "R3App.csproj"));
+        var appProjectReferences = appProject
+            .Descendants("ProjectReference")
+            .Select(element => ((string?)element.Attribute("Include") ?? string.Empty)
+                .Replace('\\', '/'))
+            .Where(path => path.Length > 0)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        Assert(solutionProjects.SetEquals(expectedSolutionProjects) &&
+               testProjectReferences.SetEquals(ExpectedTestProjectReferences) &&
+               appProjectReferences.SetEquals(ExpectedAppProjectReferences),
+            "Expected Tst/R3Test.csproj and its App dependency to cover every project declared by R3Cfg.slnx.");
+
+        var repositoryProjects = Directory
+            .EnumerateFiles(repoRoot, "*.csproj", SearchOption.AllDirectories)
+            .Where(path => !path.Contains(
+                $"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}",
+                StringComparison.OrdinalIgnoreCase))
+            .Where(path => !path.Contains(
+                $"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}",
+                StringComparison.OrdinalIgnoreCase))
+            .Select(path => (Path: path, Text: File.ReadAllText(path)))
+            .ToArray();
+        var workloadProject = repositoryProjects.FirstOrDefault(project =>
+            Regex.IsMatch(
+                project.Text,
+                @"Microsoft\.NET\.Sdk\.(?:Maui|BlazorWebAssembly)|<UseMaui>\s*true\s*</UseMaui>|net\d+(?:\.\d+)?-(?:android|ios|maccatalyst|tvos|browser|wasm)(?:[-.]|<)",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
+        Assert(workloadProject.Path is null,
+            $"Repository verification disables the MSBuild workload resolver, so workload-dependent projects are not allowed: {workloadProject.Path}");
+
         var portPublish = File.ReadAllText(Path.Combine(
             repoRoot,
             "Script",
@@ -359,7 +521,10 @@ internal static partial class Program
                    "$signingEnabled",
                    StringComparison.Ordinal) &&
                portPublish.Contains(
-                   "Signing skipped: unsigned Preview package.",
+                   "RelTest.ps1",
+                   StringComparison.Ordinal) &&
+               portPublish.Contains(
+                   "Signing skipped: unsigned package (AUTHENTICODE NOT PROVISIONED).",
                    StringComparison.Ordinal) &&
                portPublish.Contains(
                    "SHA256SUMS.txt",

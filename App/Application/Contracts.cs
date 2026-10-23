@@ -46,4 +46,5 @@ public sealed record AnalyzeResult(
     IReadOnlyList<GamePlanRow> Games,
     PatchCatalogResult PatchCat,
     IReadOnlyList<BackupSnapshot> Backups,
-    IReadOnlyList<GameScanDiagnostic> GameScanDiagnostic);
+    IReadOnlyList<GameScanDiagnostic> GameScanDiagnostic,
+    Rpcs3BuildIdentity? BuildIdentity = null);

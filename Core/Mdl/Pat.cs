@@ -241,7 +241,11 @@ public sealed record Rpcs3PatchEntry(
     string? DefPrint = null,
     string? KeySer = null,
     PatClass Class = PatClass.Main,
-    IReadOnlyList<PatDepGroup>? DepGroups = null)
+    IReadOnlyList<PatDepGroup>? DepGroups = null,
+    // The bytes this definition actually writes, canonicalized by
+    // PatchWriteSemantics. Null when the source carried no Patch node; the
+    // incomplete marker when an operation's effect cannot be proven.
+    string? WritePrint = null)
 {
     public IReadOnlyList<string> Patches =>
         DepList ?? [];

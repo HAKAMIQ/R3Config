@@ -15,10 +15,43 @@
 | `config/custom_configs/config_<SERIAL>.yml` | مشترك | selected config paths فقط |
 | `patches/r3hcan.json` | R3Config | metadata متزامن مع authored catalog |
 | `patches/r3config_hcanary.json` | R3Config legacy | fallback عند غياب الاسم الجديد؛ لا يُحذف تلقائيًا |
-| `config/R3Bkp/` | R3Config | manifests الجديدة والاستعادة |
+| `config/R3Bkp/` | R3Config | manifests الجديدة والاستعادة؛ الحذف والتنظيف يقتصران عليه |
 | `config/R3ConfigBackups/` | R3Config legacy | العرض والاستعادة فقط |
 
 ملف بلا owner وعقد واضح لا يجوز أن يصبح mutation target.
+
+## Backup retention وrestore
+
+- الحذف الصريح والتنظيف يعملان على snapshots `R3Bkp` فقط؛ snapshots
+  `R3ConfigBackups` لا تُحذف ولا تدخل عدّ الاحتفاظ.
+- لا يُحذف snapshot يحتوي ملفات أو مجلدات غير `manifest.json` وpayloads المدرجة فيه.
+- الاستعادة تحفظ الحالة الحالية لكل targets في snapshot جديد داخل `R3Bkp` بعد
+  التحقق وقبل أول commit، ويجب أن يطابق hash الحالة المتوقعة. فشل هذا الحفظ يوقف
+  الاستعادة دون تغيير أي target، وهذا الـsnapshot يسمح بالتراجع عن الاستعادة.
+- كتابة config أو patch تفشل قبل لمس أي target تحذف الـsnapshot الذي أُخذ لها
+  (`BackupService.DiscardUnused`، best effort وبشروط حذف snapshot العادية نفسها)، فلا
+  تتراكم snapshots يتيمة تزاحم عدّ الاحتفاظ. بعد أول محاولة commit يبقى الـsnapshot
+  للتراجع.
+- اسم مجلد الـsnapshot معرّف فقط: تاريخ ميلادي بالوقت المحلي بصيغة
+  yyyyMMdd_HHmmss_fff ثم GUID، منسّق بـ InvariantCulture فلا يتأثر بلغة الواجهة ولا
+  بتقويم Windows Region. لا يقرأ أي كود هذا الاسم كتاريخ: الترتيب والأحدث المختار
+  تلقائيًا وعدّ الاحتفاظ تعتمد كلها على CreatedAt في `manifest.json`
+  (`BackupManifest.MadeAt`). الاسم يُستخدم كمسار فقط: يُشتق من المجلد الأب لـ
+  BackupPath في الـmanifest، ويُقارن بالمسار المسجّل عند الاستعادة والحذف، ويظهر في
+  عمود المسار ورسالة الاستعادة، ويكسر التعادل (ordinal ignore-case) عند تساوي CreatedAt فقط.
+- البناءات السابقة نسّقت الاسم بثقافة الواجهة، فقد توجد مجلدات بأسماء هجرية مثل
+  14480512_... تحت `R3Bkp`. لا تُعاد تسميتها ولا تُرحَّل؛ تُعرض وتُستعاد كالمعتاد
+  لأن مساراتها مسجّلة في manifest كل منها، وتخضع لعدّ الاحتفاظ نفسه حسب CreatedAt.
+
+## Writer lock
+
+- mutex عابر للعمليات مشتق من SHA-256 لـcanonical data root، يمسكه thread خلفي
+  مخصص طوال عمر العملية؛ ملكية mutex مرتبطة بالـthread، فلا يجوز أن يمسكه thread
+  من thread pool قد ينتهي فيُترك الـlock مهجورًا لعملية أخرى.
+- أي فشل في إنشاء أو امتلاك الـmutex (بما فيه اسم يحمله object من نوع آخر) يعيد
+  `MutBlock.Locked` إلى `CheckCan` ولا يُسقط العملية.
+- حماية `patch.yml` تقارن الـcanonical target بمسار `patches` المعلن وبالـcanonical
+  data root معًا، لأن الجذر قد يُفتح عبر junction.
 
 ## بوابة كل mutation
 

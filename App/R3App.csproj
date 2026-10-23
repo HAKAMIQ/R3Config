@@ -11,15 +11,15 @@
     <DebugType>embedded</DebugType>
     <AssemblyName>R3Config</AssemblyName>
     <RootNamespace>R3Config</RootNamespace>
-    <Version>0.1.0-preview</Version>
+    <Version>0.1.0</Version>
     <AssemblyVersion>0.1.0.0</AssemblyVersion>
     <FileVersion>0.1.0.0</FileVersion>
-    <InformationalVersion>0.1.0-preview</InformationalVersion>
+    <InformationalVersion>0.1.0</InformationalVersion>
     <Product>R3Config</Product>
     <Authors>HAKAMIQ</Authors>
     <Company>HAKAMIQ</Company>
     <Description>Offline Windows companion for safe RPCS3 per-game configuration and patch management.</Description>
-    <Copyright>Copyright © 2026 HAKAMIQ. All rights reserved.</Copyright>
+    <Copyright>Copyright © 2026 HAKAMIQ. Licensed under GPL-3.0-or-later.</Copyright>
     <ApplicationIcon>Data\Icon.ico</ApplicationIcon>
     <R3LangCompilerDll>$(MSBuildProjectDirectory)\..\Script\LangPack\bin\$(Configuration)\net8.0\R3LangPack.dll</R3LangCompilerDll>
     <R3LangIntermediateDir>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\r3lang</R3LangIntermediateDir>
@@ -29,18 +29,22 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core\R3Core.csproj" />
-	  <ProjectReference Include="..\Script\LangPack\R3LangPack.csproj"
-					 ReferenceOutputAssembly="false"
-					 Private="false"
-					 GlobalPropertiesToRemove="RuntimeIdentifier;RuntimeIdentifiers;PublishRuntimeIdentifier;SelfContained;PublishSelfContained;PublishSingleFile" />
+	  <ProjectReference Include="..\Script\LangPack\R3LangPack.csproj" ReferenceOutputAssembly="false" Private="false" GlobalPropertiesToRemove="RuntimeIdentifier;RuntimeIdentifiers;PublishRuntimeIdentifier;SelfContained;PublishSelfContained;PublishSingleFile" />
+    <R3LangSource Include="$(MSBuildProjectDirectory)\Lang\*.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Data\cat.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Data\cat.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="Data\wiki-notes.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="Data\rpcs3-builds.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="Data\diagnostics-kb.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="Data\rpcn-evidence.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="Data\rpcs3-knowledge.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="Data\can.yml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Data\patch_requirements.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Data\art.yml" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Data\art_dep.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Data\ncl.zip" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Compile Include="$(R3LangGeneratedManifest)" Visible="false" />
     <Content Include="$(R3LangIntermediateDir)\ar-SA.r3lang" Link="Lang\ar-SA.r3lang" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="$(R3LangIntermediateDir)\en-US.r3lang" Link="Lang\en-US.r3lang" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
@@ -55,11 +59,23 @@
     <None Include="..\RN.md" Link="RN.md" CopyToPublishDirectory="Always" />
     <None Include="..\CHEATS.md" Link="CHEATS.md" CopyToPublishDirectory="Always" />
     <None Include="..\CANARY.md" Link="CANARY.md" CopyToPublishDirectory="Always" />
+    <None Include="..\NCL.md" Link="NCL.md" CopyToPublishDirectory="Always" />
+    <None Include="..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToPublishDirectory="Always" />
   </ItemGroup>
 
-  <Target Name="CompileR3LanguagePacks"
-          BeforeTargets="CoreCompile"
-          DependsOnTargets="ResolveProjectReferences">
+  <ItemGroup>
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
+  </ItemGroup>
+
+  <Target Name="R3ShipWpfUiLoose" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Condition="'%(Filename)%(Extension)' == 'Wpf.Ui.dll' Or '%(Filename)%(Extension)' == 'Wpf.Ui.Abstractions.dll'">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CompileR3LanguagePacks" BeforeTargets="CoreCompile" DependsOnTargets="ResolveProjectReferences" Condition="'$(DesignTimeBuild)' != 'true'" Inputs="@(R3LangSource);$(R3LangCompilerDll)" Outputs="$(R3LangIntermediateDir)\ar-SA.r3lang;$(R3LangIntermediateDir)\en-US.r3lang;$(R3LangGeneratedManifest)">
     <MakeDir Directories="$(R3LangIntermediateDir);$(R3LangGeneratedDir)" />
     <Exec Command="dotnet &quot;$(R3LangCompilerDll)&quot; &quot;$(MSBuildProjectDirectory)\Lang&quot; &quot;$(R3LangIntermediateDir)&quot; &quot;$(R3LangGeneratedManifest)&quot;" />
   </Target>

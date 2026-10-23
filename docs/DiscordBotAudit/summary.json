@@ -1,0 +1,48 @@
+{
+ "regex": {
+  "total": 188,
+  "byDisposition": {
+   "ALREADY_COVERED": 83,
+   "IMPLEMENTED": 35,
+   "NOT_APPLICABLE": 3,
+   "QUEUED_FIXTURE": 1,
+   "REFERENCE_ONLY": 38,
+   "SUPERSEDED": 28
+  }
+ },
+ "generalNotes": {
+  "total": 112,
+  "byDisposition": {
+   "ALREADY_COVERED": 4,
+   "IMPLEMENTED": 6,
+   "NOT_APPLICABLE": 10,
+   "REFERENCE_ONLY_CURRENTLY_UNVERIFIED": 92
+  }
+ },
+ "weirdSettingsRules": {
+  "total": 216,
+  "byDisposition": {
+   "ALREADY_COVERED": 6,
+   "IMPLEMENTED": 1,
+   "NOT_APPLICABLE": 1,
+   "REFERENCE_ONLY_CURRENTLY_UNVERIFIED": 208
+  }
+ },
+ "weirdSettingsFamilies": {
+  "total": 33,
+  "withWikiSerials": 32,
+  "withCatalogSerials": 32,
+  "activeCorroborated": 0,
+  "referenceOnly": 33,
+  "supersededOrConflict": 0
+ },
+ "subsystems": {
+  "total": 34,
+  "byDisposition": {
+   "ALREADY_COVERED": 5,
+   "IMPLEMENTED": 13,
+   "NOT_APPLICABLE": 8,
+   "REFERENCE_ONLY": 8
+  }
+ }
+}

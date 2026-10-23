@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>R3Test</AssemblyName>
     <RootNamespace>R3Config.Tests</RootNamespace>
-    <Version>0.1.0-preview</Version>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +20,7 @@
   <ItemGroup>
     <None Include="Fixtures\Official\patch.yml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Fixtures\Official\NOTICE.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fixtures\RecSync\github-*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

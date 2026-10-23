@@ -10,8 +10,15 @@ public sealed class AnalysisUseCase(
     PatchHashProbeService patchHashProbe,
     HCanBindingEvidenceService bindingEvidence,
     PatchCatalogUseCase patchCatalog,
-    BackupUseCase backups)
+    BackupUseCase backups,
+    Rpcs3BuildIdentityProbe? buildIdentityProbe = null)
 {
+    // Optional for source/binary compatibility with any other composition
+    // root; AppComposition always supplies a real probe.
+    private readonly Rpcs3BuildIdentityProbe _buildIdentityProbe =
+        buildIdentityProbe ?? new Rpcs3BuildIdentityProbe();
+
+
     public async Task<AnalyzeResult> RunAsync(
         string rpcs3ExePath,
         Svc.RecSvc catalog,
@@ -32,14 +39,23 @@ public sealed class AnalysisUseCase(
                     install,
                     cancellationToken),
             cancellationToken);
+        // Build identity is evidence only (see Rpcs3BuildIdentity) — it never
+        // influences game scanning, hardware probing, or any recommendation
+        // decision. It is probed alongside them purely because it is another
+        // cheap, independent, read-only local-log read.
+        var buildIdentityTask = Task.Run(
+            () => _buildIdentityProbe.Probe(install),
+            cancellationToken);
 
         await Task.WhenAll(
                 hardwareTask,
-                scanTask)
+                scanTask,
+                buildIdentityTask)
             .ConfigureAwait(false);
 
         var hardware = await hardwareTask.ConfigureAwait(false);
         var scanResult = await scanTask.ConfigureAwait(false);
+        var buildIdentity = await buildIdentityTask.ConfigureAwait(false);
         var games = await Task.Run(() =>
                 patchHashProbe.Enrich(
                         install,
@@ -60,7 +76,6 @@ public sealed class AnalysisUseCase(
             catalog,
             hardware,
             games,
-            scanResult.CfgSer,
             cancellationToken),
             cancellationToken);
 
@@ -90,7 +105,8 @@ public sealed class AnalysisUseCase(
             await rowsTask.ConfigureAwait(false),
             await patchCatalogTask.ConfigureAwait(false),
             await backupsTask.ConfigureAwait(false),
-            scanResult.Diags);
+            scanResult.Diags,
+            BuildIdentity: buildIdentity);
     }
 
     private List<GamePlanRow> BuildRow(
@@ -98,7 +114,6 @@ public sealed class AnalysisUseCase(
         Svc.RecSvc catalog,
         HwInfo hardware,
         IReadOnlyList<Rpcs3GameDescriptor> games,
-        IReadOnlyList<string> customConfigSerials,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -112,7 +127,6 @@ public sealed class AnalysisUseCase(
                 StringComparer.OrdinalIgnoreCase);
 
         var detectedSerials = gamesBySerial.Keys
-            .Concat(customConfigSerials)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var rows = new List<GamePlanRow>(
@@ -176,7 +190,9 @@ public sealed class AnalysisUseCase(
     private static RecSum BuildSum(
         WikiRec recommendation)
     {
-        var items = recommendation.Changes
+        var items = recommendation.IsInherited
+            ? Array.Empty<RecItem>()
+            : recommendation.Changes
             .Select(change => new RecItem(
                 Serial: recommendation.Serial,
                 Path: change.Path,
@@ -187,7 +203,8 @@ public sealed class AnalysisUseCase(
                 IsDiff: true,
                 IsAction: false,
                 IsSel: false,
-                Notes: change.Notes ?? string.Empty))
+                Notes: change.Notes ?? string.Empty,
+                Class: change.Class))
             .ToArray();
 
         return new RecSum(

@@ -84,6 +84,7 @@ public static class R3Yaml
             return value switch
             {
                 YamlScalarNode scalar => scalar.Value,
+                YamlSequenceNode sequence => JoinList(sequence),
                 null => null,
                 _ => value.ToString()
             };
@@ -95,6 +96,21 @@ public static class R3Yaml
                 InvalidDataException)
         {
             return null;
+        }
+    }
+
+    public static bool HasKey(string path, string section, string key)
+    {
+        if (!File.Exists(path)) return false;
+        try
+        {
+            var root = GetRoot(LoadYaml(path));
+            return FindVal2(root, section) is YamlMappingNode sectionNode &&
+                   FindVal(sectionNode, key) is not null;
+        }
+        catch (Exception ex) when (ex is YamlException or IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            return false;
         }
     }
 
@@ -125,6 +141,12 @@ public static class R3Yaml
 
             foreach (var change in sectionGroup)
             {
+                if (IsList(change.Section, change.Key))
+                {
+                    SetValue(section, change.Key, ToList(change.Value));
+                    continue;
+                }
+
                 SetYaml(
                     section,
                     change.Key,
@@ -395,6 +417,30 @@ public static class R3Yaml
             new YamlScalarNode(key),
             value);
     }
+
+    // Core / Libraries Control is the one sequence-valued setting: the game's
+    // config carries exactly the Wiki's "<name>.sprx:lle" entries.
+    private static bool IsList(string section, string key) =>
+        section == "Core" && key == "Libraries Control";
+
+    private static YamlSequenceNode ToList(string value)
+    {
+        var list = new YamlSequenceNode();
+        foreach (var entry in value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            list.Add(new YamlScalarNode(entry));
+        }
+
+        return list;
+    }
+
+    private static string JoinList(YamlSequenceNode sequence) =>
+        string.Join(
+            ", ",
+            sequence.Children
+                .OfType<YamlScalarNode>()
+                .Select(node => node.Value ?? string.Empty)
+                .Order(StringComparer.Ordinal));
 
     private static string Norm(string value)
     {

@@ -40,6 +40,7 @@ public sealed partial class MainVm : VmBase
             var result = _flow.LoadCat(AppContext.BaseDirectory);
             _catalog = result.Cat;
             _loadErr = result.Error;
+            ApplyLocalRecSync();
 
             if (_catalog is null)
             {
@@ -96,6 +97,10 @@ public sealed partial class MainVm : VmBase
     private void LoadGame()
     {
         OnChange(nameof(SelGame));
+        OnChange(nameof(SelTitle));
+        OnChange(nameof(SelSerial));
+        OnChange(nameof(SelVersion));
+        OnChange(nameof(HasSelVersion));
         OnChange(nameof(GameSer));
         OnChange(nameof(PatReady));
         OnChange(nameof(ReadyTip));
@@ -137,16 +142,19 @@ public sealed partial class MainVm : VmBase
 
         HwStatus = FmtHw();
         HwTip = FmtHwTip();
+        R3VerTip = UiText.Rpcs3BuildTip(_buildIdentity);
         BkpStat = UiText.Fmt("Status.BkpCount", Advanced.Backups.Count);
 
         SetCat();
         GameList.SetLang();
         Plan.SetLang();
+        Runtime.SetLang();
         Preview.SetLang();
         OnPatchPresentationChanged();
         RefreshGameSetupPresentation();
         LoadSrc();
         Advanced.SetLang();
+        Sync.SetLang();
         HCanary.SetLang();
         LoadR3Ui();
         LangChg?.Invoke(this, EventArgs.Empty);
@@ -324,6 +332,7 @@ public sealed partial class MainVm : VmBase
     {
         _install = null;
         _hwInfo = null;
+        _buildIdentity = null;
         _patCat = null;
         _catErr = null;
         _catSrc = [];
@@ -345,6 +354,7 @@ public sealed partial class MainVm : VmBase
         Advanced.TgtCfg = UiText.GetText("Ui.EmptyValue");
         HwStatus = FmtHw();
         HwTip = FmtHwTip();
+        R3VerTip = UiText.Rpcs3BuildTip(_buildIdentity);
         SetRunUi(isRunning: false);
         LoadSrc();
         LoadGame();
@@ -379,6 +389,7 @@ public sealed partial class MainVm : VmBase
         ChtSelectAll.RaiseCan();
         ChtClearSelection.RaiseCan();
         ChtRemove.RaiseCan();
+        NclImportCmd.RaiseCan();
         CanDel.RaiseCan();
         CanImp.RaiseCan();
         OfclMgr.RaiseCan();

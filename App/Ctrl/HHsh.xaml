@@ -13,7 +13,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="HSty.xaml" />
+                <ResourceDictionary Source="HCanStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -98,7 +98,7 @@
                                    ToolTip="{lang:TextExt Key=HCanary.Tooltip.PatchType}"
                                    AutomationProperties.HelpText="{lang:TextExt Key=HCanary.Tooltip.PatchType}" />
 
-                        <ComboBox ItemsSource="{Binding HCanary.PatTypes}"
+                        <ComboBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Field.PatchType}" ItemsSource="{Binding HCanary.PatTypes}"
                                   SelectedItem="{Binding HCanary.PatType,
                                                         Mode=TwoWay,
                                                         UpdateSourceTrigger=PropertyChanged}"
@@ -114,7 +114,7 @@
                                    ToolTip="{lang:TextExt Key=HCanary.Tooltip.ExecutableHash}"
                                    AutomationProperties.HelpText="{lang:TextExt Key=HCanary.Tooltip.ExecutableHash}" />
 
-                        <TextBox Text="{Binding HCanary.ExeHash,
+                        <TextBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Field.ExecutableHash}" Text="{Binding HCanary.ExeHash,
                                               Mode=TwoWay,
                                               UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource HCanTechnicalTextBox}"

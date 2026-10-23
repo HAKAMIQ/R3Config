@@ -14,7 +14,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="HSty.xaml" />
+                <ResourceDictionary Source="HCanStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -59,7 +59,7 @@
                        Text="{lang:TextExt Key=HCanary.Start.Game.Search}"
                        Style="{StaticResource HCanLocalizedLabelText}" />
 
-            <TextBox x:Name="GameSearchBox"
+            <TextBox AutomationProperties.Name="{lang:TextExt Key=HCanary.Start.Game.Search}" x:Name="GameSearchBox"
                      Grid.Row="6"
                      Height="32"
                      Style="{StaticResource HCanLocalizedTextBox}"
@@ -207,6 +207,10 @@
 
                         <StackPanel HorizontalAlignment="Stretch"
                                     VerticalAlignment="Top">
+
+                            <TextBlock Text="&#xE7FC;"
+                                       Style="{StaticResource EmptyStateGlyph}"
+                                       HorizontalAlignment="Left" />
 
                             <TextBlock Text="{lang:TextExt Key=HCanary.Start.Game.Empty}"
                                        Style="{StaticResource HCanLocalizedSectionCaptionText}"

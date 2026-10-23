@@ -5,6 +5,9 @@ public sealed record CfgEntry(
     string? CurVal,
     RecItem StateIt)
 {
+    // CurVal is the effective value; removal needs evidence of a physical key.
+    public bool HasCustomOverride { get; init; }
+
     public string Section => Change.Section;
 
     public string Key => Change.Key;
@@ -18,6 +21,8 @@ public sealed record CfgEntry(
     public string? Notes => Change.Notes;
 
     public RecRisk Risk => Change.Risk;
+
+    public WikiRecommendationClass Class => Change.Class;
 
     public RecState State => StateIt.State;
 
@@ -34,6 +39,7 @@ public sealed record CfgPlan(
     string GameSer,
     string GameName,
     string CfgPath,
+    string GlobalCfgPath,
     IReadOnlyList<CfgEntry> Items,
     RecSum RecState,
     bool NeedBkp);

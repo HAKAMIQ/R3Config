@@ -67,26 +67,6 @@ public sealed class CatSvc
         }
     }
 
-    public Mdl.CatInfo ReadCat(string catalogPath)
-    {
-        return LoadCat(catalogPath).Info;
-    }
-
-    public string CalcFile(string filePath)
-    {
-        if (!File.Exists(filePath))
-        {
-            throw new FileNotFoundException(
-                "Source file was not found.",
-                filePath);
-        }
-
-        return CalcHash(R3Bound.ReadBytes(
-            filePath,
-            R3Limits.PatCatBy,
-            "recommendation source"));
-    }
-
     public string FmtInf(Mdl.CatInfo info)
     {
         var generatedAt = info.GenAt?.UtcDateTime

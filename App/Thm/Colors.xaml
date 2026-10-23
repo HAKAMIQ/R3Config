@@ -3,7 +3,7 @@
                     xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
 
     <Color x:Key="Fluent.Dark.Surface.Background.Color">#FF202020</Color>
-    <Color x:Key="Fluent.Dark.Surface.Card.Color">#FF292929</Color>
+    <Color x:Key="Fluent.Dark.Surface.Card.Color">#FF2B2B2B</Color>
     <Color x:Key="Fluent.Dark.Surface.CardHover.Color">#FF333333</Color>
     <Color x:Key="Fluent.Dark.Surface.CardPressed.Color">#FF1F1F1F</Color>
     <Color x:Key="Fluent.Dark.Surface.Subtle.Color">#FF252525</Color>
@@ -11,13 +11,15 @@
 
     <Color x:Key="Fluent.Dark.Text.Primary.Color">#FFFFFFFF</Color>
     <Color x:Key="Fluent.Dark.Text.Secondary.Color">#FFD6D6D6</Color>
+    <Color x:Key="Fluent.Dark.Text.Tertiary.Color">#FFA3A3A3</Color>
+    <Color x:Key="Fluent.Dark.Surface.Input.Color">#FF2D2D2D</Color>
     <Color x:Key="Fluent.Dark.Text.Disabled.Color">#FF8A8A8A</Color>
     <Color x:Key="Fluent.Dark.Text.OnAccent.Color">#FF081018</Color>
 
-    <Color x:Key="Fluent.Dark.Stroke.Default.Color">#FF5A5A5A</Color>
-    <Color x:Key="Fluent.Dark.Stroke.Subtle.Color">#FF3D3D3D</Color>
+    <Color x:Key="Fluent.Dark.Stroke.Default.Color">#FF4A4A4A</Color>
+    <Color x:Key="Fluent.Dark.Stroke.Subtle.Color">#FF383838</Color>
     <Color x:Key="Fluent.Dark.Stroke.Strong.Color">#FF707070</Color>
-    <Color x:Key="Fluent.Dark.Stroke.Focus.Color">#FF479EF5</Color>
+    <Color x:Key="Fluent.Dark.Stroke.Focus.Color">#FF9E9E9E</Color>
 
     <Color x:Key="Fluent.Dark.Accent.Default.Color">#FF479EF5</Color>
     <Color x:Key="Fluent.Dark.Accent.Hover.Color">#FF62ABF5</Color>
@@ -43,7 +45,7 @@
 
     <Color x:Key="Fluent.Dark.Elevation.Shadow.Color">#99000000</Color>
 
-    <Color x:Key="Fluent.Light.Surface.Background.Color">#FFF5F5F5</Color>
+    <Color x:Key="Fluent.Light.Surface.Background.Color">#FFF3F3F3</Color>
     <Color x:Key="Fluent.Light.Surface.Card.Color">#FFFFFFFF</Color>
     <Color x:Key="Fluent.Light.Surface.CardHover.Color">#FFF0F0F0</Color>
     <Color x:Key="Fluent.Light.Surface.CardPressed.Color">#FFE8E8E8</Color>
@@ -52,13 +54,15 @@
 
     <Color x:Key="Fluent.Light.Text.Primary.Color">#FF242424</Color>
     <Color x:Key="Fluent.Light.Text.Secondary.Color">#FF616161</Color>
+    <Color x:Key="Fluent.Light.Text.Tertiary.Color">#FF6B6B6B</Color>
+    <Color x:Key="Fluent.Light.Surface.Input.Color">#FFFFFFFF</Color>
     <Color x:Key="Fluent.Light.Text.Disabled.Color">#FFA0A0A0</Color>
     <Color x:Key="Fluent.Light.Text.OnAccent.Color">#FFFFFFFF</Color>
 
-    <Color x:Key="Fluent.Light.Stroke.Default.Color">#FFBDBDBD</Color>
-    <Color x:Key="Fluent.Light.Stroke.Subtle.Color">#FFE0E0E0</Color>
+    <Color x:Key="Fluent.Light.Stroke.Default.Color">#FFD1D1D1</Color>
+    <Color x:Key="Fluent.Light.Stroke.Subtle.Color">#FFE5E5E5</Color>
     <Color x:Key="Fluent.Light.Stroke.Strong.Color">#FF8A8A8A</Color>
-    <Color x:Key="Fluent.Light.Stroke.Focus.Color">#FF0F6CBD</Color>
+    <Color x:Key="Fluent.Light.Stroke.Focus.Color">#FF616161</Color>
 
     <Color x:Key="Fluent.Light.Accent.Default.Color">#FF0F6CBD</Color>
     <Color x:Key="Fluent.Light.Accent.Hover.Color">#FF115EA3</Color>
@@ -117,6 +121,14 @@
     <SolidColorBrush x:Key="Text.Secondary"
                      po:Freeze="False"
                      Color="{StaticResource Fluent.Dark.Text.Secondary.Color}" />
+
+    <SolidColorBrush x:Key="Text.Tertiary"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Text.Tertiary.Color}" />
+
+    <SolidColorBrush x:Key="Surface.Input"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Surface.Input.Color}" />
 
     <SolidColorBrush x:Key="Text.Disabled"
                      po:Freeze="False"
@@ -209,5 +221,9 @@
     <SolidColorBrush x:Key="Scroll.ThumbHover"
                      po:Freeze="False"
                      Color="{StaticResource Fluent.Dark.Scroll.ThumbHover.Color}" />
+
+    <SolidColorBrush x:Key="Elevation.Shadow"
+                     po:Freeze="False"
+                     Color="{StaticResource Elevation.Shadow.Color}" />
 
 </ResourceDictionary>

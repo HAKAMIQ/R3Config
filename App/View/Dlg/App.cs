@@ -2,13 +2,15 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Input;
 using System.Windows.Media;
-using R3Config.Svc;
 using R3Config.Lang;
+using R3Config.Svc;
 
 namespace R3Config.View.Dlg;
 
 public partial class AppDlg : Window
 {
+    private readonly bool _isConfirm;
+
     public AppDlg(
         Window? owner,
         string title,
@@ -18,12 +20,7 @@ public partial class AppDlg : Window
     {
         InitializeComponent();
 
-        AutomationProperties.SetAutomationId(this, isConfirm ? "Dialog.Confirm" : "Dialog.Info");
-        AutomationProperties.SetAutomationId(MainBtn, isConfirm ? "Dialog.ConfirmYes" : "Dialog.InfoOk");
-        AutomationProperties.SetAutomationId(AltBtn, isConfirm ? "Dialog.ConfirmNo" : "Dialog.InfoCancel");
-
-        SourceInitialized += (_, _) =>
-            WinTheme.Apply(this);
+        _isConfirm = isConfirm;
 
         Owner = owner;
         Title = title;
@@ -43,19 +40,46 @@ public partial class AppDlg : Window
             ? Visibility.Visible
             : Visibility.Collapsed;
 
+        ConfigureAutomation();
         SetKind(kind);
         SetFlow();
 
-        KeyDown += (_, e) =>
-        {
-            if (e.Key != Key.Escape)
-            {
-                return;
-            }
+        SourceInitialized += OnSourceInitialized;
+        PreviewKeyDown += OnPreviewKeyDown;
+    }
 
-            DialogResult = !isConfirm;
-            Close();
-        };
+    private void ConfigureAutomation()
+    {
+        AutomationProperties.SetAutomationId(
+            this,
+            _isConfirm
+                ? "Dialog.Confirm"
+                : "Dialog.Info");
+
+        AutomationProperties.SetName(
+            this,
+            Title);
+
+        AutomationProperties.SetAutomationId(
+            MainBtn,
+            _isConfirm
+                ? "Dialog.ConfirmYes"
+                : "Dialog.InfoOk");
+
+        AutomationProperties.SetName(
+            MainBtn,
+            MainBtn.Content?.ToString() ?? string.Empty);
+
+        if (_isConfirm)
+        {
+            AutomationProperties.SetAutomationId(
+                AltBtn,
+                "Dialog.ConfirmNo");
+
+            AutomationProperties.SetName(
+                AltBtn,
+                AltBtn.Content?.ToString() ?? string.Empty);
+        }
     }
 
     private void SetFlow()
@@ -63,6 +87,7 @@ public partial class AppDlg : Window
         var layout = UiLaySvc.Current;
 
         CntGrid.FlowDirection = layout.ShFlow;
+
         Btns.FlowDirection = FlowDirection.LeftToRight;
 
         TitlTxt.FlowDirection = layout.TextFlow;
@@ -76,44 +101,80 @@ public partial class AppDlg : Window
 
     private void SetKind(DlgKind kind)
     {
-        var accent = (Brush)FindResource("Accent.Default");
-        var warning = (Brush)FindResource("Status.Warning");
-        var danger = (Brush)FindResource("Status.Danger");
-        var border = (Brush)FindResource("Stroke.Default");
-        var warningSurface = (Brush)FindResource("Status.WarningSurface");
-        var dangerSurface = (Brush)FindResource("Status.DangerSurface");
-        var infoSurface = (Brush)FindResource("Status.InfoSurface");
-
         switch (kind)
         {
             case DlgKind.Warning:
-                IconText.Text = "!";
-                IconText.Foreground = warning;
-                IconBdg.Background = warningSurface;
-                IconBdg.BorderBrush = warning;
+                SetIcon(
+                    "!",
+                    "Status.Warning",
+                    "Status.WarningSurface",
+                    "Status.Warning");
                 break;
 
             case DlgKind.Error:
-                IconText.Text = "×";
-                IconText.Foreground = danger;
-                IconBdg.Background = dangerSurface;
-                IconBdg.BorderBrush = danger;
+                SetIcon(
+                    "×",
+                    "Status.Danger",
+                    "Status.DangerSurface",
+                    "Status.Danger");
                 break;
 
             case DlgKind.Confirm:
-                IconText.Text = "?";
-                IconText.Foreground = accent;
-                IconBdg.Background = infoSurface;
-                IconBdg.BorderBrush = accent;
+                SetIcon(
+                    "?",
+                    "Accent.Default",
+                    "Status.InfoSurface",
+                    "Accent.Default");
                 break;
 
             default:
-                IconText.Text = "i";
-                IconText.Foreground = accent;
-                IconBdg.Background = infoSurface;
-                IconBdg.BorderBrush = border;
+                SetIcon(
+                    "i",
+                    "Accent.Default",
+                    "Status.InfoSurface",
+                    "Stroke.Default");
                 break;
         }
+    }
+
+    private void SetIcon(
+        string text,
+        string foregroundResource,
+        string backgroundResource,
+        string borderResource)
+    {
+        IconText.Text = text;
+
+        IconText.Foreground =
+            (Brush)FindResource(foregroundResource);
+
+        IconBdg.Background =
+            (Brush)FindResource(backgroundResource);
+
+        IconBdg.BorderBrush =
+            (Brush)FindResource(borderResource);
+    }
+
+    private void OnSourceInitialized(
+        object? sender,
+        EventArgs e)
+    {
+        WinTheme.Apply(this);
+    }
+
+    private void OnPreviewKeyDown(
+        object sender,
+        KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape)
+        {
+            return;
+        }
+
+        e.Handled = true;
+
+        DialogResult = !_isConfirm;
+        Close();
     }
 
     private void MainClk(

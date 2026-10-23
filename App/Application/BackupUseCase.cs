@@ -20,8 +20,9 @@ public sealed class BackupUseCase(
                 Rpcs3AppPaths.BkpRoot(install),
                 cancellationToken)
             .Concat(backupService.ListBkp(
-                Rpcs3AppPaths.OldBkp(install),
-                cancellationToken))
+                    Rpcs3AppPaths.OldBkp(install),
+                    cancellationToken)
+                .Select(item => item with { IsLegacy = true }))
             .OrderByDescending(item => item.MadeAt)
             .ThenBy(item => item.DirPath, StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -51,8 +52,10 @@ public sealed class BackupUseCase(
                 "At least one backup snapshot must be retained.");
         }
 
-        var snapshots = List(install);
-        if (snapshots.Count <= keepCount)
+        var snapshots = List(install)
+            .Where(snapshot => !snapshot.IsLegacy)
+            .ToArray();
+        if (snapshots.Length <= keepCount)
         {
             return 0;
         }
@@ -60,9 +63,15 @@ public sealed class BackupUseCase(
         var deleted = 0;
         foreach (var snapshot in snapshots.Skip(keepCount))
         {
-            if (Delete(install, snapshot))
+            try
             {
-                deleted++;
+                if (Delete(install, snapshot))
+                {
+                    deleted++;
+                }
+            }
+            catch (InvalidDataException)
+            {
             }
         }
 
@@ -105,9 +114,11 @@ public sealed class BackupUseCase(
             .Select(candidate => candidate.TargetPath)
             .ToArray();
 
+        IReadOnlyList<string> workPaths = [Rpcs3AppPaths.BkpRoot(install)];
         mutationGuard.CheckCan(
             install,
-            targetPaths);
+            targetPaths,
+            workPaths);
 
         var contracts = candidates
             .Select(candidate => CaptureContract(candidate))
@@ -119,7 +130,8 @@ public sealed class BackupUseCase(
             {
                 mutationGuard.CheckCan(
                     install,
-                    targetPaths);
+                    targetPaths,
+                    workPaths);
                 foreach (var contract in contracts)
                 {
                     ValidateManagedOwnership(contract.Candidate);
@@ -127,6 +139,8 @@ public sealed class BackupUseCase(
                         contract.Candidate.TargetPath,
                         contract.ExpectedState);
                 }
+
+                SaveCurrent(install, targetPaths, contracts);
             },
             () =>
             {
@@ -135,6 +149,49 @@ public sealed class BackupUseCase(
                     ValidateBackupPayload(candidate);
                 }
             });
+    }
+
+    private void SaveCurrent(
+        Rpcs3InstallDescriptor install,
+        IReadOnlyList<string> targetPaths,
+        IReadOnlyList<RestoreContract> contracts)
+    {
+        var backupRoot = Rpcs3AppPaths.BkpRoot(install);
+        var current = backupService.BuildBkp(
+            backupRoot,
+            targetPaths);
+        foreach (var contract in contracts)
+        {
+            var entry = current.Files.SingleOrDefault(file => Paths(
+                file.TgtPath,
+                contract.Candidate.TargetPath));
+            if (entry is null ||
+                entry.Existed != contract.ExpectedState.Exists ||
+                (entry.Existed &&
+                 !string.Equals(
+                     entry.Sha256,
+                     contract.ExpectedState.Sha256,
+                     StringComparison.OrdinalIgnoreCase)))
+            {
+                try
+                {
+                    backupService.DeleteSnapshot(
+                        backupRoot,
+                        new BackupSnapshot(
+                            Path.GetDirectoryName(current.Files[0].BkpPath)!,
+                            current.MadeAt,
+                            current.Files));
+                }
+                catch (Exception ex) when (ex is IOException or
+                                               UnauthorizedAccessException or
+                                               InvalidDataException)
+                {
+                }
+
+                throw new IOException(
+                    $"A restore target changed while its current state was being backed up: {contract.Candidate.TargetPath}");
+            }
+        }
     }
 
     private static string ManagedRoot(
@@ -155,11 +212,12 @@ public sealed class BackupUseCase(
             return backupRoot;
         }
 
-        var oldRoot = Path.GetFullPath(
-            Rpcs3AppPaths.OldBkp(install));
-        if (IsChild(oldRoot, snapshotPath))
+        if (IsChild(
+                Path.GetFullPath(Rpcs3AppPaths.OldBkp(install)),
+                snapshotPath))
         {
-            return oldRoot;
+            throw new InvalidDataException(
+                "Legacy R3ConfigBackups snapshots can be viewed and restored, but R3Config does not delete them.");
         }
 
         throw new InvalidDataException(

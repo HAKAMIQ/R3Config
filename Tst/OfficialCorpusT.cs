@@ -13,6 +13,7 @@ namespace R3Config.Tests;
 public static class OfficialCorpusT
 {
     private static readonly JsonSerializerOptions ReportOptions = new() { WriteIndented = true };
+    public const string ExpectedSnapshotDate = "2026-08-25";
     public const long ExpectedSize = 897858;
     public const string ExpectedSha256 =
         "45F746AFC3D4EEA2450F32F92769BB555029807497CFF3512B633428EF74E8AD";
@@ -41,7 +42,7 @@ public static class OfficialCorpusT
         var report = new
         {
             Source = sourcePath,
-            SnapshotDate = "2026-08-25",
+            SnapshotDate = ExpectedSnapshotDate,
             Revision = "Unavailable",
             Size = before.Length,
             Sha256 = before.Sha256,

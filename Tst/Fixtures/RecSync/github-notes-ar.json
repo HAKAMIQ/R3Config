@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "dataVersion": "20261020120000",
+  "dataSource": "R3Config reviewed Arabic Wiki notes",
+  "notes": [
+    {
+      "sourceEnglish": "Fixture recommendation note",
+      "noteArabic": "ملاحظة اختبارية"
+    }
+  ]
+}

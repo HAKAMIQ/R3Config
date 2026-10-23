@@ -7,6 +7,8 @@
 
     <Style x:Key="Type.Body"
            TargetType="{x:Type TextBlock}">
+        <Setter Property="NumberSubstitution.Substitution"
+                Value="European" />
         <Setter Property="FontFamily"
                 Value="{DynamicResource Type.Font.Body}" />
         <Setter Property="FontSize"
@@ -25,6 +27,8 @@
                 Value="Stretch" />
         <Setter Property="TextWrapping"
                 Value="Wrap" />
+        <Setter Property="TextTrimming"
+                Value="None" />
         <Setter Property="SnapsToDevicePixels"
                 Value="True" />
     </Style>
@@ -43,8 +47,10 @@
                 Value="12" />
         <Setter Property="Foreground"
                 Value="{DynamicResource Text.Secondary}" />
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
         <Setter Property="TextTrimming"
-                Value="CharacterEllipsis" />
+                Value="None" />
     </Style>
 
     <Style x:Key="Type.Subtitle"
@@ -77,6 +83,16 @@
                 Value="28" />
     </Style>
 
+    <Style x:Key="TechnicalTextSpan"
+           TargetType="{x:Type Span}">
+        <Setter Property="FlowDirection"
+                Value="{DynamicResource TechnicalText.FlowDirection}" />
+        <Setter Property="Language"
+                Value="{DynamicResource TechnicalText.Language}" />
+        <Setter Property="NumberSubstitution.Substitution"
+                Value="European" />
+    </Style>
+
     <Style x:Key="Type.Technical"
            TargetType="{x:Type TextBlock}">
         <Setter Property="FontFamily"
@@ -91,6 +107,8 @@
                 Value="{DynamicResource TechnicalText.FlowDirection}" />
         <Setter Property="Language"
                 Value="{DynamicResource TechnicalText.Language}" />
+        <Setter Property="NumberSubstitution.Substitution"
+                Value="European" />
         <Setter Property="TextAlignment"
                 Value="{DynamicResource TechnicalText.TextAlignment}" />
         <Setter Property="HorizontalAlignment"
@@ -124,6 +142,10 @@
                 Value="Center" />
         <Setter Property="TextAlignment"
                 Value="{DynamicResource App.TextAlignment}" />
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+        <Setter Property="TextTrimming"
+                Value="None" />
         <Setter Property="Margin"
                 Value="24" />
     </Style>
@@ -162,6 +184,10 @@
            BasedOn="{StaticResource Type.BodyStrong}">
         <Setter Property="FontWeight"
                 Value="SemiBold" />
+        <Setter Property="TextWrapping"
+                Value="NoWrap" />
+        <Setter Property="TextTrimming"
+                Value="CharacterEllipsis" />
         <Setter Property="ToolTip"
                 Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
     </Style>
@@ -186,6 +212,8 @@
                 Value="{DynamicResource TechnicalText.FlowDirection}" />
         <Setter Property="Language"
                 Value="{DynamicResource TechnicalText.Language}" />
+        <Setter Property="NumberSubstitution.Substitution"
+                Value="European" />
         <Setter Property="TextAlignment"
                 Value="{DynamicResource TechnicalText.TextAlignment}" />
         <Setter Property="TextWrapping"
@@ -201,6 +229,10 @@
            BasedOn="{StaticResource Type.Subtitle}">
         <Setter Property="TextAlignment"
                 Value="{DynamicResource App.TextAlignment}" />
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+        <Setter Property="TextTrimming"
+                Value="None" />
     </Style>
 
     <Style x:Key="SectionCaptionText"
@@ -210,8 +242,8 @@
                 Value="{DynamicResource App.TextAlignment}" />
         <Setter Property="TextWrapping"
                 Value="Wrap" />
-        <Setter Property="ToolTip"
-                Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="TextTrimming"
+                Value="None" />
     </Style>
 
     <Style x:Key="BottomBarLabelText"
@@ -221,10 +253,16 @@
                 Value="{DynamicResource TechnicalText.FlowDirection}" />
         <Setter Property="Language"
                 Value="{DynamicResource TechnicalText.Language}" />
+        <Setter Property="NumberSubstitution.Substitution"
+                Value="European" />
         <Setter Property="TextAlignment"
                 Value="{DynamicResource TechnicalText.TextAlignment}" />
         <Setter Property="FontWeight"
                 Value="SemiBold" />
+        <Setter Property="TextWrapping"
+                Value="NoWrap" />
+        <Setter Property="TextTrimming"
+                Value="None" />
         <Setter Property="VerticalAlignment"
                 Value="Center" />
     </Style>

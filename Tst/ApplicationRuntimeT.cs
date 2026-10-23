@@ -261,13 +261,18 @@ internal static class ApplicationRuntimeT
             return new CfgEntry(
                 change,
                 currentValue,
-                state);
+                state)
+            {
+                // A value physically present in the custom config is what makes Remove available.
+                HasCustomOverride = currentValue is not null
+            };
         }).ToArray();
 
         return new CfgPlan(
             serial,
             title,
             configPath,
+            string.Empty, // Presentation-only plan; no installation or mutation.
             items,
             new RecSum(
                 serial,

@@ -120,21 +120,6 @@ public sealed partial class PatchHashProbeService
         return enriched;
     }
 
-    public string? FindNewestLog(
-        Rpcs3InstallDescriptor install)
-    {
-        ArgumentNullException.ThrowIfNull(install);
-
-        return ListCand(install)
-            .OrderByDescending(candidate =>
-                candidate.WriteUtc)
-            .ThenBy(candidate =>
-                EviRank(candidate.Kind))
-            .Select(candidate =>
-                candidate.Path)
-            .FirstOrDefault();
-    }
-
     public HashRes Probe(
         Rpcs3InstallDescriptor install,
         Rpcs3GameDescriptor game,
@@ -195,6 +180,10 @@ public sealed partial class PatchHashProbeService
             }
         }
 
+        var hdd0Path = Rpcs3InstallService.Hdd0(
+            install,
+            out _);
+
         var cacheResults = ListCan2(
                 install,
                 game.Serial,
@@ -209,9 +198,9 @@ public sealed partial class PatchHashProbeService
                     TryProb2(
                         path,
                         FindUtc(
-                            install,
                             game,
                             moduleName,
+                            hdd0Path,
                             cancellationToken)));
             })
             .Where(item => item.Result.HasHash)
@@ -319,25 +308,7 @@ public sealed partial class PatchHashProbeService
     private static IEnumerable<MetaCand> ListCand(
         Rpcs3InstallDescriptor install)
     {
-        var configBase = Path.GetDirectoryName(
-            install.CfgPath);
-
-        var portablePath = Path.Combine(
-            install.RootPath,
-            "portable");
-
-        var roots = new[]
-            {
-                install.RootPath,
-                install.DataRoot,
-                configBase,
-                install.CfgPath,
-                portablePath
-            }
-            .Where(path =>
-                !string.IsNullOrWhiteSpace(path))
-            .Cast<string>()
-            .Distinct(StringComparer.OrdinalIgnoreCase);
+        var roots = Rpcs3LogLocator.CandidateRoots(install);
 
         var paths = roots
             .SelectMany(root =>
@@ -490,20 +461,19 @@ public sealed partial class PatchHashProbeService
     }
 
     private static DateTime? FindUtc(
-        Rpcs3InstallDescriptor install,
         Rpcs3GameDescriptor game,
         string? moduleName,
+        string? hdd0Path,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(moduleName))
+        if (string.IsNullOrWhiteSpace(moduleName) ||
+            string.IsNullOrWhiteSpace(hdd0Path))
         {
+            // Without a trusted /dev_hdd0/ resolution we cannot prove that
+            // a cache entry is at least as new as every executable RPCS3 may
+            // actually boot. Keep the cache as historical evidence only.
             return null;
         }
-
-        var dataRoot =
-            install.DataRoot ??
-            Path.GetDirectoryName(install.CfgPath) ??
-            install.RootPath;
 
         var candidates = new[]
         {
@@ -517,8 +487,7 @@ public sealed partial class PatchHashProbeService
                 "USRDIR",
                 moduleName),
             Path.Combine(
-                dataRoot,
-                "dev_hdd0",
+                hdd0Path,
                 "game",
                 game.Serial,
                 "USRDIR",

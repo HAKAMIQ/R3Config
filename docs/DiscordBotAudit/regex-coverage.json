@@ -1,0 +1,2324 @@
+{
+ "source": "discord-bot-master LogParser.RegexPatterns.cs",
+ "total": 188,
+ "patterns": [
+  {
+   "name": "Rpcs3LogHeader",
+   "groups": [
+    "build_and_specs"
+   ],
+   "trigger": "RPCS3 v",
+   "realLogHits": 37,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Rpcs3BuildIdentityParser reads the banner (version, build, commit, branch, arch)."
+  },
+  {
+   "name": "FirstLineWithDot",
+   "groups": [
+    "first_unicode_dot"
+   ],
+   "trigger": "0:00:00.0",
+   "realLogHits": 244,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Parser accepts the leading BOM and the \"·\" level marker."
+  },
+  {
+   "name": "CurrentTime",
+   "groups": [
+    "os_type",
+    "posix_name",
+    "posix_release",
+    "os_version_major",
+    "os_version_minor",
+    "os_version_build",
+    "os_service_pack",
+    "os_compat_mode",
+    "os_version_string"
+   ],
+   "trigger": "Current Time:",
+   "realLogHits": 37,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Header lines are kept raw (CpuLine/OsLine); HwProbe owns the structured host facts."
+  },
+  {
+   "name": "InstallationId",
+   "groups": [
+    "hw_id"
+   ],
+   "trigger": "Installation ID:",
+   "realLogHits": 37,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "NOT_APPLICABLE",
+   "implementedBy": null,
+   "rationale": "Discord-side identification / privacy (installation id)."
+  },
+  {
+   "name": "PhysicalDeviceName",
+   "groups": [
+    "vulkan_gpu",
+    "vulkan_driver_version_raw"
+   ],
+   "trigger": "Physical device in",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "No occurrence in the real logs and no literal in the RPCS3 source; the renderer line supersedes it."
+  },
+  {
+   "name": "VulkanDeviceName",
+   "groups": [
+    "vulkan_found_device",
+    "vulkan_compatible_device_name"
+   ],
+   "trigger": "Found vulkan-compatible GPU:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Rpcs3LogParser: adapter and renderer from \"Found Vulkan-compatible GPU\" / \"Renderer initialized on device\"."
+  },
+  {
+   "name": "CompatDbFoundPath",
+   "groups": [
+    "compat_database_path"
+   ],
+   "trigger": "Finished reading database from file:",
+   "realLogHits": 37,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "CompatDbNotFoundPath",
+   "groups": [
+    "compat_database_path"
+   ],
+   "trigger": "Database file not found:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "FwInstallMessage",
+   "groups": [
+    "fw_installed_message",
+    "fw_version_installed"
+   ],
+   "trigger": "Successfully installed PS3 firmware",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Informational success message (gui_log.success, main_window.cpp:1840); not a diagnostic; firmware version is already read from \"Firmware version:\"."
+  },
+  {
+   "name": "FwVersion",
+   "groups": [
+    "fw_version_installed"
+   ],
+   "trigger": "Firmware version:",
+   "realLogHits": 37,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext (tranche 1)",
+   "rationale": "New LogRunContext.FirmwareVersion (process-level, numeric only)."
+  },
+  {
+   "name": "GameTitle",
+   "groups": [
+    "game_title"
+   ],
+   "trigger": "Title:",
+   "realLogHits": 150,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Rpcs3LogParser reads Title/Serial/Category/APP_VER from the SYS lines."
+  },
+  {
+   "name": "GameSerial",
+   "groups": [
+    "serial"
+   ],
+   "trigger": "Serial:",
+   "realLogHits": 380,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Rpcs3LogParser reads Title/Serial/Category/APP_VER from the SYS lines."
+  },
+  {
+   "name": "GameCategory",
+   "groups": [
+    "game_category"
+   ],
+   "trigger": "Category:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Rpcs3LogParser reads Title/Serial/Category/APP_VER from the SYS lines."
+  },
+  {
+   "name": "DiscVersionLdr",
+   "groups": [
+    "disc_app_version",
+    "disc_package_version"
+   ],
+   "trigger": "LDR: Version:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "LDR: prefixed variant; 0 occurrences in the real logs (all use SYS:). The SYS: variant is the current form."
+  },
+  {
+   "name": "DiscVersionSys",
+   "groups": [
+    "disc_app_version",
+    "disc_package_version"
+   ],
+   "trigger": "SYS: Version:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext (tranche 1)",
+   "rationale": "LogRunContext.PackageVersion (VERSION=) next to APP_VER."
+  },
+  {
+   "name": "CachePathLdr",
+   "groups": [
+    "win_path",
+    "lin_path"
+   ],
+   "trigger": "LDR: Cache",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "LDR: prefixed variant; 0 occurrences in the real logs (all use SYS:). The SYS: variant is the current form."
+  },
+  {
+   "name": "CachePathSys",
+   "groups": [
+    "win_path",
+    "lin_path"
+   ],
+   "trigger": "SYS: Cache",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "BootPathLdr",
+   "groups": [
+    "win_path",
+    "lin_path"
+   ],
+   "trigger": "LDR: Path",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "LDR: prefixed variant; 0 occurrences in the real logs (all use SYS:). The SYS: variant is the current form."
+  },
+  {
+   "name": "BootPathSys",
+   "groups": [
+    "win_path",
+    "lin_path"
+   ],
+   "trigger": "SYS: Path",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "BootPathDigitalLdr",
+   "groups": [
+    "ldr_path_full",
+    "ldr_path",
+    "ldr_path_serial"
+   ],
+   "trigger": "LDR: Path:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "LDR: prefixed variant; 0 occurrences in the real logs (all use SYS:). The SYS: variant is the current form."
+  },
+  {
+   "name": "BootPathDigitalSys",
+   "groups": [
+    "ldr_path_full",
+    "ldr_path",
+    "ldr_path_serial"
+   ],
+   "trigger": "SYS: Path:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "SelectedConfigType",
+   "groups": [
+    "selected_config_mode"
+   ],
+   "trigger": "Selected config:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext (tranche 1)",
+   "rationale": "LogRunContext.ConfigMode + CustomConfigFile; and the parser now treats the SECOND \"Used configuration\" block (printed after a custom config loads) as the effective one instead of merging both (real defect fixed)."
+  },
+  {
+   "name": "ConfigTypeAndPath",
+   "groups": [
+    "applied_config_type",
+    "applied_config_path"
+   ],
+   "trigger": "Applying",
+   "realLogHits": 197,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext (tranche 1)",
+   "rationale": "LogRunContext.ConfigMode + CustomConfigFile; and the parser now treats the SECOND \"Used configuration\" block (printed after a custom config loads) as the effective one instead of merging both (real defect fixed)."
+  },
+  {
+   "name": "FailedPatchPath",
+   "groups": [
+    "patch_error_file",
+    "patch_error_line",
+    "patch_error_column",
+    "patch_error_text"
+   ],
+   "trigger": "patch_log: Failed to load patch file",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.PatchFileLoadFailed",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "PpuDecoderType",
+   "groups": [
+    "ppu_decoder"
+   ],
+   "trigger": "PPU Decoder:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "PpuThreadCount",
+   "groups": [
+    "ppu_threads"
+   ],
+   "trigger": "PPU Threads:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "LlvmCpuArch",
+   "groups": [],
+   "trigger": "Use LLVM CPU:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "ThreadSchedulerMode",
+   "groups": [
+    "thread_scheduler"
+   ],
+   "trigger": "thread scheduler",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SpuDecoderType",
+   "groups": [
+    "spu_decoder"
+   ],
+   "trigger": "SPU Decoder:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SpuEventsBusyLoop",
+   "groups": [
+    "spu_events_busy_loop"
+   ],
+   "trigger": "SPU Reservation Busy Waiting Enabled:",
+   "realLogHits": 66,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "DisableSpuGetllarSpinOptimization",
+   "groups": [
+    "disable_getllar_spin_optimization"
+   ],
+   "trigger": "Disable SPU GETLLAR Spin Optimization:",
+   "realLogHits": 66,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SecondaryCores",
+   "groups": [
+    "spu_secondary_cores"
+   ],
+   "trigger": "secondary cores:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Setting line absent from all real logs; the generic settings capture needs no per-key regex either way."
+  },
+  {
+   "name": "LowerThreadPriority",
+   "groups": [
+    "spu_lower_thread_priority"
+   ],
+   "trigger": "",
+   "realLogHits": null,
+   "rpcs3SourceLiteral": null,
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Commented out in the bot section table itself."
+  },
+  {
+   "name": "SpuThreadCount",
+   "groups": [
+    "spu_threads"
+   ],
+   "trigger": "SPU Threads:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SpuDelayPenalty",
+   "groups": [
+    "spu_delay_penalty"
+   ],
+   "trigger": "SPU delay penalty:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SpuLoopDetection",
+   "groups": [
+    "spu_loop_detection"
+   ],
+   "trigger": "SPU loop detection:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SpursThreadCount",
+   "groups": [
+    "spurs_threads"
+   ],
+   "trigger": "Max SPURS Threads:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SpuBlockSize",
+   "groups": [
+    "spu_block_size"
+   ],
+   "trigger": "Block Size:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "TsxMode",
+   "groups": [
+    "enable_tsx"
+   ],
+   "trigger": "Enable TSX:",
+   "realLogHits": 18,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AccurateXfloat",
+   "groups": [
+    "accurate_xfloat"
+   ],
+   "trigger": "Accurate xfloat:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Per-flag xfloat lines superseded by \"XFloat Accuracy\"; irrelevant to the generic settings capture."
+  },
+  {
+   "name": "ApproximateXfloat",
+   "groups": [
+    "approximate_xfloat"
+   ],
+   "trigger": "Approximate xfloat:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Per-flag xfloat lines superseded by \"XFloat Accuracy\"; irrelevant to the generic settings capture."
+  },
+  {
+   "name": "RelaxedXfloat",
+   "groups": [
+    "relaxed_xfloat"
+   ],
+   "trigger": "Relaxed xfloat:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Per-flag xfloat lines superseded by \"XFloat Accuracy\"; irrelevant to the generic settings capture."
+  },
+  {
+   "name": "XfloatMode",
+   "groups": [
+    "xfloat_mode"
+   ],
+   "trigger": "XFloat Accuracy:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "GetLlarMode",
+   "groups": [
+    "accurate_getllar"
+   ],
+   "trigger": "Accurate GETLLAR:",
+   "realLogHits": 4,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "PutLlucMode",
+   "groups": [
+    "accurate_putlluc"
+   ],
+   "trigger": "Accurate PUTLLUC:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Setting line absent from all real logs; the generic settings capture needs no per-key regex either way."
+  },
+  {
+   "name": "RsxReservationAccessMode",
+   "groups": [
+    "accurate_rsx_reservation"
+   ],
+   "trigger": "Accurate RSX reservation access:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "RsxFifoMode",
+   "groups": [
+    "rsx_fifo_mode"
+   ],
+   "trigger": "RSX FIFO Fetch Accuracy:",
+   "realLogHits": 66,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "DebugConsoleMode",
+   "groups": [
+    "debug_console_mode"
+   ],
+   "trigger": "Debug Console Mode:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "LibLoaderMode",
+   "groups": [
+    "lib_loader"
+   ],
+   "trigger": "Lib Loader:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Setting line absent from all real logs; the generic settings capture needs no per-key regex either way."
+  },
+  {
+   "name": "HookStaticFunctions",
+   "groups": [
+    "hook_static_functions"
+   ],
+   "trigger": "Hook static functions:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "LoadLibrariesList",
+   "groups": [
+    "library_list"
+   ],
+   "trigger": "Load libraries:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Setting line absent from all real logs; the generic settings capture needs no per-key regex either way."
+  },
+  {
+   "name": "LibrariesControlList",
+   "groups": [
+    "library_list"
+   ],
+   "trigger": "Libraries Control:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "HleLwmutex",
+   "groups": [
+    "hle_lwmutex"
+   ],
+   "trigger": "HLE lwmutex:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "ClockScale",
+   "groups": [
+    "clock_scale"
+   ],
+   "trigger": "Clocks scale:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "CpuPreemptCount",
+   "groups": [
+    "cpu_preempt_count"
+   ],
+   "trigger": "Max CPU Preempt Count:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SleepTimersMode",
+   "groups": [
+    "sleep_timer"
+   ],
+   "trigger": "Sleep Timers Accuracy:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "EnableHostRoot",
+   "groups": [
+    "host_root"
+   ],
+   "trigger": "Enable /host_root/:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "RendererBackend",
+   "groups": [
+    "renderer"
+   ],
+   "trigger": "Renderer:",
+   "realLogHits": 168,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "ResolutionMode",
+   "groups": [
+    "resolution"
+   ],
+   "trigger": "Resolution:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AspectRatioMode",
+   "groups": [
+    "aspect_ratio"
+   ],
+   "trigger": "Aspect ratio:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "FrameLimit",
+   "groups": [
+    "frame_limit"
+   ],
+   "trigger": "Frame limit:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "MsaaMode",
+   "groups": [
+    "msaa"
+   ],
+   "trigger": "MSAA:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "Wcb",
+   "groups": [
+    "write_color_buffers"
+   ],
+   "trigger": "Write Color Buffers:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "Wdb",
+   "groups": [
+    "write_depth_buffer"
+   ],
+   "trigger": "Write Depth Buffer:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "Rcb",
+   "groups": [
+    "read_color_buffers"
+   ],
+   "trigger": "Read Color Buffers:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "Rdb",
+   "groups": [
+    "read_depth_buffer"
+   ],
+   "trigger": "Read Depth Buffer:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "VsyncMode",
+   "groups": [
+    "vsync"
+   ],
+   "trigger": "VSync:",
+   "realLogHits": 28,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "GpuTextureScaling",
+   "groups": [
+    "gpu_texture_scaling"
+   ],
+   "trigger": "GPU texture scaling:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "StretchToDisplay",
+   "groups": [
+    "stretch_to_display"
+   ],
+   "trigger": "Stretch To Display Area:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "StrictRendering",
+   "groups": [
+    "strict_rendering_mode"
+   ],
+   "trigger": "Strict Rendering Mode:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "OcclusionQueriesMode",
+   "groups": [
+    "zcull"
+   ],
+   "trigger": "Occlusion Queries:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "VertexCache",
+   "groups": [
+    "vertex_cache"
+   ],
+   "trigger": "Vertex Cache:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "FrameSkip",
+   "groups": [
+    "frame_skip"
+   ],
+   "trigger": "Frame Skip:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "BlitMode",
+   "groups": [
+    "cpu_blit"
+   ],
+   "trigger": "Blit:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "DisableAsyncShaders",
+   "groups": [
+    "disable_async_shaders"
+   ],
+   "trigger": "Disable Asynchronous Shader Compiler:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Setting line absent from all real logs; the generic settings capture needs no per-key regex either way."
+  },
+  {
+   "name": "ShaderMode",
+   "groups": [
+    "shader_mode"
+   ],
+   "trigger": "Shader Mode:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "DisableNativeF16",
+   "groups": [
+    "disable_native_float16"
+   ],
+   "trigger": "Disable native float16 support:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Setting line absent from all real logs; the generic settings capture needs no per-key regex either way."
+  },
+  {
+   "name": "RsxMultithreadMode",
+   "groups": [
+    "mtrsx"
+   ],
+   "trigger": "Multithreaded RSX:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "RelaxedZcull",
+   "groups": [
+    "relaxed_zcull"
+   ],
+   "trigger": "Relaxed ZCULL Sync:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "ResolutionScaling",
+   "groups": [
+    "resolution_scale"
+   ],
+   "trigger": "Resolution Scale:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AnisoFilter",
+   "groups": [
+    "af_override"
+   ],
+   "trigger": "Anisotropic Filter",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "ScalableDimensions",
+   "groups": [
+    "texture_scale_threshold"
+   ],
+   "trigger": "Scalable Dimension:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "DriverRecoveryTimeout",
+   "groups": [
+    "driver_recovery_timeout"
+   ],
+   "trigger": "Driver Recovery Timeout:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "DriverWakeupDelay",
+   "groups": [
+    "driver_wakeup_delay"
+   ],
+   "trigger": "Driver Wake-Up Delay:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "VblankRate",
+   "groups": [
+    "vblank_rate"
+   ],
+   "trigger": "Vblank Rate:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SelectedD3d12Device",
+   "groups": [
+    "d3d_gpu"
+   ],
+   "trigger": "12:",
+   "realLogHits": 41745,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SelectedVulkanDevice",
+   "groups": [
+    "vulkan_gpu"
+   ],
+   "trigger": "Vulkan:",
+   "realLogHits": 145,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "FifoPresentMode",
+   "groups": [
+    "force_fifo_present"
+   ],
+   "trigger": "Force FIFO present mode:",
+   "realLogHits": 28,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AsyncTextureStreaming",
+   "groups": [
+    "async_texture_streaming"
+   ],
+   "trigger": "Asynchronous Texture Streaming",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AsyncQueueScheduler",
+   "groups": [
+    "async_queue_scheduler"
+   ],
+   "trigger": "Asynchronous Queue Scheduler:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "UseRebar",
+   "groups": [
+    "use_rebar"
+   ],
+   "trigger": "Use Re-BAR for GPU uploads:",
+   "realLogHits": 66,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AudioBackend",
+   "groups": [
+    "audio_backend"
+   ],
+   "trigger": "Renderer:",
+   "realLogHits": 168,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "DownmixToStereo",
+   "groups": [
+    "audio_stereo"
+   ],
+   "trigger": "Downmix to Stereo:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Setting line absent from all real logs; the generic settings capture needs no per-key regex either way."
+  },
+  {
+   "name": "MasterVolume",
+   "groups": [
+    "audio_volume"
+   ],
+   "trigger": "Master Volume:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AudioBuffering",
+   "groups": [
+    "audio_buffering"
+   ],
+   "trigger": "Enable Buffering:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AudioBufferLength",
+   "groups": [
+    "audio_buffer_duration"
+   ],
+   "trigger": "Desired Audio Buffer Duration:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AudioTimeStretching",
+   "groups": [
+    "audio_stretching"
+   ],
+   "trigger": "Enable Time Stretching:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "GamepadType",
+   "groups": [
+    "pad_handler"
+   ],
+   "trigger": "Pad:",
+   "realLogHits": 45,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "CustomInputConfig",
+   "groups": [
+    "custom_input_config"
+   ],
+   "trigger": "Loading input configuration:",
+   "realLogHits": 212,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "StartPausedSavestate",
+   "groups": [
+    "start_paused_savestate"
+   ],
+   "trigger": "Start Paused:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SuspendEmulationSavestate",
+   "groups": [
+    "suspend_emulation_savestate"
+   ],
+   "trigger": "Suspend Emulation Savestate Mode:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "CompatibleSavestate",
+   "groups": [
+    "compatible_savestate"
+   ],
+   "trigger": "Compatible Savestate Mode:",
+   "realLogHits": 82,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AutoStartAfterBoot",
+   "groups": [
+    "auto_start_on_boot"
+   ],
+   "trigger": "Automatically start games after boot:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "AlwaysStartAfterBoot",
+   "groups": [
+    "always_start_on_boot"
+   ],
+   "trigger": "Always start after boot:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Setting line absent from all real logs; the generic settings capture needs no per-key regex either way."
+  },
+  {
+   "name": "NativeUIMode",
+   "groups": [
+    "native_ui"
+   ],
+   "trigger": "Use native user interface:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "SilenceAllLogs",
+   "groups": [
+    "disable_logs"
+   ],
+   "trigger": "Silence All Logs:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "LogChannelList",
+   "groups": [
+    "log_disabled_channels",
+    "log_disabled_channels_multiline"
+   ],
+   "trigger": "Log:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints these as \"Used configuration\" key/value lines; R3Config keeps every one generically as LogSetting(path, value) with no per-key regex."
+  },
+  {
+   "name": "GamePathLdr",
+   "groups": [
+    "ldr_game_full",
+    "ldr_game",
+    "ldr_game_serial"
+   ],
+   "trigger": "LDR: Game:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "LDR: prefixed variant; 0 occurrences in the real logs (all use SYS:). The SYS: variant is the current form."
+  },
+  {
+   "name": "DiscPathLdr",
+   "groups": [
+    "ldr_disc_full",
+    "ldr_disc",
+    "ldr_disc_serial"
+   ],
+   "trigger": "LDR: Disc",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "LDR: prefixed variant; 0 occurrences in the real logs (all use SYS:). The SYS: variant is the current form."
+  },
+  {
+   "name": "DigitalPathLdr",
+   "groups": [
+    "ldr_path_full",
+    "ldr_path",
+    "ldr_path_serial"
+   ],
+   "trigger": "LDR: Path:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "LDR: prefixed variant; 0 occurrences in the real logs (all use SYS:). The SYS: variant is the current form."
+  },
+  {
+   "name": "BootPathInBodyLdr",
+   "groups": [
+    "ldr_boot_path_full",
+    "ldr_boot_path",
+    "ldr_boot_path_serial"
+   ],
+   "trigger": "LDR: Boot path:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "LDR: prefixed variant; 0 occurrences in the real logs (all use SYS:). The SYS: variant is the current form."
+  },
+  {
+   "name": "TitleWasSet",
+   "groups": [
+    "ldr_game_full",
+    "ldr_game",
+    "ldr_game_serial"
+   ],
+   "trigger": "SYS: Title was set from",
+   "realLogHits": 10,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.TitleRenamedOnBoot",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "GamePathSys",
+   "groups": [
+    "title_was_set_from",
+    "title_was_set_to"
+   ],
+   "trigger": "SYS: Game:",
+   "realLogHits": 53,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "DigitalPathSys",
+   "groups": [
+    "ldr_path_full",
+    "ldr_path",
+    "ldr_path_serial"
+   ],
+   "trigger": "SYS: Path:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "BootPathInBodySys",
+   "groups": [
+    "ldr_boot_path_full",
+    "ldr_boot_path",
+    "ldr_boot_path_serial"
+   ],
+   "trigger": "SYS: Boot path:",
+   "realLogHits": 32,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "DiscMountSys",
+   "groups": [
+    "vfs_disc_mount"
+   ],
+   "trigger": "SYS: Disc:",
+   "realLogHits": 50,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "LoadingIso",
+   "groups": [
+    "iso_path"
+   ],
+   "trigger": "SYS: Loading iso",
+   "realLogHits": 16,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext (tranche 1)",
+   "rationale": "LogRunContext.BootMedia (ISO archive)."
+  },
+  {
+   "name": "IsoEncType",
+   "groups": [
+    "iso_enc_type",
+    "iso_reg_count"
+   ],
+   "trigger": "Set 'enc type':",
+   "realLogHits": 30,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext (tranche 1)",
+   "rationale": "LogRunContext.IsoEncryption from the ISO line itself; a missing key is only meaningful for an encrypted ISO."
+  },
+  {
+   "name": "FailedDiscKeyFile",
+   "groups": [
+    "failed_disc_key_file"
+   ],
+   "trigger": "ISO: init: Failed",
+   "realLogHits": 6,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext (tranche 1)",
+   "rationale": "LogRunContext.IsoKey (Missing/Found) recorded as an observation, not a problem; the bot reports \"key is missing\" as an error even when the log says enc type NONE."
+  },
+  {
+   "name": "CorruptIsoFile",
+   "groups": [
+    "corrupted_iso_file",
+    "corrupt_iso_file_error"
+   ],
+   "trigger": "ISO: iso_archive: Corrupt ISO file",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.IsoCorrupt",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "FoundDiscKeyFile",
+   "groups": [
+    "found_disc_key_file"
+   ],
+   "trigger": "Found matching key file:",
+   "realLogHits": 9,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext (tranche 1)",
+   "rationale": "LogRunContext.IsoKey (Missing/Found) recorded as an observation, not a problem; the bot reports \"key is missing\" as an error even when the log says enc type NONE."
+  },
+  {
+   "name": "ElfPath",
+   "groups": [
+    "host_root_in_boot",
+    "elf_boot_path_full",
+    "elf_boot_path",
+    "elf_boot_path_serial"
+   ],
+   "trigger": "Elf path:",
+   "realLogHits": 43,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "VfsMountPath",
+   "groups": [
+    "mounted_dev_bdvd"
+   ],
+   "trigger": "VFS: Mounted path \"/dev_bdvd\"",
+   "realLogHits": 61,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "InvalidFileFormat",
+   "groups": [
+    "failed_to_boot"
+   ],
+   "trigger": "Invalid or unsupported file format:",
+   "realLogHits": 2,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.InvalidFileFormat",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "DecryptFailedSelfPath",
+   "groups": [
+    "failed_to_decrypt",
+    "failed_to_decrypt"
+   ],
+   "trigger": "SELF:",
+   "realLogHits": 13,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "NOT_APPLICABLE",
+   "implementedBy": null,
+   "rationale": "REJECTED: the trigger \"SELF:\" matches benign lines (for example \"SELF: Loading RAP file ...\"); a match would be a false observation."
+  },
+  {
+   "name": "GameVersion",
+   "groups": [
+    "disc_app_version",
+    "disc_package_version"
+   ],
+   "trigger": "SYS: Version:",
+   "realLogHits": 84,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Rpcs3LogParser reads Title/Serial/Category/APP_VER from the SYS lines."
+  },
+  {
+   "name": "FailedToVerifyNpDrm",
+   "groups": [
+    "failed_to_verify_npdrm"
+   ],
+   "trigger": "sceNp: npDrmIsAvailable(): Failed to verify",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.NpDrmVerifyFailed",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "FailedToDecryptEdat",
+   "groups": [
+    "failed_to_decrypt_edat"
+   ],
+   "trigger": "Failed to decrypt '",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.EdatDecryptFailed",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "RsxDriverInfoLegacy",
+   "groups": [
+    "driver_version"
+   ],
+   "trigger": "{rsx::thread} RSX: 3",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "No occurrence in the real logs and no literal in the RPCS3 source; the renderer line supersedes it."
+  },
+  {
+   "name": "GlRenderer",
+   "groups": [
+    "driver_manuf_new"
+   ],
+   "trigger": "GL RENDERER:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "OpenGL-backend information lines; only when the OpenGL renderer is used. Kept as knowledge, no consumer today."
+  },
+  {
+   "name": "GlVersion",
+   "groups": [
+    "opengl_version",
+    "driver_version_new"
+   ],
+   "trigger": "GL VERSION:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "OpenGL-backend information lines; only when the OpenGL renderer is used. Kept as knowledge, no consumer today."
+  },
+  {
+   "name": "GlslVersion",
+   "groups": [
+    "glsl_version"
+   ],
+   "trigger": "GLSL VERSION:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "OpenGL-backend information lines; only when the OpenGL renderer is used. Kept as knowledge, no consumer today."
+  },
+  {
+   "name": "GlTexelBufferSize",
+   "groups": [
+    "texel_buffer_size_new"
+   ],
+   "trigger": "texel buffer size reported:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "OpenGL-backend information lines; only when the OpenGL renderer is used. Kept as knowledge, no consumer today."
+  },
+  {
+   "name": "PhysicalDeviceFound",
+   "groups": [
+    "vulkan_gpu",
+    "vulkan_driver_version_raw"
+   ],
+   "trigger": "Physical device in",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "No occurrence in the real logs and no literal in the RPCS3 source; the renderer line supersedes it."
+  },
+  {
+   "name": "VulkanDeviceFound",
+   "groups": [
+    "vulkan_found_device"
+   ],
+   "trigger": "Found vulkan-compatible GPU:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Rpcs3LogParser: adapter and renderer from \"Found Vulkan-compatible GPU\" / \"Renderer initialized on device\"."
+  },
+  {
+   "name": "RenderDeviceInitialized",
+   "groups": [
+    "vulkan_initialized_device"
+   ],
+   "trigger": "Renderer initialized on device",
+   "realLogHits": 61,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Rpcs3LogParser: adapter and renderer from \"Found Vulkan-compatible GPU\" / \"Renderer initialized on device\"."
+  },
+  {
+   "name": "FailedToCompileShader",
+   "groups": [
+    "shader_compile_error"
+   ],
+   "trigger": "RSX: Failed to compile shader",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Obsolete: no literal in RPCS3 source and 0 real-log hits; GL compilation is ShaderCompileFailed (program.cpp:201)."
+  },
+  {
+   "name": "ShaderCompilationFailed",
+   "groups": [
+    "shader_compile_error"
+   ],
+   "trigger": "RSX: Compilation failed",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.ShaderCompileFailed",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "ShaderLinkageFailed",
+   "groups": [
+    "shader_compile_error"
+   ],
+   "trigger": "RSX: Linkage failed",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.ShaderLinkFailed",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "UnsupportedDevice",
+   "groups": [
+    "rsx_unsupported_gpu"
+   ],
+   "trigger": "RSX: Unsupported device",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.UnsupportedDevice",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "UnsupportedDeviceFeatures",
+   "groups": [
+    "rsx_not_supported_feature"
+   ],
+   "trigger": "RSX: Your GPU does not support",
+   "realLogHits": 24,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.GpuFeatureUnsupported",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "UnsupportedDriverFeatures",
+   "groups": [
+    "rsx_not_supported_feature"
+   ],
+   "trigger": "RSX: GPU/driver lacks support",
+   "realLogHits": 2,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.DriverFeatureLacking",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "RsxFragmentationError",
+   "groups": [
+    "rsx_fragmentation_error"
+   ],
+   "trigger": "RSX: Descriptor pool creation failed",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.DescriptorPoolFragmentation",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "SwapchainMode",
+   "groups": [
+    "rsx_swapchain_mode"
+   ],
+   "trigger": "RSX: Swapchain:",
+   "realLogHits": 161,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "VkExtensions",
+   "groups": [
+    "vk_ext"
+   ],
+   "trigger": "RSX: ** Using",
+   "realLogHits": 628,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "GlExtensions",
+   "groups": [
+    "gl_ext"
+   ],
+   "trigger": "RSX: [CAPS] Using",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "OpenGL-backend information lines; only when the OpenGL renderer is used. Kept as knowledge, no consumer today."
+  },
+  {
+   "name": "DetectedGpuMemoryInfo",
+   "groups": [
+    "gpu_memory_info"
+   ],
+   "trigger": "RSX: Detected",
+   "realLogHits": 183,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "FatalError",
+   "groups": [
+    "fatal_error_context",
+    "fatal_error"
+   ],
+   "trigger": "F ",
+   "realLogHits": 86354,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "LogRules classifies fatal/crash/assertion and builds a deterministic signature; the (e=0x..) code stays in the normalized pattern."
+  },
+  {
+   "name": "FailedToLoadRap",
+   "groups": [
+    "rap_file"
+   ],
+   "trigger": "Failed to load RAP file:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Obsolete: no literal in RPCS3 source, 0 real-log hits; superseded by RapNotFound / GameLicenseNotFound."
+  },
+  {
+   "name": "FailedToLocateRap",
+   "groups": [
+    "rap_file"
+   ],
+   "trigger": "Failed to locate the game license file:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.GameLicenseNotFound",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "RapNotFound",
+   "groups": [
+    "rap_file"
+   ],
+   "trigger": "Rap file not found:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.RapNotFound",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "MissingGamepad",
+   "groups": [
+    "native_ui_input"
+   ],
+   "trigger": "Pad handler expected but none initialized",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Obsolete: no literal in RPCS3 source, 0 real-log hits."
+  },
+  {
+   "name": "FailedToBindGamepad",
+   "groups": [
+    "failed_pad",
+    "failed_pad_handler"
+   ],
+   "trigger": "Failed to bind device",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.PadBindFailed",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "InputDeviceConnected",
+   "groups": [
+    "pad_handler"
+   ],
+   "trigger": "Input:",
+   "realLogHits": 1568,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "XAudio2Thread",
+   "groups": [
+    "xaudio_init_error",
+    "xaudio_error_code"
+   ],
+   "trigger": "XAudio2Thread",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Obsolete: no literal in RPCS3 source, 0 real-log hits; superseded by AudioBackendInitFailed."
+  },
+  {
+   "name": "CellAudioThread",
+   "groups": [
+    "xaudio_init_error",
+    "xaudio_error_code"
+   ],
+   "trigger": "cellAudio Thread",
+   "realLogHits": 2092,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "SUPERSEDED",
+   "implementedBy": null,
+   "rationale": "Obsolete: the XAudio2Backend failure form has no literal in RPCS3 source; the bare \"cellAudio Thread\" text is a thread name, not a failure."
+  },
+  {
+   "name": "AudioBackendFailed",
+   "groups": [
+    "audio_backend_init_error"
+   ],
+   "trigger": "using a Null renderer instead",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.AudioBackendInitFailed",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "PpuHash",
+   "groups": [
+    "ppu_patch"
+   ],
+   "trigger": "PPU executable hash:",
+   "realLogHits": 70,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Rpcs3LogParser: PPU executable hash (deduplicated, lower-cased)."
+  },
+  {
+   "name": "OvlHash",
+   "groups": [
+    "ovl_patch"
+   ],
+   "trigger": "OVL executable hash:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Extra executable/library hashes and SPU image loads: input for the frozen Official Patches / Canary domains, not for Domain 5."
+  },
+  {
+   "name": "SpuHash",
+   "groups": [
+    "spu_patch"
+   ],
+   "trigger": "SPU executable hash:",
+   "realLogHits": 3099,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Extra executable/library hashes and SPU image loads: input for the frozen Official Patches / Canary domains, not for Domain 5."
+  },
+  {
+   "name": "PrxHash",
+   "groups": [
+    "prx_patch"
+   ],
+   "trigger": "PRX library hash:",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Extra executable/library hashes and SPU image loads: input for the frozen Official Patches / Canary domains, not for Domain 5."
+  },
+  {
+   "name": "OvlHash2",
+   "groups": [
+    "ovl_patch"
+   ],
+   "trigger": "OVL hash of",
+   "realLogHits": 13,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Extra executable/library hashes and SPU image loads: input for the frozen Official Patches / Canary domains, not for Domain 5."
+  },
+  {
+   "name": "PrxHash2",
+   "groups": [
+    "prx_patch"
+   ],
+   "trigger": "PRX hash of",
+   "realLogHits": 3474,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Extra executable/library hashes and SPU image loads: input for the frozen Official Patches / Canary domains, not for Domain 5."
+  },
+  {
+   "name": "AppliedPatch",
+   "groups": [
+    "patch_desc"
+   ],
+   "trigger": ": Applied patch",
+   "realLogHits": 41,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext (tranche 1)",
+   "rationale": "LogRunContext.AppliedPatches (hash + description as RPCS3 printed them)."
+  },
+  {
+   "name": "SpuImageLoad",
+   "groups": [
+    "spu_patch"
+   ],
+   "trigger": "Loaded SPU image:",
+   "realLogHits": 336,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Extra executable/library hashes and SPU image loads: input for the frozen Official Patches / Canary domains, not for Domain 5."
+  },
+  {
+   "name": "SysFsStatFailed",
+   "groups": [
+    "broken_filename_or_dir",
+    "broken_digital_filename"
+   ],
+   "trigger": "'sys_fs_stat' failed",
+   "realLogHits": 1163,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext",
+   "rationale": "LogRunContext.FailedDiscPaths (distinct /dev_bdvd failures) + IrdComparer"
+  },
+  {
+   "name": "SysFsOpenFailed",
+   "groups": [
+    "broken_filename",
+    "broken_digital_filename"
+   ],
+   "trigger": "'sys_fs_open' failed",
+   "realLogHits": 11415,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext",
+   "rationale": "LogRunContext.FailedDiscPaths (distinct /dev_bdvd failures) + IrdComparer"
+  },
+  {
+   "name": "SysFsOpenDirFailed",
+   "groups": [
+    "broken_directory"
+   ],
+   "trigger": "'sys_fs_opendir' failed",
+   "realLogHits": 767,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext",
+   "rationale": "LogRunContext.FailedDiscPaths (distinct /dev_bdvd failures) + IrdComparer"
+  },
+  {
+   "name": "InvalidEdat",
+   "groups": [
+    "edat_block_offset"
+   ],
+   "trigger": "EDAT: ",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.EdatBlockInvalidHash",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "FwNotInstalled",
+   "groups": [
+    "fw_missing_msg"
+   ],
+   "trigger": "PS3 firmware is not installed",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.FirmwareNotInstalled",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "FwNotInstalled2",
+   "groups": [
+    "fw_missing_something"
+   ],
+   "trigger": "do you have the PS3 firmware installed",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.FirmwareCertificateMissing",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "UnimplementedSyscall",
+   "groups": [
+    "unimplemented_syscall_context",
+    "unimplemented_syscall"
+   ],
+   "trigger": "Unimplemented syscall",
+   "realLogHits": 33,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.UnimplementedSyscall",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "CellAudioEnqueueFailed",
+   "groups": [
+    "enqueue_buffer_error"
+   ],
+   "trigger": "Could not enqueue",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "Repeated events are counted per signature (Count); the bot count-only observation (enqueue errors) is the same idea."
+  },
+  {
+   "name": "PpuSyscallTodo",
+   "groups": [
+    "log_channel",
+    "syscall_name"
+   ],
+   "trigger": "{PPU[",
+   "realLogHits": 3803264,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Syscall call statistics / TTY output: bot-side statistics and debugging; not a deterministic diagnosis input."
+  },
+  {
+   "name": "VerificationFailed",
+   "groups": [
+    "verification_error_hex",
+    "verification_error"
+   ],
+   "trigger": "Verification failed",
+   "realLogHits": 3,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "ALREADY_COVERED",
+   "implementedBy": null,
+   "rationale": "LogRules classifies fatal/crash/assertion and builds a deterministic signature; the (e=0x..) code stays in the normalized pattern."
+  },
+  {
+   "name": "SysTtyWrite",
+   "groups": [
+    "tty_line"
+   ],
+   "trigger": "sys_tty_write():",
+   "realLogHits": 1655232,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Syscall call statistics / TTY output: bot-side statistics and debugging; not a deterministic diagnosis input."
+  },
+  {
+   "name": "SyscallDump",
+   "groups": [
+    "syscall_name"
+   ],
+   "trigger": "⁂",
+   "realLogHits": 31303,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Syscall call statistics / TTY output: bot-side statistics and debugging; not a deterministic diagnosis input."
+  },
+  {
+   "name": "UndubFlag",
+   "groups": [
+    "game_mod"
+   ],
+   "trigger": "undub",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Community/game-mod flags of the bot (undub, UFC/NCAA mods): game-specific community knowledge, uncorroborated."
+  },
+  {
+   "name": "UfcModFlag",
+   "groups": [
+    "game_mod"
+   ],
+   "trigger": "UDF Packaged",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Community/game-mod flags of the bot (undub, UFC/NCAA mods): game-specific community knowledge, uncorroborated."
+  },
+  {
+   "name": "Ncaa14RevampedModFlag",
+   "groups": [
+    "game_mod"
+   ],
+   "trigger": "CFBR_DLC",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Community/game-mod flags of the bot (undub, UFC/NCAA mods): game-specific community knowledge, uncorroborated."
+  },
+  {
+   "name": "InputDeviceGamepad",
+   "groups": [
+    "pad_id",
+    "pad_controller_name",
+    "pad_handler"
+   ],
+   "trigger": "Input: Pad",
+   "realLogHits": 604,
+   "rpcs3SourceLiteral": "no",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "SdlControllerName",
+   "groups": [
+    "pad_has_accel",
+    "pad_has_gyro"
+   ],
+   "trigger": "SDL: Found game",
+   "realLogHits": 37,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "FailedToRemoveSaveData",
+   "groups": [
+    "bad_save_data_path"
+   ],
+   "trigger": "SYS: Failed to remove save data",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.SaveDataRemoveFailed",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "FailedToRemoveTrophy",
+   "groups": [
+    "bad_trophy_data_path"
+   ],
+   "trigger": "Trophy: Failed to remove",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "QUEUED_FIXTURE",
+   "implementedBy": null,
+   "rationale": "RPCS3 prints a different, notice-level \"Failed to remove partial installation\" (unpkg.cpp:1451); meaning differs from the bot, no real-log fixture."
+  },
+  {
+   "name": "FailedToInstallTrophy",
+   "groups": [
+    "bad_trophy_data_path"
+   ],
+   "trigger": "Failed to install trophy",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogObservationKind.TrophyInstallFailed",
+   "rationale": "Typed observation rule (LogObservationRules); format anchored to RPCS3 source."
+  },
+  {
+   "name": "SaveDataBeforeSegfault",
+   "groups": [
+    "save_dir_before_segfault"
+   ],
+   "trigger": "cellSaveData: cellSaveDataGetListItem",
+   "realLogHits": 32,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "NOT_APPLICABLE",
+   "implementedBy": null,
+   "rationale": "REJECTED: infers save-data corruption from the last save call before a crash (adjacency is not evidence)."
+  },
+  {
+   "name": "BootingFromSavestate",
+   "groups": [
+    "booting_savestate"
+   ],
+   "trigger": "SYS: Booting savestate",
+   "realLogHits": 0,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "REFERENCE_ONLY",
+   "implementedBy": null,
+   "rationale": "Observed in real logs but only feeds bot advice or statistics (extensions, memory, swapchain, controllers, perf sensor); no R3Config consumer."
+  },
+  {
+   "name": "PerfSensor",
+   "groups": [
+    "total_cpu",
+    "current_ram",
+    "peak_ram"
+   ],
+   "trigger": "Performance Sensor",
+   "realLogHits": 1740,
+   "rpcs3SourceLiteral": "yes",
+   "disposition": "IMPLEMENTED",
+   "implementedBy": "LogRunContext",
+   "rationale": "LogPerformanceSummary (median/p5/p95, RAM peak) from PERF lines; rpcs3/Emu/perf_monitor.cpp:73/87"
+  }
+ ]
+}

@@ -326,6 +326,7 @@ public sealed class ReadSvc
                 SrcPath: sourcePath,
                 DepList: dependencies,
                 DefPrint: CalcDef(patchNode),
+                WritePrint: PatchWriteSemantics.Project(patchNode),
                 KeySer: runtimeKeySerial,
                 Class: source == PatSrc.Can ||
                        source == PatSrc.Imported &&

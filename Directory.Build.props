@@ -1,17 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
-    <Deterministic>true</Deterministic>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <NuGetAudit>true</NuGetAudit>
     <NuGetAuditMode>all</NuGetAuditMode>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(ContinuousIntegrationBuild)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <RestoreLockedMode Condition="Exists('$(MSBuildProjectDirectory)\packages.lock.json')">true</RestoreLockedMode>
   </PropertyGroup>
 </Project>

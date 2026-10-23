@@ -1159,7 +1159,7 @@ public static class GameSetupT
         Assert(parsedOfficial.IsOk && parsedOfficial.Catalog.Entries.Count == 1,
             "The end-to-end official fixture did not retain a reviewable source definition.");
         official = parsedOfficial.Catalog.Entries.Single();
-        var artemis = canary with
+        var artemisSeed = canary with
         {
             Title = "Artemis Collection Setup Fixture",
             Risk = PatRisk.Cheat,
@@ -1179,18 +1179,31 @@ public static class GameSetupT
         File.Copy(
             BundledCanaryPatchService.GetPath(AppContext.BaseDirectory),
             BundledCanaryPatchService.GetPath(appBase));
-        File.WriteAllText(
-            BundledCheatPatchService.GetBndl(appBase),
-            PatchYaml(
-                artemis.Hash,
-                artemis.Title,
+        var artemisText = PatchYaml(
+                artemisSeed.Hash,
+                artemisSeed.Title,
                 game.Serial,
                 game.Version!,
-                artemis.Author!,
-                artemis.Notes!,
-                artemis.Group!,
-                artemis.PatVer!),
+                artemisSeed.Author!,
+                artemisSeed.Notes!,
+                artemisSeed.Group!,
+                artemisSeed.PatVer!)
+            .Replace(
+                "0x00000010",
+                "0x00000030",
+                StringComparison.Ordinal);
+        File.WriteAllText(
+            BundledCheatPatchService.GetBndl(appBase),
+            artemisText,
             new UTF8Encoding(false));
+        var parsedArtemis = new ReadSvc().ReadText(
+            artemisText,
+            PatSrc.Artemis,
+            "art.yml");
+        Assert(parsedArtemis.IsOk &&
+               parsedArtemis.Catalog.Entries.Count == 1,
+            "The end-to-end Artemis fixture did not retain a reviewable source definition.");
+        var artemis = parsedArtemis.Catalog.Entries.Single();
 
         var customPath = Path.Combine(
             env.Install.CustPath,
@@ -1577,7 +1590,8 @@ public static class GameSetupT
             {
                 ["TITLE"] = game.Title,
                 ["TITLE_ID"] = game.Serial,
-                ["APP_VER"] = game.Version ?? "01.00"
+                ["APP_VER"] = game.Version ?? "01.00",
+                ["CATEGORY"] = "DG"
             });
         var escapedPath = environment.GamePath.Replace(
             "\\",
@@ -1697,7 +1711,7 @@ public static class GameSetupT
             HCanSpu: canary.HashKind == HashKind.Spu ? [hash] : []);
     }
 
-    private static Rpcs3PatchEntry OfficialFor(
+    internal static Rpcs3PatchEntry OfficialFor(
         Rpcs3PatchEntry canary,
         string patchesPath)
     {
@@ -1827,7 +1841,7 @@ public static class GameSetupT
             """ + "\r\n";
     }
 
-    private static string PatchYaml(
+    internal static string PatchYaml(
         string hash,
         string title,
         string serial,
@@ -1853,7 +1867,7 @@ public static class GameSetupT
             """ + "\r\n";
     }
 
-    private static string UserImportedYaml()
+    internal static string UserImportedYaml()
     {
         return """
             Version: 1.2

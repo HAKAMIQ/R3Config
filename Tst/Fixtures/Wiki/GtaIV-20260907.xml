@@ -1,0 +1,31 @@
+<mediawiki><!-- Configuration and GameID excerpt; comments and empty values omitted. Original source SHA256: 410AACCBD9A77637671D6DEB6768CD1D7E7506FF83C8197265BEEA34CACB2097 --><page><title>Grand Theft Auto IV</title><ns>0</ns><id>829</id><revision><id>59358</id><timestamp>2026-09-05T17:48:53Z</timestamp><text><![CDATA[{{vginfobox
+|gameid    = {{gameid|id=BLES00229, BLUS30127, NPEB00882, NPUB30702|oid=BLES00258, BLJM60093|ird=Yes}}<br>'''''The Complete Edition'''''<br>{{gameid|id=BLES01128, BLUS30682|oid=BLJM60346|ird=Yes}}
+}}
+==Configuration==
+{{config
+
+|spu xfloat accuracy                   = Accurate
+|spu xfloat accuracy notes             = Fixes missing collision. Requires SPU LLVM recompiler. Expect audio stutter.
+
+|anti-aliasing                         = Disabled
+|anti-aliasing notes                   = When enabled, outlines seen on characters and objects under shadows and water will be visible. Additionally, buildings in the distance are not rendered correctly.
+|zcull accuracy                        = Relaxed
+|zcull accuracy notes                  = Improves performance without any noticeable issues.
+|resolution scale threshold            = 320x320
+|resolution scale threshold notes      = Properly scales bloom when using Resolution Scaling.
+|write color buffers                   = On 
+|write color buffers notes             = Fixes missing reflections.
+|multithreaded rsx                     = On 
+|multithreaded rsx notes               = Improves performance.
+|asynchronous texture streaming        = On 
+|asynchronous texture streaming notes  = If you have a stronger GPU, this can give substantial performance boost.
+
+
+
+
+|sleep timers accuracy                 = As Host
+|sleep timers accuracy notes           = Slightly improves performance.
+|rsx fifo accuracy notes               = Helps to reduce crashes.
+
+
+}}]]></text></revision></page></mediawiki>

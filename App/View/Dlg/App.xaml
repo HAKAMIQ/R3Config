@@ -30,6 +30,10 @@
                     Value="{DynamicResource App.TextAlignment}" />
             <Setter Property="HorizontalAlignment"
                     Value="Stretch" />
+            <Setter Property="TextWrapping"
+                    Value="Wrap" />
+            <Setter Property="TextTrimming"
+                    Value="None" />
         </Style>
 
         <Style x:Key="AppDlgLocalizedMessageText"
@@ -41,6 +45,10 @@
                     Value="{DynamicResource App.TextAlignment}" />
             <Setter Property="HorizontalAlignment"
                     Value="Stretch" />
+            <Setter Property="TextWrapping"
+                    Value="Wrap" />
+            <Setter Property="TextTrimming"
+                    Value="None" />
         </Style>
 
         <Style x:Key="AppDlgSecondaryActionButton"
@@ -49,13 +57,13 @@
             <Setter Property="FlowDirection"
                     Value="{DynamicResource App.TextFlowDirection}" />
             <Setter Property="MinWidth"
-                    Value="96" />
+                    Value="{StaticResource Button.MinWidth.Standard}" />
             <Setter Property="Height"
-                    Value="32" />
+                    Value="{StaticResource Control.Height.Standard}" />
             <Setter Property="MinHeight"
-                    Value="32" />
+                    Value="{StaticResource Control.Height.Standard}" />
             <Setter Property="Padding"
-                    Value="12,4" />
+                    Value="{StaticResource Button.Padding.Standard}" />
             <Setter Property="Margin"
                     Value="4,0" />
             <Setter Property="HorizontalContentAlignment"
@@ -74,13 +82,13 @@
             <Setter Property="FlowDirection"
                     Value="{DynamicResource App.TextFlowDirection}" />
             <Setter Property="MinWidth"
-                    Value="96" />
+                    Value="{StaticResource Button.MinWidth.Standard}" />
             <Setter Property="Height"
-                    Value="32" />
+                    Value="{StaticResource Control.Height.Standard}" />
             <Setter Property="MinHeight"
-                    Value="32" />
+                    Value="{StaticResource Control.Height.Standard}" />
             <Setter Property="Padding"
-                    Value="12,4" />
+                    Value="{StaticResource Button.Padding.Standard}" />
             <Setter Property="Margin"
                     Value="4,0" />
             <Setter Property="HorizontalContentAlignment"
@@ -124,30 +132,31 @@
                         Width="32"
                         Height="32"
                         CornerRadius="{StaticResource Radius.Circle.32}"
-                        BorderThickness="1"
+                        BorderThickness="{StaticResource Stroke.Thickness.Default}"
                         VerticalAlignment="Top">
 
                     <TextBlock x:Name="IconText"
                                FlowDirection="LeftToRight"
                                Language="{DynamicResource TechnicalText.Language}"
-                               TextAlignment="{DynamicResource TechnicalText.TextAlignment}"
+                               NumberSubstitution.Substitution="European"
+                               TextAlignment="Center"
                                FontSize="16"
                                FontWeight="Bold"
                                HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
+                               VerticalAlignment="Center"
+                               TextWrapping="NoWrap"
+                               TextTrimming="None" />
                 </Border>
 
                 <StackPanel Grid.Column="2"
                             HorizontalAlignment="Stretch">
 
                     <TextBlock x:Name="TitlTxt"
-                               Style="{StaticResource AppDlgLocalizedTitleText}"
-                               TextWrapping="Wrap" />
+                               Style="{StaticResource AppDlgLocalizedTitleText}" />
 
                     <TextBlock x:Name="MsgText"
                                Style="{StaticResource AppDlgLocalizedMessageText}"
-                               Margin="0,8,0,0"
-                               TextWrapping="Wrap" />
+                               Margin="0,8,0,0" />
                 </StackPanel>
             </Grid>
 
@@ -159,7 +168,7 @@
                 <StackPanel x:Name="Btns"
                             Style="{StaticResource FluentDialog.Buttons}"
                             Orientation="Horizontal"
-                            HorizontalAlignment="Left"
+                            HorizontalAlignment="{DynamicResource App.TrailingHorizontalAlignment}"
                             VerticalAlignment="Center"
                             FlowDirection="LeftToRight">
 
@@ -169,6 +178,7 @@
 
                     <Button x:Name="MainBtn"
                             Style="{StaticResource AppDlgPrimaryActionButton}"
+                            IsDefault="True"
                             Click="MainClk" />
                 </StackPanel>
             </Border>

@@ -109,31 +109,17 @@ public sealed partial class MainVm
 
         return
         [
-            .. bySerial.Keys
-                .Concat(scan.CfgSer.Where(serial =>
-                    _catalog?.Find(serial) is not null))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Select(serial =>
+            .. bySerial.Values
+                .Select(game =>
                 {
                     var recommendation =
-                        _catalog?.Find(serial);
-                    var game = bySerial.TryGetValue(
-                        serial,
-                        out var detected)
-                        ? detected
-                        : new Rpcs3GameDescriptor(
-                            Serial: serial,
-                            Title: recommendation?.WikiName ?? serial,
-                            InstPath: string.Empty,
-                            Version: null,
-                            PpuHash: null,
-                            SpuHash: null);
+                        _catalog?.Find(game.Serial);
 
                     return new GameVm(
                         game,
                         recommendation,
-                        EmptyLibrarySummary(serial),
-                        serial,
+                        EmptyLibrarySummary(game.Serial),
+                        game.Serial,
                         GameVm.ResolveTitle(
                             game,
                             recommendation),

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:lang="clr-namespace:R3Config.Lang"
              x:Class="R3Config.Ctrl.StatBar"
+             AutomationProperties.AutomationId="StatusBar.Root"
              FlowDirection="{DynamicResource App.FlowDirection}"
              Language="{DynamicResource App.XmlLanguage}"
              UseLayoutRounding="True"
@@ -53,7 +54,10 @@
 
                 <TextBlock Text="{Binding R3Status}"
                            Style="{StaticResource StatBarLocalizedStatusText}"
-                           ToolTip="{lang:TextExt Key=Status.Rpcs3Tip}" />
+                           ToolTip="{Binding R3VerTip}"
+                           AutomationProperties.AutomationId="StatusBar.Rpcs3"
+                           AutomationProperties.Name="{Binding R3Status}"
+                           AutomationProperties.HelpText="{Binding R3VerTip}" />
             </Border>
 
             <Border Style="{StaticResource StatusMetricPill}"
@@ -62,7 +66,10 @@
 
                 <TextBlock Text="{Binding Status}"
                            Style="{StaticResource StatBarLocalizedStatusText}"
-                           ToolTip="{lang:TextExt Key=Status.DataTip}" />
+                           ToolTip="{lang:TextExt Key=Status.DataTip}"
+                           AutomationProperties.AutomationId="StatusBar.Data"
+                           AutomationProperties.Name="{Binding Status}"
+                           AutomationProperties.HelpText="{lang:TextExt Key=Status.DataTip}" />
             </Border>
 
             <Border Style="{StaticResource StatusMetricPill}"
@@ -71,7 +78,10 @@
 
                 <TextBlock Text="{Binding RecStat}"
                            Style="{StaticResource StatBarLocalizedStatusText}"
-                           ToolTip="{lang:TextExt Key=Status.RecTip}" />
+                           ToolTip="{lang:TextExt Key=Status.RecTip}"
+                           AutomationProperties.AutomationId="StatusBar.Recommendations"
+                           AutomationProperties.Name="{Binding RecStat}"
+                           AutomationProperties.HelpText="{lang:TextExt Key=Status.RecTip}" />
             </Border>
 
             <Border Style="{StaticResource StatusMetricPill}"
@@ -80,7 +90,10 @@
 
                 <TextBlock Text="{Binding HwStatus}"
                            Style="{StaticResource StatBarLocalizedStatusText}"
-                           ToolTip="{Binding HwTip}" />
+                           ToolTip="{Binding HwTip}"
+                           AutomationProperties.AutomationId="StatusBar.Hardware"
+                           AutomationProperties.Name="{Binding HwStatus}"
+                           AutomationProperties.HelpText="{Binding HwTip}" />
             </Border>
 
             <Border Style="{StaticResource StatusMetricPill}"
@@ -89,7 +102,10 @@
 
                 <TextBlock Text="{Binding BkpStat}"
                            Style="{StaticResource StatBarLocalizedStatusText}"
-                           ToolTip="{lang:TextExt Key=Status.BkpTip}" />
+                           ToolTip="{lang:TextExt Key=Status.BkpTip}"
+                           AutomationProperties.AutomationId="StatusBar.Backup"
+                           AutomationProperties.Name="{Binding BkpStat}"
+                           AutomationProperties.HelpText="{lang:TextExt Key=Status.BkpTip}" />
             </Border>
         </UniformGrid>
     </Border>

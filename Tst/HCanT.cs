@@ -2713,7 +2713,7 @@ internal static class HCanTst
 
         var xaml = ReadSources(
             Path.Combine(appRoot, "Ctrl", "HCan.xaml"),
-            Path.Combine(appRoot, "Ctrl", "HSty.xaml"),
+            Path.Combine(appRoot, "Ctrl", "HCanStyles.xaml"),
             Path.Combine(appRoot, "Ctrl", "HGam.xaml"),
             Path.Combine(appRoot, "Ctrl", "HTgt.xaml"),
             Path.Combine(appRoot, "Ctrl", "HHsh.xaml"),

@@ -553,9 +553,12 @@ internal static partial class Program
             "RPCS3_CONFIG_DIR");
         try
         {
+            // RPCS3 keeps RPCS3_CONFIG_DIR only up to its last separator, so
+            // the directory itself needs the trailing one (RecSyncT covers
+            // the variant without it).
             Environment.SetEnvironmentVariable(
                 "RPCS3_CONFIG_DIR",
-                configuredData);
+                configuredData + Path.DirectorySeparatorChar);
             var configuredInstall = Rpcs3InstallService.FromExe(envExe);
             Assert(configuredInstall.DataRoot == configuredData &&
                    configuredInstall.PatCfg == Path.Combine(
@@ -570,6 +573,140 @@ internal static partial class Program
                 "RPCS3_CONFIG_DIR",
                 previousConfigDir);
         }
+
+        var vfsHashRoot = Path.Combine(
+            tempRoot,
+            "compat-vfs-hash-proof");
+        var vfsHashConfig = Path.Combine(
+            vfsHashRoot,
+            "config");
+        var vfsHashHdd0 = Path.Combine(
+            tempRoot,
+            "compat-vfs-hdd0");
+        var vfsHashGame = Path.Combine(
+            tempRoot,
+            "compat-vfs-game");
+        var vfsHashExe = Path.Combine(
+            vfsHashRoot,
+            "rpcs3.exe");
+        Directory.CreateDirectory(vfsHashConfig);
+        Directory.CreateDirectory(vfsHashGame);
+        File.WriteAllText(vfsHashExe, string.Empty);
+        File.WriteAllText(
+            Path.Combine(vfsHashConfig, "vfs.yml"),
+            $"\"/dev_hdd0/\": \"{EscPath(vfsHashHdd0)}\"{Environment.NewLine}");
+
+        var vfsHashCache = Path.Combine(
+            vfsHashRoot,
+            "cache",
+            serial,
+            $"ppu-{prxBase57}-EBOOT.BIN");
+        Directory.CreateDirectory(vfsHashCache);
+        Directory.SetLastWriteTimeUtc(
+            vfsHashCache,
+            DateTime.UtcNow.AddMinutes(-5));
+
+        var vfsHashRealEboot = Path.Combine(
+            vfsHashHdd0,
+            "game",
+            serial,
+            "USRDIR",
+            "EBOOT.BIN");
+        Directory.CreateDirectory(
+            Path.GetDirectoryName(vfsHashRealEboot)!);
+        File.WriteAllText(
+            vfsHashRealEboot,
+            "custom VFS executable");
+        File.SetLastWriteTimeUtc(
+            vfsHashRealEboot,
+            DateTime.UtcNow.AddMinutes(-1));
+
+        var vfsHashDecoyEboot = Path.Combine(
+            vfsHashRoot,
+            "dev_hdd0",
+            "game",
+            serial,
+            "USRDIR",
+            "EBOOT.BIN");
+        Directory.CreateDirectory(
+            Path.GetDirectoryName(vfsHashDecoyEboot)!);
+        File.WriteAllText(
+            vfsHashDecoyEboot,
+            "default-path decoy executable");
+        File.SetLastWriteTimeUtc(
+            vfsHashDecoyEboot,
+            DateTime.UtcNow.AddMinutes(-10));
+
+        var vfsHashInstall = Rpcs3InstallService.FromExe(
+            vfsHashExe);
+        var vfsHashIdentity = new PatchHashProbeService().Enrich(
+            vfsHashInstall,
+            exactGame with
+            {
+                InstPath = vfsHashGame,
+                PpuHash = null,
+                HashEvi = HashEvi.None
+            });
+        Assert(vfsHashIdentity.PpuList.Count == 0 &&
+               vfsHashIdentity.Hashes.Contains(exactHash),
+            "Expected cache-currentness validation to use the resolved RPCS3 /dev_hdd0/ executable rather than DataRoot\\dev_hdd0.");
+
+        var malformedVfsHashRoot = Path.Combine(
+            tempRoot,
+            "compat-malformed-vfs-hash-proof");
+        var malformedVfsHashConfig = Path.Combine(
+            malformedVfsHashRoot,
+            "config");
+        var malformedVfsHashGame = Path.Combine(
+            tempRoot,
+            "compat-malformed-vfs-game");
+        var malformedVfsHashExe = Path.Combine(
+            malformedVfsHashRoot,
+            "rpcs3.exe");
+        Directory.CreateDirectory(malformedVfsHashConfig);
+        Directory.CreateDirectory(Path.Combine(
+            malformedVfsHashGame,
+            "PS3_GAME",
+            "USRDIR"));
+        File.WriteAllText(malformedVfsHashExe, string.Empty);
+        File.WriteAllText(
+            Path.Combine(malformedVfsHashConfig, "vfs.yml"),
+            "[/dev_hdd0/: broken");
+        var malformedVfsBaseEboot = Path.Combine(
+            malformedVfsHashGame,
+            "PS3_GAME",
+            "USRDIR",
+            "EBOOT.BIN");
+        File.WriteAllText(
+            malformedVfsBaseEboot,
+            "base executable");
+        File.SetLastWriteTimeUtc(
+            malformedVfsBaseEboot,
+            DateTime.UtcNow.AddMinutes(-10));
+
+        var malformedVfsHashCache = Path.Combine(
+            malformedVfsHashRoot,
+            "cache",
+            serial,
+            $"ppu-{prxBase57}-EBOOT.BIN");
+        Directory.CreateDirectory(malformedVfsHashCache);
+        Directory.SetLastWriteTimeUtc(
+            malformedVfsHashCache,
+            DateTime.UtcNow.AddMinutes(-1));
+
+        var malformedVfsHashIdentity =
+            new PatchHashProbeService().Enrich(
+                Rpcs3InstallService.FromExe(
+                    malformedVfsHashExe),
+                exactGame with
+                {
+                    InstPath = malformedVfsHashGame,
+                    PpuHash = null,
+                    HashEvi = HashEvi.None
+                });
+        Assert(malformedVfsHashIdentity.PpuList.Count == 0 &&
+               malformedVfsHashIdentity.Hashes.Contains(exactHash),
+            "Expected malformed vfs.yml to keep cache hashes historical instead of treating them as authoritative current executable evidence.");
 
         var cacheProofRoot = Path.Combine(
             tempRoot,

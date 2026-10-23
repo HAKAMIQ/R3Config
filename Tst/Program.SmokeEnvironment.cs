@@ -56,7 +56,8 @@ internal static partial class Program
             {
                 ["TITLE"] = "TEST12345",
                 ["TITLE_ID"] = "TEST12345",
-                ["APP_VER"] = "01.00"
+                ["APP_VER"] = "01.00",
+                ["CATEGORY"] = "DG"
             });
         File.WriteAllText(
             Path.Combine(configPath, "games.yml"),
@@ -66,13 +67,15 @@ internal static partial class Program
         {
             ["TITLE"] = "Assassin's Creed Rogue SFO",
             ["TITLE_ID"] = "BLUS31465",
-            ["APP_VER"] = "01.02"
+            ["APP_VER"] = "01.02",
+            ["CATEGORY"] = "DG"
         });
         SfoWrite(Path.Combine(hddGameFolder, "PARAM.SFO"), new Dictionary<string, string>
         {
             ["TITLE"] = "Non Portable HDD Game",
             ["TITLE_ID"] = "NPUB00001",
-            ["APP_VER"] = "01.00"
+            ["APP_VER"] = "01.00",
+            ["CATEGORY"] = "HG"
         });
 
         var wikiXmlPath = Path.Combine(tempRoot, "wiki.xml");
@@ -170,7 +173,8 @@ internal static partial class Program
         {
             ["TITLE"] = "Internal update package title",
             ["TITLE_ID"] = rogue.Serial,
-            ["APP_VER"] = "01.03"
+            ["APP_VER"] = "01.03",
+            ["CATEGORY"] = "GD"
         });
         var updatedRogue = new GameScanner().Scan(env.Install).Single(game => game.Serial == rogue.Serial);
         Assert(updatedRogue.Title == rogue.Title,
@@ -178,6 +182,55 @@ internal static partial class Program
         Assert(updatedRogue.Version == "01.03",
             "Expected the installed dev_hdd0 update version to override the older disc PARAM.SFO version.");
         Directory.Delete(updateFolder, recursive: true);
+
+        var orphanDataSerial = "BLUS39998";
+        var orphanDataFolder = Path.Combine(
+            env.Install.DataRoot!,
+            "dev_hdd0",
+            "game",
+            orphanDataSerial);
+        Directory.CreateDirectory(orphanDataFolder);
+        SfoWrite(
+            Path.Combine(orphanDataFolder, "PARAM.SFO"),
+            new Dictionary<string, string>
+            {
+                ["TITLE"] = "Orphan Game Data",
+                ["TITLE_ID"] = orphanDataSerial,
+                ["APP_VER"] = "09.99",
+                ["CATEGORY"] = "GD"
+            });
+        var orphanDataResult = new GameScanner().Scan(env.Install);
+        Assert(orphanDataResult.All(game =>
+                !game.Serial.Equals(
+                    orphanDataSerial,
+                    StringComparison.OrdinalIgnoreCase)),
+            "Expected CATEGORY=GD without a trusted base DG/HG game to remain out of the installed-game list.");
+        Directory.Delete(orphanDataFolder, recursive: true);
+
+        var mismatchedUpdateFolder = Path.Combine(
+            env.Install.DataRoot!,
+            "dev_hdd0",
+            "game",
+            rogue.Serial);
+        Directory.CreateDirectory(mismatchedUpdateFolder);
+        SfoWrite(
+            Path.Combine(mismatchedUpdateFolder, "PARAM.SFO"),
+            new Dictionary<string, string>
+            {
+                ["TITLE"] = "Mismatched Game Data",
+                ["TITLE_ID"] = "BLUS39997",
+                ["APP_VER"] = "09.99",
+                ["CATEGORY"] = "GD"
+            });
+        var mismatchedUpdateResult = new GameScanner().ScanInfo(
+            env.Install);
+        Assert(mismatchedUpdateResult.Games.Single(game =>
+                   game.Serial == rogue.Serial).Version == "01.02" &&
+               mismatchedUpdateResult.Diags.Any(diagnostic =>
+                   diagnostic.Code == ScanCode.GameBad &&
+                   diagnostic.SrcPath == mismatchedUpdateFolder),
+            "Expected a dev_hdd0 update TITLE_ID mismatch to remain non-authoritative and leave the base-game version unchanged.");
+        Directory.Delete(mismatchedUpdateFolder, recursive: true);
 
         var mismatchedRoot = Path.Combine(
             env.TempRoot,
@@ -207,7 +260,8 @@ internal static partial class Program
             {
                 ["TITLE"] = "Wrong game metadata",
                 ["TITLE_ID"] = "BLUS30000",
-                ["APP_VER"] = "01.00"
+                ["APP_VER"] = "01.00",
+                ["CATEGORY"] = "DG"
             });
         var mismatchedInstall = Rpcs3InstallService.FromExe(
             Path.Combine(
@@ -231,7 +285,8 @@ internal static partial class Program
         {
             ["TITLE"] = "Portable HDD Game",
             ["TITLE_ID"] = "NPEB00002",
-            ["APP_VER"] = "02.00"
+            ["APP_VER"] = "02.00",
+            ["CATEGORY"] = "HG"
         });
 
         var portableInstall = Rpcs3InstallService.FromExe(Path.Combine(portableRpcs3Root, "rpcs3.exe"));
@@ -244,6 +299,108 @@ internal static partial class Program
         var portableGames = new GameScanner().Scan(portableInstall);
         Assert(portableGames.Any(game => game.Serial == "NPEB00002"), "Expected portable dev_hdd0 game.");
 
+        var vfsRpcs3Root = Path.Combine(
+            env.TempRoot,
+            "rpcs3-custom-vfs");
+        var vfsConfigPath = Path.Combine(
+            vfsRpcs3Root,
+            "config");
+        var vfsEmulatorDir = Path.Combine(
+            env.TempRoot,
+            "custom-emulator-dir");
+        var vfsHdd0Path = Path.Combine(
+            vfsEmulatorDir,
+            "custom-hdd0");
+        var vfsGameFolder = Path.Combine(
+            vfsHdd0Path,
+            "game",
+            "NPEB00004");
+        var vfsDecoyFolder = Path.Combine(
+            vfsRpcs3Root,
+            "dev_hdd0",
+            "game",
+            "NPEB00005");
+        Directory.CreateDirectory(vfsConfigPath);
+        Directory.CreateDirectory(vfsGameFolder);
+        Directory.CreateDirectory(vfsDecoyFolder);
+        File.WriteAllText(
+            Path.Combine(vfsRpcs3Root, "rpcs3.exe"),
+            string.Empty);
+        File.WriteAllText(
+            Path.Combine(vfsConfigPath, "vfs.yml"),
+            $"\"$(EmulatorDir)\": \"{EscPath(vfsEmulatorDir)}\"{Environment.NewLine}" +
+            $"\"/dev_hdd0/\": \"$(EmulatorDir)custom-hdd0/\"{Environment.NewLine}");
+        SfoWrite(
+            Path.Combine(vfsGameFolder, "PARAM.SFO"),
+            new Dictionary<string, string>
+            {
+                ["TITLE"] = "Custom VFS HDD Game",
+                ["TITLE_ID"] = "NPEB00004",
+                ["APP_VER"] = "03.00",
+                ["CATEGORY"] = "HG"
+            });
+        SfoWrite(
+            Path.Combine(vfsDecoyFolder, "PARAM.SFO"),
+            new Dictionary<string, string>
+            {
+                ["TITLE"] = "Wrong Default HDD",
+                ["TITLE_ID"] = "NPEB00005",
+                ["APP_VER"] = "01.00",
+                ["CATEGORY"] = "HG"
+            });
+        var vfsInstall = Rpcs3InstallService.FromExe(
+            Path.Combine(vfsRpcs3Root, "rpcs3.exe"));
+        var vfsGames = new GameScanner().Scan(vfsInstall);
+        Assert(vfsGames.Any(game => game.Serial == "NPEB00004") &&
+               vfsGames.All(game => game.Serial != "NPEB00005"),
+            "Expected GameScanner to use the /dev_hdd0/ path resolved from RPCS3 vfs.yml instead of assuming DataRoot\\dev_hdd0.");
+
+        var badVfsRoot = Path.Combine(
+            env.TempRoot,
+            "rpcs3-malformed-vfs");
+        var badVfsConfig = Path.Combine(
+            badVfsRoot,
+            "config");
+        var badVfsGame = Path.Combine(
+            env.TempRoot,
+            "bad-vfs-base-game");
+        Directory.CreateDirectory(badVfsConfig);
+        Directory.CreateDirectory(Path.Combine(
+            badVfsGame,
+            "PS3_GAME"));
+        File.WriteAllText(
+            Path.Combine(badVfsRoot, "rpcs3.exe"),
+            string.Empty);
+        File.WriteAllText(
+            Path.Combine(badVfsConfig, "vfs.yml"),
+            "[/dev_hdd0/: broken");
+        SfoWrite(
+            Path.Combine(
+                badVfsGame,
+                "PS3_GAME",
+                "PARAM.SFO"),
+            new Dictionary<string, string>
+            {
+                ["TITLE"] = "Base Game With Bad VFS",
+                ["TITLE_ID"] = "BLUS39996",
+                ["APP_VER"] = "01.00",
+                ["CATEGORY"] = "DG"
+            });
+        File.WriteAllText(
+            Path.Combine(badVfsConfig, "games.yml"),
+            $"BLUS39996: \"{EscPath(badVfsGame)}\"{Environment.NewLine}");
+        var badVfsInstall = Rpcs3InstallService.FromExe(
+            Path.Combine(badVfsRoot, "rpcs3.exe"));
+        var badVfsResult = new GameScanner().ScanInfo(
+            badVfsInstall);
+        Assert(badVfsResult.Games.Any(game => game.Serial == "BLUS39996") &&
+               badVfsResult.Diags.Any(diagnostic =>
+                   diagnostic.Code == ScanCode.GameBad &&
+                   diagnostic.SrcPath.EndsWith(
+                       "vfs.yml",
+                       StringComparison.OrdinalIgnoreCase)),
+            "Expected malformed vfs.yml to fail closed for dev_hdd0 discovery while preserving independent games.yml discovery and diagnostics.");
+
         var legacyRpcs3Root = Path.Combine(env.TempRoot, "rpcs3-legacy-games-yml");
         var legacyConfigPath = Path.Combine(legacyRpcs3Root, "config");
         var legacyGameFolder = Path.Combine(env.TempRoot, "legacy-games", "BLUS00003");
@@ -254,7 +411,8 @@ internal static partial class Program
         {
             ["TITLE"] = "Legacy Root Games YML",
             ["TITLE_ID"] = "BLUS00003",
-            ["APP_VER"] = "01.00"
+            ["APP_VER"] = "01.00",
+            ["CATEGORY"] = "DG"
         });
         File.WriteAllText(Path.Combine(legacyRpcs3Root, "games.yml"), $"BLUS00003: \"{EscPath(legacyGameFolder)}\"{Environment.NewLine}");
         var legacyInstall = Rpcs3InstallService.FromExe(Path.Combine(legacyRpcs3Root, "rpcs3.exe"));
@@ -291,7 +449,8 @@ internal static partial class Program
             {
                 ["TITLE"] = $"Large List Game {index}",
                 ["TITLE_ID"] = serial,
-                ["APP_VER"] = "01.00"
+                ["APP_VER"] = "01.00",
+                ["CATEGORY"] = "DG"
             });
             largeGamesYml.AppendLine(CultureInfo.InvariantCulture, $"{serial}: \"{EscPath(folder)}\"");
         }
@@ -507,8 +666,8 @@ internal static partial class Program
             "Expected Vblank Rate to be classified as ManualTiming.");
         Assert(recommendation.Changes.Any(change => change.Key == "Read Color Buffers" && change.Risk == RecRisk.Cond),
             "Expected may-cause notes to be classified as Conditional.");
-        Assert(recommendation.Changes.Any(change => change.Key == "Write Depth Buffer" && change.Risk == RecRisk.PatDep),
-            "Expected patch-dependent notes to be classified as PatchDependent.");
+        Assert(recommendation.Changes.All(change => change.Key != "Write Depth Buffer"),
+            "Expected PatchSpecific Write Depth Buffer guidance to stay out of automatic catalog recommendations.");
         Assert(recommendation.Changes.Any(change => change.Key == "Strict Rendering Mode" && change.Risk == RecRisk.PerfCost),
             "Expected performance-cost notes to be classified as PerformanceCost.");
 

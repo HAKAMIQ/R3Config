@@ -1,0 +1,1756 @@
+{
+ "source": "GeneralNotesSection",
+ "total": 112,
+ "rules": [
+  {
+   "id": "GN-001",
+   "upstream": "GeneralNotesSection#42",
+   "severity": "error",
+   "inputKeys": [
+    "edat_block_offset",
+    "elf_boot_path",
+    "failed_to_decrypt",
+    "rsx_unsupported_gpu",
+    "serial",
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-002",
+   "upstream": "GeneralNotesSection#44",
+   "severity": "error",
+   "inputKeys": [
+    "edat_block_offset",
+    "elf_boot_path",
+    "failed_to_boot",
+    "failed_to_decrypt",
+    "rsx_unsupported_gpu",
+    "serial",
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-003",
+   "upstream": "GeneralNotesSection#46",
+   "severity": "error",
+   "inputKeys": [
+    "elf_boot_path",
+    "failed_to_boot",
+    "failed_to_decrypt",
+    "failed_to_verify_npdrm",
+    "rsx_unsupported_gpu",
+    "serial",
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-004",
+   "upstream": "GeneralNotesSection#48",
+   "severity": "error",
+   "inputKeys": [
+    "disc_to_psn_serial",
+    "failed_to_boot",
+    "failed_to_decrypt",
+    "failed_to_verify_npdrm",
+    "rsx_unsupported_gpu",
+    "serial",
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "PsnDiscFixBuildVersion",
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-005",
+   "upstream": "GeneralNotesSection#52",
+   "severity": "error",
+   "inputKeys": [
+    "disc_to_psn_serial",
+    "failed_to_boot",
+    "failed_to_decrypt",
+    "failed_to_verify_npdrm",
+    "game_status",
+    "rsx_unsupported_gpu",
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "PsnDiscFixBuildVersion",
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-006",
+   "upstream": "GeneralNotesSection#54",
+   "severity": "error",
+   "inputKeys": [
+    "disc_to_psn_serial",
+    "failed_to_boot",
+    "failed_to_decrypt",
+    "failed_to_verify_npdrm",
+    "game_status"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "PsnDiscFixBuildVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-007",
+   "upstream": "GeneralNotesSection#60",
+   "severity": "warning",
+   "inputKeys": [
+    "disc_to_psn_serial",
+    "fw_version_installed",
+    "game_status"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "MinimumFirmwareVersion",
+    "PsnDiscFixBuildVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "depends on network / bot-side derived data (update lookup, compat API, moderation)"
+  },
+  {
+   "id": "GN-008",
+   "upstream": "GeneralNotesSection#63",
+   "severity": "warning",
+   "inputKeys": [
+    "fw_version_installed",
+    "game_status"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "MinimumFirmwareVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice on an observed fact; no current evidence supports acting on it"
+  },
+  {
+   "id": "GN-009",
+   "upstream": "GeneralNotesSection#83",
+   "severity": "warning",
+   "inputKeys": [
+    "elf_boot_path_full",
+    "ldr_boot_path_full",
+    "ldr_disc_full",
+    "ldr_game_full",
+    "ldr_path_full",
+    "win_path"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-010",
+   "upstream": "GeneralNotesSection#91",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-011",
+   "upstream": "GeneralNotesSection#96",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-012",
+   "upstream": "GeneralNotesSection#104",
+   "severity": "error",
+   "inputKeys": [
+    "host_root_in_boot"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "/root_host/"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-013",
+   "upstream": "GeneralNotesSection#112",
+   "severity": "error",
+   "inputKeys": [
+    "elf_boot_path",
+    "elf_boot_path_serial",
+    "host_root_in_boot",
+    "ldr_boot_path",
+    "ldr_boot_path_serial",
+    "ldr_game",
+    "ldr_game_serial",
+    "ldr_path",
+    "ldr_path_serial"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "/dev_hdd0/game/"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-014",
+   "upstream": "GeneralNotesSection#117",
+   "severity": "error",
+   "inputKeys": [
+    "elf_boot_path",
+    "elf_boot_path_serial",
+    "host_root_in_boot",
+    "ldr_boot_path",
+    "ldr_boot_path_serial",
+    "ldr_disc",
+    "ldr_disc_serial",
+    "ldr_game",
+    "ldr_game_serial",
+    "ldr_path",
+    "ldr_path_serial"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "/dev_hdd0/game/"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-015",
+   "upstream": "GeneralNotesSection#119",
+   "severity": "warning",
+   "inputKeys": [
+    "elf_boot_path",
+    "elf_boot_path_serial",
+    "ldr_boot_path",
+    "ldr_boot_path_serial",
+    "ldr_disc",
+    "ldr_disc_serial",
+    "ldr_game",
+    "ldr_game_serial",
+    "ldr_path",
+    "ldr_path_serial"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-016",
+   "upstream": "GeneralNotesSection#124",
+   "severity": "error",
+   "inputKeys": [
+    "corrupt_iso_file_error",
+    "corrupted_iso_file",
+    "elf_boot_path_serial",
+    "ldr_boot_path_serial",
+    "ldr_disc",
+    "ldr_disc_serial"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-017",
+   "upstream": "GeneralNotesSection#126",
+   "severity": "error",
+   "inputKeys": [
+    "corrupt_iso_file_error",
+    "corrupted_iso_file",
+    "ldr_disc",
+    "ldr_disc_serial"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-018",
+   "upstream": "GeneralNotesSection#135",
+   "severity": "error",
+   "inputKeys": [
+    "corrupt_iso_file_error",
+    "corrupted_iso_file",
+    "failed_disc_key_file",
+    "iso_path",
+    "os_type",
+    "vfs_disc_mount"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-019",
+   "upstream": "GeneralNotesSection#137",
+   "severity": "warning",
+   "inputKeys": [
+    "corrupt_iso_file_error",
+    "failed_disc_key_file",
+    "found_disc_key_file",
+    "iso_path",
+    "os_type",
+    "vfs_disc_mount"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-020",
+   "upstream": "GeneralNotesSection#140",
+   "severity": "warning",
+   "inputKeys": [
+    "failed_disc_key_file",
+    "found_disc_key_file",
+    "iso_path",
+    "os_type",
+    "vfs_disc_mount"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-021",
+   "upstream": "GeneralNotesSection#148",
+   "severity": "warning",
+   "inputKeys": [
+    "failed_disc_key_file",
+    "found_disc_key_file",
+    "mounted_dev_bdvd",
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-022",
+   "upstream": "GeneralNotesSection#152",
+   "severity": "info",
+   "inputKeys": [
+    "log_from_ui",
+    "mounted_dev_bdvd",
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-023",
+   "upstream": "GeneralNotesSection#155",
+   "severity": "info",
+   "inputKeys": [
+    "log_from_ui",
+    "mounted_dev_bdvd",
+    "os_type",
+    "ppu_decoder",
+    "renderer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-024",
+   "upstream": "GeneralNotesSection#156",
+   "severity": "info",
+   "inputKeys": [
+    "log_from_ui",
+    "mounted_dev_bdvd",
+    "os_type",
+    "ppu_decoder",
+    "renderer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-025",
+   "upstream": "GeneralNotesSection#163",
+   "severity": "info",
+   "inputKeys": [
+    "fw_installed_message",
+    "fw_version_installed",
+    "game_title",
+    "log_from_ui",
+    "ppu_decoder",
+    "renderer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-026",
+   "upstream": "GeneralNotesSection#164",
+   "severity": "info",
+   "inputKeys": [
+    "fw_installed_message",
+    "fw_version_installed",
+    "game_title",
+    "log_from_ui",
+    "ppu_decoder",
+    "renderer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-027",
+   "upstream": "GeneralNotesSection#171",
+   "severity": "error",
+   "inputKeys": [
+    "fw_installed_message",
+    "fw_version_installed",
+    "game_category",
+    "game_title"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-028",
+   "upstream": "GeneralNotesSection#176",
+   "severity": "error",
+   "inputKeys": [
+    "game_category"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "ALREADY_COVERED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "GN-029",
+   "upstream": "GeneralNotesSection#181",
+   "severity": "error",
+   "inputKeys": [
+    "game_category"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "ALREADY_COVERED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "GN-030",
+   "upstream": "GeneralNotesSection#194",
+   "severity": "info",
+   "inputKeys": [
+    "compat_database_path"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "IMPLEMENTED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "GN-031",
+   "upstream": "GeneralNotesSection#196",
+   "severity": "warning",
+   "inputKeys": [
+    "compat_database_path"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "IMPLEMENTED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "GN-032",
+   "upstream": "GeneralNotesSection#198",
+   "severity": "warning",
+   "inputKeys": [
+    "compat_database_path"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "IMPLEMENTED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "GN-033",
+   "upstream": "GeneralNotesSection#202",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-034",
+   "upstream": "GeneralNotesSection#212",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-035",
+   "upstream": "GeneralNotesSection#215",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-036",
+   "upstream": "GeneralNotesSection#219",
+   "severity": "warning",
+   "inputKeys": [
+    "thread_count"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-037",
+   "upstream": "GeneralNotesSection#239",
+   "severity": "other",
+   "inputKeys": [
+    "game_status"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice on an observed fact; no current evidence supports acting on it"
+  },
+  {
+   "id": "GN-038",
+   "upstream": "GeneralNotesSection#251",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_model"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-039",
+   "upstream": "GeneralNotesSection#258",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_extensions",
+    "cpu_model"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-040",
+   "upstream": "GeneralNotesSection#262",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_extensions"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-041",
+   "upstream": "GeneralNotesSection#279",
+   "severity": "warning",
+   "inputKeys": [
+    "cpu_extensions"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-042",
+   "upstream": "GeneralNotesSection#287",
+   "severity": "warning",
+   "inputKeys": [
+    "memory_amount"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-043",
+   "upstream": "GeneralNotesSection#290",
+   "severity": "warning",
+   "inputKeys": [
+    "memory_amount",
+    "total_cpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-044",
+   "upstream": "GeneralNotesSection#294",
+   "severity": "warning",
+   "inputKeys": [
+    "current_ram",
+    "memory_amount",
+    "total_cpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-045",
+   "upstream": "GeneralNotesSection#311",
+   "severity": "error",
+   "inputKeys": [
+    "glsl_version",
+    "opengl_version"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "MinimumOpenGLVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-046",
+   "upstream": "GeneralNotesSection#319",
+   "severity": "warning",
+   "inputKeys": [
+    "os_type",
+    "os_version"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "MinimumOpenGLVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-047",
+   "upstream": "GeneralNotesSection#323",
+   "severity": "warning",
+   "inputKeys": [
+    "os_type",
+    "os_version"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "MinimumOpenGLVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-048",
+   "upstream": "GeneralNotesSection#325",
+   "severity": "other",
+   "inputKeys": [
+    "os_type",
+    "os_version"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "MinimumOpenGLVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-049",
+   "upstream": "GeneralNotesSection#341",
+   "severity": "warning",
+   "inputKeys": [
+    "discrete_gpu_info",
+    "gpu_info"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-050",
+   "upstream": "GeneralNotesSection#344",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-051",
+   "upstream": "GeneralNotesSection#361",
+   "severity": "important",
+   "inputKeys": [
+    "driver_version_info",
+    "driver_version_parsed",
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "NvidiaRecommendedLinuxDriverVersion",
+    "NvidiaRecommendedWindowsDriverVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-052",
+   "upstream": "GeneralNotesSection#365",
+   "severity": "info",
+   "inputKeys": [
+    "driver_version_parsed",
+    "os_type",
+    "renderer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "NvidiaRecommendedLinuxDriverVersion",
+    "NvidiaRecommendedWindowsDriverVersion",
+    "NvidiaTextureMemoryBugFixedVersion",
+    "NvidiaTextureMemoryBugVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-053",
+   "upstream": "GeneralNotesSection#371",
+   "severity": "info",
+   "inputKeys": [
+    "os_type",
+    "renderer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "NvidiaFullscreenBugFixedVersion",
+    "NvidiaFullscreenBugVersion",
+    "NvidiaRecommendedLinuxDriverVersion",
+    "NvidiaRecommendedWindowsDriverVersion",
+    "NvidiaTextureMemoryBugFixedVersion",
+    "NvidiaTextureMemoryBugVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-054",
+   "upstream": "GeneralNotesSection#381",
+   "severity": "important",
+   "inputKeys": [
+    "os_type",
+    "renderer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "AmdDriverVersionProvider",
+    "AmdShaderCompilationBugFixedVersion",
+    "AmdShaderCompilationBugVersion",
+    "LatestKnownVersion",
+    "NvidiaFullscreenBugFixedVersion",
+    "NvidiaFullscreenBugVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-055",
+   "upstream": "GeneralNotesSection#383",
+   "severity": "important",
+   "inputKeys": [
+    "os_type",
+    "renderer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "AmdDriverVersionProvider",
+    "AmdShaderCompilationBugFixedVersion",
+    "AmdShaderCompilationBugVersion",
+    "LatestKnownVersion",
+    "NvidiaFullscreenBugFixedVersion"
+   ],
+   "settingsReferenced": [
+    "OpenGL",
+    "Renderer"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-056",
+   "upstream": "GeneralNotesSection#386",
+   "severity": "important",
+   "inputKeys": [
+    "os_type",
+    "renderer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "AmdDriverVersionProvider",
+    "AmdRecommendedWindowsDriverVersion",
+    "AmdShaderCompilationBugFixedVersion",
+    "AmdShaderCompilationBugVersion",
+    "LatestKnownVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-057",
+   "upstream": "GeneralNotesSection#391",
+   "severity": "important",
+   "inputKeys": [
+    "os_type",
+    "renderer"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "AmdDriverVersionProvider",
+    "AmdRecommendedWindowsDriverVersion",
+    "AmdShaderCompilationBugFixedVersion",
+    "IntelRecommendedWindowsDriverVersion",
+    "LatestKnownVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-058",
+   "upstream": "GeneralNotesSection#397",
+   "severity": "important",
+   "inputKeys": [
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "AmdRecommendedWindowsDriverVersion",
+    "IntelRecommendedWindowsDriverVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-059",
+   "upstream": "GeneralNotesSection#406",
+   "severity": "error",
+   "inputKeys": [
+    "shader_compile_error",
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "AmdRecommendedWindowsDriverVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "depends on network / bot-side derived data (update lookup, compat API, moderation)"
+  },
+  {
+   "id": "GN-060",
+   "upstream": "GeneralNotesSection#408",
+   "severity": "error",
+   "inputKeys": [
+    "shader_compile_error",
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "AmdRecommendedWindowsDriverVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "depends on network / bot-side derived data (update lookup, compat API, moderation)"
+  },
+  {
+   "id": "GN-061",
+   "upstream": "GeneralNotesSection#410",
+   "severity": "error",
+   "inputKeys": [
+    "shader_compile_error",
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "AmdRecommendedWindowsDriverVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "depends on network / bot-side derived data (update lookup, compat API, moderation)"
+  },
+  {
+   "id": "GN-062",
+   "upstream": "GeneralNotesSection#414",
+   "severity": "warning",
+   "inputKeys": [
+    "rsx_fragmentation_error",
+    "shader_compile_error",
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "depends on network / bot-side derived data (update lookup, compat API, moderation)"
+  },
+  {
+   "id": "GN-063",
+   "upstream": "GeneralNotesSection#422",
+   "severity": "warning",
+   "inputKeys": [
+    "enqueue_buffer_error",
+    "os_type",
+    "rsx_fragmentation_error"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-064",
+   "upstream": "GeneralNotesSection#424",
+   "severity": "warning",
+   "inputKeys": [
+    "enqueue_buffer_error",
+    "os_type",
+    "rsx_fragmentation_error"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-065",
+   "upstream": "GeneralNotesSection#428",
+   "severity": "warning",
+   "inputKeys": [
+    "enqueue_buffer_error",
+    "os_type",
+    "patch_error_column",
+    "patch_error_file",
+    "patch_error_line"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "patch.yml"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-066",
+   "upstream": "GeneralNotesSection#446",
+   "severity": "info",
+   "inputKeys": [
+    "ovl_patch",
+    "spu_patch"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "IMPLEMENTED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "GN-067",
+   "upstream": "GeneralNotesSection#452",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-068",
+   "upstream": "GeneralNotesSection#454",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-069",
+   "upstream": "GeneralNotesSection#464",
+   "severity": "question",
+   "inputKeys": [
+    "game_category"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "ALREADY_COVERED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "GN-070",
+   "upstream": "GeneralNotesSection#475",
+   "severity": "error",
+   "inputKeys": [
+    "game_category",
+    "ldr_disc",
+    "ldr_game_serial",
+    "serial"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-071",
+   "upstream": "GeneralNotesSection#477",
+   "severity": "info",
+   "inputKeys": [
+    "game_category",
+    "ldr_disc",
+    "ldr_game_serial",
+    "serial"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-072",
+   "upstream": "GeneralNotesSection#480",
+   "severity": "warning",
+   "inputKeys": [
+    "ldr_disc",
+    "ldr_game_serial",
+    "native_ui_input",
+    "serial"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Native UI"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-073",
+   "upstream": "GeneralNotesSection#482",
+   "severity": "error",
+   "inputKeys": [
+    "ldr_disc",
+    "ldr_game_serial",
+    "native_ui_input",
+    "serial",
+    "xaudio_init_error"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-074",
+   "upstream": "GeneralNotesSection#484",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_backend_init_error",
+    "ldr_disc",
+    "ldr_game_serial",
+    "native_ui_input",
+    "serial",
+    "xaudio_init_error"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-075",
+   "upstream": "GeneralNotesSection#488",
+   "severity": "error",
+   "inputKeys": [
+    "audio_backend_init_error",
+    "fw_missing_msg",
+    "fw_missing_something",
+    "ldr_disc",
+    "native_ui_input",
+    "xaudio_init_error"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-076",
+   "upstream": "GeneralNotesSection#491",
+   "severity": "warning",
+   "inputKeys": [
+    "audio_backend_init_error",
+    "booting_savestate",
+    "fw_missing_msg",
+    "fw_missing_something",
+    "native_ui_input",
+    "xaudio_init_error"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-077",
+   "upstream": "GeneralNotesSection#498",
+   "severity": "warning",
+   "inputKeys": [
+    "booting_savestate",
+    "fw_missing_msg",
+    "fw_missing_something",
+    "game_mod"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-078",
+   "upstream": "GeneralNotesSection#527",
+   "severity": "other",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [
+    "AncientBuild",
+    "OldBuild",
+    "PrehistoricBuild",
+    "VeryOldBuild",
+    "VeryVeryOldBuild"
+   ],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "no diagnostic input (fun/moderation text)"
+  },
+  {
+   "id": "GN-079",
+   "upstream": "GeneralNotesSection#529",
+   "severity": "other",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [
+    "AncientBuild",
+    "OldBuild",
+    "VeryOldBuild",
+    "VeryVeryOldBuild"
+   ],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "no diagnostic input (fun/moderation text)"
+  },
+  {
+   "id": "GN-080",
+   "upstream": "GeneralNotesSection#534",
+   "severity": "important",
+   "inputKeys": [
+    "build_commit",
+    "build_unknown"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "OldBuild",
+    "VeryOldBuild"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-081",
+   "upstream": "GeneralNotesSection#536",
+   "severity": "important",
+   "inputKeys": [
+    "build_commit",
+    "build_number",
+    "build_unknown",
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "OldBuild"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-082",
+   "upstream": "GeneralNotesSection#538",
+   "severity": "warning",
+   "inputKeys": [
+    "build_commit",
+    "build_number",
+    "build_unknown",
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-083",
+   "upstream": "GeneralNotesSection#540",
+   "severity": "important",
+   "inputKeys": [
+    "build_commit",
+    "build_number",
+    "build_unknown",
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-084",
+   "upstream": "GeneralNotesSection#547",
+   "severity": "warning",
+   "inputKeys": [
+    "build_commit",
+    "build_number",
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "BrokenMsvcOptimizationBuild",
+    "TryGetRpcs3Version",
+    "UnBrokenMsvcOptimizationBuild"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-085",
+   "upstream": "GeneralNotesSection#551",
+   "severity": "info",
+   "inputKeys": [
+    "os_type"
+   ],
+   "gameFamilies": [
+    "DesIds"
+   ],
+   "versionConstants": [
+    "BrokenMsvcOptimizationBuild",
+    "TryGetRpcs3Version",
+    "UnBrokenMsvcOptimizationBuild"
+   ],
+   "settingsReferenced": [
+    "All games",
+    "File",
+    "Remove Disk Cache"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "GN-086",
+   "upstream": "GeneralNotesSection#561",
+   "severity": "other",
+   "inputKeys": [
+    "game_update_version",
+    "game_version"
+   ],
+   "gameFamilies": [
+    "DesIds"
+   ],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "game-family rule: exact serial set preserved; predicate-level comparison against the Wiki/catalog is pending"
+  },
+  {
+   "id": "GN-087",
+   "upstream": "GeneralNotesSection#572",
+   "severity": "info",
+   "inputKeys": [
+    "elf_boot_path",
+    "ppu_patch"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-088",
+   "upstream": "GeneralNotesSection#576",
+   "severity": "info",
+   "inputKeys": [
+    "elf_boot_path",
+    "ppu_patch"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-089",
+   "upstream": "GeneralNotesSection#578",
+   "severity": "info",
+   "inputKeys": [
+    "elf_boot_path"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-090",
+   "upstream": "GeneralNotesSection#608",
+   "severity": "error",
+   "inputKeys": [
+    "fatal_error",
+    "fatal_error_context"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "ALREADY_COVERED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "GN-091",
+   "upstream": "GeneralNotesSection#613",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-092",
+   "upstream": "GeneralNotesSection#620",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Remove",
+    "Shader Cache"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-093",
+   "upstream": "GeneralNotesSection#625",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Remove",
+    "SPU Cache"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-094",
+   "upstream": "GeneralNotesSection#630",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "PPU Cache",
+    "Remove"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-095",
+   "upstream": "GeneralNotesSection#638",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "PPU Cache",
+    "Remove"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-096",
+   "upstream": "GeneralNotesSection#643",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [
+    "Remove",
+    "SPU Cache"
+   ],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-097",
+   "upstream": "GeneralNotesSection#661",
+   "severity": "error",
+   "inputKeys": [
+    "supported_gpu"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [
+    "DecompilerIssueEndVersion",
+    "DecompilerIssueStartVersion",
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "depends on network / bot-side derived data (update lookup, compat API, moderation)"
+  },
+  {
+   "id": "GN-098",
+   "upstream": "GeneralNotesSection#667",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [
+    "DecompilerIssueEndVersion",
+    "DecompilerIssueStartVersion",
+    "TryGetRpcs3Version"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-099",
+   "upstream": "GeneralNotesSection#672",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [
+    "DecompilerIssueEndVersion"
+   ],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-100",
+   "upstream": "GeneralNotesSection#677",
+   "severity": "error",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-101",
+   "upstream": "GeneralNotesSection#681",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-102",
+   "upstream": "GeneralNotesSection#718",
+   "severity": "warning",
+   "inputKeys": [
+    "ppu_decoder",
+    "unimplemented_syscall"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "IMPLEMENTED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "GN-103",
+   "upstream": "GeneralNotesSection#720",
+   "severity": "warning",
+   "inputKeys": [
+    "ppu_decoder",
+    "unimplemented_syscall"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "IMPLEMENTED",
+   "rationale": "the observed fact is stated by the parser; the attached advice is not ported"
+  },
+  {
+   "id": "GN-104",
+   "upstream": "GeneralNotesSection#726",
+   "severity": "error",
+   "inputKeys": [
+    "bad_save_data_path",
+    "ppu_decoder"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice on an observed fact; no current evidence supports acting on it"
+  },
+  {
+   "id": "GN-105",
+   "upstream": "GeneralNotesSection#747",
+   "severity": "error",
+   "inputKeys": [
+    "bad_trophy_data_path"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-106",
+   "upstream": "GeneralNotesSection#766",
+   "severity": "error",
+   "inputKeys": [
+    "save_dir_before_segfault"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-107",
+   "upstream": "GeneralNotesSection#793",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-108",
+   "upstream": "GeneralNotesSection#795",
+   "severity": "info",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-109",
+   "upstream": "GeneralNotesSection#803",
+   "severity": "info",
+   "inputKeys": [
+    "os_type"
+   ],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  },
+  {
+   "id": "GN-110",
+   "upstream": "GeneralNotesSection#872",
+   "severity": "other",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "no diagnostic input (fun/moderation text)"
+  },
+  {
+   "id": "GN-111",
+   "upstream": "GeneralNotesSection#874",
+   "severity": "other",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "NOT_APPLICABLE",
+   "rationale": "no diagnostic input (fun/moderation text)"
+  },
+  {
+   "id": "GN-112",
+   "upstream": "GeneralNotesSection#875",
+   "severity": "warning",
+   "inputKeys": [],
+   "gameFamilies": [],
+   "versionConstants": [],
+   "settingsReferenced": [],
+   "disposition": "REFERENCE_ONLY_CURRENTLY_UNVERIFIED",
+   "rationale": "advice or heuristic on hardware/OS/settings; not corroborated by the canonical Wiki (0 mentions) or current official evidence"
+  }
+ ]
+}

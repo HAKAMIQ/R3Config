@@ -18,6 +18,7 @@ public sealed class PatchMutationUseCase(
         bool expertMode,
         IReadOnlyList<PatMatch>? allMatches = null)
     {
+        VerifyCanaryArtemisEnable(matches, allMatches);
         var (liveEnabled, state) = LiveEnabled(
             install,
             allMatches,
@@ -105,9 +106,23 @@ public sealed class PatchMutationUseCase(
     public PatRes ApplyTxn(
         Mdl.PatchApplyPlan plan,
         Rpcs3InstallDescriptor install,
-        IReadOnlyList<PatMatch> selectedMatches)
+        IReadOnlyList<PatMatch> selectedMatches,
+        IReadOnlyList<PatMatch>? allMatches = null)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(selectedMatches);
+
+        return ApplyTxnGuarded(plan, install, selectedMatches, allMatches);
+    }
+
+    private PatRes ApplyTxnGuarded(
+        Mdl.PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install,
+        IReadOnlyList<PatMatch> selectedMatches,
+        IReadOnlyList<PatMatch>? allMatches)
     {
         Check(plan, install);
+        VerifyCanaryArtemisEnable(selectedMatches, allMatches);
         CheckSrc(selectedMatches);
         VerifyReviewedDefinitions(selectedMatches);
         VerifyRuntimeIdentityCollisions(install, selectedMatches, allowSelectedNewer: true);
@@ -176,7 +191,141 @@ public sealed class PatchMutationUseCase(
         };
     }
 
+    public PatRes ApplyPreparedManaged(
+        Mdl.PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install,
+        PatMatch selectedMatch,
+        LibStRes preparation)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(selectedMatch);
+
+        return ApplyPreparedManagedGuarded(plan, install, selectedMatch, preparation);
+    }
+
+    private PatRes ApplyPreparedManagedGuarded(
+        Mdl.PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install,
+        PatMatch selectedMatch,
+        LibStRes preparation)
+    {
+        Check(plan, install);
+        ArgumentNullException.ThrowIfNull(selectedMatch);
+        ArgumentNullException.ThrowIfNull(preparation);
+
+        if (!preparation.IsOk)
+        {
+            throw new InvalidOperationException(
+                preparation.Error ??
+                preparation.Message);
+        }
+
+        if (selectedMatch.Patch.Source !=
+            PatSrc.ManagedArtemis)
+        {
+            throw new InvalidOperationException(
+                "Prepared NCL application accepts only ManagedArtemis definitions.");
+        }
+
+        CheckSrc([selectedMatch]);
+        VerifyRuntimeIdentityCollisions(
+            install,
+            [selectedMatch],
+            allowSelectedNewer: true);
+
+        if (preparation.Extra.Count != 0)
+        {
+            throw new Rpcs3MutationBlockedException(
+                MutBlock.Tgt,
+                "Generated NCL preparation cannot mutate shared managed cheat-library files.");
+        }
+
+        var serial =
+            selectedMatch.TgtSer ??
+            selectedMatch.MatSer ??
+            throw new InvalidOperationException(
+                "The generated NCL match has no exact title ID.");
+
+        var expectedManagedPath =
+            BundledCheatPatchService.GetPath(
+                install.PatPath,
+                serial);
+
+        if (!Path.GetFullPath(
+                preparation.TgtPath).Equals(
+                    Path.GetFullPath(
+                        expectedManagedPath),
+                    StringComparison.OrdinalIgnoreCase))
+        {
+            throw new Rpcs3MutationBlockedException(
+                MutBlock.Tgt,
+                "The prepared NCL managed patch target does not match its exact title-specific RPCS3 path.");
+        }
+
+        var preparedFiles =
+            preparation.PreparedFile is null
+                ? Array.Empty<PatchPreparedFile>()
+                : [preparation.PreparedFile];
+
+        foreach (var file in preparedFiles)
+        {
+            if (file.Kind != PrepKind.PatCat ||
+                file.CatSrc != PatSrc.ManagedArtemis ||
+                !Path.GetFullPath(
+                    file.TgtPath).Equals(
+                        Path.GetFullPath(
+                            expectedManagedPath),
+                        StringComparison.OrdinalIgnoreCase))
+            {
+                throw new Rpcs3MutationBlockedException(
+                    MutBlock.Tgt,
+                    "Generated NCL preparation attempted an unexpected RPCS3 mutation target.");
+            }
+        }
+
+        if (!plan.HasChg)
+        {
+            throw new InvalidOperationException(
+                "The generated NCL patch activation plan is empty.");
+        }
+
+        var backupRoot =
+            Rpcs3AppPaths.BkpRoot(install);
+
+        mutationGuard.CheckCan(
+            install,
+            [
+                plan.PatCfg,
+                .. preparedFiles.Select(
+                    file => file.TgtPath)
+            ],
+            [backupRoot]);
+
+        var result = applyService.ApplyTxn(
+            plan,
+            backupRoot,
+            preparedFiles,
+            VldFunc(install));
+
+        return result with
+        {
+            PrepMsgs =
+                string.IsNullOrWhiteSpace(
+                    preparation.Message)
+                    ? []
+                    : [preparation.Message]
+        };
+    }
     public PatRes Apply(
+        Mdl.PatchApplyPlan plan,
+        Rpcs3InstallDescriptor install)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+
+        return ApplyGuarded(plan, install);
+    }
+
+    private PatRes ApplyGuarded(
         Mdl.PatchApplyPlan plan,
         Rpcs3InstallDescriptor install)
     {
@@ -194,6 +343,8 @@ public sealed class PatchMutationUseCase(
             validator);
     }
 
+    // Disable and RemoveArtemis only remove R3Config-enabled or R3Config-owned
+    // state. They are recovery operations and are intentionally not gated.
     public PatRes Disable(
         Mdl.PatchApplyPlan plan,
         Rpcs3InstallDescriptor install,
@@ -535,6 +686,34 @@ public sealed class PatchMutationUseCase(
         {
             throw new InvalidOperationException(
                 "Official, Canary, Artemis, and local patch sources must be applied separately.");
+        }
+    }
+
+    private static void VerifyCanaryArtemisEnable(
+        IReadOnlyList<PatMatch> selectedMatches,
+        IReadOnlyList<PatMatch>? allMatches)
+    {
+        if (allMatches is null)
+        {
+            if (selectedMatches.Any(match =>
+                    match.Patch.Source == PatSrc.Artemis))
+            {
+                throw new InvalidOperationException(
+                    "Artemis enable cannot validate Canary equivalents because the current match set is unavailable. Reload patches and try again.");
+            }
+
+            return;
+        }
+
+        foreach (var selected in selectedMatches)
+        {
+            if (CanaryArtemisPolicy.HasApplicableEquivalent(
+                    selected,
+                    allMatches))
+            {
+                throw new InvalidOperationException(
+                    $"Artemis patch '{selected.Patch.Title}' has an applicable Canary equivalent and cannot be enabled through Artemis. Use the Canary version.");
+            }
         }
     }
 

@@ -35,6 +35,8 @@ public sealed partial class MainVm
             _gameLibraryScanCancellation = null;
         }
 
+        CancelLogDiag();
+        StopRecSync();
         HCanary.HashChg -= OnHCanaryHashChanged;
         if (IsBusy)
         {

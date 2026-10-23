@@ -23,13 +23,25 @@ public sealed record CfgChg(
     string Value,
     string WikiKey,
     string? Notes,
-    RecRisk Risk)
+    RecRisk Risk,
+    WikiRecommendationClass Class =
+        WikiRecommendationClass.GeneralRecommendation)
 {
     [JsonIgnore]
     public string Path => $"{Section} / {Key}";
+
+    [JsonIgnore]
+    public RecOrigin Origin { get; init; } = RecOrigin.Baseline;
 }
 
 public sealed record WikiRec(
     string Serial,
     [property: JsonPropertyName("WikiTitle")] string WikiName,
-    IReadOnlyList<CfgChg> Changes);
+    IReadOnlyList<CfgChg> Changes,
+    WikiGameIdRole Binding = WikiGameIdRole.Primary,
+    string? VariantLabel = null)
+{
+    [JsonIgnore]
+    public bool IsInherited =>
+        Binding != WikiGameIdRole.Primary;
+}

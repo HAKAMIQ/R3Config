@@ -64,15 +64,15 @@
                     MouseLeftButtonDown="DragWin">
 
                 <Grid Height="32"
-                      FlowDirection="LeftToRight"
+                      FlowDirection="{DynamicResource App.CaptionButtonsFlowDirection}"
                       ClipToBounds="True">
 
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="46" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="46" />
                     </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0"
+                    <Button Grid.Column="1"
                             AutomationProperties.Name="{lang:TextExt Key=Window.CloseTip}"
                             ToolTip="{lang:TextExt Key=Window.CloseTip}"
                             Click="CloseWin"
@@ -101,7 +101,7 @@
                               UseLayoutRounding="True">
 
                             <TextBlock Text=""
-                                       FontFamily="Segoe Fluent Icons"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="10"
                                        Foreground="{Binding Foreground,
                                                             RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
@@ -114,7 +114,7 @@
                         </Grid>
                     </Button>
 
-                    <TextBlock Grid.Column="1"
+                    <TextBlock Grid.Column="0"
                                Text="{lang:TextExt Key=HCanary.Title}"
                                Style="{StaticResource HCanLocalizedTitleText}"
                                FlowDirection="{DynamicResource App.TextFlowDirection}"
