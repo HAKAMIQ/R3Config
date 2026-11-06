@@ -277,8 +277,11 @@ public sealed partial class MainVm : VmBase
                     serial: row.Game.Serial,
                     title: GameVm.ResolveTitle(
                         row.Game,
-                        row.Rec),
-                    isDetectedInRpcs3: row.InR3))
+                        row.Rec,
+                        _gameDatabase.FindCompatibility(row.Game.Serial)),
+                    isDetectedInRpcs3: row.InR3,
+                    compatibility: _gameDatabase.FindCompatibility(row.Game.Serial),
+                    config: _gameDatabase.FindConfig(row.Game.Serial)))
                 .ToArray();
 
             GameList.Load(gameItems);

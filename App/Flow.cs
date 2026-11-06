@@ -400,6 +400,11 @@ public sealed class AppFlow
         return WikiEvidenceCases().LoadKnowledge(baseDir);
     }
 
+    public GameDatabaseLoadResult LoadGameDatabase(string baseDir)
+    {
+        return (_cases.GameDatabase ?? new GameDatabaseUseCase()).Load(baseDir);
+    }
+
     public GameSettingsModel GameSettings(
         CfgPlan? plan,
         Rpcs3GameDescriptor game,

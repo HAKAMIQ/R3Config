@@ -15,6 +15,16 @@ namespace R3Config.Vm;
 
 public sealed partial class MainVm : VmBase
 {
+    private void LoadGameDatabase()
+    {
+        var result = _flow.LoadGameDatabase(AppContext.BaseDirectory);
+        _gameDatabase = result.Database;
+        if (result.Error is not null)
+        {
+            Log(result.Error);
+        }
+    }
+
     public void LoadR3Ui()
     {
         var isRunning = false;

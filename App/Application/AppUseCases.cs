@@ -18,4 +18,5 @@ public sealed record AppUseCases(
     WikiEvidenceUseCase? WikiEvidence = null,
     RuntimeContextUseCase? RuntimeContext = null,
     LogDiagnosticsUseCase? LogDiagnostics = null,
-    RecommendationSyncUseCase? RecommendationSync = null);
+    RecommendationSyncUseCase? RecommendationSync = null,
+    GameDatabaseUseCase? GameDatabase = null);

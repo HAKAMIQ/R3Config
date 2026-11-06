@@ -27,6 +27,7 @@ public sealed partial class MainVm : VmBase, IDisposable
     private readonly Func<Rpcs3InstallDescriptor, Rpcs3GameDescriptor, GameLaunchResult> _launchGame;
     private Rpcs3InstallDescriptor? _install;
     private RecSvc? _catalog;
+    private Rpcs3GameDatabase _gameDatabase = Rpcs3GameDatabase.Empty;
     private string? _loadErr;
     private PatCat? _patCat;
     private string? _catErr;
@@ -201,6 +202,7 @@ public sealed partial class MainVm : VmBase, IDisposable
         };
         HCanary.HashChg += OnHCanaryHashChanged;
 
+        LoadGameDatabase();
         LoadCat();
         InitializeGameLibrary();
         HCanary.Load(AppContext.BaseDirectory);

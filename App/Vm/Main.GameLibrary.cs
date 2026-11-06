@@ -114,6 +114,8 @@ public sealed partial class MainVm
                 {
                     var recommendation =
                         _catalog?.Find(game.Serial);
+                    var compatibility =
+                        _gameDatabase.FindCompatibility(game.Serial);
 
                     return new GameVm(
                         game,
@@ -122,8 +124,11 @@ public sealed partial class MainVm
                         game.Serial,
                         GameVm.ResolveTitle(
                             game,
-                            recommendation),
-                        isDetectedInRpcs3: true);
+                            recommendation,
+                            compatibility),
+                        isDetectedInRpcs3: true,
+                        compatibility,
+                        _gameDatabase.FindConfig(game.Serial));
                 })
         ];
     }

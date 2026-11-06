@@ -105,6 +105,8 @@ $requiredFiles = @(
     'Wpf.Ui.dll',
     'Wpf.Ui.Abstractions.dll',
     'Data/cat.json',
+    'Data/compat-export.json',
+    'Data/game-configs.json',
     'Data/wiki-notes.json',
     'Data/rpcs3-builds.json',
     'Data/diagnostics-kb.json',
@@ -271,6 +273,23 @@ foreach ($languagePack in @('Lang/ar-SA.r3lang', 'Lang/en-US.r3lang')) {
 $catalog = Get-Content -Raw -LiteralPath (Join-Path $releasePath 'Data/cat.json') | ConvertFrom-Json
 if (@($catalog.Recommendations).Count -eq 0) {
     throw 'Release recommendation catalog is empty.'
+}
+
+$compatibilityPath = Join-Path $releasePath 'Data/compat-export.json'
+$configDatabasePath = Join-Path $releasePath 'Data/game-configs.json'
+$compatibilityHash = Get-Sha256Hex -LiteralPath $compatibilityPath
+$configDatabaseHash = Get-Sha256Hex -LiteralPath $configDatabasePath
+if ($compatibilityHash -ne '21d87c3cf1ce354747dedf73e0b0faee918ec7f017ea1a5f40d4fbcff5fc99e8') {
+    throw "Data/compat-export.json SHA-256 drifted from the pinned November snapshot: $compatibilityHash"
+}
+if ($configDatabaseHash -ne 'b08d2fb6a6e8e663e62bb70a0f307c644272bf276a0c855adb49d86e93b1a391') {
+    throw "Data/game-configs.json SHA-256 drifted from the pinned November snapshot: $configDatabaseHash"
+}
+$compatibilityDatabase = Get-Content -Raw -LiteralPath $compatibilityPath | ConvertFrom-Json
+$configDatabase = Get-Content -Raw -LiteralPath $configDatabasePath | ConvertFrom-Json
+if (@($compatibilityDatabase.results.PSObject.Properties).Count -ne 6798 -or
+    @($configDatabase.games.PSObject.Properties).Count -ne 2294) {
+    throw 'Bundled RPCS3 November game database counts are invalid.'
 }
 
 $forbiddenCbak = Join-Path $releasePath 'Data/cbak.json'

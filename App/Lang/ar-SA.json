@@ -129,6 +129,7 @@
   "Games.FilterTooltip": "تصفية الألعاب (الكل أو المثبتة فقط).",
   "Games.SearchPlaceholder": "بحث باسم اللعبة أو السيريال...",
   "Games.SearchTip": "اكتب جزءا من الاسم أو السيريال للبحث.",
+  "Games.CompatibilityLine": "التوافق: {0} ({1})",
   "Games.Serial": "السيريال",
   "Games.Title": "الألعاب",
   "Games.TitleCol": "العنوان",

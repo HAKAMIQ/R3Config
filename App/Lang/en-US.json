@@ -129,6 +129,7 @@
   "Games.FilterTooltip": "Filter the game list by the catalog or locally detected RPCS3 games.",
   "Games.SearchPlaceholder": "Search by game or serial...",
   "Games.SearchTip": "Search by game name or serial.",
+  "Games.CompatibilityLine": "Compatibility: {0} ({1})",
   "Games.Serial": "Serial",
   "Games.Title": "Games",
   "Games.TitleCol": "Title",

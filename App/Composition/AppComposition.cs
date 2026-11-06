@@ -141,7 +141,8 @@ public static class AppComposition
             RuntimeContext: new RuntimeContextUseCase(),
             LogDiagnostics: new LogDiagnosticsUseCase(),
             RecommendationSync: BuildRecommendationSync(
-                recommendationSyncFolder ?? RecommendationSyncUseCase.DefaultFolder));
+                recommendationSyncFolder ?? RecommendationSyncUseCase.DefaultFolder),
+            GameDatabase: new GameDatabaseUseCase());
     }
 
     // One HTTP client and one store for the application lifetime; the sync

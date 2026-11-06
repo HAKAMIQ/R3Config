@@ -32,6 +32,16 @@ internal static partial class Program
 
         try
         {
+            if (args.Length == 1 && args[0].Equals("--game-database-only", StringComparison.OrdinalIgnoreCase))
+            {
+                runner.RunCase(nameof(Rpcs3GameDatabaseT), () => Rpcs3GameDatabaseT.Run(AppContext.BaseDirectory));
+                return;
+            }
+            if (args.Length == 3 && args[0].Equals("--game-database-audit", StringComparison.OrdinalIgnoreCase))
+            {
+                runner.RunCase(nameof(Rpcs3GameDatabaseT), () => Rpcs3GameDatabaseT.Audit(args[1], args[2]));
+                return;
+            }
             if (args.Length is 1 or 2 && args[0] == "--review-fixes-only")
             {
                 ReviewFixesT.Run(runner, context.CreateTempRoot("ReviewFixes"), args.Length == 2 ? args[1] : null);
@@ -254,6 +264,7 @@ internal static partial class Program
             runner.RunCase(nameof(UiDateT), () => UiDateT.Run(RepoRoot()));
             runner.RunCase(nameof(SetSvcT), () => SetSvcT.Run(smokeRoot));
             runner.RunCase(nameof(RecSyncT), () => RecSyncT.Run(smokeRoot));
+            runner.RunCase(nameof(Rpcs3GameDatabaseT), () => Rpcs3GameDatabaseT.Run(AppContext.BaseDirectory));
             runner.RunCase(
                 nameof(CfgBaselineT),
                 () => CfgBaselineT.Run(smokeRoot));

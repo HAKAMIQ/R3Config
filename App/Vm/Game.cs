@@ -1,4 +1,6 @@
+using R3Config.Lang;
 using R3Config.Mdl;
+using R3Config.Svc;
 
 namespace R3Config.Vm;
 
@@ -12,7 +14,9 @@ public sealed class GameVm : VmBase
         RecSum recState,
         string serial,
         string title,
-        bool isDetectedInRpcs3)
+        bool isDetectedInRpcs3,
+        Rpcs3CompatibilityEntry? compatibility = null,
+        RecSyncApiGame? config = null)
     {
         Game = game;
         Rec = recommendation;
@@ -20,11 +24,14 @@ public sealed class GameVm : VmBase
         Serial = serial;
         Title = title;
         InR3 = isDetectedInRpcs3;
+        Compatibility = compatibility;
+        Config = config;
     }
 
     public static string ResolveTitle(
         Rpcs3GameDescriptor game,
-        WikiRec? recommendation)
+        WikiRec? recommendation,
+        Rpcs3CompatibilityEntry? compatibility = null)
     {
         ArgumentNullException.ThrowIfNull(game);
 
@@ -39,8 +46,12 @@ public sealed class GameVm : VmBase
             return scannedTitle;
         }
 
-        var catalogTitle =
-            recommendation?.WikiName.Trim();
+        var catalogTitle = recommendation?.WikiName.Trim();
+
+        if (string.IsNullOrWhiteSpace(catalogTitle))
+        {
+            catalogTitle = compatibility?.Title;
+        }
 
         return string.IsNullOrWhiteSpace(
                 catalogTitle)
@@ -69,6 +80,20 @@ public sealed class GameVm : VmBase
     public string Title { get; }
 
     public bool InR3 { get; }
+
+    public Rpcs3CompatibilityEntry? Compatibility { get; }
+
+    public RecSyncApiGame? Config { get; }
+
+    public string CompatibilityLine =>
+        Compatibility is null
+            ? string.Empty
+            : UiText.Fmt(
+                "Games.CompatibilityLine",
+                Compatibility.Status,
+                Compatibility.Date.ToString(
+                    "yyyy-MM-dd",
+                    System.Globalization.CultureInfo.InvariantCulture));
 
     public int Pending => RecState.Pending;
 }
