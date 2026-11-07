@@ -33,6 +33,12 @@ internal static class ReviewedNotesImportT
     private const string FromWiki = "Fixes visual problems in-game.";
     private const string FromWikiAr = "يصلح المشكلات الرسومية داخل اللعبة.";
 
+    // Round-6 row blocked by the technical-token gate: approved Arabic with "CPU" kept (not "معالج").
+    private const string FromCpu =
+        "Big performance boost. On a decent CPU, \"Approximate\" is the way to go. It provides good accuracy (slightly less than on PS3) almost across all the game. \"Precise\" would be required only on some sections on Stahl Arms (with Relaxed/Approximate, some light sources produce bloom or wrong light color not present on PS3).";
+    private const string FromCpuAr =
+        "يحسن الأداء كثيرا. مع CPU جيد، يوفر Approximate أداء مرتفعا ودقة قريبة من جهاز PS3 الأصلي في معظم اللعبة. قد تحتاج Precise في بعض أقسام Stahl Arms، لأن Relaxed وApproximate قد يسببان توهجا أو ألوان إضاءة غير موجودة على PS3.";
+
     // flag=skip with approved == English: not imported.
     private const string SkipSame = "RPCN 1.4.0 - 2025/02/12";
 
@@ -50,6 +56,7 @@ internal static class ReviewedNotesImportT
             AssertExact(FromArByEn, FromArByEnAr);
             AssertExact(FromOfficial, FromOfficialAr);
             AssertExact(FromWiki, FromWikiAr);
+            AssertExact(FromCpu, FromCpuAr);
 
             var online = new GameOnlineVm(new WikiOnlineEvidence(
                 "Page", WikiOnlineState.Supported, "1.00", null, "N/A",

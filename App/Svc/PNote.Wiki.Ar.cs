@@ -77,7 +77,7 @@ public static partial class NoteSvc
             ["Avoids black screen"] =
                 "يمنع ظهور الشاشة السوداء.",
             ["Big performance boost. On a decent CPU, \"Approximate\" is the way to go. It provides good accuracy (slightly less than on PS3) almost across all the game. \"Precise\" would be required only on some sections on Stahl Arms (with Relaxed/Approximate, some light sources produce bloom or wrong light color not present on PS3)."] =
-                "يحسن الأداء بدرجة كبيرة. على CPU جيد، تعد Approximate القيمة الأنسب وتوفر دقة جيدة أقل قليلا من PS3 في معظم اللعبة. لا تحتاج Precise إلا في بعض أقسام Stahl Arms؛ إذ قد تنتج Relaxed أو Approximate توهج Bloom أو ألوان إضاءة خاطئة غير موجودة على PS3.",
+                "يحسن الأداء كثيرا. مع CPU جيد، يوفر Approximate أداء مرتفعا ودقة قريبة من جهاز PS3 الأصلي في معظم اللعبة. قد تحتاج Precise في بعض أقسام Stahl Arms، لأن Relaxed وApproximate قد يسببان توهجا أو ألوان إضاءة غير موجودة على PS3.",
             ["Breaks pod windows and other transparent objects if disabled. Only disable if you experience graphical issues on AMD GPUs."] =
                 "يؤدي تعطيله إلى كسر نوافذ Pod والعناصر الشفافة الأخرى. عطله فقط إذا واجهت مشكلات رسومية على بطاقات AMD GPU.",
             ["Can help performance on low core-count CPUs, otherwise use unlimited"] =
