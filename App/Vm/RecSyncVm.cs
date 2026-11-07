@@ -74,6 +74,9 @@ public sealed class RecSyncVm : VmBase
 
     public event EventHandler? PrefChg;
 
+    // Clock used for the Wiki freshness state; replaced only by tests.
+    public Func<DateTimeOffset> Now { get; set; } = () => DateTimeOffset.UtcNow;
+
     public ObservableCollection<RecSyncSourceRowVm> Sources { get; } = [];
 
     public ObservableCollection<RecSyncChangeRowVm> Changes { get; } = [];
@@ -205,7 +208,7 @@ public sealed class RecSyncVm : VmBase
         {
             Sources.Add(new RecSyncSourceRowVm(
                 UiText.GetText($"Sync.Source.{state.Source}"),
-                UiText.GetText($"Sync.Status.{state.Status}"),
+                StatusText(state),
                 Time(state.LastSuccessUtc),
                 state.Status == RecSyncSourceStatus.NotPublished ? string.Empty : state.Detail ?? string.Empty));
         }
@@ -247,6 +250,37 @@ public sealed class RecSyncVm : VmBase
         OnChange(nameof(HasChanges));
         OnChange(nameof(HasNoChanges));
     }
+
+    private const int StaleAfterDays = 30;
+
+    // The Wiki row adds a Stale state with its date when the last successful
+    // sync is older than 30 days. With no successful sync the date of the
+    // embedded data (BaselineVersion, yyyy-MM-dd) is used; an unparsable
+    // version never produces a Stale claim.
+    private string StatusText(RecSyncSourceState state)
+    {
+        var status = UiText.GetText($"Sync.Status.{state.Status}");
+        if (state.Source != RecSyncSource.Wiki)
+        {
+            return status;
+        }
+
+        var last = state.LastSuccessUtc ?? EmbeddedDataDate();
+        return last is { } value && Now() - value > TimeSpan.FromDays(StaleAfterDays)
+            ? status + " | " + UiText.Fmt("Sync.Wiki.Stale", UiDate.Inline(value))
+            : status;
+    }
+
+    private DateTimeOffset? EmbeddedDataDate() =>
+        _data is not null &&
+        DateTime.TryParseExact(
+            _data.BaselineVersion,
+            "yyyy-MM-dd",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out var date)
+            ? new DateTimeOffset(DateTime.SpecifyKind(date, DateTimeKind.Local))
+            : null;
 
     private static string Time(DateTimeOffset? value) =>
         value is null

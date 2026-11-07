@@ -1512,6 +1512,7 @@
   "Sync.Status.Cancelled": "ألغي",
   "Sync.Status.Skipped": "مؤجل",
   "Sync.Status.NotPublished": "قاعدة GitHub لم تنشر بعد",
+  "Sync.Wiki.Stale": "قديمة: آخر تحديث {0}",
   "Sync.Kind.Added": "إضافة",
   "Sync.Kind.Updated": "تعديل",
   "Sync.Kind.Removed": "إزالة",

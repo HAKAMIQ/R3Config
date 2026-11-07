@@ -60,6 +60,16 @@ internal static partial class Program
                 WikiNotesParserT.RunCases(runner, args.Length == 2 ? args[1] : null);
                 return;
             }
+            if (args.Length == 1 && args[0].Equals("--online-notes-only", StringComparison.OrdinalIgnoreCase))
+            {
+                runner.RunCase(nameof(OnlineNotesT), OnlineNotesT.Run);
+                return;
+            }
+            if (args.Length == 1 && args[0].Equals("--rec-sync-stale-only", StringComparison.OrdinalIgnoreCase))
+            {
+                runner.RunCase(nameof(RecSyncStaleT), RecSyncStaleT.Run);
+                return;
+            }
             if (args.Length == 1 && args[0].Equals("--wiki-scope-only", StringComparison.OrdinalIgnoreCase))
             {
                 var root = context.CreateTempRoot("R3ConfigWikiScope");
@@ -281,6 +291,8 @@ internal static partial class Program
             runner.RunCase(nameof(WikiCorpusT), () => WikiCorpusT.Fixture(smokeRoot));
             WikiNotesParserT.RunCases(runner, null);
             runner.RunCase(nameof(GameSettingsUiT), GameSettingsUiT.Run);
+            runner.RunCase(nameof(OnlineNotesT), OnlineNotesT.Run);
+            runner.RunCase(nameof(RecSyncStaleT), RecSyncStaleT.Run);
             runner.RunCase(nameof(Rpcs3BuildCatalogT), Rpcs3BuildCatalogT.Run);
             runner.RunCase(nameof(RuntimeContextT), RuntimeContextT.Run);
             runner.RunCase(nameof(HostCpuT), HostCpuT.Run);
