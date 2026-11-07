@@ -82,11 +82,26 @@ public sealed class PatchCatalogMergeService
         Rpcs3PatchEntry existing,
         Rpcs3PatchEntry candidate)
     {
-        return AreEqual(existing.PatVer, candidate.PatVer) &&
-               !string.Equals(
-                   existing.DefPrint,
-                   candidate.DefPrint,
-                   StringComparison.OrdinalIgnoreCase);
+        if (string.Equals(
+                existing.DefPrint,
+                candidate.DefPrint,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // Changed content is only resolvable by version when both versions are
+        // present and RPCS3-comparable. Missing or incomparable versions would
+        // otherwise be settled by load order or by treating "missing" as older.
+        return AreEqual(existing.PatVer, candidate.PatVer) ||
+               !IsOrdered(existing.PatVer, candidate.PatVer);
+    }
+
+    private static bool IsOrdered(string? left, string? right)
+    {
+        return !string.IsNullOrWhiteSpace(left) &&
+               !string.IsNullOrWhiteSpace(right) &&
+               TryVer(left.Trim(), right.Trim(), out _);
     }
 
     private static bool AreEqual(string? left, string? right)
