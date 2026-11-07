@@ -121,6 +121,82 @@ internal static class WikiNotesParserT
         Console.WriteLine("Wiki free-text notes and RPCN/netplay evidence regression (real Minecraft fixture) PASS.");
     }
 
+    public static void RunCases(R3Config.Tests.TestRunner runner, string? only)
+    {
+        (string Name, Action Body)[] cases =
+        [
+            (nameof(PrReference), PrReference),
+            (nameof(BangCommentEnd), BangCommentEnd),
+            (nameof(WikiResidueOnly), WikiResidueOnly),
+            (nameof(WikiNotesParserT), Run)
+        ];
+        foreach (var (name, body) in cases)
+        {
+            if (only is null || only.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                runner.RunCase(name, body);
+            }
+        }
+    }
+
+    public static void PrReference()
+    {
+        var evidence = WikiNotesParser.Parse(
+            "PrPage",
+            [],
+            "==Known Issues==\n* Fixed by {{pr|1234}} in a later build, see also {{issue|99}}.");
+        Assert(evidence.Notes.Count == 1,
+            $"Expected one note, got {evidence.Notes.Count}.");
+        var text = evidence.Notes[0].Text;
+        Assert(text.Contains("RPCS3 PR #1234", StringComparison.Ordinal) &&
+               text.Contains("RPCS3 issue #99", StringComparison.Ordinal) &&
+               !text.Contains("{{", StringComparison.Ordinal),
+            $"Expected {{{{pr|N}}}} to be rendered like {{{{issue|N}}}}, got '{text}'.");
+    }
+
+    public static void BangCommentEnd()
+    {
+        var evidence = WikiNotesParser.Parse(
+            "CommentPage",
+            [],
+            "==Known Issues==\n* Visible start.<!-- hidden words --!> Visible end.");
+        Assert(evidence.Notes.Count == 1,
+            $"Expected one note, got {evidence.Notes.Count}.");
+        var text = evidence.Notes[0].Text;
+        Assert(!text.Contains("hidden", StringComparison.Ordinal) &&
+               !text.Contains("--!>", StringComparison.Ordinal) &&
+               text.Contains("Visible start.", StringComparison.Ordinal) &&
+               text.Contains("Visible end.", StringComparison.Ordinal),
+            $"Expected a comment closed by --!> to be removed, got '{text}'.");
+    }
+
+    public static void WikiResidueOnly()
+    {
+        var evidence = WikiNotesParser.Parse(
+            "ResiduePage",
+            [],
+            "==Known Issues==\n* [[File:shot.png|200px]]\n* 120px\n* [[Category:Games]]\n* Category:Games\n" +
+            "* Enter the below text in the DNS section:\n* 192.168.1.10\n* nemo.example.net=203.0.113.5\n" +
+            "* https://example.org/rpcn\n* RPCN servers can disconnect you.");
+        var texts = evidence.Notes.Select(note => note.Text).ToArray();
+        Assert(!texts.Any(text => text.Equals("200px", StringComparison.Ordinal) ||
+                                  text.Equals("120px", StringComparison.Ordinal) ||
+                                  text.StartsWith("Category:", StringComparison.OrdinalIgnoreCase)),
+            $"Expected size-only image and Category residue to be dropped, got: {string.Join(" | ", texts)}.");
+        foreach (var kept in new[]
+                 {
+                     "Enter the below text in the DNS section:",
+                     "192.168.1.10",
+                     "nemo.example.net=203.0.113.5",
+                     "https://example.org/rpcn",
+                     "RPCN servers can disconnect you."
+                 })
+        {
+            Assert(texts.Contains(kept, StringComparer.Ordinal),
+                $"Expected user-facing line '{kept}' to be kept, got: {string.Join(" | ", texts)}.");
+        }
+    }
+
     private static void Assert(bool condition, string message)
     {
         if (!condition)

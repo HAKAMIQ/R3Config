@@ -166,19 +166,6 @@
         },
         {
           "Page": "007: Quantum of Solace",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "007: Quantum of Solace",
           "SourceSection": "PS3 REBORN",
           "Class": "InformationalNote",
           "Text": "146.190.205.197",
@@ -735,19 +722,6 @@
           "Text": "[https://github.com/BusterDaemon/ACInf-GO GO server] (Linux)",
           "VersionCondition": null,
           "PlatformCondition": "Linux",
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Ace Combat Infinity",
-          "SourceSection": "Local server",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
           "EditionCondition": null,
           "HardwareCondition": null,
           "Rpcs3BuildCondition": null,
@@ -3378,19 +3352,6 @@
         },
         {
           "Page": "Band Hero",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Band Hero",
           "SourceSection": "PS3 REBORN",
           "Class": "InformationalNote",
           "Text": "146.190.205.197",
@@ -4018,19 +3979,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Battlefield: Bad Company 2",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -4863,19 +4811,6 @@
         },
         {
           "Page": "BlackSite: Area 51",
-          "SourceSection": "Platform difference",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "BlackSite: Area 51",
           "SourceSection": "PS3 REBORN",
           "Class": "InformationalNote",
           "Text": "146.190.205.197",
@@ -5544,19 +5479,6 @@
           "SourceSection": "Warehouse",
           "Class": "InformationalNote",
           "Text": "[https://wiki.aiwarehouse.xyz/ Warehouse Website]",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Blur",
-          "SourceSection": "Warehouse",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -6248,19 +6170,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Burnout Paradise",
-          "SourceSection": "PSORG",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -6940,19 +6849,6 @@
         },
         {
           "Page": "Call of Duty 3",
-          "SourceSection": "Camera Downscaling",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Call of Duty 3",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -7480,19 +7376,6 @@
         },
         {
           "Page": "Call of Duty: World at War",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Call of Duty: World at War",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -7704,19 +7587,6 @@
           "SourceSection": "PSONE",
           "Class": "InformationalNote",
           "Text": "You need to be whitelisted first. [https://discord.com/invite/puHGNZr PSONE Discord]",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Calling All Cars",
-          "SourceSection": "PSONE",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -8361,7 +8231,7 @@
           "Page": "Catherine",
           "SourceSection": "Black Screen after Altus logo - \u003Ci\u003EFixed by {{pr|5310}}\u003C/i\u003E",
           "Class": "VersionSpecificNote",
-          "Text": "For certain CPUs, the game hangs on a black screen after the Atlus logo. This issue was first visible after {{pr|4422}} and is being tracked as part of RPCS3 issue #4473. For people affected by this issue, use this [https://obk.ee/rpcs3/archive/rpcs3-v0.0.5-6664-47752221_win64.7z older build] of the emulator.",
+          "Text": "For certain CPUs, the game hangs on a black screen after the Atlus logo. This issue was first visible after RPCS3 PR #4422 and is being tracked as part of RPCS3 issue #4473. For people affected by this issue, use this [https://obk.ee/rpcs3/archive/rpcs3-v0.0.5-6664-47752221_win64.7z older build] of the emulator.",
           "VersionCondition": "0.5",
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -8947,19 +8817,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Colin McRae: DiRT",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -10144,19 +10001,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "DJ Hero",
-          "SourceSection": "Warehouse",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -10228,19 +10072,6 @@
           "SourceSection": "Warehouse",
           "Class": "InformationalNote",
           "Text": "[https://wiki.aiwarehouse.xyz/ Warehouse Website]",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "DJ Hero 2",
-          "SourceSection": "Warehouse",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -14663,19 +14494,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Driver: San Francisco",
-          "SourceSection": "PSORG",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -15423,7 +15241,7 @@
           "Page": "Dynasty Warriors: Gundam",
           "SourceSection": "Special Notes",
           "Class": "InformationalNote",
-          "Text": "The game was able to progress from the loadable to the playable state by {{pr|4764}}.",
+          "Text": "The game was able to progress from the loadable to the playable state by RPCS3 PR #4764.",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -17746,7 +17564,7 @@
           "Page": "FIFA Street 3",
           "SourceSection": "Regression - Game requires SPU Interpreter static to boot \u003Ci\u003E{{issue|13545}}\u003C/i\u003E",
           "Class": "Warning",
-          "Text": "After {{pr|10917}} was merged, the game no longer boots without SPU interpreter set to static to prevent a crash relating to unimplemented SPU interrupts. This setting causes the game to run very poorly.",
+          "Text": "After RPCS3 PR #10917 was merged, the game no longer boots without SPU interpreter set to static to prevent a crash relating to unimplemented SPU interrupts. This setting causes the game to run very poorly.",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -18174,19 +17992,6 @@
           "SourceSection": "Graphical issues",
           "Class": "InformationalNote",
           "Text": "RPCS3 issue #10998: Player\u0027s skin and ground lighting and shadows appear different to what\u0027s expected",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Far Cry 3",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -19726,19 +19531,6 @@
         },
         {
           "Page": "Fuel",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Fuel",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS:",
@@ -19964,19 +19756,6 @@
           "SourceSection": "Custom Icon Art by soundreaction",
           "Class": "InformationalNote",
           "Text": "Custom icon artwork provided by soundreaction. Can be switched with original \u0022ICON0.PNG\u0022 inside the game\u0027s \u0022PS3_GAME\u0022 directory (It is recommended to retain the original art for safety). This replaces the original game icon artwork with the movie\u0027s logo.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "G-Force",
-          "SourceSection": "Custom Icon Art by soundreaction",
-          "Class": "InformationalNote",
-          "Text": "300px",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -20641,19 +20420,6 @@
       "Notes": [
         {
           "Page": "Ghostbusters: The Video Game",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Ghostbusters: The Video Game",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -21000,19 +20766,6 @@
           "SourceSection": "Custom Icon Art by Jjw410",
           "Class": "InformationalNote",
           "Text": "Custom replacement icon art by user Jjw410. Can be switched with original icon by renaming the image \u0022ICON0.PNG\u0022 and replacing the file of the same name in the game\u0027s \u0022PS3_GAME\u0022 directory (it is recommended to retain the original art for safety). Author has centered the original logo and given it a black drop shadow to match the style of the GOW Collection\u0027s icon.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "God of War III",
-          "SourceSection": "Custom Icon Art by Jjw410",
-          "Class": "InformationalNote",
-          "Text": "300px",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -22312,19 +22065,6 @@
         },
         {
           "Page": "Guitar Hero 5",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Guitar Hero 5",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -22412,19 +22152,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": true
-        },
-        {
-          "Page": "Guitar Hero III: Legends of Rock",
-          "SourceSection": "Post-Processing",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         },
         {
           "Page": "Guitar Hero III: Legends of Rock",
@@ -22543,19 +22270,6 @@
         },
         {
           "Page": "Guitar Hero World Tour",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Guitar Hero World Tour",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -22634,19 +22348,6 @@
         },
         {
           "Page": "Guitar Hero: Aerosmith",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Guitar Hero: Aerosmith",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -22713,19 +22414,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Guitar Hero: Metallica",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -22813,19 +22501,6 @@
         },
         {
           "Page": "Guitar Hero: Smash Hits",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Guitar Hero: Smash Hits",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -22903,19 +22578,6 @@
         },
         {
           "Page": "Guitar Hero: Van Halen",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Guitar Hero: Van Halen",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -22983,19 +22645,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Guitar Hero: Warriors of Rock",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -23982,19 +23631,6 @@
         },
         {
           "Page": "Haze",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Haze",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -24286,19 +23922,6 @@
           "SourceSection": "Custom Icon Art by Jjw410",
           "Class": "InformationalNote",
           "Text": "Custom replacement icon art by user Jjw410. Can be switched with original icon by renaming the image \u0022ICON0.PNG\u0022 and replacing the file of the same name in the game\u0027s \u0022PS3_GAME\u0022 directory (it is recommended to retain the original art for safety).",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Heavenly Sword",
-          "SourceSection": "Custom Icon Art by Jjw410",
-          "Class": "InformationalNote",
-          "Text": "300px",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -26556,19 +26179,6 @@
         },
         {
           "Page": "James Bond 007: Blood Stone",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "James Bond 007: Blood Stone",
           "SourceSection": "PS3 REBORN",
           "Class": "InformationalNote",
           "Text": "146.190.205.197",
@@ -26625,19 +26235,6 @@
           "SourceSection": "Flickering/flashing scenery",
           "Class": "InformationalNote",
           "Text": "RPCS3 issue #14833: When shooting a gun, some walls and other scenery flash brightly.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "James Cameron\u0027s Avatar: The Game",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -28574,19 +28171,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Killzone 2",
-          "SourceSection": "PSRewired",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -29541,19 +29125,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "LEGO Star Wars: The Complete Saga",
-          "SourceSection": "Custom Icon Art by Jjw410",
-          "Class": "InformationalNote",
-          "Text": "300px",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -29626,19 +29197,6 @@
           "SourceSection": "Custom Icon Art by Jjw410",
           "Class": "InformationalNote",
           "Text": "Custom replacement icon art by user Jjw410. Can be switched with original icon by renaming the image \u0022ICON0.PNG\u0022 and replacing the file of the same name in the game\u0027s \u0022PS3_GAME\u0022 directory (it is recommended to retain the original art for safety).",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "LEGO The Lord of the Rings",
-          "SourceSection": "Custom Icon Art by Jjw410",
-          "Class": "InformationalNote",
-          "Text": "300px",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -30367,19 +29925,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": "BCUS98199",
           "PatchDependent": false
-        },
-        {
-          "Page": "LittleBigPlanet",
-          "SourceSection": "Different Serial Code on Base NA Release",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -30492,19 +30037,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "LittleBigPlanet 2",
-          "SourceSection": "Resolution Scaling",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -30604,19 +30136,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "LittleBigPlanet 3",
-          "SourceSection": "Resolution Scaling",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -30648,19 +30167,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "LittleBigPlanet Hub",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -30710,19 +30216,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "LittleBigPlanet Karting",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -33689,19 +33182,6 @@
         },
         {
           "Page": "Medal of Honor",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Medal of Honor",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -33769,19 +33249,6 @@
           "SourceSection": "Random Crashes",
           "Class": "InformationalNote",
           "Text": "Game isn\u0027t playable due to random crashes.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Medal of Honor: Airborne",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -34176,19 +33643,6 @@
           "SourceSection": "Resolution Scaling",
           "Class": "InformationalNote",
           "Text": "Visible lines appear in distant geometry, commonly seen on shadows.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Mercenaries 2: World in Flames",
-          "SourceSection": "Resolution Scaling",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -35615,19 +35069,6 @@
         },
         {
           "Page": "ModNation Racers",
-          "SourceSection": "Version 01.11 Crash",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "ModNation Racers",
           "SourceSection": "Netplay IP/Host Switches",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the IP/Host Switches section:",
@@ -36653,19 +36094,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "MotorStorm",
-          "SourceSection": "PSORG",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -36801,19 +36229,6 @@
           "SourceSection": "PSRewired",
           "Class": "InformationalNote",
           "Text": "[https://discord.gg/VfeuF6ZWVb PSRewired Discord]",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "MotorStorm: Apocalypse",
-          "SourceSection": "PSRewired",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -36990,19 +36405,6 @@
           "SourceSection": "PSORG",
           "Class": "InformationalNote",
           "Text": "[https://discord.gg/DQbrEb44qr PSORG Discord]",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "MotorStorm: Pacific Rift",
-          "SourceSection": "PSORG",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -37903,19 +37305,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "NBA 07",
-          "SourceSection": "PSRewired",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -38467,7 +37856,7 @@
           "Page": "NBA Street Homecourt",
           "SourceSection": "Regression - Game requires SPU Interpreter static to boot - \u003Ci\u003E{{issue|13545}}\u003C/i\u003E",
           "Class": "Warning",
-          "Text": "After {{pr|10917}} was merged, the game no longer boots without SPU interpreter set to static to prevent a crash relating to unimplemented SPU interrupts. This setting causes the game to run very poorly.",
+          "Text": "After RPCS3 PR #10917 was merged, the game no longer boots without SPU interpreter set to static to prevent a crash relating to unimplemented SPU interrupts. This setting causes the game to run very poorly.",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -40602,19 +39991,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Need for Speed Carbon",
-          "SourceSection": "Warehouse",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -42033,19 +41409,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Operation Flashpoint: Dragon Rising",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -43820,19 +43183,6 @@
           "SourceSection": "60FPS",
           "Class": "InformationalNote",
           "Text": "Setting Vblank Rate to 120hz allows the game to run at 60FPS.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "PlayStation: Home",
-          "SourceSection": "60FPS",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -45892,19 +45242,6 @@
         },
         {
           "Page": "Race Driver: GRID",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Race Driver: GRID",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -47012,19 +46349,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Ratchet: Deadlocked",
-          "SourceSection": "PSORG",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -48023,19 +47347,6 @@
           "SourceSection": "PSRewired",
           "Class": "InformationalNote",
           "Text": "[https://discord.gg/VfeuF6ZWVb PSRewired Discord]",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Resistance: Fall of Man",
-          "SourceSection": "PSRewired",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -52697,19 +52008,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Shaun White Skateboarding",
-          "SourceSection": "PS3 REBORN",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -52745,19 +52043,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Shaun White Snowboarding",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -54255,19 +53540,6 @@
         },
         {
           "Page": "Singularity",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Singularity",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -54716,7 +53988,7 @@
           "Page": "Skylanders Imaginators",
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
-          "Text": "\u003C!-- Mention any known problems --!\u003E Constant crashing on loading, while playing in a level, exiting a level , Customizing a character and opening chests",
+          "Text": "Constant crashing on loading, while playing in a level, exiting a level , Customizing a character and opening chests",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -55664,7 +54936,7 @@
           "Page": "Sonic The Hedgehog",
           "SourceSection": "Graphical bugs - {{issue|4122}}",
           "Class": "InformationalNote",
-          "Text": "Previously, this meant that 3D rendered objects would rarely appear and you would just be left with a skybox and 2D UI elements. After {{pr|12258}} was merged, the graphics improved to where they flicker in and out of existence and are at least somewhat visible. It may be possible to complete the game, but a seizure warning is advised.",
+          "Text": "Previously, this meant that 3D rendered objects would rarely appear and you would just be left with a skybox and 2D UI elements. After RPCS3 PR #12258 was merged, the graphics improved to where they flicker in and out of existence and are at least somewhat visible. It may be possible to complete the game, but a seizure warning is advised.",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -57303,19 +56575,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Starhawk",
-          "SourceSection": "Starhawk Revived",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -57681,19 +56940,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Stranglehold",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -60178,19 +59424,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Terraria",
-          "SourceSection": "Custom Icon Art by soundreaction",
-          "Class": "InformationalNote",
-          "Text": "300px",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -60786,19 +60019,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "The Club",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -61444,19 +60664,6 @@
         },
         {
           "Page": "The History Channel: Battle for the Pacific",
-          "SourceSection": "Unlocked Framerate Issues",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "The History Channel: Battle for the Pacific",
           "SourceSection": "Netplay IP/Host Switches/DNS",
           "Class": "RpcnNote",
           "Text": "This title requires a private server to access all Netplay features. Enter the below text in the DNS section:",
@@ -61886,19 +61093,6 @@
           "SourceSection": "Custom Icon Art by Jjw410",
           "Class": "InformationalNote",
           "Text": "Custom replacement icon art by user Jjw410. Can be switched with original icon by renaming the image \u0022ICON0.PNG\u0022 and replacing the file of the same name in the game\u0027s \u0022PS3_GAME\u0022 directory (it is recommended to retain the original art for safety). The Author removed the TM symbol (looked out of place and cheap next to the logo) and fixed a small black dot obfuscating the logo\u0027s glow.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "The Jak \u0026 Daxter Trilogy",
-          "SourceSection": "Custom Icon Art by Jjw410",
-          "Class": "InformationalNote",
-          "Text": "300px",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -62371,19 +61565,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "The Lord of the Rings Conquest",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -62882,19 +62063,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "The Ratchet \u0026 Clank Trilogy",
-          "SourceSection": "PSORG",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -63234,19 +62402,6 @@
           "SourceSection": "Custom Icon Art by Jjw410",
           "Class": "InformationalNote",
           "Text": "Custom replacement icon art by user Jjw410. Can be switched with original icon by renaming the image \u0022ICON0.PNG\u0022 and replacing the file of the same name in the game\u0027s \u0022PS3_GAME\u0022 directory (it is recommended to retain the original art for safety). The Author has removed the background and has given the logo a subtle white glow to match that of the Jak Trilogy\u0027s icon.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "The Sly Collection",
-          "SourceSection": "Custom Icon Art by Jjw410",
-          "Class": "InformationalNote",
-          "Text": "300px",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -64458,19 +63613,6 @@
         },
         {
           "Page": "Tom Clancy\u0027s EndWar",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Tom Clancy\u0027s EndWar",
           "SourceSection": "PS3 REBORN",
           "Class": "InformationalNote",
           "Text": "146.190.205.197",
@@ -64527,19 +63669,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Tom Clancy\u0027s Ghost Recon: Advanced Warfighter 2",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -64661,19 +63790,6 @@
           "SourceSection": "PS3 REBORN",
           "Class": "InformationalNote",
           "Text": "[https://discord.com/invite/z3Crm9acME PS3 REBORN Discord]",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Tom Clancy\u0027s Ghost Recon: Future Soldier",
-          "SourceSection": "PS3 REBORN",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -64998,19 +64114,6 @@
           "SourceSection": "Special Notes",
           "Class": "NetworkNote",
           "Text": "Note that the settings recommended above that mention multiplayer in their notes only apply to the multiplayer mode of the game, the single player mode does not require these settings.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Tom Clancy\u0027s Splinter Cell: Double Agent",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -66038,19 +65141,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Transformers: Dark of the Moon",
-          "SourceSection": "Warehouse",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -66168,19 +65258,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Transformers: Fall of Cybertron",
-          "SourceSection": "Warehouse",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -66250,19 +65327,6 @@
           "SourceSection": "Warehouse",
           "Class": "InformationalNote",
           "Text": "[https://wiki.aiwarehouse.xyz/ Warehouse Website]",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Transformers: Revenge of the Fallen",
-          "SourceSection": "Warehouse",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -66347,19 +65411,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Transformers: Rise of the Dark Spark",
-          "SourceSection": "Warehouse",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -66429,19 +65480,6 @@
           "SourceSection": "Warehouse",
           "Class": "InformationalNote",
           "Text": "[https://wiki.aiwarehouse.xyz/ Warehouse Website]",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Transformers: War for Cybertron",
-          "SourceSection": "Warehouse",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -69491,19 +68529,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Warhawk",
-          "SourceSection": "PSONE",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -70566,19 +69591,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "WipEout HD",
-          "SourceSection": "PSONE",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": [
@@ -70682,19 +69694,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Wolfenstein",
-          "SourceSection": "Special Notes",
-          "Class": "NetworkNote",
-          "Text": "Category:Custom servers (Netplay)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,

@@ -55,6 +55,11 @@ internal static partial class Program
                 runner.RunCase(nameof(EvidencePolicyT), EvidencePolicyT.Run);
                 return;
             }
+            if (args.Length is 1 or 2 && args[0].Equals("--wiki-notes-parser-only", StringComparison.OrdinalIgnoreCase))
+            {
+                WikiNotesParserT.RunCases(runner, args.Length == 2 ? args[1] : null);
+                return;
+            }
             if (args.Length == 1 && args[0].Equals("--wiki-scope-only", StringComparison.OrdinalIgnoreCase))
             {
                 var root = context.CreateTempRoot("R3ConfigWikiScope");
@@ -274,7 +279,7 @@ internal static partial class Program
             runner.RunCase(nameof(App_Pat), App_Pat);
             runner.RunCase(nameof(Cat_Dup), Cat_Dup);
             runner.RunCase(nameof(WikiCorpusT), () => WikiCorpusT.Fixture(smokeRoot));
-            runner.RunCase(nameof(WikiNotesParserT), WikiNotesParserT.Run);
+            WikiNotesParserT.RunCases(runner, null);
             runner.RunCase(nameof(GameSettingsUiT), GameSettingsUiT.Run);
             runner.RunCase(nameof(Rpcs3BuildCatalogT), Rpcs3BuildCatalogT.Run);
             runner.RunCase(nameof(RuntimeContextT), RuntimeContextT.Run);

@@ -60,7 +60,7 @@ public static class WikiNotesParser
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly Regex HtmlComment = new(
-        @"<!--.*?-->",
+        @"<!--.*?--!?>",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
 
     private static readonly Regex BreakTag = new(
@@ -73,6 +73,18 @@ public static class WikiNotesParser
 
     private static readonly Regex IssueRef = new(
         @"\{\{issue\|(?<id>\d+)\}\}",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    private static readonly Regex PrRef = new(
+        @"\{\{pr\|(?<id>\d+)\}\}",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    // Lines that survive Clean() as pure MediaWiki residue: an image reduced
+    // to its size option ([[File:x.png|200px]] -> "200px") or a category tag.
+    // Nothing else is dropped (IPs, hosts entries, links and RPCN lines are
+    // user-facing information).
+    private static readonly Regex WikiResidueLine = new(
+        @"^(?:\d+px|Category:.*)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     private static readonly Regex WikiLink = new(
@@ -160,7 +172,7 @@ public static class WikiNotesParser
             var text = Clean(string.Join(' ', buffer));
             buffer.Clear();
 
-            if (!string.IsNullOrWhiteSpace(text))
+            if (!string.IsNullOrWhiteSpace(text) && !WikiResidueLine.IsMatch(text))
             {
                 notes.Add(Classify(page, sourceSection, text));
             }
@@ -422,6 +434,7 @@ public static class WikiNotesParser
         value = HtmlComment.Replace(value, string.Empty);
         value = BreakTag.Replace(value, " ");
         value = IssueRef.Replace(value, "RPCS3 issue #${id}");
+        value = PrRef.Replace(value, "RPCS3 PR #${id}");
         value = WikiLink.Replace(value, match =>
         {
             var body = match.Groups["body"].Value;
