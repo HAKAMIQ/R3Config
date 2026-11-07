@@ -254,6 +254,8 @@ internal static partial class Program
                 Ui_GameDataTextDirection);
             runner.RunCase(nameof(Arch_Svc), Arch_Svc);
             runner.RunCase(nameof(PatchWriteSemanticsT), PatchWriteSemanticsT.Run);
+            runner.RunCase(nameof(PatchMergeOrderT), PatchMergeOrderT.Run);
+            runner.RunCase(nameof(PlanReasonT), PlanReasonT.Run);
             runner.RunCase(
                 nameof(CanaryArtemisConflictT),
                 () => CanaryArtemisConflictT.Run(smokeRoot));

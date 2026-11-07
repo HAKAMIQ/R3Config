@@ -181,6 +181,21 @@
                                                TextWrapping="Wrap"
                                                Visibility="{Binding HasNote,
                                                                     Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                    <TextBlock Text="{Binding ReasonTitle}"
+                                               Style="{StaticResource RecToolTipWikiHeadingText}"
+                                               TextAlignment="{DynamicResource App.TextAlignment}"
+                                               Margin="0,12,0,0"
+                                               Visibility="{Binding HasReason,
+                                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                    <TextBlock Text="{Binding ReasonText}"
+                                               Style="{StaticResource RecLocalizedBodyText}"
+                                               TextAlignment="{DynamicResource App.TextAlignment}"
+                                               Margin="0,4,0,0"
+                                               TextWrapping="Wrap"
+                                               Visibility="{Binding HasReason,
+                                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
                                 </StackPanel>
                             </Border>
                         </ToolTip>

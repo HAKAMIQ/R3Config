@@ -113,6 +113,36 @@ public sealed class PlanItVm : VmBase
 
     public bool HasNote => !string.IsNullOrWhiteSpace(Entry.Notes);
 
+    public bool HasReason => ReasonText.Length > 0;
+
+    // Why this row is not applied automatically. Shown only inside the existing
+    // row ToolTip; the decision codes never reach the UI.
+    public string ReasonText
+    {
+        get
+        {
+            if (Entry.State is not (Mdl.RecState.Blocked or Mdl.RecState.Manual) ||
+                Entry.StateIt.Decision is not { } decision)
+            {
+                return string.Empty;
+            }
+
+            var reasons = decision.Reasons;
+            var key = reasons.Contains("EvidenceConflict", StringComparer.Ordinal)
+                ? "Plan.Reason.Conflict"
+                : reasons.Any(reason => reason.EndsWith(":Mismatch", StringComparison.Ordinal))
+                    ? "Plan.Reason.Mismatch"
+                    : reasons.Contains("IdentityNotMatched", StringComparer.Ordinal)
+                        ? "Plan.Reason.Identity"
+                        : Entry.State == Mdl.RecState.Manual
+                            ? "Plan.Reason.Manual"
+                            : "Plan.Reason.Unproven";
+            return UiText.GetText(key);
+        }
+    }
+
+    public string ReasonTitle => UiText.GetText("Plan.Reason.Title");
+
     public string BadgeDsp => IsApply
         ? StatDsp
         : HandDsp;
@@ -143,6 +173,8 @@ public sealed class PlanItVm : VmBase
     {
         OnChange(nameof(RiskDsp));
         OnChange(nameof(RiskTip));
+        OnChange(nameof(ReasonText));
+        OnChange(nameof(ReasonTitle));
         OnChange(nameof(HandDsp));
         OnChange(nameof(HandTip));
         OnChange(nameof(Tone));

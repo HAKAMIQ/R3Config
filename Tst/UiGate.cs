@@ -1105,9 +1105,15 @@ internal static class UiGate
         // below was recomputed from the current XAML after that surface was
         // added; serials, settings and values remain LTR through the shared
         // DataGridCellTextLeft style.
-        const int expectedCount = 1002;
+        //
+        // The row ToolTip reason (Ctrl/Rec.xaml, PlanRowTemplate) adds exactly
+        // two entries, 1002 -> 1004: TextAlignment={DynamicResource
+        // App.TextAlignment} on the reason title and on the reason body, the
+        // same value the neighbouring Wiki instruction heading already uses.
+        // No existing entry changed or was removed.
+        const int expectedCount = 1004;
         const string expectedSha256 =
-            "1edd83960b95604e9b46aca6060178b82c8ad347d726bed53c4221e32911540f";
+            "f4c09c130c59a13a5c36147a95c12d71d054bed44447a44dd2d217394a4db9d4";
         var propertyNames = new HashSet<string>(
             [
                 "FlowDirection",
