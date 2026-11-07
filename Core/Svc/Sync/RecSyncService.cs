@@ -126,7 +126,7 @@ public sealed class RecSyncService : IDisposable
 
             var after = RecSyncMerge.BuildEffective(baseline, store);
             var ok = reports.Count(report => report.Status is RecSyncSourceStatus.Updated or RecSyncSourceStatus.Unchanged);
-            var failed = reports.Count(report => report.Status is RecSyncSourceStatus.Blocked or RecSyncSourceStatus.RateLimited or RecSyncSourceStatus.Unavailable or RecSyncSourceStatus.Invalid or RecSyncSourceStatus.NotPublished);
+            var failed = reports.Count(report => report.Status is RecSyncSourceStatus.Blocked or RecSyncSourceStatus.RateLimited or RecSyncSourceStatus.Unavailable or RecSyncSourceStatus.Invalid);
             var status = failed == 0
                 ? RecSyncRunStatus.Completed
                 : ok > 0 ? RecSyncRunStatus.Partial : RecSyncRunStatus.Failed;

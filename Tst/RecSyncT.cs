@@ -1217,7 +1217,9 @@ internal static class RecSyncT
         var (service, fake) = Make(Path.Combine(folder, "store"), Respond(api: _ => Json(Fixture("config-api-v1.json")), wiki: WikiFixtures));
         using (service)
         {
-            Sync(service, baseline, manual: true);
+            var healthy = Sync(service, baseline, manual: true);
+            Assert(SourceStatus(healthy, RecSyncSource.GitHub) == RecSyncSourceStatus.NotPublished && healthy.Status == RecSyncRunStatus.Completed,
+                "An unpublished optional GitHub source must not downgrade a run where every available source succeeded.");
             Sync(service, baseline, manual: true);
         }
 
