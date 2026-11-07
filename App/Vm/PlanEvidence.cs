@@ -214,7 +214,25 @@ public sealed class GameOnlineVm
 
     public bool HasNotes => !string.IsNullOrWhiteSpace(Evidence.Notes);
 
-    public string Notes => Evidence.Notes ?? string.Empty;
+    // Same reviewed-translation path as free-text Wiki notes. Only an exact
+    // reviewed Arabic text replaces the Wiki wording; otherwise the original is
+    // kept (these notes are often technical, e.g. "RPCN 1.1 - 2024/02/09").
+    public string Notes
+    {
+        get
+        {
+            var raw = Evidence.Notes;
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return string.Empty;
+            }
+
+            var result = NoteSvc.Trans(raw);
+            return result.Quality == NoteQual.Exact && NoteSvc.ContainsArabic(result.Body)
+                ? result.Body
+                : raw;
+        }
+    }
 
     private List<OnlineRowVm> BuildRows()
     {

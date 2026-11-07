@@ -71,6 +71,9 @@ R3Test.exe --gen-build-catalog <rpcs3-windows-builds-master.json> <github-window
 تصادم صف Archive مع صف GitHub. التغطية ليست كل بناءات RPCS3 المصدرة، وبناء غير موجود يبقى «غير محسوم» بلا أي بديل. راجع
 [بيئة التشغيل والتوافق](RuntimeContext.md) لعرض النسخة الحالية مقابل المختبرة.
 
+ملاحظة جدول Online (`GameOnlineVm.Notes`) تمر على مسار الترجمة نفسه لملاحظات الويكي (`NoteSvc.Trans`): تُعرض بالعربية
+فقط إذا وُجدت ترجمة معتمدة مطابقة تمامًا، وإلا بقي نص الويكي الأصلي كما هو. الاختبار `R3Test.exe --online-notes-only`.
+
 ## مصدر البيانات
 
 `App/Data/cat.json` و`App/Data/wiki-notes.json` مشحونان ويولَّدان معًا من ملف واحد هو
