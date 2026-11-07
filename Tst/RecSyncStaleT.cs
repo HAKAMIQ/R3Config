@@ -54,8 +54,18 @@ internal static class RecSyncStaleT
         var embedded = new DateTimeOffset(new DateTime(2026, 9, 20, 0, 0, 0, DateTimeKind.Local));
         var never = UiText.GetText("Sync.Status.NeverChecked");
         Assert(WikiStatus(null, "2026-09-20", RecSyncSourceStatus.NeverChecked) ==
-               never + " | " + UiText.Fmt("Sync.Wiki.Stale", UiDate.Inline(embedded)),
-            lang + ": without a successful sync, old embedded data is Stale with its date.");
+               never + " | " + UiText.Fmt("Sync.Wiki.Stale", UiDate.DateInline(embedded)),
+            lang + ": without a successful sync, old embedded data is Stale with its date only.");
+        Assert(!WikiStatus(null, "2026-09-20", RecSyncSourceStatus.NeverChecked)
+                   .Contains(UiDate.Inline(embedded), StringComparison.Ordinal),
+            lang + ": the embedded data date must not carry a 12:00 AM time.");
+
+        var culture = new System.Globalization.CultureInfo("en-US");
+        Assert(UiDate.DateText(embedded, culture, TimeZoneInfo.Local) == "9/20/2026",
+            lang + ": UiDate.DateText must format the date without a time in the given culture.");
+        Assert(UiDate.DateText(new DateTimeOffset(1800, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                   new System.Globalization.CultureInfo("ar-SA"), TimeZoneInfo.Utc) == "1800-01-01",
+            lang + ": a date outside the user's calendar falls back to yyyy-MM-dd.");
         Assert(WikiStatus(null, "2026-10-20", RecSyncSourceStatus.NeverChecked) == never,
             lang + ": recent embedded data is not stale.");
         Assert(WikiStatus(null, "not-a-date", RecSyncSourceStatus.NeverChecked) == never,

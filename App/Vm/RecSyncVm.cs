@@ -265,9 +265,13 @@ public sealed class RecSyncVm : VmBase
             return status;
         }
 
-        var last = state.LastSuccessUtc ?? EmbeddedDataDate();
+        var last = state.LastSuccessUtc;
+        var embedded = last is null;
+        last ??= EmbeddedDataDate();
         return last is { } value && Now() - value > TimeSpan.FromDays(StaleAfterDays)
-            ? status + " | " + UiText.Fmt("Sync.Wiki.Stale", UiDate.Inline(value))
+            ? status + " | " + UiText.Fmt(
+                "Sync.Wiki.Stale",
+                embedded ? UiDate.DateInline(value) : UiDate.Inline(value))
             : status;
     }
 

@@ -69,11 +69,51 @@ public static class UiDate
         }
     }
 
+    // Date only, for values that carry no real time of day (for example the
+    // yyyy-MM-dd version of the embedded data), so no "12:00 AM" is shown.
+    public static string DateText(DateTimeOffset value)
+    {
+        return DateText(
+            value,
+            UserCulture,
+            TimeZoneInfo.Local);
+    }
+
+    public static string DateText(
+        DateTimeOffset value,
+        CultureInfo culture,
+        TimeZoneInfo zone)
+    {
+        ArgumentNullException.ThrowIfNull(culture);
+        ArgumentNullException.ThrowIfNull(zone);
+
+        var local = TimeZoneInfo.ConvertTime(value, zone).DateTime;
+
+        try
+        {
+            return local.ToString(
+                culture.DateTimeFormat.ShortDatePattern,
+                culture);
+        }
+        catch (Exception ex) when (
+            ex is ArgumentOutOfRangeException or FormatException)
+        {
+            return local.ToString(
+                "yyyy-MM-dd",
+                CultureInfo.InvariantCulture);
+        }
+    }
+
     // For dates embedded in localized sentences: kept left-to-right inside
     // Arabic text.
     public static string Inline(DateTimeOffset value)
     {
         return LeftToRight(Text(value));
+    }
+
+    public static string DateInline(DateTimeOffset value)
+    {
+        return LeftToRight(DateText(value));
     }
 
     // WPF text rendering ignores the LRI/PDI and LRE/PDF controls, so date
