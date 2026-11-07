@@ -30,6 +30,15 @@ internal static class GameSettingsUiT
     internal const string TestBuildUrl =
         "https://github.com/RPCS3/rpcs3-binaries-win/releases/download/build-0123456789abcdef0123456789abcdef01234567/rpcs3-v0.0.30-16004-01234567_win64_msvc.7z";
 
+    // The real frame-limiter note now has a reviewed Arabic translation. These UI
+    // tests need one note without it, to prove the "translation unavailable" path,
+    // so only that sentence is reworded; the rest of the page stays the real text.
+    private static readonly string UnreviewedMinecraftPage =
+        WikiNotesParserT.MinecraftPage.Replace(
+            "while the game is running,",
+            "while the game is running (fixture wording without a reviewed translation),",
+            StringComparison.Ordinal);
+
     internal static Rpcs3BuildCatalog TestBuilds { get; } =
         new([new Rpcs3BuildEntry("0.0.30", 16004, "Windows", TestBuildUrl)]);
 
@@ -48,7 +57,7 @@ internal static class GameSettingsUiT
             var parsed = WikiNotesParser.Parse(
                 "Minecraft",
                 ["BLES01976", "BLUS31426", "NPEB01899", "NPUB31419", "NPJB00549"],
-                WikiNotesParserT.MinecraftPage);
+                UnreviewedMinecraftPage);
             WikiEvidenceCatalog
                 .FromPages("RPCS3 Wiki snapshot", "2026-09-07", "test", [parsed])
                 .Save(Path.Combine(root, "Data", WikiEvidenceCatalog.FileName));
@@ -119,7 +128,7 @@ internal static class GameSettingsUiT
             var evidence = WikiNotesParser.Parse(
                 "Minecraft",
                 ["BLES01976", "BLUS31426"],
-                WikiNotesParserT.MinecraftPage);
+                UnreviewedMinecraftPage);
             var model = GameSettingsProjector.Project(
                 plan,
                 evidence,

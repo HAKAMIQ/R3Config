@@ -309,7 +309,7 @@ public static partial class NoteSvc
             ["Slightly improves performance at the cost of worse graphics."] =
                 "يحسن الأداء قليلا مقابل رسوم أسوأ.",
             ["Slightly improves performance."] =
-                "يحسن الأداء قليلا.",
+                "يحسن الأداء بدرجة طفيفة.",
             ["This patch allows the files regulation.bin, boot.bnd, ingamescript.bnd, and menustay.bnd to be loaded from an alternative path. If these files are placed in [dev_hdd0/game/[region]/alt/], the game will load them from that folder. If the files are not present there, the game will load them from the normal path."] =
                 "يسمح هذا الباتش بتحميل الملفات regulation.bin وboot.bnd وingamescript.bnd وmenustay.bnd من مسار بديل. إذا وضعت هذه الملفات في [dev_hdd0/game/[region]/alt/] فستحملها اللعبة من هذا المجلد. وإذا لم تكن موجودة هناك فستحملها من المسار المعتاد.",
             ["This patch changes the PvP time limit from 15 minutes to 32,767 minutes in order to improve debugging efficiency."] =

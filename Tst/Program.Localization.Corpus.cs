@@ -331,7 +331,7 @@ internal static partial class Program
                        omitted == 0 &&
                        exactUnique.Count == 924 &&
                        structuredUnique.Count == 1 &&
-                       NoteSvc.ReviewedWikiArabicTranslationCount == 705 &&
+                       NoteSvc.ReviewedWikiArabicTranslationCount == 1608 &&
                        NoteSvc.ReviewedOfficialPatchArabicTranslationCount == 367,
                     $"Arabic corpus coverage is incomplete. Translated={actualTranslations}, Fallback={fallback}, Omitted={omitted}, NonEmpty={notes.Count}, " +
                     $"ExactUnique={exactUnique.Count}, StructuredUnique={structuredUnique.Count}, " +

@@ -130,7 +130,7 @@ public static partial class NoteSvc
             ["Changing to anything other than Auto causes graphical issues"] =
                 "تغيير Auto إلى أي خيار آخر يسبب مشكلات رسومية.",
             ["Fixes broken graphics"] =
-                "يصلح الرسوم المعطلة.",
+                "يصلح الرسوم المعروضة بشكل غير صحيح.",
             ["Slightly improves performance without any noticeable issues"] =
                 "يحسن الأداء بدرجة طفيفة دون مشكلات ملحوظة.",
             ["Improves performance without any noticeable issues"] =
