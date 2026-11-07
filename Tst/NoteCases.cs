@@ -19,6 +19,9 @@ internal static class NoteCases
             case "--reviewed-notes-only":
                 runner.RunCase(nameof(ReviewedNotesImportT), ReviewedNotesImportT.Run);
                 return true;
+            case "--wiki-label-link-only":
+                runner.RunCase(nameof(WikiLabelLinkT), WikiLabelLinkT.Run);
+                return true;
             default:
                 return false;
         }
@@ -29,5 +32,6 @@ internal static class NoteCases
         runner.RunCase(nameof(OnlineNotesT), OnlineNotesT.Run);
         runner.RunCase(nameof(RecSyncStaleT), RecSyncStaleT.Run);
         runner.RunCase(nameof(ReviewedNotesImportT), ReviewedNotesImportT.Run);
+        runner.RunCase(nameof(WikiLabelLinkT), WikiLabelLinkT.Run);
     }
 }

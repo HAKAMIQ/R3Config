@@ -14,6 +14,8 @@ namespace R3Config.Ctrl;
 // browser; no other text is ever executable.
 public static class LinkText
 {
+    private const string LeftToRightMark = "\u200E";
+
     public static readonly DependencyProperty TextProperty =
         DependencyProperty.RegisterAttached(
             "Text",
@@ -67,9 +69,24 @@ public static class LinkText
 
         foreach (var segment in WikiLinks.Split(text))
         {
-            block.Inlines.Add(segment.Url is null
-                ? new Run(segment.Text)
-                : Link(segment.Text, segment.Url));
+            if (segment.Url is null)
+            {
+                block.Inlines.Add(new Run(segment.Text));
+            }
+            else if (segment.Text == segment.Url)
+            {
+                // A bare address is LTR; the marks keep its neighbours from
+                // reordering around it inside RTL (Arabic) text. WPF ignores
+                // bidi isolates, so LRM is the working tool here.
+                block.Inlines.Add(new Run(LeftToRightMark));
+                block.Inlines.Add(Link(segment.Text, segment.Url));
+                block.Inlines.Add(new Run(LeftToRightMark));
+            }
+            else
+            {
+                // [url label]: only the label is visible; the url is the ToolTip.
+                block.Inlines.Add(Link(segment.Text, segment.Url));
+            }
         }
     }
 

@@ -7,13 +7,16 @@ using System.Text.RegularExpressions;
 namespace R3Config.Svc;
 
 // Safe link extraction for user-facing Wiki text. Only absolute http/https
-// URLs become links; nothing else in the text is ever executable.
+// URLs become links; nothing else in the text is ever executable. Wiki
+// external links written as [url label] become one segment whose Text is the
+// label and whose Url is the address; the brackets and the url are dropped
+// from the visible text. A bare URL is a segment whose Text is the url.
 public static class WikiLinks
 {
     public sealed record Segment(string Text, string? Url);
 
-    private static readonly Regex UrlPattern = new(
-        @"https?://[^\s<>""']+",
+    private static readonly Regex LinkPattern = new(
+        @"\[(?<labelUrl>https?://[^\s\[\]<>""']+)[ \t]+(?<label>[^\[\]\r\n]*?[^\s\[\]])[ \t]*\]|(?<bare>https?://[^\s<>""']+)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     public static bool IsSafeUrl(string? value)
@@ -28,19 +31,28 @@ public static class WikiLinks
         var segments = new List<Segment>();
         var position = 0;
 
-        foreach (Match match in UrlPattern.Matches(text))
+        foreach (Match match in LinkPattern.Matches(text))
         {
+            if (match.Groups["labelUrl"].Success)
+            {
+                var labelUrl = match.Groups["labelUrl"].Value;
+                if (IsSafeUrl(labelUrl))
+                {
+                    AddText(segments, text, position, match.Index);
+                    segments.Add(new Segment(match.Groups["label"].Value, labelUrl));
+                    position = match.Index + match.Length;
+                }
+
+                continue;
+            }
+
             var url = match.Value.TrimEnd('.', ',', ';', ':', ')', ']', '!', '?', '*');
             if (!IsSafeUrl(url))
             {
                 continue;
             }
 
-            if (match.Index > position)
-            {
-                segments.Add(new Segment(text[position..match.Index], null));
-            }
-
+            AddText(segments, text, position, match.Index);
             segments.Add(new Segment(url, url));
             position = match.Index + url.Length;
         }
@@ -51,6 +63,14 @@ public static class WikiLinks
         }
 
         return segments;
+    }
+
+    private static void AddText(List<Segment> segments, string text, int start, int end)
+    {
+        if (end > start)
+        {
+            segments.Add(new Segment(text[start..end], null));
+        }
     }
 
     public static bool IsOfficialRpcs3Url(string? url)
