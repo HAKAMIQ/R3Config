@@ -411,6 +411,32 @@ internal static class WikiNotesParserT
 
         Assert(Single("<s>An unclosed strike tag keeps the note.").Text == "An unclosed strike tag keeps the note.",
             "A note whose strike tags do not balance must be kept.");
+
+        // Round 21: <strike> is the same strike-through as <s>. Tornado
+        // Outbreak (rev 57392, the only <strike> page of the pinned snapshot):
+        // the struck note goes, the plain note after it stays.
+        var tornado = WikiNotesParser.Parse(
+            "Tornado Outbreak",
+            ["BLES00695"],
+            """
+            ==Known Issues==
+            <!-- Mention any known issues relating to the game. Use the issue and PR template if necessary. If no notable issues are present, mention "There are no reported issues with this title." -->
+            ===Crash===
+            <strike> RPCS3 will instantly close itself upon playing through the level Camelot Falls with the dash move. </strike>
+
+            This issue appears to be fixed in later builds of the emulator.
+            """);
+        Assert(tornado.Notes.Count == 1 && tornado.Notes[0].Text == "This issue appears to be fixed in later builds of the emulator.",
+            $"Tornado Outbreak's wholly struck <strike> note must not be emitted and its next note must stay, got: {string.Join(" | ", tornado.Notes.Select(note => note.Text))}.");
+
+        Assert(Single("<strike>{{issue|1}}: Partly struck</strike> - still open").Text == "RPCS3 issue #1: Partly struck - still open",
+            "A partly <strike>-struck note must be kept unchanged.");
+        Assert(Single("<STRIKE>An unclosed strike-through keeps the note.").Text == "An unclosed strike-through keeps the note.",
+            "A note whose <strike> tags do not balance must be kept.");
+        Assert(Single("<s>A mismatched pair keeps the note.</strike>").Text == "A mismatched pair keeps the note.",
+            "<s> closed by </strike> does not balance, so the note must be kept.");
+        Assert(WikiNotesParser.Parse("Mixed", [], "==Known Issues==\n* <s>One struck</s> <strike>two struck</strike>").Notes.Count == 0,
+            "A note struck by <s> and <strike> together is wholly struck.");
     }
 
     private static string? BuildOf(string bullet) => Single(bullet).Rpcs3BuildCondition;

@@ -27,8 +27,8 @@ Wiki XML (audit فقط)
   مثل below في الملاحظة؛ الاختبار `R3Test.exe --wiki-notes-parser-only VersionIpv4`. وبالمثل لا يأخذه من رقم داخل صيغة بناء
   RPCS3 (v0.0.N-NNNN أو rpcs3-v0.0.N)؛ الاختبار `R3Test.exe --wiki-notes-parser-only VersionRpcs3Build`. ونطاق البناء
   (`WikiFreeTextNote.Rpcs3BuildCondition`) يُقرأ من 0.0.N المجردة ومن هذه الصيغة بدون البادئة، ولا يُقرأ من رقم داخل عنوان IPv4؛ الاختبار
-  `R3Test.exe --wiki-notes-parser-only BuildScopeRpcs3Build`. والملاحظة المشطوبة كلها في الويكي (`<s>...</s>`) لا تُنتج، أما
-  المشطوبة جزئيًا فتبقى كما هي؛ الاختبار `R3Test.exe --wiki-notes-parser-only StruckNotes`.
+  `R3Test.exe --wiki-notes-parser-only BuildScopeRpcs3Build`. والملاحظة المشطوبة كلها في الويكي (`<s>...</s>` أو `<strike>...</strike>`) لا تُنتج، أما
+  المشطوبة جزئيًا، أو اللي وسومها ما تتوازن (الوسم يُغلق بنفس نوعه)، فتبقى كما هي؛ الاختبار `R3Test.exe --wiki-notes-parser-only StruckNotes`.
 - `WikiOnlineEvidence.TestedGameVersion` هو الإصدار الذي اختبره الويكي وليس شرطًا.
   `RequiredGameVersion` يبقى `null` ما لم يذكر الويكي الشرط صراحة. غياب الجدول يعني
   Unknown ولا يعني Not supported، وأي حقل ناقص يعرض Unknown.

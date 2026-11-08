@@ -139,10 +139,11 @@ public static class WikiNotesParser
         @"\b0\.0\.\d+(?:-\d+)?\b|(?<=\brpcs3-v)0\.0\.\d+(?:-\d+)?\b|(?<=\bv)0\.0\.\d+-\d+\b",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    // A strike-through tag (<s> or </s>). A note the Wiki struck through as a
-    // whole is no longer evidence (e.g. "Fixed by PR ...") and is not emitted.
+    // A strike-through tag (<s>, <strike> or their closing tags). A note the
+    // Wiki struck through as a whole is no longer evidence (e.g. "Fixed by PR
+    // ...") and is not emitted.
     private static readonly Regex StrikeTag = new(
-        @"<(?<close>/?)s\b[^>]*>",
+        @"<(?<close>/?)(?<name>strike|s)\b[^>]*>",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     private static readonly Regex SerialNumber = new(
@@ -369,42 +370,42 @@ public static class WikiNotesParser
     private static bool StartsInside(Match number, IEnumerable<Match> spans) =>
         spans.Any(span => number.Index >= span.Index && number.Index < span.Index + span.Length);
 
-    // True only when, comments removed, everything outside balanced <s>...</s>
-    // spans is whitespace. A partly struck note, or one whose tags do not
-    // balance, is kept unchanged.
+    // True only when, comments removed, everything outside balanced
+    // <s>...</s> or <strike>...</strike> spans is whitespace. A partly struck
+    // note, or one whose tags do not balance (a closing tag must close the
+    // same kind), is kept unchanged.
     private static bool IsWhollyStruck(string raw)
     {
         var text = HtmlComment.Replace(raw, string.Empty);
-        var depth = 0;
+        var open = new Stack<string>();
         var position = 0;
         var struck = false;
 
         foreach (Match tag in StrikeTag.Matches(text))
         {
-            if (depth == 0 && !string.IsNullOrWhiteSpace(text[position..tag.Index]))
+            if (open.Count == 0 && !string.IsNullOrWhiteSpace(text[position..tag.Index]))
             {
                 return false;
             }
 
+            var name = tag.Groups["name"].Value.ToUpperInvariant();
             if (tag.Groups["close"].Length > 0)
             {
-                if (depth == 0)
+                if (open.Count == 0 || open.Pop() != name)
                 {
                     return false;
                 }
-
-                depth--;
             }
             else
             {
-                depth++;
+                open.Push(name);
                 struck = true;
             }
 
             position = tag.Index + tag.Length;
         }
 
-        return struck && depth == 0 && string.IsNullOrWhiteSpace(text[position..]);
+        return struck && open.Count == 0 && string.IsNullOrWhiteSpace(text[position..]);
     }
 
     private static List<WikiOnlineEvidence> ParseOnline(
