@@ -41,8 +41,8 @@ internal static class LogDiagT
     [
         $"\uFEFFRPCS3 v0.0.42-{build}-{commit} Alpha | master",
         "Architecture: x64",
-        "12th Gen Intel(R) Core(TM) i5-12600KF | 16 Threads | 31.82 GiB RAM | TSC: 3.686GHz | AVX+ | FMA3",
-        "Operating system: Windows, Major: 10, Minor: 0, Build: 26200, Service Pack: none",
+        "Test CPU | 8 Threads | 16.00 GiB RAM | TSC: 1.000GHz | AVX+ | FMA3",
+        "Operating system: Windows, Major: 10, Minor: 0, Build: 12345, Service Pack: none",
         "Qt version: Compiled against Qt 6.11.2 | Run-time uses Qt 6.11.2",
         "Current Time: 2026-09-18T20:18:15"
     ];
@@ -51,8 +51,8 @@ internal static class LogDiagT
     {
         var lines = new List<string>
         {
-            Line('A', "0:00:00.121256", "RSX", "Found Vulkan-compatible GPU: 'NVIDIA GeForce RTX 3060' running on driver 616.64.0.0", "Vulkan Device Enumeration Thread"),
-            Line('!', "0:00:21.066397", "SYS", $"Emulator::BootGame: path='D:/games/{serial}', title_id='{serial}', direct=0"),
+            Line('A', "0:00:00.121256", "RSX", "Found Vulkan-compatible GPU: 'Test GPU' running on driver 1.0", "Vulkan Device Enumeration Thread"),
+            Line('!', "0:00:21.066397", "SYS", $"Emulator::BootGame: path='X:/TestGames/{serial}', title_id='{serial}', direct=0"),
             Line('!', "0:00:21.073531", "SYS", "Title: Synthetic Game"),
             Line('!', "0:00:21.073532", "SYS", $"Serial: {serial}"),
             Line('!', "0:00:21.073534", "SYS", "Category: DG"),
@@ -64,12 +64,12 @@ internal static class LogDiagT
             "  Renderer: Vulkan",
             "  Resolution Scale: 100",
             "  Vulkan:",
-            "    Adapter: NVIDIA GeForce RTX 3060",
+            "    Adapter: Test GPU",
             Line('!', "0:00:21.212410", "ppu_loader", $"PPU executable hash: PPU-{Ppu} (<- 1234)")
         };
         if (renderer)
         {
-            lines.Add(Line('!', "0:00:21.305877", "RSX", "Vulkan: Renderer initialized on device 'NVIDIA GeForce RTX 3060'"));
+            lines.Add(Line('!', "0:00:21.305877", "RSX", "Vulkan: Renderer initialized on device 'Test GPU'"));
         }
 
         lines.Add(Line('S', "0:00:22.000000", "GUI", "Boot successful."));
@@ -101,12 +101,12 @@ internal static class LogDiagT
 
         var session = Parse(lines);
         Assert(session.Build is { VersionText: "0.0.42", BuildNumber: 19900, Commit: "abcdef12", Branch: "master" } &&
-               session.CpuLine!.Contains("i5-12600KF", StringComparison.Ordinal) &&
-               session.OsLine!.Contains("Build: 26200", StringComparison.Ordinal),
+               session.CpuLine == "Test CPU | 8 Threads | 16.00 GiB RAM | TSC: 1.000GHz | AVX+ | FMA3" &&
+               session.OsLine!.Contains("Build: 12345", StringComparison.Ordinal),
             "The log header supplies the build identity, CPU and OS lines.");
         Assert(session.GameSerial == "TEST00001" && session.GameTitle == "Synthetic Game" && session.AppVersion == "01.05" &&
                session.GameCategory == "DG" && session.PpuHashes.SequenceEqual([Ppu]) &&
-               session.Renderer == "Vulkan" && session.GpuName == "NVIDIA GeForce RTX 3060",
+               session.Renderer == "Vulkan" && session.GpuName == "Test GPU",
             "Serial, title, APP_VER, category, PPU hash, renderer and GPU come from the log's own lines.");
         Assert(session.Settings.Any(item => item is { Path: "Video/Renderer", Value: "Vulkan" }) &&
                session.Settings.Any(item => item is { Path: "Core/PPU Decoder", Value: "Recompiler (LLVM)" }) &&

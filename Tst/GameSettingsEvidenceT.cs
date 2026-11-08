@@ -136,7 +136,7 @@ internal static class GameSettingsEvidenceT
         var rec = new WikiRec(Serial, "T", [Change("Only for NVIDIA GPUs.")], WikiGameIdRole.Primary);
         var service = new PlanService();
 
-        Assert(service.BuildCfg(env.Install, game, rec, Hardware("NVIDIA GeForce RTX 3060", "10DE")).Items.Single().IsSel,
+        Assert(service.BuildCfg(env.Install, game, rec, Hardware("NVIDIA GeForce Test", "10DE")).Items.Single().IsSel,
             "An NVIDIA machine keeps an NVIDIA-scoped change auto-selectable.");
         var amd = service.BuildCfg(env.Install, game, rec, Hardware("AMD Radeon RX 6700", "1002")).Items.Single();
         Assert(amd.State == RecState.Blocked && !amd.IsSel, "An AMD machine blocks an NVIDIA-scoped change.");

@@ -221,7 +221,7 @@ public sealed partial class WikiSvc
             ["output scaling"] = Values("Nearest", "Bilinear", "FidelityFX Super Resolution"),
             ["audio out windows"] = Values("Cubeb", "XAudio2", "FAudio", "Disabled"),
             ["audio format"] = Values("Stereo", "Surround 5.1", "Surround 7.1", "Automatic", "Manual"),
-            ["microphone type"] = Values("Disabled", "Standard", "SingStar", "Real SingStar", "Rocksmith"),
+            ["microphone type"] = Values("Disabled", "Standard", "SingStar", "Real SingStar", "Rocksmith", "Eye Toy", "PS Eye"),
             ["keyboard handler"] = Values("Null", "Basic"),
             ["mouse handler"] = Values("Null", "Basic", "Raw"),
             ["camera input"] = Values("Unknown", "EyeToy", "PS Eye", "UVC 1.1"),
@@ -233,7 +233,8 @@ public sealed partial class WikiSvc
 
     // The one numeric-limit table, taken from system_config.h of the RPCS3 source
     // (commit 54014a7de4b2ccec98c9c0cb7dbebec0606c5cd6, cfg::_int/uint/_float
-    // template bounds). The Wiki converters and the RecSync value gate
+    // template bounds; unchanged at b94078bed10ccdb86c5e4b9f73bff8f479089fa4,
+    // the SyncBoundsT snapshot). The Wiki converters and the RecSync value gate
     // (IsSyncValue) must both read their limits from here.
     internal readonly record struct NumericBound(decimal Min, decimal Max, bool Fractional = false);
 

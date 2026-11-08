@@ -62,7 +62,7 @@ public sealed class PlanService
             ["Video/Disable Vertex Cache"] = "false",
             ["Video/Driver Wake-Up Delay"] = "0",
             ["Video/Vblank Rate"] = "60",
-            ["Video/Vblank NTSC Fixup"] = "false",
+            ["Video/Vblank NTSC Fixup"] = "true",
             ["Video/Force CPU Blit"] = "false",
             ["Video/Use GPU texture scaling"] = "false",
             ["Video/Disable ZCull Occlusion Queries"] = "false",

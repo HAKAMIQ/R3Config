@@ -42,8 +42,8 @@ internal static class EvidenceApplicabilityT
 
     private static HwInfo LowTier() => Hardware("Dual Core Test CPU", 2, 4, "Basic Display Adapter");
 
-    private static HwInfo HighTier(string gpu = "NVIDIA GeForce RTX 3060", string? pci = "10DE") =>
-        Hardware("Intel Core i5-12600KF", 16, 32, gpu, pci);
+    private static HwInfo HighTier(string gpu = "NVIDIA GeForce Test", string? pci = "10DE") =>
+        Hardware("High Tier Test CPU", 16, 32, gpu, pci);
 
     private static CfgChg Change(
         string section,

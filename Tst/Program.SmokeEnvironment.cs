@@ -99,17 +99,17 @@ internal static partial class Program
     static HwState Hw_All()
     {
         var highEndHardware = new HwProbe(
-            readCpuName: () => "Intel Core i5-12600KF",
+            readCpuName: () => "High Tier Test CPU",
             readLogicalProcessors: () => 16,
             readTotalMemoryBytes: () => 32UL * 1024UL * 1024UL * 1024UL,
-            readGpuName: () => "NVIDIA GeForce RTX 3060").Probe();
+            readGpuName: () => "NVIDIA GeForce Test").Probe();
         Assert(highEndHardware.Tier == HwTier.High,
             "Expected high-end hardware profile from CPU/RAM/GPU probe data.");
-        Assert(highEndHardware.CpuName.Contains("12600KF", StringComparison.OrdinalIgnoreCase),
+        Assert(highEndHardware.CpuName.Contains("High Tier Test CPU", StringComparison.OrdinalIgnoreCase),
             "Expected CPU name to be preserved.");
         Assert(highEndHardware.TotalB >= 31.9,
             "Expected total RAM to be reported in GiB.");
-        Assert(highEndHardware.GpuName.Contains("RTX 3060", StringComparison.OrdinalIgnoreCase),
+        Assert(highEndHardware.GpuName.Contains("NVIDIA GeForce Test", StringComparison.OrdinalIgnoreCase),
             "Expected GPU name to be preserved.");
 
         var balancedHardware = new HwProbe(

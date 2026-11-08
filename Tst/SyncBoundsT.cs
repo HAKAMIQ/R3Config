@@ -9,9 +9,11 @@ namespace R3Config.Tests;
 // (WikiSvc.IsSyncValue) at and around every numeric limit.
 //
 // Snapshot source (read-only reference, not read at test time):
-//   rpcs3/Emu/system_config.h of the local RPCS3 checkout rpcs3-54014a7
-//   RPCS3 commit 54014a7de4b2ccec98c9c0cb7dbebec0606c5cd6 (2026-09-07)
-//   SHA-256 cd33a151a8ff5dc3a8b0919610448e93c74144e1d6336983b71ee8e028ba34ed
+//   rpcs3/Emu/system_config.h of the local RPCS3 checkout RPCS3-Source-Full
+//   RPCS3 commit b94078bed10ccdb86c5e4b9f73bff8f479089fa4 (2026-11-06,
+//   build v0.0.43-20568-b94078be)
+//   SHA-256 d8277cb265ec05ad40303e70ae810ff57aaba1b2b044d2061c3ac2e39fc68a15
+//   (CRLF checkout; the git blob is 7a3ab96799089ab316fcaee29c70570bed93fab7a6ebc1a87ed9f4c330ef713d)
 // Enum settings are not part of the snapshot. The trailing number is the
 // declaration line in system_config.h.
 internal static class SyncBoundsT
@@ -22,52 +24,52 @@ internal static class SyncBoundsT
         ("Core", "Preferred SPU Threads", "Int", "0", "0", "6"), // 34
         ("Core", "SPU loop detection", "Bool", "false", null, null), // 36
         ("Core", "Accurate SPU DMA", "Bool", "false", null, null), // 39
-        ("Core", "Accurate RSX reservation access", "Bool", "false", null, null), // 42
+        ("Core", "Accurate RSX reservation access", "Bool", "false", null, null), // 44
         ("Core", "Disable SPU GETLLAR Spin Optimization", "Bool", "false", null, null), // 31
-        ("Core", "Accurate PPU 128-byte Reservation Op Max Length", "Int", "0", "-1", "14"), // 65
+        ("Core", "Accurate PPU 128-byte Reservation Op Max Length", "Int", "0", "-1", "14"), // 67
         ("Core", "Max SPURS Threads", "Int", "6", "1", "6"), // 37
-        ("Core", "Clocks scale", "Int", "100", "10", "3000"), // 82
-        ("Core", "Use Accurate DFMA", "Bool", "true", null, null), // 69
-        ("Core", "PPU Accurate Non-Java Mode", "Bool", "false", null, null), // 71
-        ("Core", "PPU Accurate Vector NaN Values", "Bool", "false", null, null), // 72
-        ("Core", "Debug Console Mode", "Bool", "false", null, null), // 75
-        ("Core", "Hook static functions", "Bool", "false", null, null), // 76
-        ("Core", "Libraries Control", "List", "", null, null), // 77
-        ("Video", "Anisotropic Filter Override", "Int", "0", "0", "16"), // 167
-        ("Video", "Resolution Scale", "Int", "100", "25", "800"), // 166
-        ("Video", "Minimum Scalable Dimension", "Int", "16", "1", "1024"), // 169
-        ("Video", "Write Color Buffers", "Bool", "false", null, null), // 131
-        ("Video", "Read Color Buffers", "Bool", "false", null, null), // 133
-        ("Video", "Write Depth Buffer", "Bool", "false", null, null), // 132
-        ("Video", "Read Depth Buffer", "Bool", "false", null, null), // 134
-        ("Video", "Handle RSX Memory Tiling", "Bool", "false", null, null), // 135
-        ("Video", "Strict Rendering Mode", "Bool", "false", null, null), // 143
-        ("Video", "Stretch To Display Area", "Bool", "false", null, null), // 141
-        ("Video", "Multithreaded RSX", "Bool", "false", null, null), // 156
-        ("Video", "Vulkan.Asynchronous Texture Streaming", "Bool", "false", null, null), // 192
-        ("Video", "Disable On-Disk Shader Cache", "Bool", "false", null, null), // 152
-        ("Video", "Disable Vertex Cache", "Bool", "false", null, null), // 147
-        ("Video", "Driver Wake-Up Delay", "Int", "0", "0", "16667"), // 172
-        ("Video", "Vblank Rate", "Int", "60", "1", "6000"), // 173
-        ("Video", "Vblank NTSC Fixup", "Bool", "false", null, null), // 174
-        ("Video", "Force CPU Blit", "Bool", "false", null, null), // 151
-        ("Video", "Use GPU texture scaling", "Bool", "false", null, null), // 140
-        ("Video", "Disable ZCull Occlusion Queries", "Bool", "false", null, null), // 145
-        ("Video", "Texture LOD Bias Addend", "Float", "0", "-32", "32"), // 168
-        ("Video", "Allow Host GPU Labels", "Bool", "false", null, null), // 176
-        ("Video", "Force Hardware MSAA Resolve", "Bool", "false", null, null), // 158
-        ("Video", "Emulate Special Depth Comparison", "Bool", "false", null, null), // 149
-        ("Video", "Disable Asynchronous Memory Manager", "Bool", "false", null, null), // 178
-        ("Video", "Relaxed ZCULL Sync", "Bool", "false", null, null), // 157
-        ("Video", "Accurate ZCULL stats", "Bool", "true", null, null), // 163
-        ("Audio", "Dump to file", "Bool", "false", null, null), // 256
-        ("Audio", "Convert to 16 bit", "Bool", "false", null, null), // 257
-        ("Audio", "Master Volume", "Int", "100", "0", "200"), // 262
-        ("Audio", "Enable Buffering", "Bool", "true", null, null), // 263
-        ("Audio", "Desired Audio Buffer Duration", "Int", "34", "4", "250"), // 264
-        ("Audio", "Enable Time Stretching", "Bool", "false", null, null), // 265
-        ("Audio", "Time Stretching Threshold", "Int", "75", "0", "100"), // 267
-        ("Miscellaneous", "Silence All Logs", "Bool", "false", null, null) // 380
+        ("Core", "Clocks scale", "Int", "100", "10", "3000"), // 83
+        ("Core", "Use Accurate DFMA", "Bool", "true", null, null), // 71
+        ("Core", "PPU Accurate Non-Java Mode", "Bool", "false", null, null), // 73
+        ("Core", "PPU Accurate Vector NaN Values", "Bool", "false", null, null), // 74
+        ("Core", "Debug Console Mode", "Bool", "false", null, null), // 78
+        ("Core", "Hook static functions", "Bool", "false", null, null), // 79
+        ("Core", "Libraries Control", "List", "", null, null), // 80
+        ("Video", "Anisotropic Filter Override", "Int", "0", "0", "16"), // 172
+        ("Video", "Resolution Scale", "Int", "100", "25", "800"), // 171
+        ("Video", "Minimum Scalable Dimension", "Int", "16", "1", "1024"), // 174
+        ("Video", "Write Color Buffers", "Bool", "false", null, null), // 135
+        ("Video", "Read Color Buffers", "Bool", "false", null, null), // 137
+        ("Video", "Write Depth Buffer", "Bool", "false", null, null), // 136
+        ("Video", "Read Depth Buffer", "Bool", "false", null, null), // 138
+        ("Video", "Handle RSX Memory Tiling", "Bool", "false", null, null), // 139
+        ("Video", "Strict Rendering Mode", "Bool", "false", null, null), // 147
+        ("Video", "Stretch To Display Area", "Bool", "false", null, null), // 145
+        ("Video", "Multithreaded RSX", "Bool", "false", null, null), // 161
+        ("Video", "Vulkan.Asynchronous Texture Streaming", "Bool", "false", null, null), // 197
+        ("Video", "Disable On-Disk Shader Cache", "Bool", "false", null, null), // 157
+        ("Video", "Disable Vertex Cache", "Bool", "false", null, null), // 151
+        ("Video", "Driver Wake-Up Delay", "Int", "0", "0", "16667"), // 177
+        ("Video", "Vblank Rate", "Int", "60", "1", "6000"), // 178
+        ("Video", "Vblank NTSC Fixup", "Bool", "true", null, null), // 179
+        ("Video", "Force CPU Blit", "Bool", "false", null, null), // 156
+        ("Video", "Use GPU texture scaling", "Bool", "false", null, null), // 144
+        ("Video", "Disable ZCull Occlusion Queries", "Bool", "false", null, null), // 149
+        ("Video", "Texture LOD Bias Addend", "Float", "0", "-32", "32"), // 173
+        ("Video", "Allow Host GPU Labels", "Bool", "false", null, null), // 181
+        ("Video", "Force Hardware MSAA Resolve", "Bool", "false", null, null), // 163
+        ("Video", "Emulate Special Depth Comparison", "Bool", "false", null, null), // 153
+        ("Video", "Disable Asynchronous Memory Manager", "Bool", "false", null, null), // 183
+        ("Video", "Relaxed ZCULL Sync", "Bool", "false", null, null), // 162
+        ("Video", "Accurate ZCULL stats", "Bool", "true", null, null), // 168
+        ("Audio", "Dump to file", "Bool", "false", null, null), // 268
+        ("Audio", "Convert to 16 bit", "Bool", "false", null, null), // 269
+        ("Audio", "Master Volume", "Int", "100", "0", "200"), // 274
+        ("Audio", "Enable Buffering", "Bool", "true", null, null), // 275
+        ("Audio", "Desired Audio Buffer Duration", "Int", "34", "4", "250"), // 276
+        ("Audio", "Enable Time Stretching", "Bool", "false", null, null), // 277
+        ("Audio", "Time Stretching Threshold", "Int", "75", "0", "100"), // 279
+        ("Miscellaneous", "Silence All Logs", "Bool", "false", null, null) // 393
     ];
 
     public static void Run()
@@ -182,13 +184,15 @@ internal static class SyncBoundsT
     // to "Null"; the RPCS3 YAML only ever holds the to_string text of the enum
     // (system_config_types.cpp: video_renderer, audio_renderer, microphone_handler).
     // RecSync values are YAML values, so "Null" is valid and "Disabled" is not.
+    // The value lists are the to_string cases at RPCS3 b94078b ("Eye Toy" and
+    // "PS Eye" were added to microphone_handler in 2d103407, build 20013).
     private static void NullHandlerValuesAreYamlValues()
     {
         (string Section, string Key, string[] Valid)[] rows =
         [
             ("Video", "Renderer", ["Null", "OpenGL", "Vulkan"]),
             ("Audio", "Renderer", ["Null", "XAudio2", "Cubeb", "FAudio"]),
-            ("Audio", "Microphone Type", ["Null", "Standard", "SingStar", "Real SingStar", "Rocksmith"])
+            ("Audio", "Microphone Type", ["Null", "Standard", "SingStar", "Real SingStar", "Rocksmith", "Eye Toy", "PS Eye"])
         ];
 
         foreach (var row in rows)
