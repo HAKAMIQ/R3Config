@@ -24,7 +24,9 @@ Wiki XML (audit فقط)
   serial، إصدار اللعبة، النسخة (digital/disc)، المنصة، العتاد، إصدار RPCS3، واعتماد
   الباتش. النطاق غير المحسوم يجعلها `Conditional` وتُعرض دون تطبيق تلقائي. لا يُخفى شيء.
   `WikiNotesParser` لا يأخذ إصدار اللعبة من رقم داخل عنوان IPv4 (مجرد أو host=IPv4) حتى لو ظهرت كلمة
-  مثل below في الملاحظة؛ الاختبار `R3Test.exe --wiki-notes-parser-only VersionIpv4`.
+  مثل below في الملاحظة؛ الاختبار `R3Test.exe --wiki-notes-parser-only VersionIpv4`. وبالمثل لا يأخذه من رقم داخل صيغة بناء
+  RPCS3 (v0.0.N-NNNN أو rpcs3-v0.0.N)، ونطاق البناء يبقى من قاعدة 0.0.N المجردة وحدها؛ الاختبار
+  `R3Test.exe --wiki-notes-parser-only VersionRpcs3Build`.
 - `WikiOnlineEvidence.TestedGameVersion` هو الإصدار الذي اختبره الويكي وليس شرطًا.
   `RequiredGameVersion` يبقى `null` ما لم يذكر الويكي الشرط صراحة. غياب الجدول يعني
   Unknown ولا يعني Not supported، وأي حقل ناقص يعرض Unknown.

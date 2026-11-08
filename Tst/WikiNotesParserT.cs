@@ -129,6 +129,7 @@ internal static class WikiNotesParserT
             (nameof(BangCommentEnd), BangCommentEnd),
             (nameof(WikiResidueOnly), WikiResidueOnly),
             (nameof(VersionIpv4), VersionIpv4),
+            (nameof(VersionRpcs3Build), VersionRpcs3Build),
             (nameof(WikiNotesParserT), Run)
         ];
         foreach (var (name, body) in cases)
@@ -250,6 +251,59 @@ internal static class WikiNotesParserT
         var build = Single("The game requires a uDraw GameTablet USB peripheral to be connected and configured for passthrough to RPCS3. Support for this was added in RPCS3 version 0.0.13-11475.");
         Assert(build.Rpcs3BuildCondition == "0.0.13-11475" && build.VersionCondition == "0.0.13",
             $"RPCS3 build wording must stay build scope (0.0.13-11475 / 0.0.13), got '{build.Rpcs3BuildCondition}' / '{build.VersionCondition}'.");
+    }
+
+    // Round 14: a dotted number inside RPCS3 build wording (v0.0.N-NNNN or
+    // rpcs3-v0.0.N) is never a game version. The Catherine and Madden NFL 10
+    // sections are copied verbatim (entities decoded) from the pinned snapshot
+    // RPCS3+Wiki-20260920160231.xml (Catherine page id 51 revision 58286;
+    // Madden NFL 10 page id 1817 revision 52837). The build-scope rule is not
+    // widened: it still reads only a bare 0.0.N, so a v-prefixed build keeps no
+    // Rpcs3BuildCondition.
+    public static void VersionRpcs3Build()
+    {
+        var catherine = WikiNotesParser.Parse(
+            "Catherine",
+            ["BLUS30428"],
+            """
+            ==Known Issues==
+            There are no reported issues with this title.
+            ===Black Screen after Altus logo - <i>Fixed by {{pr|5310}}</i>===
+            <s>For certain CPUs, the game hangs on a black screen after the Atlus logo. This issue was first visible after {{pr|4422}} and is being tracked as part of {{issue|4473}}. For people affected by this issue, use this [https://obk.ee/rpcs3/archive/rpcs3-v0.0.5-6664-47752221_win64.7z older build] of the emulator.</s>
+            """);
+        var catherineNote = catherine.Notes.Single(note => note.Text.Contains("rpcs3-v0.0.5-6664", StringComparison.Ordinal));
+        Assert(catherineNote.VersionCondition is null,
+            $"Catherine note must not take a VersionCondition from 'rpcs3-v0.0.5-6664', got '{catherineNote.VersionCondition}'.");
+        Assert(catherineNote.Rpcs3BuildCondition is null,
+            $"The unchanged build-scope rule does not read a v-prefixed build, got '{catherineNote.Rpcs3BuildCondition}'.");
+
+        var madden = WikiNotesParser.Parse(
+            "Madden NFL 10",
+            ["BLUS30375"],
+            """
+            ==Known Issues==
+            <!-- Mention any known issues relating to the game. Use the issue and PR template if necessary. If no notable issues are present, mention "There are no reported issues with this title." -->
+            ===Black lines across menus===
+            * {{issue|12514}}: Black lines appear across the title screen and game menus in RPCS3 versions after v0.0.21-13399.
+            """);
+        var maddenNote = madden.Notes.Single(note => note.Text.Contains("v0.0.21-13399", StringComparison.Ordinal));
+        Assert(maddenNote.VersionCondition is null,
+            $"Madden NFL note must not take a VersionCondition from 'v0.0.21-13399', got '{maddenNote.VersionCondition}'.");
+        Assert(maddenNote.Rpcs3BuildCondition is null,
+            $"The unchanged build-scope rule does not read a v-prefixed build, got '{maddenNote.Rpcs3BuildCondition}'.");
+
+        Assert(VersionOf("Crashes on newer builds, so use the rpcs3-v0.0.5 build or older.") is null,
+            "rpcs3-v0.0.N without a build number must not become a VersionCondition.");
+        Assert(VersionOf("Update the game to version 1.05; menus break in RPCS3 versions after v0.0.21-13399.") == "1.05",
+            "A game version stated before RPCS3 build wording must be chosen over the build.");
+        Assert(VersionOf("Menus break in RPCS3 versions after v0.0.21-13399 unless the game is updated to 1.05.") == "1.05",
+            "A game version stated after RPCS3 build wording must be chosen over the build.");
+        Assert(VersionOf("If you get a crash with version 01.11, set the network status as disabled.") == "01.11",
+            "Explicit game version 01.11 must remain the VersionCondition.");
+
+        var added = Single("The game requires a 'Ride Gate'/'Summonride Portal' USB peripheral to be connected and configured for passthrough to RPCS3. Support for this was added in RPCS3 version 0.0.17-12652.");
+        Assert(added.Rpcs3BuildCondition == "0.0.17-12652" && added.VersionCondition == "0.0.17",
+            $"Bare RPCS3 build wording must stay build scope (0.0.17-12652 / 0.0.17), got '{added.Rpcs3BuildCondition}' / '{added.VersionCondition}'.");
     }
 
     private static string? VersionOf(string bullet) => Single(bullet).VersionCondition;

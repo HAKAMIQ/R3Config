@@ -105,6 +105,13 @@ public static class WikiNotesParser
         @"\b\d{1,3}(?:\.\d{1,3}){3}\b",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    // A dotted number inside RPCS3 build wording (v0.0.N-NNNN or rpcs3-v0.0.N)
+    // is never a game version, e.g. 0.21 in "after v0.0.21-13399" or 0.5 in
+    // "rpcs3-v0.0.5-6664". Build scope still comes only from Rpcs3BuildNumber.
+    private static readonly Regex Rpcs3BuildWording = new(
+        @"\brpcs3-v0\.0\.\d+(?:-\d+)?\b|\bv0\.0\.\d+-\d+\b",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
     private static readonly Regex VersionContextWord = new(
         @"\b(version|update|past|below|above|prior to|before|after|newer|older)\b",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
@@ -293,9 +300,9 @@ public static class WikiNotesParser
         string text)
     {
         var platformMatch = PlatformWord.Match(text);
-        var addresses = Ipv4Address.Matches(text);
+        var excluded = Ipv4Address.Matches(text).Concat(Rpcs3BuildWording.Matches(text)).ToArray();
         var versionMatch = VersionNumber.Matches(text).FirstOrDefault(number =>
-            !addresses.Any(address => number.Index >= address.Index && number.Index < address.Index + address.Length));
+            !excluded.Any(span => number.Index >= span.Index && number.Index < span.Index + span.Length));
         var hasVersionContext = versionMatch is not null && VersionContextWord.IsMatch(text);
         var platform = platformMatch.Success ? platformMatch.Value : null;
         var version = hasVersionContext ? versionMatch?.Value : null;
