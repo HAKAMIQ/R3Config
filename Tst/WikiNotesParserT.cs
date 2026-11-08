@@ -130,6 +130,8 @@ internal static class WikiNotesParserT
             (nameof(WikiResidueOnly), WikiResidueOnly),
             (nameof(VersionIpv4), VersionIpv4),
             (nameof(VersionRpcs3Build), VersionRpcs3Build),
+            (nameof(BuildScopeRpcs3Build), BuildScopeRpcs3Build),
+            (nameof(StruckNotes), StruckNotes),
             (nameof(WikiNotesParserT), Run)
         ];
         foreach (var (name, body) in cases)
@@ -254,28 +256,20 @@ internal static class WikiNotesParserT
     }
 
     // Round 14: a dotted number inside RPCS3 build wording (v0.0.N-NNNN or
-    // rpcs3-v0.0.N) is never a game version. The Catherine and Madden NFL 10
-    // sections are copied verbatim (entities decoded) from the pinned snapshot
-    // RPCS3+Wiki-20260920160231.xml (Catherine page id 51 revision 58286;
-    // Madden NFL 10 page id 1817 revision 52837). The build-scope rule is not
-    // widened: it still reads only a bare 0.0.N, so a v-prefixed build keeps no
-    // Rpcs3BuildCondition.
+    // rpcs3-v0.0.N) is never a game version. The Catherine sentence and the
+    // Madden NFL 10 section are copied verbatim (entities decoded) from the
+    // pinned snapshot RPCS3+Wiki-20260920160231.xml (Catherine page id 51
+    // revision 58286; Madden NFL 10 page id 1817 revision 52837). The wiki
+    // wraps the Catherine sentence in <s>, and a wholly struck note is dropped
+    // since round 15 (StruckNotes), so the sentence is used here without it.
+    // Round 15: the same wording is read as build scope (BuildScopeRpcs3Build).
     public static void VersionRpcs3Build()
     {
-        var catherine = WikiNotesParser.Parse(
-            "Catherine",
-            ["BLUS30428"],
-            """
-            ==Known Issues==
-            There are no reported issues with this title.
-            ===Black Screen after Altus logo - <i>Fixed by {{pr|5310}}</i>===
-            <s>For certain CPUs, the game hangs on a black screen after the Atlus logo. This issue was first visible after {{pr|4422}} and is being tracked as part of {{issue|4473}}. For people affected by this issue, use this [https://obk.ee/rpcs3/archive/rpcs3-v0.0.5-6664-47752221_win64.7z older build] of the emulator.</s>
-            """);
-        var catherineNote = catherine.Notes.Single(note => note.Text.Contains("rpcs3-v0.0.5-6664", StringComparison.Ordinal));
+        var catherineNote = Single("For certain CPUs, the game hangs on a black screen after the Atlus logo. This issue was first visible after {{pr|4422}} and is being tracked as part of {{issue|4473}}. For people affected by this issue, use this [https://obk.ee/rpcs3/archive/rpcs3-v0.0.5-6664-47752221_win64.7z older build] of the emulator.");
         Assert(catherineNote.VersionCondition is null,
             $"Catherine note must not take a VersionCondition from 'rpcs3-v0.0.5-6664', got '{catherineNote.VersionCondition}'.");
-        Assert(catherineNote.Rpcs3BuildCondition is null,
-            $"The unchanged build-scope rule does not read a v-prefixed build, got '{catherineNote.Rpcs3BuildCondition}'.");
+        Assert(catherineNote.Rpcs3BuildCondition == "0.0.5-6664",
+            $"rpcs3-v0.0.5-6664 must be build scope 0.0.5-6664, got '{catherineNote.Rpcs3BuildCondition}'.");
 
         var madden = WikiNotesParser.Parse(
             "Madden NFL 10",
@@ -289,8 +283,8 @@ internal static class WikiNotesParserT
         var maddenNote = madden.Notes.Single(note => note.Text.Contains("v0.0.21-13399", StringComparison.Ordinal));
         Assert(maddenNote.VersionCondition is null,
             $"Madden NFL note must not take a VersionCondition from 'v0.0.21-13399', got '{maddenNote.VersionCondition}'.");
-        Assert(maddenNote.Rpcs3BuildCondition is null,
-            $"The unchanged build-scope rule does not read a v-prefixed build, got '{maddenNote.Rpcs3BuildCondition}'.");
+        Assert(maddenNote.Rpcs3BuildCondition == "0.0.21-13399",
+            $"v0.0.21-13399 must be build scope 0.0.21-13399, got '{maddenNote.Rpcs3BuildCondition}'.");
 
         Assert(VersionOf("Crashes on newer builds, so use the rpcs3-v0.0.5 build or older.") is null,
             "rpcs3-v0.0.N without a build number must not become a VersionCondition.");
@@ -305,6 +299,121 @@ internal static class WikiNotesParserT
         Assert(added.Rpcs3BuildCondition == "0.0.17-12652" && added.VersionCondition == "0.0.17",
             $"Bare RPCS3 build wording must stay build scope (0.0.17-12652 / 0.0.17), got '{added.Rpcs3BuildCondition}' / '{added.VersionCondition}'.");
     }
+
+    // Round 15: Rpcs3BuildNumber also reads RPCS3 build wording (v0.0.N-NNNN or
+    // rpcs3-v0.0.N) as build scope, and never reads a number inside an IPv4
+    // address. Wiki lines are verbatim (entities decoded) from the pinned
+    // snapshot RPCS3+Wiki-20260920160231.xml: All-Pro Football 2K8 page id 765
+    // revision 58005; Ace Combat Infinity page id 1259 revision 58886.
+    public static void BuildScopeRpcs3Build()
+    {
+        Assert(BuildOf("{{issue|12514}}: Black lines appear across the title screen and game menus in RPCS3 versions after v0.0.21-13399.") == "0.0.21-13399",
+            "v0.0.21-13399 must be build scope 0.0.21-13399.");
+        Assert(BuildOf("{{issue|13253}}: There are graphical glitches (flimmering on helmets + pixelated banners) since RPCS v0.0.26-14569 when both WCB and CPU blit are enabled.") == "0.0.26-14569",
+            "v0.0.26-14569 must be build scope 0.0.26-14569.");
+        Assert(BuildOf("For people affected by this issue, use this [https://obk.ee/rpcs3/archive/rpcs3-v0.0.5-6664-47752221_win64.7z older build] of the emulator.") == "0.0.5-6664",
+            "rpcs3-v0.0.5-6664 must be build scope 0.0.5-6664.");
+        Assert(BuildOf("Crashes on newer builds, so use the rpcs3-v0.0.5 build or older.") == "0.0.5",
+            "rpcs3-v0.0.5 must be build scope 0.0.5.");
+
+        var aceCombat = WikiNotesParser.Parse(
+            "Ace Combat Infinity",
+            ["NPUB31347"],
+            """
+            ==Special Notes==
+            ===Netplay IP/Host Switches===
+            This title requires a private server to access all Netplay features. Enter the below text in the '''IP/Host Switches''' section:
+            ====Local server====
+            <pre>dev-wind.siliconstudio.co.jp=127.0.0.1</pre>
+            """);
+        var local = aceCombat.Notes.Single(note => note.Text.Contains("127.0.0.1", StringComparison.Ordinal));
+        Assert(local.Rpcs3BuildCondition is null && local.VersionCondition is null,
+            $"An IPv4 address must not become build scope, got '{local.Rpcs3BuildCondition}' / '{local.VersionCondition}'.");
+        Assert(BuildOf("Enter the below text: a.example.net=127.0.0.1. Broken since RPCS3 0.0.17-12650.") == "0.0.17-12650",
+            "A build stated after an IPv4 address must be chosen over the address.");
+
+        foreach (var (text, build, version) in new[]
+                 {
+                     ("Support for this was added in RPCS3 version 0.0.13-11475.", "0.0.13-11475", "0.0.13"),
+                     ("Support for this was added in RPCS3 version 0.0.17-12652.", "0.0.17-12652", "0.0.17"),
+                     ("RPCS3 issue #11122: Excessive amounts of bloom occur in versions of RPCS3 since 0.0.17-12650", "0.0.17-12650", null),
+                     ("The game, in its current state (build 0.0.24-14141), will have difficulty maintaining 60fps.", "0.0.24-14141", null)
+                 })
+        {
+            var note = Single(text);
+            Assert(note.Rpcs3BuildCondition == build && note.VersionCondition == version,
+                $"Bare RPCS3 build wording must stay unchanged ({build} / {version ?? "null"}), got '{note.Rpcs3BuildCondition}' / '{note.VersionCondition}'.");
+        }
+
+        Assert(BuildOf("The game will freeze during the loading screen if its not updated to version 1.09.") is null &&
+               VersionOf("The game will freeze during the loading screen if its not updated to version 1.09.") == "1.09",
+            "A game version must stay a game version and never become build scope.");
+    }
+
+    // Round 15: a note that the Wiki has wholly struck through (<s>...</s>) is
+    // no longer evidence and is not emitted; a partly struck note is kept as is.
+    // Sections are verbatim (entities decoded) from the pinned snapshot
+    // RPCS3+Wiki-20260920160231.xml: Catherine page id 51 revision 58286;
+    // Madden NFL 12 page id 1819 revision 55629; Rampart page id 2172 revision
+    // 57249; Fuel Overdose page id 1587 revision 54678.
+    public static void StruckNotes()
+    {
+        var catherine = WikiNotesParser.Parse(
+            "Catherine",
+            ["BLUS30428"],
+            """
+            ==Known Issues==
+            <!-- Mention any known issues relating to the game. Use the issue and PR template if necessary. If no notable issues are present, mention "There are no reported issues with this title." -->
+            There are no reported issues with this title.
+            ===Black Screen after Altus logo - <i>Fixed by {{pr|5310}}</i>===
+            <s>For certain CPUs, the game hangs on a black screen after the Atlus logo. This issue was first visible after {{pr|4422}} and is being tracked as part of {{issue|4473}}. For people affected by this issue, use this [https://obk.ee/rpcs3/archive/rpcs3-v0.0.5-6664-47752221_win64.7z older build] of the emulator.</s>
+            """);
+        Assert(catherine.Notes.Count == 1 && catherine.Notes[0].Text == "There are no reported issues with this title.",
+            $"Catherine's wholly struck note must not be emitted, got: {string.Join(" | ", catherine.Notes.Select(note => note.Text))}.");
+
+        var madden12 = WikiNotesParser.Parse(
+            "Madden NFL 12",
+            ["BLUS30770"],
+            """
+            ==Known Issues==
+            <!-- Mention any known issues relating to the game. Use the issue and PR template if necessary. If no notable issues are present, mention "There are no reported issues with this title." -->
+
+            ===<s>Black lines across menus</s>===
+            <s>* {{issue|12514}}: Black lines appear across the title screen and game menus in RPCS3 versions after v0.0.21-13399.</s><!--Fixed by PR 14131 in July 2023-->
+            """);
+        Assert(madden12.Notes.Count == 0,
+            $"Madden NFL 12's wholly struck note must not be emitted, got: {string.Join(" | ", madden12.Notes.Select(note => note.Text))}.");
+
+        var rampart = WikiNotesParser.Parse(
+            "Rampart",
+            [],
+            """
+            ==Known Issues==
+            ===Crashing at Main Menu===
+            *<s>{{issue|14860}}: The game freezes at the main menu</s> - Resolved by PR 15167
+            """);
+        Assert(rampart.Notes.Count == 1 && rampart.Notes[0].Text == "RPCS3 issue #14860: The game freezes at the main menu - Resolved by PR 15167",
+            $"A partly struck note must be kept unchanged, got: {string.Join(" | ", rampart.Notes.Select(note => note.Text))}.");
+
+        var fuel = WikiNotesParser.Parse(
+            "Fuel Overdose",
+            [],
+            """
+            ==Known Issues==
+            There are no reported issues with this title.
+
+            ===<s>Disk space error</s>===
+            *<s>{{issue|13301}} - The demo version and full game prior to version 1.05 can't make it past the intro FMV's due to an error calculating available disk space to create the autosave data.</s> - Resolved by PR 15313
+            """);
+        var fuelNote = fuel.Notes.SingleOrDefault(note => note.Text.Contains("13301", StringComparison.Ordinal));
+        Assert(fuel.Notes.Count == 2 && fuelNote is not null && fuelNote.VersionCondition == "1.05",
+            $"A partly struck note must be kept with its VersionCondition 1.05, got: {string.Join(" | ", fuel.Notes.Select(note => $"{note.Text} [{note.VersionCondition}]"))}.");
+
+        Assert(Single("<s>An unclosed strike tag keeps the note.").Text == "An unclosed strike tag keeps the note.",
+            "A note whose strike tags do not balance must be kept.");
+    }
+
+    private static string? BuildOf(string bullet) => Single(bullet).Rpcs3BuildCondition;
 
     private static string? VersionOf(string bullet) => Single(bullet).VersionCondition;
 

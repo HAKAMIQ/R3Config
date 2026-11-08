@@ -685,7 +685,7 @@
           "PlatformCondition": null,
           "EditionCondition": null,
           "HardwareCondition": null,
-          "Rpcs3BuildCondition": "0.0.1",
+          "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
         },
@@ -1239,7 +1239,7 @@
           "PlatformCondition": null,
           "EditionCondition": null,
           "HardwareCondition": "CPU",
-          "Rpcs3BuildCondition": null,
+          "Rpcs3BuildCondition": "0.0.26-14569",
           "SerialCondition": null,
           "PatchDependent": false
         }
@@ -2287,29 +2287,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        }
-      ],
-      "Online": []
-    },
-    {
-      "Page": "Asdivine Hearts",
-      "Serials": [
-        "NPJB00823",
-        "NPUB31850"
-      ],
-      "Notes": [
-        {
-          "Page": "Asdivine Hearts",
-          "SourceSection": "Regressed to loadable - \u003Ci\u003EFixed by {{pr|13115}}\u003C/i\u003E",
-          "Class": "InformationalNote",
-          "Text": "RPCS3 issue #6365 - Some games regressed to Loadable \u0022Tried different settings, but no luck, the game throws this error before rendering of graphics: F {PPU[0x1000005] Thread (UnityMain) [0x000ff458]} class std::runtime_error thrown: Trap! (0xff458)",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -8226,19 +8203,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Catherine",
-          "SourceSection": "Black Screen after Altus logo - \u003Ci\u003EFixed by {{pr|5310}}\u003C/i\u003E",
-          "Class": "InformationalNote",
-          "Text": "For certain CPUs, the game hangs on a black screen after the Atlus logo. This issue was first visible after RPCS3 PR #4422 and is being tracked as part of RPCS3 issue #4473. For people affected by this issue, use this [https://obk.ee/rpcs3/archive/rpcs3-v0.0.5-6664-47752221_win64.7z older build] of the emulator.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": []
@@ -13838,19 +13802,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Dragon Ball: Raging Blast",
-          "SourceSection": "Broken character textures - \u003Ci\u003EFixed by {{pr|7846}}\u003C/i\u003E",
-          "Class": "InformationalNote",
-          "Text": "There are broken character textures in character selection and cutscenes. In battles, it isn\u0027t present. It\u0027s a minor issue.",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -27059,19 +27010,6 @@
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
-        },
-        {
-          "Page": "Joust",
-          "SourceSection": "\u003Cs\u003ERendering issues\u003C/s\u003E",
-          "Class": "InformationalNote",
-          "Text": "* RPCS3 issue #14001: Wrong colors are shown compared to console (mainly blue instead of red and yellow).",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
         }
       ],
       "Online": []
@@ -31533,7 +31471,7 @@
           "PlatformCondition": null,
           "EditionCondition": null,
           "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
+          "Rpcs3BuildCondition": "0.0.21-13399",
           "SerialCondition": null,
           "PatchDependent": false
         }
@@ -31572,7 +31510,7 @@
           "PlatformCondition": null,
           "EditionCondition": null,
           "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
+          "Rpcs3BuildCondition": "0.0.21-13399",
           "SerialCondition": null,
           "PatchDependent": false
         }
@@ -31602,19 +31540,6 @@
         "NPUB90594"
       ],
       "Notes": [
-        {
-          "Page": "Madden NFL 12",
-          "SourceSection": "\u003Cs\u003EBlack lines across menus\u003C/s\u003E",
-          "Class": "InformationalNote",
-          "Text": "* RPCS3 issue #12514: Black lines appear across the title screen and game menus in RPCS3 versions after v0.0.21-13399.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
         {
           "Page": "Madden NFL 12",
           "SourceSection": "Create-a-Player issue",
@@ -35734,19 +35659,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Mortal Kombat II",
-          "SourceSection": "\u003Cs\u003EIncorrect colors\u003C/s\u003E",
-          "Class": "InformationalNote",
-          "Text": "*RPCS3 issue #11324: Incorrect colors appear both in menus and in-game.",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -40568,19 +40480,6 @@
           "PlatformCondition": null,
           "EditionCondition": null,
           "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "NieR",
-          "SourceSection": "Vulkan hang during final cutscenes - \u003Ci\u003EFixed\u003C/i\u003E",
-          "Class": "HardwareConditionalNote",
-          "Text": "After the point-of-no-return at the final dungeon of the game, the game will freeze and crash during the cutscenes when using the Vulkan renderer. In order to bypass this, users are required to either skip the cutscenes or play the final sequence with the OpenGL renderer. This issue is tracked as part of RPCS3 issue #6468 (Warning, contains major spoilers regarding the final boss battle).",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": "Vulkan",
           "Rpcs3BuildCondition": null,
           "SerialCondition": null,
           "PatchDependent": false
@@ -47488,31 +47387,6 @@
       "Online": []
     },
     {
-      "Page": "Retro/Grade",
-      "Serials": [
-        "NPEB01094",
-        "NPEB01113",
-        "NPUB30280",
-        "NPUB30884"
-      ],
-      "Notes": [
-        {
-          "Page": "Retro/Grade",
-          "SourceSection": "Broken graphics - \u003Ci\u003EFixed by {{pr|14934}}\u003C/i\u003E",
-          "Class": "InformationalNote",
-          "Text": "RPCS3 issue #6688: The graphics show as pixelated colors.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        }
-      ],
-      "Online": []
-    },
-    {
       "Page": "Revenant Saga",
       "Serials": [
         "NPUB31863"
@@ -49810,7 +49684,7 @@
           "PlatformCondition": null,
           "EditionCondition": null,
           "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
+          "Rpcs3BuildCondition": "0.0.26-14570",
           "SerialCondition": null,
           "PatchDependent": false
         }
@@ -58729,19 +58603,6 @@
         },
         {
           "Page": "Tales of Xillia 2",
-          "SourceSection": "Game crashes with too many DLCs installed - \u003Ci\u003EFixed by {{pr|7945}}\u003C/i\u003E",
-          "Class": "Warning",
-          "Text": "If users install more that 16 DLCs, the game will crash after the intro logos. This issue is tracked as part of RPCS3 issue #4091.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Tales of Xillia 2",
           "SourceSection": "Low Brightness",
           "Class": "InformationalNote",
           "Text": "The Xillia titles have low brightness and appear darker than other titles. This is present even on the PlayStation 3 and reflects the aesthetics the developer were going for. This is NOT a bug with RPCS3. If you want to check, confirm it with [https://www.youtube.com/watch?v=N0aTh7RcyT4 walkthrough videos] from the PlayStation 3.",
@@ -59533,19 +59394,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
-        {
-          "Page": "Test Drive: Ferrari Racing Legends",
-          "SourceSection": "\u003Cs\u003EError Loading Save Data\u003C/s\u003E",
-          "Class": "InformationalNote",
-          "Text": "RPCS3 issue #13036: Several in-game error messages appear when it tries to auto-load saved data on starting the game.",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,
@@ -60496,19 +60344,6 @@
         "BLUS30023"
       ],
       "Notes": [
-        {
-          "Page": "The Godfather: The Don\u0027s Edition",
-          "SourceSection": "Input may stop working after the intro screen - \u003Ci\u003EFixed by {{pr|14458}}\u003C/i\u003E",
-          "Class": "InformationalNote",
-          "Text": "After the intro you may be greeted with a message asking you to reconnect your controller to continue, there\u0027s no known fix for this. However, you can try this workaround: after booting the game, minimise the game window and open pad settings in RPCS3, then select on your controller under the \u0022Handlers\u0022 dropdown (even if it\u0027s already been selected). Then hit save and close the pad settings window and switch back to the game window. Input should start working again after this.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        },
         {
           "Page": "The Godfather: The Don\u0027s Edition",
           "SourceSection": "Motion controls",
@@ -62751,33 +62586,6 @@
           "SourceSection": "Known Issues",
           "Class": "InformationalNote",
           "Text": "There are no reported issues with this title.",
-          "VersionCondition": null,
-          "PlatformCondition": null,
-          "EditionCondition": null,
-          "HardwareCondition": null,
-          "Rpcs3BuildCondition": null,
-          "SerialCondition": null,
-          "PatchDependent": false
-        }
-      ],
-      "Online": []
-    },
-    {
-      "Page": "The Witch and the Hundred Knight",
-      "Serials": [
-        "BLES01987",
-        "BLJS10160",
-        "BLUS30964",
-        "NPEB01930",
-        "NPJB00367",
-        "NPUB31422"
-      ],
-      "Notes": [
-        {
-          "Page": "The Witch and the Hundred Knight",
-          "SourceSection": "Broken graphics - \u003Ci\u003EFixed by {{pr|14647}}\u003C/i\u003E",
-          "Class": "InformationalNote",
-          "Text": "RPCS3 issue #7041: In sections of the game, the graphics appear pixelated even with WCB enabled.",
           "VersionCondition": null,
           "PlatformCondition": null,
           "EditionCondition": null,

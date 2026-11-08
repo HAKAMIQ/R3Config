@@ -132,9 +132,18 @@ public static class WikiNotesParser
         @"\b(digital|disc|physical|retail)\b",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
+    // RPCS3 build scope: a bare 0.0.N(-NNNN), or the build inside RPCS3 build
+    // wording (v0.0.N-NNNN or rpcs3-v0.0.N), taken without its prefix. A
+    // number inside an IPv4 address (127.0.0.1) is never build scope.
     private static readonly Regex Rpcs3BuildNumber = new(
-        @"\b0\.0\.\d+(?:-\d+)?\b",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        @"\b0\.0\.\d+(?:-\d+)?\b|(?<=\brpcs3-v)0\.0\.\d+(?:-\d+)?\b|(?<=\bv)0\.0\.\d+-\d+\b",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    // A strike-through tag (<s> or </s>). A note the Wiki struck through as a
+    // whole is no longer evidence (e.g. "Fixed by PR ...") and is not emitted.
+    private static readonly Regex StrikeTag = new(
+        @"<(?<close>/?)s\b[^>]*>",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     private static readonly Regex SerialNumber = new(
         @"(?<![A-Z0-9])[BNM][A-Z]{3}\d{5}(?![A-Z0-9])",
@@ -182,10 +191,11 @@ public static class WikiNotesParser
                 return;
             }
 
-            var text = Clean(string.Join(' ', buffer));
+            var raw = string.Join(' ', buffer);
+            var text = Clean(raw);
             buffer.Clear();
 
-            if (!string.IsNullOrWhiteSpace(text) && !WikiResidueLine.IsMatch(text))
+            if (!string.IsNullOrWhiteSpace(text) && !WikiResidueLine.IsMatch(text) && !IsWhollyStruck(raw))
             {
                 notes.Add(Classify(page, sourceSection, text));
             }
@@ -279,7 +289,8 @@ public static class WikiNotesParser
     {
         var edition = EditionWord.Match(text);
         var hardware = HardwareWord.Match(text);
-        var build = Rpcs3BuildNumber.Match(text);
+        var addresses = Ipv4Address.Matches(text);
+        var build = Rpcs3BuildNumber.Matches(text).FirstOrDefault(number => !StartsInside(number, addresses));
         var serial = SerialNumber.Match(text);
 
         // Scope is preserved verbatim from explicit cues only; it never
@@ -288,7 +299,7 @@ public static class WikiNotesParser
         {
             EditionCondition = edition.Success ? edition.Value.ToLowerInvariant() : null,
             HardwareCondition = hardware.Success ? hardware.Value : null,
-            Rpcs3BuildCondition = build.Success ? build.Value : null,
+            Rpcs3BuildCondition = build?.Value,
             SerialCondition = serial.Success ? serial.Value.ToUpperInvariant() : null,
             PatchDependent = PatchWord.IsMatch(text)
         };
@@ -301,8 +312,7 @@ public static class WikiNotesParser
     {
         var platformMatch = PlatformWord.Match(text);
         var excluded = Ipv4Address.Matches(text).Concat(Rpcs3BuildWording.Matches(text)).ToArray();
-        var versionMatch = VersionNumber.Matches(text).FirstOrDefault(number =>
-            !excluded.Any(span => number.Index >= span.Index && number.Index < span.Index + span.Length));
+        var versionMatch = VersionNumber.Matches(text).FirstOrDefault(number => !StartsInside(number, excluded));
         var hasVersionContext = versionMatch is not null && VersionContextWord.IsMatch(text);
         var platform = platformMatch.Success ? platformMatch.Value : null;
         var version = hasVersionContext ? versionMatch?.Value : null;
@@ -354,6 +364,47 @@ public static class WikiNotesParser
         }
 
         return new WikiFreeTextNote(page, sourceSection, WikiNoteClass.InformationalNote, text, null, null);
+    }
+
+    private static bool StartsInside(Match number, IEnumerable<Match> spans) =>
+        spans.Any(span => number.Index >= span.Index && number.Index < span.Index + span.Length);
+
+    // True only when, comments removed, everything outside balanced <s>...</s>
+    // spans is whitespace. A partly struck note, or one whose tags do not
+    // balance, is kept unchanged.
+    private static bool IsWhollyStruck(string raw)
+    {
+        var text = HtmlComment.Replace(raw, string.Empty);
+        var depth = 0;
+        var position = 0;
+        var struck = false;
+
+        foreach (Match tag in StrikeTag.Matches(text))
+        {
+            if (depth == 0 && !string.IsNullOrWhiteSpace(text[position..tag.Index]))
+            {
+                return false;
+            }
+
+            if (tag.Groups["close"].Length > 0)
+            {
+                if (depth == 0)
+                {
+                    return false;
+                }
+
+                depth--;
+            }
+            else
+            {
+                depth++;
+                struck = true;
+            }
+
+            position = tag.Index + tag.Length;
+        }
+
+        return struck && depth == 0 && string.IsNullOrWhiteSpace(text[position..]);
     }
 
     private static List<WikiOnlineEvidence> ParseOnline(
