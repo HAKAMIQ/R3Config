@@ -186,6 +186,7 @@
 
                                     <TextBlock ctrl:LinkText.Text="{Binding LocBody}"
                                                ctrl:LinkText.Source="{Binding Notes}"
+                                               ctrl:LinkText.Interactive="False"
                                                Style="{StaticResource RecLocalizedBodyText}"
                                                FlowDirection="{Binding NoteFlow}"
                                                TextAlignment="{Binding NoteText}"

@@ -23,6 +23,8 @@ Wiki XML (audit فقط)
 - الملاحظات (`WikiFreeTextNote`) لا تتحول إلى إعدادات أبدًا. كل ملاحظة تحمل نطاقها:
   serial، إصدار اللعبة، النسخة (digital/disc)، المنصة، العتاد، إصدار RPCS3، واعتماد
   الباتش. النطاق غير المحسوم يجعلها `Conditional` وتُعرض دون تطبيق تلقائي. لا يُخفى شيء.
+  `WikiNotesParser` لا يأخذ إصدار اللعبة من رقم داخل عنوان IPv4 (مجرد أو host=IPv4) حتى لو ظهرت كلمة
+  مثل below في الملاحظة؛ الاختبار `R3Test.exe --wiki-notes-parser-only VersionIpv4`.
 - `WikiOnlineEvidence.TestedGameVersion` هو الإصدار الذي اختبره الويكي وليس شرطًا.
   `RequiredGameVersion` يبقى `null` ما لم يذكر الويكي الشرط صراحة. غياب الجدول يعني
   Unknown ولا يعني Not supported، وأي حقل ناقص يعرض Unknown.
@@ -46,6 +48,9 @@ Wiki XML (audit فقط)
   LTR بخط ثابت) و«نسخ IP/Host» (النص الأصلي بالضبط من المصدر الإنجليزي عبر `LinkText.SourceProperty`، بلا LRM ولا فواصل أسطر). و«Category:...»
   الملصوقة في نهاية سطر لا تُعرض، وذيلها المترجم «الفئة:» يُحذف فقط إذا كان في المصدر. طبقة العرض فقط: البيانات وجداول الترجمة لا تتغير.
   الاختبار `R3Test.exe --note-reveal-only` و`NoteRevealUiT` داخل `UiGate`.
+- ToolTip صف الإعداد (ملاحظة cat.json) يُغلق مع أول نقرة داخله، فيُضبط `LinkText.InteractiveProperty` على False هناك فقط:
+  يظهر `label` الرابط نصًا عاديًا بلا رابط ولا «إظهار الرابط» ولا «نسخ» ولا «فتح» ولا أزرار IP/Host، وبلا بديل. القيمة
+  الافتراضية True، فبقية المواضع لم تتغير. الاختبار `GameSettingsUiT` داخل `UiGate`.
 
 ## كتالوج بناءات RPCS3 (تنزيل النسخة المختبرة)
 

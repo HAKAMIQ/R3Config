@@ -5,6 +5,7 @@ using System.Linq;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Automation;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -349,6 +350,7 @@ internal static class GameSettingsUiT
                 "English Wiki note text must render left-to-right in the Arabic UI.");
 
             AssertNotesCardLinks(view, vm);
+            AssertPlanRowTooltipLink(view, vm);
 
             Assert(listener.Errors.Count == 0,
                 "Settings view produced data-binding errors: " + string.Join(" | ", listener.Errors));
@@ -407,6 +409,59 @@ internal static class GameSettingsUiT
                 $"[{language}] Settings.Notes must carry the mod label as a Hyperlink to {modUrl}.");
         }
     }
+
+    // Round 13: a ToolTip closes on the first click inside it, so the Plan-row
+    // tooltip body (shipped cat.json note for BLUS30948, RPCS3 issue 6861) shows
+    // the [url label] label as plain text: no raw [url ...] syntax, no URL text,
+    // and no Hyperlink, inline button, or other interactive element.
+    private static void AssertPlanRowTooltipLink(R3Config.Ctrl.RecView view, PlanVm vm)
+    {
+        const string serial = "BLUS30948";
+        const string label = "black field glitch during day games";
+        var rec = RecSvc.Load(Path.Combine(RepoRoot(), "App", "Data", "cat.json")).Find(serial)
+            ?? throw new InvalidOperationException("Shipped cat.json must contain BLUS30948.");
+        Assert(rec.Changes.Any(change => (change.Notes ?? string.Empty).Contains("[https://github.com/RPCS3/rpcs3/issues/6861/ " + label + "]", StringComparison.Ordinal)),
+            "Shipped cat.json BLUS30948 must still carry the [url label] note this regression covers.");
+        var plan = PlanOf(serial, rec.WikiName, rec.Changes);
+        var model = GameSettingsProjector.Project(plan, null, new GameSettingsContext(serial, "01.00"));
+        var window = Window.GetWindow(view)!;
+
+        foreach (var language in new[] { UiText.EnLang, UiText.ArabLang })
+        {
+            UiText.SetLang(language);
+            UiLaySvc.Apply();
+            vm.Load(plan, model);
+            vm.SetLang();
+            Settle(window);
+
+            var row = All<Border>(view).Single(item => item.ToolTip is ToolTip &&
+                                                       (item.DataContext as PlanItVm)?.Key == "Shader Mode");
+            var tip = (ToolTip)row.ToolTip;
+            tip.PlacementTarget = row;
+            tip.IsOpen = true;
+            try
+            {
+                tip.UpdateLayout();
+                var body = All<TextBlock>(tip).Single(block => R3Config.Ctrl.LinkText.GetText(block) is { Length: > 0 });
+                var shown = Flatten(body.Inlines);
+                Assert(!shown.Contains('[') && !shown.Contains("http", StringComparison.OrdinalIgnoreCase) &&
+                       !shown.Contains("github", StringComparison.OrdinalIgnoreCase) && !shown.Contains("6861", StringComparison.Ordinal),
+                    $"[{language}] The Plan-row tooltip must not show raw [url ...] syntax or the URL. Rendered: {shown}");
+                Assert(language != UiText.EnLang || shown.Contains(label, StringComparison.Ordinal),
+                    $"[{language}] The Plan-row tooltip must show the link label as text. Rendered: {shown}");
+                Assert(!Inlines(body.Inlines).Any(inline => inline is Hyperlink or InlineUIContainer) &&
+                       All<ButtonBase>(tip).Count == 0,
+                    $"[{language}] The Plan-row tooltip must hold no Hyperlink, inline UI, or button.");
+            }
+            finally
+            {
+                tip.IsOpen = false;
+            }
+        }
+    }
+
+    private static IEnumerable<Inline> Inlines(InlineCollection inlines) =>
+        inlines.SelectMany(inline => inline is Span span ? Inlines(span.Inlines).Prepend(inline) : [inline]);
 
     // Layout passes only: pumping the dispatcher would run the queued
     // Application.OnStartup, which resets the UI language and opens the real

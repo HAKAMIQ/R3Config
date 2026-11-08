@@ -54,6 +54,16 @@ public static class LinkText
             typeof(LinkText),
             new PropertyMetadata(null, Changed));
 
+    // False only where nothing can be clicked (a ToolTip closes on the first
+    // click inside it): a link shows its label or word as plain text, with no
+    // Hyperlink, reveal, copy, or open button. Default true everywhere else.
+    public static readonly DependencyProperty InteractiveProperty =
+        DependencyProperty.RegisterAttached(
+            "Interactive",
+            typeof(bool),
+            typeof(LinkText),
+            new PropertyMetadata(true, Changed));
+
     // Which links/IP-Host parts of one block the user has revealed.
     private static readonly DependencyProperty RevealedProperty =
         DependencyProperty.RegisterAttached(
@@ -81,6 +91,12 @@ public static class LinkText
 
     public static void SetSource(DependencyObject element, string? value) =>
         element.SetValue(SourceProperty, value);
+
+    public static bool GetInteractive(DependencyObject element) =>
+        (bool)element.GetValue(InteractiveProperty);
+
+    public static void SetInteractive(DependencyObject element, bool value) =>
+        element.SetValue(InteractiveProperty, value);
 
     // Replaceable for tests only, so no test touches the real clipboard or
     // starts a browser.
@@ -151,6 +167,12 @@ public static class LinkText
             display.Text = label;
         }
 
+        if (!GetInteractive(block))
+        {
+            block.Inlines.Add(display);
+            return;
+        }
+
         var link = new Hyperlink(display)
         {
             NavigateUri = new Uri(url, UriKind.Absolute),
@@ -187,6 +209,12 @@ public static class LinkText
 
     private static void AddIpHost(TextBlock block, string value, int slot)
     {
+        // Without buttons the switches stay hidden; no IP/Host text is shown.
+        if (!GetInteractive(block))
+        {
+            return;
+        }
+
         var revealed = IsRevealed(block, slot);
         AddButton(block, revealed ? "IpHost.Hide" : "IpHost.Show", "LinkText.IpHost.Show", () => Toggle(block, slot));
         AddButton(block, "IpHost.Copy", "LinkText.IpHost.Copy", () => CopyText(value));

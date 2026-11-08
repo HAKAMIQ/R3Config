@@ -99,6 +99,12 @@ public static class WikiNotesParser
         @"\b\d+\.\d+(?:\.\d+)?\b",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    // A dotted number inside an IPv4 address (bare or host=IPv4) is never a
+    // game version, e.g. 206.189.232 in "ds-eu-c.scej-online.jp=206.189.232.242".
+    private static readonly Regex Ipv4Address = new(
+        @"\b\d{1,3}(?:\.\d{1,3}){3}\b",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     private static readonly Regex VersionContextWord = new(
         @"\b(version|update|past|below|above|prior to|before|after|newer|older)\b",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
@@ -287,10 +293,12 @@ public static class WikiNotesParser
         string text)
     {
         var platformMatch = PlatformWord.Match(text);
-        var versionMatch = VersionNumber.Match(text);
-        var hasVersionContext = versionMatch.Success && VersionContextWord.IsMatch(text);
+        var addresses = Ipv4Address.Matches(text);
+        var versionMatch = VersionNumber.Matches(text).FirstOrDefault(number =>
+            !addresses.Any(address => number.Index >= address.Index && number.Index < address.Index + address.Length));
+        var hasVersionContext = versionMatch is not null && VersionContextWord.IsMatch(text);
         var platform = platformMatch.Success ? platformMatch.Value : null;
-        var version = hasVersionContext ? versionMatch.Value : null;
+        var version = hasVersionContext ? versionMatch?.Value : null;
 
         if (RpcnWord.IsMatch(text) && (NetworkContextWord.IsMatch(text) || WarningWord.IsMatch(text)))
         {

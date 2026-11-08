@@ -128,6 +128,7 @@ internal static class WikiNotesParserT
             (nameof(PrReference), PrReference),
             (nameof(BangCommentEnd), BangCommentEnd),
             (nameof(WikiResidueOnly), WikiResidueOnly),
+            (nameof(VersionIpv4), VersionIpv4),
             (nameof(WikiNotesParserT), Run)
         ];
         foreach (var (name, body) in cases)
@@ -195,6 +196,70 @@ internal static class WikiNotesParserT
             Assert(texts.Contains(kept, StringComparer.Ordinal),
                 $"Expected user-facing line '{kept}' to be kept, got: {string.Join(" | ", texts)}.");
         }
+    }
+
+    // Round 13: a dotted number inside an IPv4 address (bare or host=IPv4) is
+    // never a game version, even when a version word such as "below" occurs
+    // elsewhere in the note. The two IP/Host sections are copied verbatim from
+    // the pinned snapshot RPCS3+Wiki-20260920160231.xml (Demon's Souls page id 4
+    // revision 58715; The Lord of the Rings Conquest page id 2619 revision 57670).
+    public static void VersionIpv4()
+    {
+        var demonsSouls = WikiNotesParser.Parse(
+            "Demon's Souls",
+            ["BLUS30443"],
+            """
+            ==Special Notes==
+            ===Netplay IP/Host Switches===
+            This title requires a private server to access all Netplay features. Enter the below text in the '''IP/Host Switches''' section:
+            <pre>ds-eu-c.scej-online.jp=206.189.232.242&&ds-eu-g.scej-online.jp=206.189.232.242&&c.demons-souls.com=206.189.232.242&&g.demons-souls.com=206.189.232.242&&cmnap.scej-online.jp=206.189.232.242&&demons-souls.scej-online.jp=206.189.232.242</pre>
+            [[Category:Custom servers (Netplay)]]
+            """);
+        var demonsNote = demonsSouls.Notes.Single(note => note.Text.Contains("206.189.232.242", StringComparison.Ordinal));
+        Assert(demonsNote.VersionCondition is null,
+            $"Demon's Souls IP/Host note must not take a VersionCondition from its IPv4 address, got '{demonsNote.VersionCondition}'.");
+
+        var conquest = WikiNotesParser.Parse(
+            "The Lord of the Rings Conquest",
+            ["BLUS30226"],
+            """
+            ==Special Notes==
+            ===Arcadia===
+            Enter the below text in the '''IP/Host Switches''' section:
+            <pre>theater.ps3.arcadia=152.53.15.83&&lotr-pandemic-ps3.fesl.ea.com=152.53.15.83</pre>
+            """);
+        var conquestNote = conquest.Notes.Single(note => note.Text.Contains("152.53.15.83", StringComparison.Ordinal));
+        Assert(conquestNote.VersionCondition is null,
+            $"LotR Conquest IP/Host note must not take a VersionCondition from its IPv4 address, got '{conquestNote.VersionCondition}'.");
+
+        Assert(VersionOf("Set the primary DNS to 185.194.142.4 after connecting to RPCN.") is null,
+            "An independent IPv4 address must not become a VersionCondition.");
+        Assert(VersionOf("Enter the below text in the DNS section: nemo.example.net=203.0.113.5") is null,
+            "A host=IPv4 switch must not become a VersionCondition.");
+
+        Assert(VersionOf("The game runs well on 01.00, but crashes after the first boss.") == "01.00",
+            "Explicit game version 01.00 must remain the VersionCondition.");
+        Assert(VersionOf("Updating the game version to 1.03 may rectify this.") == "1.03",
+            "Explicit game version 1.03 must remain the VersionCondition.");
+
+        Assert(VersionOf("Enter the below text: a.example.net=203.0.113.5 and update the game to version 1.05.") == "1.05",
+            "A version stated after an IP must be chosen over the IP.");
+        Assert(VersionOf("Update the game to version 1.05, then enter the below text: a.example.net=203.0.113.5") == "1.05",
+            "A version stated before an IP must be chosen over the IP.");
+
+        var build = Single("The game requires a uDraw GameTablet USB peripheral to be connected and configured for passthrough to RPCS3. Support for this was added in RPCS3 version 0.0.13-11475.");
+        Assert(build.Rpcs3BuildCondition == "0.0.13-11475" && build.VersionCondition == "0.0.13",
+            $"RPCS3 build wording must stay build scope (0.0.13-11475 / 0.0.13), got '{build.Rpcs3BuildCondition}' / '{build.VersionCondition}'.");
+    }
+
+    private static string? VersionOf(string bullet) => Single(bullet).VersionCondition;
+
+    private static WikiFreeTextNote Single(string bullet)
+    {
+        var evidence = WikiNotesParser.Parse("VersionPage", [], "==Special Notes==\n* " + bullet);
+        Assert(evidence.Notes.Count == 1,
+            $"Expected one note, got {evidence.Notes.Count}.");
+        return evidence.Notes[0];
     }
 
     private static void Assert(bool condition, string message)
