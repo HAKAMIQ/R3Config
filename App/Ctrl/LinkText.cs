@@ -28,6 +28,9 @@ namespace R3Config.Ctrl;
 //    IP/Host" (an LTR monospace block) and "Copy IP/Host" (the exact English
 //    source text from Source, falling back to Text).
 //  - A trailing Wiki "Category:..." is not shown.
+//  - In Arabic text each whole English segment (see LtrSegments) is one LTR
+//    en-US Run, so v0.0.21-13399 never shows as 13399-v0.0.21 and
+//    "[Regression] Prototype [BLUS30145] (#19410)" keeps its order and brackets.
 // Only absolute http/https addresses are ever handed to the shell.
 public static class LinkText
 {
@@ -73,6 +76,19 @@ public static class LinkText
             new PropertyMetadata(null));
 
     private static readonly IValueConverter WidthLimit = new WidthLimitConverter();
+
+    private static readonly XmlLanguage SegmentLanguage = XmlLanguage.GetLanguage("en-US");
+
+    // Never at the start or at the end of an English segment: closing
+    // brackets and punctuation lead nothing, and the sentence's own period or
+    // an opening bracket ends nothing.
+    private const string SegmentLeadTrim = ",;:!?)]}";
+
+    private const string SegmentTailTrim = ".,;:!?([{";
+
+    private const string Openers = "([{";
+
+    private const string Closers = ")]}";
 
     public static string? GetText(DependencyObject element) =>
         (string?)element.GetValue(TextProperty);
@@ -125,10 +141,11 @@ public static class LinkText
         }
 
         var slot = 0;
+        var arabic = NoteSvc.ContainsArabic(text);
         if (WikiLinks.IsSafeUrl(target))
         {
             // A value that is itself an address is named with a word.
-            AddLink(block, WikiLinks.IsSafeUrl(text.Trim()) ? null : text, target!, slot);
+            AddLink(block, WikiLinks.IsSafeUrl(text.Trim()) ? null : text, target!, slot, arabic);
             TrimTrailingBreak(block);
             return;
         }
@@ -138,13 +155,13 @@ public static class LinkText
             switch (part.Kind)
             {
                 case NoteParts.PartKind.Text:
-                    block.Inlines.Add(new Run(part.Text));
+                    block.Inlines.AddRange(TextRuns(part.Text, arabic));
                     break;
                 case NoteParts.PartKind.Link:
-                    AddLink(block, part.Text, part.Value!, slot++);
+                    AddLink(block, part.Text, part.Value!, slot++, arabic);
                     break;
                 case NoteParts.PartKind.BareLink:
-                    AddLink(block, null, part.Value!, slot++);
+                    AddLink(block, null, part.Value!, slot++, arabic);
                     break;
                 case NoteParts.PartKind.IpHost:
                     AddIpHost(block, part.Value!, slot++);
@@ -155,30 +172,173 @@ public static class LinkText
         TrimTrailingBreak(block);
     }
 
-    private static void AddLink(TextBlock block, string? label, string url, int slot)
+    // Arabic text: WPF reorders English inside the RTL paragraph (with ar-SA
+    // digits resolve as Arabic numbers, so v0.0.21-13399 shows as
+    // 13399-v0.0.21, and a space or bracket between two English parts takes
+    // the paragraph's direction), and LRM, LRI or LRE do not prevent that. Each
+    // whole English segment becomes one LTR en-US Run instead; isolating each
+    // token alone broke "[Regression] Prototype [BLUS30145] (#19410)" into
+    // pieces read right to left. Only Run properties change: the text, its
+    // automation name and every copy stay the source characters. Text without
+    // Arabic, or without English, stays one plain Run.
+    private static List<Run> TextRuns(string text, bool arabic)
     {
-        var display = new Run();
+        var segments = arabic ? LtrSegments(text) : [];
+        if (segments.Count == 0)
+        {
+            return [new Run(text)];
+        }
+
+        var runs = new List<Run>();
+        var position = 0;
+        foreach (var (start, length) in segments)
+        {
+            if (start > position)
+            {
+                runs.Add(new Run(text[position..start]));
+            }
+
+            runs.Add(new Run(text.Substring(start, length))
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                Language = SegmentLanguage
+            });
+            position = start + length;
+        }
+
+        if (position < text.Length)
+        {
+            runs.Add(new Run(text[position..]));
+        }
+
+        return runs;
+    }
+
+    // English segments of Arabic text: the longest stretch with no Arabic
+    // character (letters, Arabic punctuation and digits), line break or
+    // guillemet, so Latin words, digits, spaces, dashes and the technical
+    // symbols between them (# % / \ . :) stay together. Trimmed of spaces, of
+    // closing punctuation (the Arabic sentence's period stays outside) and of
+    // brackets or quotes it does not close; kept when it has a Latin letter or
+    // an ASCII digit. A Hyperlink label is split on its own, so no segment
+    // crosses a link.
+    internal static IReadOnlyList<(int Start, int Length)> LtrSegments(string text)
+    {
+        var segments = new List<(int Start, int Length)>();
+        var index = 0;
+        while (index < text.Length)
+        {
+            if (EndsSegment(text[index]))
+            {
+                index++;
+                continue;
+            }
+
+            var start = index;
+            while (index < text.Length && !EndsSegment(text[index]))
+            {
+                index++;
+            }
+
+            var end = index;
+            TrimSegment(text, ref start, ref end);
+            for (var at = start; at < end; at++)
+            {
+                if (char.IsAsciiLetterOrDigit(text[at]) || text[at] is >= 'À' and <= 'ɏ')
+                {
+                    segments.Add((start, end - start));
+                    break;
+                }
+            }
+        }
+
+        return segments;
+    }
+
+    private static bool EndsSegment(char ch) =>
+        ch is '\r' or '\n' or '«' or '»' || NoteSvc.ContainsArabic(ch.ToString());
+
+    private static void TrimSegment(string text, ref int start, ref int end)
+    {
+        while (end > start)
+        {
+            if (char.IsWhiteSpace(text[start]) || SegmentLeadTrim.Contains(text[start], StringComparison.Ordinal) ||
+                !IsClosed(text, start, end, start))
+            {
+                start++;
+            }
+            else if (char.IsWhiteSpace(text[end - 1]) || SegmentTailTrim.Contains(text[end - 1], StringComparison.Ordinal) ||
+                     !IsClosed(text, start, end, end - 1))
+            {
+                end--;
+            }
+            else
+            {
+                return;
+            }
+        }
+    }
+
+    // Whether the character at an edge of text[start..end] is not a bracket or
+    // quote, or has its partner inside the segment.
+    private static bool IsClosed(string text, int start, int end, int at)
+    {
+        var ch = text[at];
+        if (ch is '"' or '\'')
+        {
+            return text.AsSpan(start, end - start).Count(ch) % 2 == 0;
+        }
+
+        if (!Openers.Contains(ch, StringComparison.Ordinal) && !Closers.Contains(ch, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        var open = new Stack<int>();
+        for (var index = start; index < end; index++)
+        {
+            if (Openers.Contains(text[index], StringComparison.Ordinal))
+            {
+                open.Push(index);
+            }
+            else if (Closers.Contains(text[index], StringComparison.Ordinal) && open.Count > 0 &&
+                     Openers[Closers.IndexOf(text[index], StringComparison.Ordinal)] == text[open.Peek()] &&
+                     (open.Pop() == at || index == at))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void AddLink(TextBlock block, string? label, string url, int slot, bool arabic)
+    {
+        IReadOnlyList<Run> display;
         if (label is null)
         {
-            display.SetBinding(Run.TextProperty, Lang(NoteParts.IsWikiPage(url) ? "Link.WikiPage" : "Link.Generic"));
+            var word = new Run();
+            word.SetBinding(Run.TextProperty, Lang(NoteParts.IsWikiPage(url) ? "Link.WikiPage" : "Link.Generic"));
+            display = [word];
         }
         else
         {
-            display.Text = label;
+            display = TextRuns(label, arabic);
         }
 
         if (!GetInteractive(block))
         {
-            block.Inlines.Add(display);
+            block.Inlines.AddRange(display);
             return;
         }
 
-        var link = new Hyperlink(display)
+        var link = new Hyperlink
         {
             NavigateUri = new Uri(url, UriKind.Absolute),
             Cursor = Cursors.Hand,
             TextDecorations = null
         };
+        link.Inlines.AddRange(display);
         link.SetResourceReference(TextElement.ForegroundProperty, "Accent.Default");
         link.MouseEnter += (_, _) => link.TextDecorations = TextDecorations.Underline;
         link.MouseLeave += (_, _) => link.TextDecorations = null;

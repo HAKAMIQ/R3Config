@@ -2386,6 +2386,7 @@ internal static class UiGate
                     R3Config.Tests.GameCompatLineUiT.VerifyRuntime(lang, isDark, shotDir);
                     R3Config.Tests.DbWarnUiT.VerifyRuntime(lang, isDark, shotDir);
                     R3Config.Tests.NoteRevealUiT.VerifyRuntime(lang, isDark, shotDir);
+                    R3Config.Tests.NoteBidiUiT.VerifyRuntime(lang, isDark, shotDir);
                     R3Config.Tests.TechnicalTextT.VerifyRuntime(lang, isDark, shotDir);
                     DangerProbe();
 

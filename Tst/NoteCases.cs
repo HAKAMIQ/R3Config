@@ -25,6 +25,9 @@ internal static class NoteCases
             case "--note-reveal-only":
                 runner.RunCase(nameof(NoteRevealT), NoteRevealT.Run);
                 return true;
+            case "--note-bidi-only":
+                runner.RunCase(nameof(NoteBidiT), NoteBidiT.Run);
+                return true;
             case "--sync-bounds-only":
                 runner.RunCase(nameof(SyncBoundsT), SyncBoundsT.Run);
                 return true;
@@ -41,5 +44,6 @@ internal static class NoteCases
         runner.RunCase(nameof(WikiLabelLinkT), WikiLabelLinkT.Run);
         runner.RunCase(nameof(SyncBoundsT), SyncBoundsT.Run);
         runner.RunCase(nameof(NoteRevealT), NoteRevealT.Run);
+        runner.RunCase(nameof(NoteBidiT), NoteBidiT.Run);
     }
 }
