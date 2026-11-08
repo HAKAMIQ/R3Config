@@ -228,7 +228,7 @@ internal static partial class Program
                 RunPatchLocalizationCases(runner);
                 Console.WriteLine(
                     "Patch presentation localization focused tests passed.");
-                Console.WriteLine("Passed: 12, Failed: 0, Skipped: 0");
+                Console.WriteLine("Passed: 13, Failed: 0, Skipped: 0");
                 return;
             }
 

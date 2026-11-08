@@ -83,6 +83,9 @@ internal static partial class Program
         runner.RunCase(
             nameof(PatchText_CorpusWideSafety),
             PatchText_CorpusWideSafety);
+        runner.RunCase(
+            nameof(PatchText_ReviewedWikiKeysMatchShippedText),
+            PatchText_ReviewedWikiKeysMatchShippedText);
     }
 
     static void Lang_Key()

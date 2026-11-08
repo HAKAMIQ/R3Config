@@ -331,7 +331,7 @@ internal static partial class Program
                        omitted == 0 &&
                        exactUnique.Count == 924 &&
                        structuredUnique.Count == 1 &&
-                       NoteSvc.ReviewedWikiArabicTranslationCount == 1608 &&
+                       NoteSvc.ReviewedWikiArabicTranslationCount == 1591 &&
                        NoteSvc.ReviewedOfficialPatchArabicTranslationCount == 367,
                     $"Arabic corpus coverage is incomplete. Translated={actualTranslations}, Fallback={fallback}, Omitted={omitted}, NonEmpty={notes.Count}, " +
                     $"ExactUnique={exactUnique.Count}, StructuredUnique={structuredUnique.Count}, " +
@@ -684,5 +684,117 @@ internal static partial class Program
         return preservesRequirement &&
                preservesCondition &&
                preservesSideEffect;
+    }
+
+    // Reviewed Wiki keys no shipped text reaches, kept on purpose. The list can
+    // only shrink: an entry that a shipped text reaches again, or that left the
+    // table, fails the check below.
+    static readonly string[] ReviewedWikiOrphansNotFoundInWikiHistory =
+    [
+        "Can improve performance, but Taurdus overlay texture breaks.",
+        "Fixes audio popping.",
+        "Fixes broken shutter compilation shaders.",
+        "Fixes missing audio in intro videos.",
+        "Renders missing fog (currently broken)",
+        "Required to get past intro screen, \"Delay each odd MFC Command\" must be checked as well",
+        "Required to get past main menu, \"Delay each odd MFC Command\" must be checked as well"
+    ];
+
+    // Removed or changed in the Wiki, and the same page of the pinned snapshot
+    // (7977CA26) holds no new wording of the same note.
+    static readonly string[] ReviewedWikiOrphansWithoutNewWording =
+    [
+        "Mesh Trimming and broken menu graphics are made visible. Stick to 100.",
+        "Prevents vertex explosions out of the ground up to the sky",
+        "Required for resolution scaling to prevent broken graphics. Reduces performance.",
+        "Required for resolution scaling. Reduces performance.",
+        "Required to access main menu.",
+        "Required to control the Gondola before Venice when you help the lady",
+        "Required to fix broken graphics when using resolution scaling. Reduces performance.",
+        "Required to get ingame, expect bad performance.",
+        "SPU LLVM causes the monster not to spawn on stage 5-3 (and likely others), use ASMJIT as it's faster than using Accurate xFloat to fix the issue.",
+        "Using Relaxed XFloat makes the audio loudly broken.",
+        "When using Resolution scaling above 100%, this must be set to 512x512. Otherwise bloom will appear pixelated."
+    ];
+
+    // Still in the pinned Wiki text, but the shipped note is a longer or
+    // different sentence, so an exact reviewed translation must not apply.
+    static readonly string[] ReviewedWikiOrphansShippedAsDifferentText =
+    [
+        "Allows for 60fps",
+        "Fixes broken collision with ragdolls.",
+        "Fixes flickering artifacts in some areas of the game.",
+        "Fixes graphics.",
+        "Fixes missing audio",
+        "Fixes missing audio.",
+        "Improves loading times.",
+        "Reduce crashes",
+        "Required for the game to boot.",
+        "Required unless using FPS Patch due to 2x game speed at 60 FPS."
+    ];
+
+    static void PatchText_ReviewedWikiKeysMatchShippedText()
+    {
+        var dataRoot = Path.Combine(RepoRoot(), "App", "Data");
+        var reachable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var shippedTexts = 0;
+        foreach (var file in new[] { "wiki-notes.json", "cat.json" })
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(dataRoot, file)));
+            var stack = new Stack<JsonElement>();
+            stack.Push(document.RootElement);
+            while (stack.Count > 0)
+            {
+                var element = stack.Pop();
+                switch (element.ValueKind)
+                {
+                    case JsonValueKind.Object:
+                        foreach (var property in element.EnumerateObject())
+                        {
+                            stack.Push(property.Value);
+                        }
+
+                        break;
+                    case JsonValueKind.Array:
+                        foreach (var item in element.EnumerateArray())
+                        {
+                            stack.Push(item);
+                        }
+
+                        break;
+                    case JsonValueKind.String when !string.IsNullOrWhiteSpace(element.GetString()):
+                        var (normalized, original) = NoteSvc.ReviewedLookupForms(element.GetString()!);
+                        reachable.Add(normalized);
+                        reachable.Add(original);
+                        shippedTexts++;
+                        break;
+                }
+            }
+        }
+
+        var table = NoteSvc.ExportReviewedWikiArabic();
+        var allowed = ReviewedWikiOrphansNotFoundInWikiHistory
+            .Concat(ReviewedWikiOrphansWithoutNewWording)
+            .Concat(ReviewedWikiOrphansShippedAsDifferentText)
+            .ToArray();
+        var unexpected = table.Keys
+            .Where(key => !reachable.Contains(key) && !allowed.Contains(key, StringComparer.Ordinal))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        var stale = allowed
+            .Where(key => !table.ContainsKey(key) || reachable.Contains(key))
+            .ToArray();
+
+        Assert(unexpected.Length == 0,
+            $"{unexpected.Length} reviewed Wiki Arabic keys match no shipped text in wiki-notes.json or cat.json: " +
+            string.Join(" | ", unexpected));
+        Assert(stale.Length == 0 && allowed.Distinct(StringComparer.Ordinal).Count() == allowed.Length,
+            "Reviewed Wiki orphan exceptions must be unique table keys that no shipped text reaches: " +
+            string.Join(" | ", stale));
+        Console.WriteLine(
+            $"Reviewed Wiki keys: Table={table.Count}, Reached={table.Count - allowed.Length}, " +
+            $"KeptOrphans={allowed.Length} (NotFoundInWikiHistory={ReviewedWikiOrphansNotFoundInWikiHistory.Length}, " +
+            $"WithoutNewWording={ReviewedWikiOrphansWithoutNewWording.Length}, " +
+            $"ShippedAsDifferentText={ReviewedWikiOrphansShippedAsDifferentText.Length}), ShippedTexts={shippedTexts}.");
     }
 }

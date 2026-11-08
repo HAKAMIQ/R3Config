@@ -240,8 +240,6 @@ public static partial class NoteSvc
                 "يصلح المشاهد شديدة السطوع أثناء اللعب، مع انخفاض بسيط متوقع في الأداء.",
             ["Fixes bright screen ingame"] =
                 "يصلح سطوع الشاشة الزائد داخل اللعبة.",
-            ["Fixes bright screen ingame."] =
-                "يصلح سطوع الشاشة الزائد داخل اللعبة.",
             ["Fixes brightness in some scenes."] =
                 "يصلح السطوع في بعض المشاهد.",
             ["Fixes brightness issues on night tracks"] =
@@ -512,8 +510,6 @@ public static partial class NoteSvc
                 "يصلح خلل القوائم عند استخدامه مع Force CPU Blit.",
             ["Fixes minor graphical bug on electric gates."] =
                 "يصلح خللا رسوميا بسيطا في البوابات الكهربائية.",
-            ["Fixes minor graphical bug on electric gates. Only use if you're not using resolution scaling."] =
-                "يصلح خللا رسوميا بسيطا في البوابات الكهربائية. استخدمه فقط إذا لم تكن تستخدم Resolution Scale.",
             ["Fixes missing AC graphics."] =
                 "يصلح رسوم AC المفقودة.",
             ["Fixes missing audio"] =
@@ -1020,8 +1016,6 @@ public static partial class NoteSvc
                 "يمنع التجمد أثناء شاشات التحميل.",
             ["Prevents game from freezing"] =
                 "يمنع تجمد اللعبة.",
-            ["Prevents game from freezing."] =
-                "يمنع تجمد اللعبة.",
             ["Prevents hanging on boot on the game launcher. (Disc Versions only)"] =
                 "يمنع التعليق عند بدء التشغيل في مشغل اللعبة (نسخ الأقراص فقط).",
             ["Prevents long pauses when choosing songs."] =
@@ -1328,8 +1322,6 @@ public static partial class NoteSvc
                 "يبدو رفع الدقة فوق 720p أسوأ بكثير؛ استخدم FSR بديلا لرفع الدقة.",
             ["Upscaling the resolution causes graphical issues."] =
                 "يسبب رفع الدقة مشكلات رسومية.",
-            ["Upscaling the resolution causes vertex explosions."] =
-                "يسبب رفع الدقة انفجار Vertex.",
             ["Use 100%, 200% or 300%. Non-integer values e.g 150% can cause pixelated HUD."] =
                 "استخدم 100% أو 200% أو 300%. قد تسبب القيم غير الصحيحة مثل 150% تكسر بكسلات HUD.",
             ["Use 100%, 200% or 300%. Non-integer values e.g 150% can pixelate menus."] =
@@ -1429,12 +1421,6 @@ public static partial class NoteSvc
                 "# إذا أردت قدرا إضافيا من الأداء، بحسب المعالج (CPU) لديك، فقد يساعد ضبط Preferred SPU Threads على أي قيمة من 2 إلى 4. إذا لم تلاحظ أي فرق فأعده إلى auto.",
             ["# Make sure you have already downloaded the edit songs via the in-game interface on your PlayStation 3. Make sure you have the music files. You should have already tested that the songs work. # Make sure you have saved your save data after the songs are downloaded. # Exit the game. # Export all save data onto an USB stick using Saved Data Utility (PS3), this is located where you press up in the game section of the PS3 interface. # If the region title ID is different from the PS3 game and the game in RPCS3, you need to convert the save files: ## Place all save datas in .../rpcs3/dev_hdd0/home/00000001/savedata/ ## Use [https://bucanero.github.io/apollo-ps3/ Apollo Save Tool] to change the Region Title ID of all the save datas (make sure to apply for every one). Then exit and start Apollo again, then Decrypt all save datas. Copy all the decryped save datas into the original save data directories, overwriting SECURE.BIN. # Copy all music files to the music directory (.../rpcs3/dev_hdd0/music/) # Start up the game, it should load your new save data. If it gives an error, make sure you executed the steps correctly. # Go to Edit Play and it should show all your edit songs. When starting the song, it should show the music files in the MP3 tab, and it should be able to play them"] =
                 "# تأكد من أنك نزلت أغاني التعديل (edit songs) مسبقا عبر واجهة اللعبة على PlayStation 3. تأكد من وجود ملفات الموسيقى. يجب أن تكون قد اختبرت عمل الأغاني. # تأكد من أنك حفظت بيانات الحفظ بعد تنزيل الأغاني. # اخرج من اللعبة. # صدر كل بيانات الحفظ إلى USB باستخدام Saved Data Utility (PS3)، وهو موجود حيث تضغط للأعلى في قسم الألعاب في واجهة PS3. # إذا كان Title ID الخاص بالمنطقة مختلفا بين لعبة PS3 واللعبة في RPCS3، فعليك تحويل ملفات الحفظ: ## ضع كل بيانات الحفظ في .../rpcs3/dev_hdd0/home/00000001/savedata/ ## استخدم [https://bucanero.github.io/apollo-ps3/ Apollo Save Tool] لتغيير Region Title ID لكل بيانات الحفظ (تأكد من تطبيقه على كل واحدة). ثم اخرج وشغل Apollo مرة أخرى، ثم فك تشفير (Decrypt) كل بيانات الحفظ. انسخ كل بيانات الحفظ المفكوكة التشفير إلى مجلدات بيانات الحفظ الأصلية، مع استبدال SECURE.BIN. # انسخ كل ملفات الموسيقى إلى مجلد الموسيقى (.../rpcs3/dev_hdd0/music/) # شغل اللعبة، ويفترض أن تحمل بيانات الحفظ الجديدة. إذا ظهر خطأ، فتأكد من أنك نفذت الخطوات بشكل صحيح. # اذهب إلى Edit Play ويفترض أن يعرض كل أغاني التعديل لديك. عند بدء الأغنية يفترض أن يعرض ملفات الموسيقى في تبويب MP3، ويفترض أن يكون قادرا على تشغيلها",
-            ["* RPCS3 issue #12514: Black lines appear across the title screen and game menus in RPCS3 versions after v0.0.21-13399"] =
-                "* مشكلة RPCS3 رقم #12514: تظهر خطوط سوداء عبر شاشة العنوان وقوائم اللعبة في إصدارات RPCS3 التي تلي v0.0.21-13399.",
-            ["* RPCS3 issue #14001: Wrong colors are shown compared to console (mainly blue instead of red and yellow)"] =
-                "* مشكلة RPCS3 رقم #14001: تظهر ألوان خاطئة مقارنة بالجهاز الحقيقي (أزرق في الغالب بدلا من الأحمر والأصفر).",
-            ["*RPCS3 issue #11324: Incorrect colors appear both in menus and in-game"] =
-                "*مشكلة RPCS3 رقم #11324: تظهر ألوان غير صحيحة في القوائم وداخل اللعبة على حد سواء.",
             ["- Katamari is invisible on file select screen. - The sprite representing the completed Katamari on the results screen is invisible. - Characters lag on the mode select screen. - Cannot change to other cousins via tagging on the mode select screen. (Can still change cousins in the Cousins Mode in Collection) - Music will restart over and over during levels RPCS3 issue #8963"] =
                 "- لا تظهر كرة Katamari في شاشة اختيار الملف. - تختفي صورة Katamari المكتملة من شاشة النتائج. - تتأخر حركة الشخصيات في شاشة اختيار الوضع. - لا يمكن تغيير الشخصيات عبر Tagging في شاشة اختيار الوضع (يمكن تغييرها من Cousins Mode داخل Collection). - قد تتكرر الموسيقى أثناء المراحل. مشكلة RPCS3 رقم #8963.",
             ["0x68005874: - Defense points - Signed 32 bits - \"\""] =
@@ -1515,10 +1501,6 @@ public static partial class NoteSvc
                 "بعد انتهاء اللعبة من تثبيت البيانات على القرص الصلب HDD، تتجمد اللعبة ولا تستطيع الانتقال إلى الشاشة التالية. ولا يمكن إغلاق المحاكي بشكل طبيعي بعد هذه النقطة.",
             ["After the game is launched, the initial splash screen pops up and the game gets stuck loading infinitely. While stuck, it will spam the log file thousands of times a second with the same warning entry"] =
                 "بعد تشغيل اللعبة تظهر شاشة البداية الأولية وتعلق اللعبة في تحميل لا نهائي. وأثناء ذلك تملأ ملف السجل (log) آلاف المرات في الثانية بنفس إدخال التحذير.",
-            ["After the intro you may be greeted with a message asking you to reconnect your controller to continue, there's no known fix for this. However, you can try this workaround: after booting the game, minimise the game window and open pad settings in RPCS3, then select on your controller under the \"Handlers\" dropdown (even if it's already been selected). Then hit save and close the pad settings window and switch back to the game window. Input should start working again after this"] =
-                "بعد المقدمة (intro) قد تظهر لك رسالة تطلب إعادة توصيل يد التحكم للمتابعة، ولا يوجد حل معروف لذلك. لكن يمكنك تجربة هذا الحل البديل: بعد تشغيل اللعبة، صغر نافذة اللعبة وافتح إعدادات pad في RPCS3، ثم اختر يد التحكم لديك من القائمة المنسدلة «Handlers» (حتى لو كانت مختارة مسبقا). ثم اضغط حفظ وأغلق نافذة إعدادات pad وعد إلى نافذة اللعبة. يفترض أن يعمل الإدخال مجددا بعد ذلك",
-            ["After the point-of-no-return at the final dungeon of the game, the game will freeze and crash during the cutscenes when using the Vulkan renderer. In order to bypass this, users are required to either skip the cutscenes or play the final sequence with the OpenGL renderer. This issue is tracked as part of RPCS3 issue #6468 (Warning, contains major spoilers regarding the final boss battle)"] =
-                "بعد نقطة اللاعودة في الزنزانة الأخيرة من اللعبة، ستتجمد اللعبة وتنهار أثناء المشاهد السينمائية عند استخدام Vulkan renderer. لتجاوز ذلك، على المستخدمين إما تخطي المشاهد السينمائية أو لعب التسلسل الأخير باستخدام OpenGL renderer. تتتبع هذه المشكلة ضمن مشكلة RPCS3 رقم #6468 (تحذير: تحتوي على حرق كبير لأحداث معركة الزعيم الأخير)",
             ["After updating the game, it won't launch at all same happens with other FIFA games"] =
                 "بعد تحديث اللعبة لا تعمل إطلاقا، ويحدث الأمر نفسه مع ألعاب FIFA الأخرى.",
             ["All Elemental Upgrades: Hold L1 and press left, up, down, up, right"] =
@@ -1773,8 +1755,6 @@ public static partial class NoteSvc
                 "تأثيرات النار/الدخان تعرض بشكل غير صحيح وتغمق الخلفية. لا تؤثر على قابلية اللعب.",
             ["First tutorial mission: Forced motion movement can be skipped by pressing L3 + R3 instead"] =
                 "مهمة التدريب الأولى: يمكن تخطي الحركة الإجبارية بالحركة بالضغط على L3 + R3 بدلا منها.",
-            ["For certain CPUs, the game hangs on a black screen after the Atlus logo. This issue was first visible after RPCS3 PR #4422 and is being tracked as part of RPCS3 issue #4473. For people affected by this issue, use this [https://obk.ee/rpcs3/archive/rpcs3-v0.0.5-6664-47752221_win64.7z older build] of the emulator"] =
-                "لدى بعض المعالجات (CPUs)، تتوقف اللعبة على شاشة سوداء بعد شعار Atlus. ظهرت هذه المشكلة أول مرة بعد طلب دمج RPCS3 رقم #4422 ويجري تتبعها ضمن مشكلة RPCS3 رقم #4473. للمتأثرين بهذه المشكلة، استخدموا هذه [https://obk.ee/rpcs3/archive/rpcs3-v0.0.5-6664-47752221_win64.7z نسخة أقدم] من المحاكي",
             ["For certain CPUs, the game may crash upon trying to open Single Player Modes and Versus Modes. Setting SPU Decoder to ASMJIT Recompiler may fix this"] =
                 "لدى بعض المعالجات (CPUs)، قد تتعطل اللعبة عند محاولة فتح Single Player Modes وVersus Modes. ضبط SPU Decoder على ASMJIT Recompiler قد يصلح هذا.",
             ["For players using a controller without motion controls, the use of [https://github.com/ZeptoBST/DualShock4-emulator/releases/tag/Release DualShock4-emulator] will be required to play through sections with mandatory gyro controls. Use the D-Pad to control the virtual gyroscope. Make sure to use the DualShock 4 pad handler in the gamepad configuration"] =
@@ -1863,8 +1843,6 @@ public static partial class NoteSvc
                 "إذا بدأت بعض نماذج الشخصيات بالاختفاء في أجزاء معينة من بداية اللعبة، يمكن حل ذلك بضبط SPU Xfloat accuracy على Accurate، لكن هذا سيضر بالأداء والصوت كثيرا، لا تستخدم هذا الإعداد إلا عند الضرورة القصوى",
             ["If the game for some reason does not bring up the instructions for the Batmobile, either reload your save or update the game to latest if you're on 1.00. Appears to be a issue that happens randomly on base version"] =
                 "إذا لم تعرض اللعبة لأي سبب تعليمات Batmobile، فأعد تحميل حفظك أو حدث اللعبة إلى أحدث إصدار إن كنت على 1.00. يبدو أنها مشكلة تحدث عشوائيا في النسخة الأساسية.",
-            ["If users install more that 16 DLCs, the game will crash after the intro logos. This issue is tracked as part of RPCS3 issue #4091"] =
-                "إذا ثبت المستخدمون أكثر من 16 DLC، فستتعطل اللعبة بعد شعارات المقدمة. يجري تتبع هذه المشكلة ضمن مشكلة RPCS3 رقم #4091.",
             ["If using the 60 FPS patch, or you have the framelimit setting to higher than 30 FPS, Joker will glitch out at the Saori puzzle in the 2nd palace. Also, in the 5th Palace you will get stuck in some elevators. The only fix for that is disabling the 60 FPS patch, limiting the framerate to 30 FPS from the GPU settings and reloading the save"] =
                 "عند استخدام تعديل 60 FPS، أو ضبط إعداد framelimit على أعلى من 30 FPS، ستتعطل حركة Joker عند لغز Saori في القصر الثاني. كذلك في القصر الخامس ستعلق في بعض المصاعد. الحل الوحيد لذلك هو تعطيل تعديل 60 FPS وتحديد معدل الإطارات عند 30 FPS من إعدادات GPU وإعادة تحميل الحفظ",
             ["If using the digital edition of WipEout HD and you would like to use the HD Fury DLC, please install all available updates before installing the DLC as installing the DLC first may break the game"] =
@@ -2255,8 +2233,6 @@ public static partial class NoteSvc
                 "مشكلة RPCS3 رقم #12892: تتعطل اللعبة عند محاولة لعب وضع المسيرة في اللعبة ('World Tour Mode').",
             ["RPCS3 issue #12923 - Without 'Disable vertex cache' setting enabled, sometimes the platfor outline will disappear"] =
                 "مشكلة RPCS3 رقم #12923 - دون تفعيل إعداد 'Disable vertex cache'، يختفي أحيانا خط حدود المنصة.",
-            ["RPCS3 issue #13036: Several in-game error messages appear when it tries to auto-load saved data on starting the game"] =
-                "مشكلة RPCS3 رقم #13036: تظهر عدة رسائل خطأ داخل اللعبة عندما تحاول تحميل البيانات المحفوظة تلقائيا عند بدء اللعبة.",
             ["RPCS3 issue #13072: This happens when you play it for a certain time, making it unstable, using SPU ASMJIT won't fix. SPU Interpreter can prevent crashes, but makes the game run very slow as a result"] =
                 "مشكلة RPCS3 رقم #13072: يحدث هذا عند اللعب لفترة معينة، مما يجعل اللعبة غير مستقرة، ولا يصلحه استخدام SPU ASMJIT. يمكن لـ SPU Interpreter منع التعطل، لكنه يجعل اللعبة تعمل ببطء شديد نتيجة لذلك.",
             ["RPCS3 issue #13253: There are graphical glitches (flimmering on helmets + pixelated banners) since RPCS v0.0.26-14569 when both WCB and CPU blit are enabled"] =
@@ -2373,12 +2349,6 @@ public static partial class NoteSvc
                 "مشكلة RPCS3 رقم #6229: يحدث تأثير تقطيع في الرسوميات ووميض.",
             ["RPCS3 issue #6270: Some vertex streching can occur and there is an issue with ghosting/trails in the skybox"] =
                 "مشكلة RPCS3 رقم #6270: قد تتمدد أجزاء من المجسمات بصورة غير طبيعية (Vertex Stretching)، وتظهر آثار متتابعة للأجسام في خلفية السماء (Skybox).",
-            ["RPCS3 issue #6365 - Some games regressed to Loadable \"Tried different settings, but no luck, the game throws this error before rendering of graphics: F {PPU[0x1000005] Thread (UnityMain) [0x000ff458]} class std::runtime_error thrown: Trap! (0xff458)"] =
-                "مشكلة RPCS3 رقم #6365 - بعض الألعاب تراجعت إلى حالة Loadable \"جربت إعدادات مختلفة دون جدوى، تظهر اللعبة هذا الخطأ قبل عرض الرسوميات: F {PPU[0x1000005] Thread (UnityMain) [0x000ff458]} class std::runtime_error thrown: Trap! (0xff458)",
-            ["RPCS3 issue #6688: The graphics show as pixelated colors"] =
-                "مشكلة RPCS3 رقم #6688: تظهر الرسوميات على شكل ألوان مبكسلة.",
-            ["RPCS3 issue #7041: In sections of the game, the graphics appear pixelated even with WCB enabled"] =
-                "مشكلة RPCS3 رقم #7041: في بعض أجزاء اللعبة تظهر الرسوميات مبكسلة حتى مع تفعيل WCB.",
             ["RPCS3 issue #7971: When playing the player phases through branches and objects that are normally supposed to be walked on"] =
                 "مشكلة RPCS3 رقم #7971: عند اللعب، يخترق اللاعب الأغصان والأجسام التي يفترض عادة أن يمشي عليها.",
             ["RPCS3 issue #8442: The grass in the distance is not rendered correctly"] =
@@ -2395,8 +2365,6 @@ public static partial class NoteSvc
                 "مشكلة RPCS3 رقم #9650: في عرض Attract Mode التجريبي، لا تتبع السيارات التي يتحكم بها CPU المسار المتوقع وينتهي بها الأمر بالاصطدام بالجدران.",
             ["RPCS3 issue #9885: The game is very unstable and will crash constantly while loading and during races"] =
                 "مشكلة RPCS3 رقم #9885: اللعبة غير مستقرة جدا وتتعطل باستمرار أثناء التحميل وأثناء السباقات.",
-            ["RPCS3 will instantly close itself upon playing through the level Camelot Falls with the dash move"] =
-                "سيغلق RPCS3 نفسه فورا عند اجتياز المرحلة Camelot Falls باستخدام حركة الاندفاع (dash).",
             ["Rain reflections on wet terrain also do not render correctly, and certain objects may at times appear translucent or render with minor artifacting at object edges that are in front of the sky"] =
                 "انعكاسات المطر على التضاريس المبللة أيضا لا تعرض بشكل صحيح، وقد تبدو بعض الأجسام أحيانا شفافة أو تعرض بعيوب بسيطة (artifacts) على حواف الأجسام التي تكون أمام السماء.",
             ["Random occurring crashes/freezes can happen on weaker hardware. Just restart the game and keep playing"] =
@@ -2817,8 +2785,6 @@ public static partial class NoteSvc
                 "الحل البديل لإصلاح depth of field المعطل هو تفعيل Force CPU Blit Emulation في [https://wiki.rpcs3.net/index.php?title=Help:Frequently_Asked_Questions#Debug_configuration تبويب Debug] أو تفعيل تعديل Disable Depth of Field في مدير التعديلات (patch manager)",
             ["There appears to be heavy performance issues with the game. While the Xbox 360 port runs at 60 FPS, due to PS3 Emulation restrictions, the game currently freezes and/or crashes often"] =
                 "يبدو أن اللعبة تعاني من مشاكل أداء شديدة. فبينما تعمل نسخة Xbox 360 بسرعة 60 FPS، فإن اللعبة حاليا، بسبب قيود محاكاة PS3، تتجمد و/أو تنهار كثيرا.",
-            ["There are broken character textures in character selection and cutscenes. In battles, it isn't present. It's a minor issue"] =
-                "توجد خامات شخصيات معطلة في اختيار الشخصيات والمشاهد السينمائية. وهي غير موجودة في المعارك. مشكلة بسيطة.",
             ["There are currently no publicly hosted custom servers, however players can host their own: [https://github.com/jackcaver/PLGarage PLGarage (WIP)], [https://github.com/ennuo/Bombd Bombd]"] =
                 "لا توجد حاليا خوادم مخصصة مستضافة علنا، لكن يمكن للاعبين استضافة خوادمهم الخاصة: [https://github.com/jackcaver/PLGarage PLGarage (WIP)]، [https://github.com/ennuo/Bombd Bombd]",
             ["There are graphical issues with the game if the default settings are used. To fix them, use the settings mentioned above"] =

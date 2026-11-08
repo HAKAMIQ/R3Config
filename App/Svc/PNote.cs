@@ -50,6 +50,14 @@ public static partial class NoteSvc
     public static IReadOnlyDictionary<string, string> ExportReviewedWikiArabic() =>
         new Dictionary<string, string>(WikiArByEn, StringComparer.Ordinal);
 
+    // The two forms Trans looks a raw note up by in the reviewed tables, so a
+    // test can tell which reviewed keys any shipped text can reach.
+    internal static (string Normalized, string Original) ReviewedLookupForms(string raw)
+    {
+        var original = raw.Trim();
+        return (NormKey(Norm(original)), original);
+    }
+
     public static void SetSyncedWikiArabic(IEnumerable<RecSyncGitHubNote>? notes)
     {
         var snapshot = notes is null
