@@ -52,6 +52,10 @@ internal static partial class Program
                 runner.RunCase(nameof(UiGate), UiGate.Run);
                 return;
             }
+            if (args.Length == 1 && DbConfigLayerT.TryRunFlag(runner, context, args[0]))
+            {
+                return;
+            }
             if (args.Length == 1 && args[0] == "--game-settings-evidence-only")
             {
                 var evidenceRoot = context.CreateTempRoot("GameSettingsEvidence");
@@ -284,6 +288,7 @@ internal static partial class Program
             runner.RunCase(
                 nameof(CfgBaselineT),
                 () => CfgBaselineT.Run(smokeRoot));
+            DbConfigLayerT.RunAll(runner, smokeRoot);
             runner.RunCase(nameof(Can_Comp), () => Can_Comp(smokeRoot));
             runner.RunCase(nameof(App_Pat), App_Pat);
             runner.RunCase(nameof(Cat_Dup), Cat_Dup);

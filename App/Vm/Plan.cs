@@ -64,6 +64,89 @@ public sealed class PlanVm : VmBase
 
     public bool HasChg => Items.Any(item => item.IsSel && item.IsDiff && item.IsAction);
 
+    // G1: the selected changes would create config_SERIAL.yml for a game that
+    // RPCS3's database config covers; RPCS3 then ignores that database config.
+    // Lines are technical (RPCS3 section/key and values), shown verbatim.
+    public bool HasDbWarn => DbLoss().Count > 0;
+
+    public string DbWarnTitle =>
+        _plan is null
+            ? string.Empty
+            : UiText.Fmt(
+                "Plan.DbWarn",
+                // WPF ignores bidi isolates, and inside RTL text it splits
+                // "config_BLUS30442.yml" at the dot after the digits; an LRM
+                // on both sides of every dot keeps the file name one LTR run.
+                Lrm + System.IO.Path.GetFileName(_plan.CfgPath).Replace(".", $"{Lrm}.{Lrm}", StringComparison.Ordinal) + Lrm);
+
+    public IReadOnlyList<string> DbWarnLines => [.. DbLoss().Select(Line)];
+
+    // Round 12: (a) a recommendation above writes the same value, so selecting
+    // it keeps the setting; (b+d) R3Config cannot write the value and it is lost.
+    public IReadOnlyList<string> DbKeepLines => [.. DbLoss().Where(setting => Keeper(setting) is not null).Select(Line)];
+
+    public IReadOnlyList<string> DbLostLines => [.. DbLoss().Where(setting => Keeper(setting) is null).Select(Line)];
+
+    public bool HasDbKeep => DbKeepLines.Count > 0;
+
+    public bool HasDbLost => DbLostLines.Count > 0;
+
+    public string DbKeepTitle => _plan is null ? string.Empty : UiText.GetText("Plan.DbWarnKeep");
+
+    public string DbLostTitle => _plan is null ? string.Empty : UiText.GetText("Plan.DbWarnLost");
+
+    // Selects the (a) rows only, and only when the user presses the button.
+    public System.Windows.Input.ICommand SelDbKeepCmd => _selDbKeep ??= new RelayCmd(SelectDbKeep, () => HasDbKeep);
+
+    private RelayCmd? _selDbKeep;
+
+    private const char Lrm = (char)0x200E;
+
+    private static string Line(CfgDbSetting setting) =>
+        setting.BaseVal is null
+            ? $"{setting.Section}/{setting.Key}: {setting.Value}"
+            : $"{setting.Section}/{setting.Key}: {setting.Value} → {setting.BaseVal}";
+
+    private PlanItVm? Keeper(CfgDbSetting setting)
+    {
+        var entry = _plan is null ? null : PlanService.DatabaseKeep(_plan, setting);
+        return entry is null ? null : Items.FirstOrDefault(item => ReferenceEquals(item.Entry, entry) && item.IsAction);
+    }
+
+    private void SelectDbKeep()
+    {
+        var keepers = DbLoss().Select(Keeper).OfType<PlanItVm>().ToArray();
+        if (keepers.Length == 0)
+        {
+            return;
+        }
+
+        _batchingSelection = true;
+        try
+        {
+            foreach (var item in keepers)
+            {
+                item.IsSel = true;
+            }
+        }
+        finally
+        {
+            _batchingSelection = false;
+        }
+
+        SetSum();
+        RaiseSel();
+    }
+
+    private IReadOnlyList<CfgDbSetting> DbLoss() =>
+        _plan is null
+            ? []
+            : PlanService.DatabaseLoss(
+                _plan,
+                Items
+                    .Where(item => item.IsSel && item.IsDiff && item.IsAction)
+                    .Select(item => item.Change));
+
     public bool CanDel => _plan?.Items.Any(item => item.HasCustomOverride) == true;
 
     public bool IsEmpty => Items.Count == 0;
@@ -103,6 +186,9 @@ public sealed class PlanVm : VmBase
             : GetEmpty(_plan);
 
         SetSum();
+        OnChange(nameof(DbWarnTitle));
+        OnChange(nameof(DbKeepTitle));
+        OnChange(nameof(DbLostTitle));
 
         foreach (var item in Items)
         {
@@ -395,6 +481,16 @@ public sealed class PlanVm : VmBase
     {
         OnChange(nameof(HasChg));
         OnChange(nameof(CanDel));
+        OnChange(nameof(HasDbWarn));
+        OnChange(nameof(DbWarnTitle));
+        OnChange(nameof(DbWarnLines));
+        OnChange(nameof(DbKeepLines));
+        OnChange(nameof(DbLostLines));
+        OnChange(nameof(HasDbKeep));
+        OnChange(nameof(HasDbLost));
+        OnChange(nameof(DbKeepTitle));
+        OnChange(nameof(DbLostTitle));
+        _selDbKeep?.RaiseCan();
         SelState?.Invoke(this, EventArgs.Empty);
     }
 }

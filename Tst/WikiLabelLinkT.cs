@@ -13,8 +13,8 @@ using static R3Config.Tests.TestAssert;
 namespace R3Config.Tests;
 
 // Round-7: Wiki external links written as [url label] render only the label as a
-// clickable link (url hidden, shown in the ToolTip); bare URLs stay as today but
-// are isolated LTR inside Arabic text. http/https only; broken forms stay text.
+// clickable link; since round 12 no address is shown anywhere (no ToolTip) and
+// a bare URL is a word link. http/https only; broken forms stay text.
 internal static class WikiLabelLinkT
 {
     private const string Lrm = "\u200E";
@@ -117,10 +117,11 @@ internal static class WikiLabelLinkT
         var block = new TextBlock();
         LinkText.SetText(block, "استخدم [" + ModUrl + " هذا المود] للإصلاح.");
         var link = block.Inlines.OfType<Hyperlink>().Single();
+        // Round 12: no raw address anywhere, not even in a ToolTip; "Show link" reveals it (NoteRevealT).
         Assert(link.NavigateUri?.AbsoluteUri == ModUrl &&
-               Equals(link.ToolTip, ModUrl) &&
+               link.ToolTip is null &&
                string.Concat(link.Inlines.OfType<Run>().Select(run => run.Text)) == "هذا المود",
-            "A labelled link must show its label, navigate to the url and carry the url in its ToolTip.");
+            "A labelled link must show its label and navigate to the url, with no url ToolTip.");
         var visible = Visible(block);
         Assert(visible == "استخدم هذا المود للإصلاح.",
             $"The rendered text must contain no bracket or url. Rendered: {visible}");
@@ -136,15 +137,14 @@ internal static class WikiLabelLinkT
         Assert(!broken.Inlines.OfType<Hyperlink>().Any() && Visible(broken) == "[ftp://x.example/a label] text",
             "A broken or non-http form must render as plain text.");
 
+        // Round 12: a bare URL is named with a word ("Link"), never shown as an address.
         var bare = new TextBlock();
         LinkText.SetText(bare, "شاهد https://forums.rpcs3.net/thread?id=1 الآن");
-        var inlines = bare.Inlines.ToList();
-        var index = inlines.FindIndex(inline => inline is Hyperlink);
-        Assert(index > 0 && index < inlines.Count - 1 &&
-               inlines[index - 1] is Run { Text: { } before } && before.EndsWith(Lrm, StringComparison.Ordinal) &&
-               inlines[index + 1] is Run { Text: { } after } && after.StartsWith(Lrm, StringComparison.Ordinal) &&
-               ((Hyperlink)inlines[index]).NavigateUri?.AbsoluteUri == "https://forums.rpcs3.net/thread?id=1",
-            "A bare URL inside Arabic text must keep its address but be isolated LTR with marks on both sides.");
+        var bareLink = bare.Inlines.OfType<Hyperlink>().Single();
+        Assert(bareLink.NavigateUri?.AbsoluteUri == "https://forums.rpcs3.net/thread?id=1" &&
+               Visible(bare) == "شاهد " + UiText.GetText("Link.Generic") + " الآن" &&
+               !Visible(bare).Contains("https", StringComparison.Ordinal),
+            "A bare URL inside Arabic text must render as a word link with no address.");
     }
 
     private static string Visible(TextBlock block)

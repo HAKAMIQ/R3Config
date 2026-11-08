@@ -106,14 +106,16 @@ public sealed class AppFlow
         Rpcs3GameDescriptor game,
         WikiRec? rec,
         HwInfo? hw,
-        Rpcs3BuildIdentity? build = null)
+        Rpcs3BuildIdentity? build = null,
+        RecSyncApiGame? databaseConfig = null)
     {
         return _cases.Config.Build(
             install,
             game,
             rec,
             hw,
-            Rpcs3RuntimeBuild.From(build));
+            Rpcs3RuntimeBuild.From(build),
+            databaseConfig);
     }
 
     public CfgRes ApplyCfg(

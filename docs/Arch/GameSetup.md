@@ -19,6 +19,27 @@ does not replace their parsers, compatibility policy, or transaction hardening.
    unreadable custom/global YAML file fails closed as `Unknown` instead of
    silently falling through to a default.
 
+   RPCS3 also applies its database config entry for a game (the Config API
+   data R3Config ships in `Data/game-configs.json`), but only while the game has
+   no custom config file (rpcs3/Emu/System.cpp:1810-1858; seen in a real log as
+   "Applying database config", then "Found custom config. Ignoring database
+   config" once the file existed). The first R3Config write creates that file,
+   so the state and `CfgEntry.CurVal` keep the chain above: it is the value that
+   holds after any write, and Apply re-resolves it before writing.
+   `CfgEntry.RunVal` carries the value RPCS3 boots with now, including the
+   database layer, and `CfgPlan.DbCfg` lists the active database settings with
+   the value that replaces each one. When selected changes would create the
+   file, the settings panel warns and lists the database settings that stop
+   applying (`PlanService.DatabaseLoss`). Copying database settings into the
+   new file is a separate product decision and is not done.
+
+   The list has two groups (display only). (a) A recommendation row above writes
+   the same value (`PlanService.DatabaseKeep`): selecting it keeps the setting,
+   and the "Select database settings" button selects exactly those rows, only
+   when pressed; automatic selection never does. (b+d) R3Config cannot write the
+   value (another recommended value, no recommendation, or a key outside the
+   map): it is lost. Nothing else in the write path changes.
+
    `WikiRecommendationClass` remains attached to each `CfgChg` through state and
    planning. Only `MandatoryGameConfig` and `GeneralRecommendation` may enter
    ordinary Game Setup configuration decisions. `PatchSpecific`,

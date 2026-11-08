@@ -1111,9 +1111,25 @@ internal static class UiGate
         // App.TextAlignment} on the reason title and on the reason body, the
         // same value the neighbouring Wiki instruction heading already uses.
         // No existing entry changed or was removed.
-        const int expectedCount = 1004;
+        //
+        // The G1 database-config warning card (Ctrl/Rec.xaml,
+        // Settings.DbConfigWarning) adds exactly two entries, 1004 -> 1006:
+        // HorizontalContentAlignment="Stretch" on its lines ItemsControl (as
+        // the Knowledge card) and FlowDirection="LeftToRight" on each line,
+        // because every line is an RPCS3 section/key and value. Removing only
+        // that card reproduces 1004/f4c09c13...; no existing entry changed.
+        //
+        // Round 12 splits that card's lines into (a) keepable and (b+d) lost
+        // groups, 1006 -> 1007: the one lines ItemsControl becomes two, each
+        // with HorizontalContentAlignment="Stretch" (+1), and the line
+        // FlowDirection="LeftToRight" moves unchanged into the shared
+        // DbWarnLineTemplate (same entry, later Rec.xaml ordinals shift). The
+        // LinkText.Source bindings carry no direction. Restoring only the
+        // pre-round-12 card and bindings reproduces 1006/c279789b...; an
+        // ordinal-free diff shows that single added entry.
+        const int expectedCount = 1007;
         const string expectedSha256 =
-            "f4c09c130c59a13a5c36147a95c12d71d054bed44447a44dd2d217394a4db9d4";
+            "f960e24ce9257f893f0456536ee19e3d8ecef1ee4743306cac5cccc66a34ae82";
         var propertyNames = new HashSet<string>(
             [
                 "FlowDirection",
@@ -2368,6 +2384,8 @@ internal static class UiGate
                     R3Config.Tests.GroupTitleDirectionT.Run();
                     VerifyGameIconPresentation();
                     R3Config.Tests.GameCompatLineUiT.VerifyRuntime(lang, isDark, shotDir);
+                    R3Config.Tests.DbWarnUiT.VerifyRuntime(lang, isDark, shotDir);
+                    R3Config.Tests.NoteRevealUiT.VerifyRuntime(lang, isDark, shotDir);
                     R3Config.Tests.TechnicalTextT.VerifyRuntime(lang, isDark, shotDir);
                     DangerProbe();
 

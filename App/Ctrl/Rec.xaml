@@ -25,6 +25,7 @@
                                TextAlignment="{DynamicResource App.TextAlignment}" />
 
                     <TextBlock ctrl:LinkText.Text="{Binding DisplayText}"
+                               ctrl:LinkText.Source="{Binding Text}"
                                Style="{StaticResource RecLocalizedBodyText}"
                                FlowDirection="{DynamicResource App.TextFlowDirection}"
                                Margin="0,2,0,0" />
@@ -48,6 +49,15 @@
                         </StackPanel>
                     </Expander>
                 </StackPanel>
+            </DataTemplate>
+
+            <!-- One lost database setting: RPCS3 section/key and values, LTR. -->
+            <DataTemplate x:Key="DbWarnLineTemplate">
+                <TextBlock Text="{Binding}"
+                           Style="{StaticResource RecLocalizedBodyText}"
+                           FlowDirection="LeftToRight"
+                           Language="en-US"
+                           Margin="0,2,0,0" />
             </DataTemplate>
 
             <DataTemplate x:Key="OnlineRowTemplate">
@@ -103,6 +113,7 @@
                                           HorizontalContentAlignment="Stretch" />
 
                             <TextBlock ctrl:LinkText.Text="{Binding Notes}"
+                                       ctrl:LinkText.Source="{Binding RawNotes}"
                                        Style="{StaticResource RecLocalizedBodyText}"
                                        FlowDirection="{Binding Notes, Converter={StaticResource ContentTextFlowConverter}}"
                                        Language="{Binding Notes, Converter={StaticResource ContentTextLanguageConverter}, ConverterCulture=en-US}"
@@ -174,6 +185,7 @@
                                                                     Converter={StaticResource BoolToVisibilityConverter}}" />
 
                                     <TextBlock ctrl:LinkText.Text="{Binding LocBody}"
+                                               ctrl:LinkText.Source="{Binding Notes}"
                                                Style="{StaticResource RecLocalizedBodyText}"
                                                FlowDirection="{Binding NoteFlow}"
                                                TextAlignment="{Binding NoteText}"
@@ -340,6 +352,69 @@
                     <StackPanel Orientation="Vertical"
                                 FlowDirection="{DynamicResource App.FlowDirection}"
                                 HorizontalAlignment="Stretch">
+
+                        <!-- 0. G1: the selected writes would create config_SERIAL.yml, and RPCS3 then
+                             ignores its database config for the game. Lines are RPCS3 keys/values (LTR). -->
+                        <Border Style="{StaticResource RecEvidenceCard}"
+                                AutomationProperties.AutomationId="Settings.DbConfigWarning"
+                                Background="{DynamicResource Status.WarningSurface}"
+                                BorderBrush="{DynamicResource Status.Warning}"
+                                Margin="0,0,0,10"
+                                Visibility="{Binding Plan.HasDbWarn,
+                                                     Converter={StaticResource BoolToVisibilityConverter}}">
+
+                            <StackPanel Orientation="Vertical"
+                                        HorizontalAlignment="Stretch">
+
+                                <TextBlock Text="{Binding Plan.DbWarnTitle}"
+                                           Style="{StaticResource RecLocalizedBodyText}"
+                                           Foreground="{DynamicResource Status.Warning}" />
+
+                                <!-- (a) A recommendation above writes the same value: selecting it keeps the setting.
+                                     The button selects these rows only when pressed; nothing is selected automatically. -->
+                                <TextBlock Text="{Binding Plan.DbKeepTitle}"
+                                           AutomationProperties.AutomationId="Settings.DbConfigKeepTitle"
+                                           Style="{StaticResource RecLocalizedSubtitleText}"
+                                           Margin="0,8,0,0"
+                                           Visibility="{Binding Plan.HasDbKeep,
+                                                                Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                <ItemsControl ItemsSource="{Binding Plan.DbKeepLines}"
+                                              ItemTemplate="{StaticResource DbWarnLineTemplate}"
+                                              HorizontalContentAlignment="Stretch"
+                                              Visibility="{Binding Plan.HasDbKeep,
+                                                                   Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                <Grid Margin="0,6,0,0"
+                                      Visibility="{Binding Plan.HasDbKeep,
+                                                           Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Button AutomationProperties.AutomationId="Settings.DbConfigSelectKeep"
+                                            Content="{lang:TextExt Key=Plan.DbWarnSelectKeep}"
+                                            ToolTip="{lang:TextExt Key=Plan.DbWarnSelectKeepTip}"
+                                            Command="{Binding Plan.SelDbKeepCmd}"
+                                            Style="{StaticResource RecSecondaryActionButton}" />
+                                </Grid>
+
+                                <!-- (b+d) R3Config cannot write these values: they are lost. -->
+                                <TextBlock Text="{Binding Plan.DbLostTitle}"
+                                           AutomationProperties.AutomationId="Settings.DbConfigLostTitle"
+                                           Style="{StaticResource RecLocalizedSubtitleText}"
+                                           Margin="0,8,0,0"
+                                           Visibility="{Binding Plan.HasDbLost,
+                                                                Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                <ItemsControl ItemsSource="{Binding Plan.DbLostLines}"
+                                              ItemTemplate="{StaticResource DbWarnLineTemplate}"
+                                              HorizontalContentAlignment="Stretch"
+                                              Visibility="{Binding Plan.HasDbLost,
+                                                                   Converter={StaticResource BoolToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Border>
 
                         <!-- 1. Actionable settings: one flat compact list; no column titles, no tab headers. -->
                         <ItemsControl AutomationProperties.AutomationId="Settings.List"

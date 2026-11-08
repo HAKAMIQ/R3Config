@@ -104,11 +104,21 @@ public sealed class PlanService
         WikiRec? recommendation,
         HwInfo? hw = null,
         Rpcs3RuntimeBuild? build = null,
-        string hostPlatform = "Windows")
+        string hostPlatform = "Windows",
+        RecSyncApiGame? databaseConfig = null)
     {
         // hw is never used as a tier: the state of a documented change never depends on
         // Low/Mid/High. Only proven vendor/host/build facts feed the change's own scope.
         var facts = RuntimeFacts.Create(game, hostPlatform, build, hw);
+        if (databaseConfig is not null &&
+            !databaseConfig.Serial.Equals(game.Serial, StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                "The RPCS3 database config entry belongs to another serial.",
+                nameof(databaseConfig));
+        }
+
+        var database = databaseConfig?.Settings;
         var targetPath = Path.Combine(
             install.CustPath,
             $"config_{game.Serial}.yml");
@@ -126,6 +136,10 @@ public sealed class PlanService
             ? []
             : [recommendation with { Changes = changes }];
 
+        // State and CurVal use the chain without the database layer on purpose:
+        // the first write creates the custom config, after which RPCS3 ignores
+        // the database config, and ConfigApplyService re-resolves CurVal through
+        // this same chain before writing. RunVal carries what RPCS3 runs now.
         var state = _recSvc.Evaluate(
             game,
             recs,
@@ -145,7 +159,8 @@ public sealed class PlanService
                         stateItem.Current,
                         stateItem)
                     {
-                        HasCustomOverride = R3Yaml.HasKey(targetPath, change.Section, change.Key)
+                        HasCustomOverride = R3Yaml.HasKey(targetPath, change.Section, change.Key),
+                        RunVal = RunValue(targetPath, globalPath, database, change, stateItem.Current)
                     })
             .ToArray();
 
@@ -157,18 +172,36 @@ public sealed class PlanService
             Items: items,
             RecState: state,
             NeedBkp: items.Any(
-                item => item.IsAction && item.IsDiff));
+                item => item.IsAction && item.IsDiff))
+        {
+            DbCfg = ActiveDatabase(targetPath, globalPath, database)
+        };
     }
 
-    // The value a running RPCS3 would use for this key: the game custom config
-    // when it overrides the key, otherwise the global RPCS3 config, otherwise
-    // the verified RPCS3 built-in default. Preview and Apply must resolve the
-    // current state through this one chain. Reading only the custom config
-    // reports every key the custom config inherits rather than overrides as an
-    // external change, because an inherited key is physically absent there.
+    // The chain without RPCS3's database config: the game custom config when it
+    // overrides the key, otherwise the global RPCS3 config, otherwise the
+    // verified RPCS3 built-in default. This is the value that holds once a
+    // custom config exists, and the one Apply re-resolves before writing.
+    // Reading only the custom config reports every key the custom config
+    // inherits rather than overrides as an external change, because an
+    // inherited key is physically absent there.
     internal static string? ResolveEffective(
         string targetPath,
         string globalPath,
+        string section,
+        string key) =>
+        ResolveEffective(targetPath, globalPath, null, section, key);
+
+    // The value a booting RPCS3 uses for this key, in the order of
+    // rpcs3/Emu/System.cpp:1810-1858: built-in default, then config.yml, then
+    // either the game custom config (when the file exists and loads) or, only
+    // when there is none, the database config entry for the game. A custom
+    // config with a single unrelated key still disables the whole database
+    // layer ("Found custom config. Ignoring database config").
+    internal static string? ResolveEffective(
+        string targetPath,
+        string globalPath,
+        IReadOnlyList<RecSyncSetting>? database,
         string section,
         string key)
     {
@@ -188,6 +221,13 @@ public sealed class PlanService
             return current;
         }
 
+        if (database is not null &&
+            !File.Exists(targetPath) &&
+            FindSetting(database, section, key) is { } fromDatabase)
+        {
+            return fromDatabase.Value;
+        }
+
         if (!R3Yaml.CanRead(globalPath))
         {
             throw new InvalidDataException(
@@ -201,6 +241,109 @@ public sealed class PlanService
 
         return global ?? ReadBuiltIn(section, key);
     }
+
+    // The database config settings that stop applying when the selected changes
+    // create the game custom config: every active database setting the write
+    // does not set itself and whose fallback value differs (or is unknown).
+    // Nothing is lost when nothing is selected or a custom config exists.
+    public static IReadOnlyList<CfgDbSetting> DatabaseLoss(
+        CfgPlan plan,
+        IEnumerable<CfgChg> selected)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(selected);
+
+        var written = selected
+            .Select(change => (change.Section, change.Key))
+            .ToHashSet();
+        if (written.Count == 0)
+        {
+            return [];
+        }
+
+        return
+        [
+            .. plan.DbCfg
+                .Where(setting =>
+                    !written.Contains((setting.Section, setting.Key)) &&
+                    !string.Equals(setting.BaseVal, setting.Value, StringComparison.Ordinal))
+                .OrderBy(setting => setting.Section, StringComparer.Ordinal)
+                .ThenBy(setting => setting.Key, StringComparer.Ordinal)
+        ];
+    }
+
+    // Round 12 (read only): the recommendation row that keeps a lost database
+    // setting when the user selects it, i.e. an actionable, not-yet-applied
+    // change of the same key whose value is exactly the database value. Null
+    // means R3Config cannot write that value for the game (another value, no
+    // recommendation, or a key outside the map). Selection stays the user's.
+    public static CfgEntry? DatabaseKeep(CfgPlan plan, CfgDbSetting setting)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(setting);
+
+        return plan.Items.FirstOrDefault(item =>
+            item.IsAction &&
+            item.IsDiff &&
+            item.Section.Equals(setting.Section, StringComparison.Ordinal) &&
+            item.Key.Equals(setting.Key, StringComparison.Ordinal) &&
+            string.Equals(item.Val, setting.Value, StringComparison.Ordinal));
+    }
+
+    private static string? RunValue(
+        string targetPath,
+        string globalPath,
+        IReadOnlyList<RecSyncSetting>? database,
+        CfgChg change,
+        string? current)
+    {
+        if (database is null)
+        {
+            return current;
+        }
+
+        try
+        {
+            return ResolveEffective(targetPath, globalPath, database, change.Section, change.Key);
+        }
+        catch (InvalidDataException)
+        {
+            // Unreadable configs already leave the state Unknown.
+            return current;
+        }
+    }
+
+    private static IReadOnlyList<CfgDbSetting> ActiveDatabase(
+        string targetPath,
+        string globalPath,
+        IReadOnlyList<RecSyncSetting>? database)
+    {
+        if (database is null || database.Count == 0 || File.Exists(targetPath))
+        {
+            return [];
+        }
+
+        var globalReadable = R3Yaml.CanRead(globalPath);
+        return
+        [
+            .. database.Select(setting => new CfgDbSetting(
+                setting.Section,
+                setting.Key,
+                setting.Value,
+                globalReadable
+                    ? R3Yaml.ReadVal(globalPath, setting.Section, setting.Key)
+                      ?? BuiltInDefaults.GetValueOrDefault($"{setting.Section}/{setting.Key}")
+                    : null))
+        ];
+    }
+
+    private static RecSyncSetting? FindSetting(
+        IReadOnlyList<RecSyncSetting> database,
+        string section,
+        string key) =>
+        database.FirstOrDefault(setting =>
+            setting.Section.Equals(section, StringComparison.Ordinal) &&
+            setting.Key.Equals(key, StringComparison.Ordinal));
 
     internal static string? ReadBuiltIn(
         string section,

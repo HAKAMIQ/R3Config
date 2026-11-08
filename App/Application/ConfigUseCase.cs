@@ -14,14 +14,16 @@ public sealed class ConfigUseCase(
         Rpcs3GameDescriptor game,
         WikiRec? recommendation,
         HwInfo? hardware,
-        Rpcs3RuntimeBuild? build = null)
+        Rpcs3RuntimeBuild? build = null,
+        RecSyncApiGame? databaseConfig = null)
     {
         return planService.BuildCfg(
             install,
             game,
             recommendation,
             hardware,
-            build);
+            build,
+            databaseConfig: databaseConfig);
     }
 
     public CfgRes Apply(
