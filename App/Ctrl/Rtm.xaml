@@ -114,7 +114,9 @@
                                    Visibility="{Binding IsTechnical,
                                                         Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                        <TextBlock Text="{Binding Value}"
+                        <!-- LinkText keeps whole English segments such as
+                             "GitHub #19262" left to right inside Arabic text. -->
+                        <TextBlock ctrl:LinkText.Text="{Binding Value}"
                                    Style="{StaticResource RecLocalizedBodyText}"
                                    Visibility="{Binding IsLocalized,
                                                         Converter={StaticResource BoolToVisibilityConverter}}" />

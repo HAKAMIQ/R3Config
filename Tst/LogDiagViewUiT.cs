@@ -108,6 +108,12 @@ internal static class LogDiagViewUiT
                     $"The Overview must render '{expected}'. Rendered: " + string.Join(" / ", overview));
             }
 
+            var englishEvidence = All<TextBlock>(view).Where(block => block.IsVisible && R3Config.Tests.NoteBidiT.Shown(block) == "Known regression match - GitHub issue #19381").ToList();
+            Assert(englishEvidence.Count == 1 && englishEvidence[0].Inlines.Count == 1 &&
+                   englishEvidence[0].Inlines.FirstInline is Run englishRun &&
+                   englishRun.ReadLocalValue(Inline.FlowDirectionProperty) == DependencyProperty.UnsetValue &&
+                   R3Config.Tests.NoteBidiT.Reversed(englishEvidence[0]).Count == 0,
+                "The English Overview evidence line stays one plain Run that reads in order.");
             var links = All<TextBlock>(view).SelectMany(block => block.Inlines.OfType<Hyperlink>()).ToList();
             var evidence = links.SingleOrDefault(link => link.Inlines.OfType<Run>().Any(run => run.Text == "View evidence"));
             var download = links.SingleOrDefault(link => link.Inlines.OfType<Run>().Any(run => run.Text == "Download exact build"));
@@ -203,6 +209,20 @@ internal static class LogDiagViewUiT
                     "Arabic diagnostics text must have no mojibake and no unresolved resource keys.");
             }
 
+            // Round 21 (B2): the Overview "Evidence" row ends with the GitHub
+            // issue number; under Arabic it must read "GitHub #19381", never
+            // "19381#", with the source text and automation name unchanged.
+            vm.LogDiag.SelectedTab = LogDiagVm.TabOverview;
+            Settle(window);
+            var arabicEvidence = EvidenceLine(DiagnosisKind.KnownRegressionMatch, 19381);
+            var arabicRows = All<TextBlock>(view).Where(block => block.IsVisible && R3Config.Tests.NoteBidiT.Shown(block) == arabicEvidence).ToList();
+            Assert(arabicRows.Count == 1, $"The Arabic Overview must render the evidence line '{arabicEvidence}' once ({arabicRows.Count}).");
+            var evidenceProblems = new List<string>();
+            CheckEvidenceLine(arabicRows[0], arabicEvidence, 19381, evidenceProblems);
+            CheckEvidenceLines(view, knowledge, evidenceProblems);
+            Assert(evidenceProblems.Count == 0,
+                $"Arabic diagnosis evidence lines: {evidenceProblems.Count} problem(s):{Environment.NewLine}{string.Join(Environment.NewLine, evidenceProblems.Take(12))}");
+
             vm.LogDiag.SelectedTab = LogDiagVm.TabLogs;
             Settle(window);
             foreach (var technical in new[] { "0.0.42-19896", "BCUS98242", "Vulkan" })
@@ -230,6 +250,86 @@ internal static class LogDiagViewUiT
 
     private static LogEvent Event(int line, char level, string channel, string message) =>
         new(line, line, line, level, null, channel, message, [.. LogRules.Classify(level, channel, message)], LogRules.BuildSignature(level, channel, message));
+
+    private static string EvidenceLine(DiagnosisKind kind, int number) =>
+        $"{UiText.GetText($"Diag.Kind.{kind}")} - {UiText.GetText("Diag.Source.GitHubIssue")} #{number.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+
+    // Every GitHub issue number of the shipped knowledge base, with every
+    // diagnosis kind, through the real DiagLineTemplate (LogDiagVm builds the
+    // Overview evidence line the same way).
+    private static void CheckEvidenceLines(FrameworkElement view, DiagnosticKnowledgeBase knowledge, List<string> problems)
+    {
+        var template = (DataTemplate)view.FindResource("DiagLineTemplate");
+        var numbers = knowledge.Entries.Select(entry => entry.Source.Number).OfType<int>().Distinct().Order().ToList();
+        Assert(numbers.Count > 0, "The shipped knowledge base must have GitHub issue numbers.");
+        var lines = numbers.SelectMany(number => Enum.GetValues<DiagnosisKind>().Select(kind => (Number: number, Text: EvidenceLine(kind, number)))).ToList();
+        var panel = new StackPanel();
+        foreach (var line in lines)
+        {
+            panel.Children.Add(new ContentPresenter
+            {
+                Content = new DiagLineVm(UiText.GetText("Diag.Overview.Evidence"), line.Text, false),
+                ContentTemplate = template
+            });
+        }
+
+        var host = new Window
+        {
+            Content = new ScrollViewer { Content = panel, FlowDirection = view.FlowDirection },
+            Width = 920,
+            Height = 900,
+            ShowActivated = false,
+            ShowInTaskbar = false
+        };
+        host.Show();
+        try
+        {
+            Settle(host);
+            foreach (var line in lines)
+            {
+                var shown = All<TextBlock>(panel).Where(block => block.IsVisible && R3Config.Tests.NoteBidiT.Shown(block) == line.Text).ToList();
+                if (shown.Count != 1)
+                {
+                    problems.Add($"'{line.Text}' rendered {shown.Count} times.");
+                    continue;
+                }
+
+                CheckEvidenceLine(shown[0], line.Text, line.Number, problems);
+            }
+        }
+        finally
+        {
+            host.Close();
+        }
+
+        Console.WriteLine($"LogDiagEvidenceBidi ar-SA lines={lines.Count} issues={numbers.Count}");
+    }
+
+    private static void CheckEvidenceLine(TextBlock block, string text, int number, List<string> problems)
+    {
+        var issue = $"#{number.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        if (text.Any(character => char.GetUnicodeCategory(character) == System.Globalization.UnicodeCategory.Format))
+        {
+            problems.Add($"'{text}': the source line must have no format character.");
+        }
+
+        var name = System.Windows.Automation.Peers.UIElementAutomationPeer.CreatePeerForElement(block)?.GetName();
+        if (name != text)
+        {
+            problems.Add($"'{text}': automation name is '{name}'.");
+        }
+
+        if (!R3Config.Tests.NoteBidiT.Segments(block).Any(segment => segment.Text.EndsWith(issue, StringComparison.Ordinal)))
+        {
+            problems.Add($"'{text}': no English segment ends with {issue}.");
+        }
+
+        var reversed = R3Config.Tests.NoteBidiT.Reversed(block);
+        if (reversed.Count > 0)
+        {
+            problems.Add($"'{text}' reads out of order: {string.Join(" | ", reversed)}");
+        }
+    }
 
     private static void Settle(Window window)
     {
