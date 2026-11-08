@@ -74,6 +74,7 @@ internal static class SyncBoundsT
     {
         BuiltInDefaultsMatchSnapshot();
         SyncValueLimits();
+        NullHandlerValuesAreYamlValues();
     }
 
     private static void BuiltInDefaultsMatchSnapshot()
@@ -175,6 +176,36 @@ internal static class SyncBoundsT
                !WikiSvc.IsSyncValue(section, key, "1e1") &&
                !WikiSvc.IsSyncValue(section, key, "0,5"),
             $"{path} must reject non-decimal text.");
+    }
+
+    // The Wiki writes "Disabled" for these three settings and Wiki.Convert maps it
+    // to "Null"; the RPCS3 YAML only ever holds the to_string text of the enum
+    // (system_config_types.cpp: video_renderer, audio_renderer, microphone_handler).
+    // RecSync values are YAML values, so "Null" is valid and "Disabled" is not.
+    private static void NullHandlerValuesAreYamlValues()
+    {
+        (string Section, string Key, string[] Valid)[] rows =
+        [
+            ("Video", "Renderer", ["Null", "OpenGL", "Vulkan"]),
+            ("Audio", "Renderer", ["Null", "XAudio2", "Cubeb", "FAudio"]),
+            ("Audio", "Microphone Type", ["Null", "Standard", "SingStar", "Real SingStar", "Rocksmith"])
+        ];
+
+        foreach (var row in rows)
+        {
+            var path = $"{row.Section}/{row.Key}";
+            foreach (var valid in row.Valid)
+            {
+                Assert(WikiSvc.IsSyncValue(row.Section, row.Key, valid),
+                    $"{path} must accept the RPCS3 YAML value '{valid}'.");
+            }
+
+            Assert(!WikiSvc.IsSyncValue(row.Section, row.Key, "Disabled"),
+                $"{path} must reject 'Disabled': it is Wiki wording, RPCS3 writes 'Null'.");
+            Assert(!WikiSvc.IsSyncValue(row.Section, row.Key, "Turbo") &&
+                   !WikiSvc.IsSyncValue(row.Section, row.Key, ""),
+                $"{path} must reject unknown text.");
+        }
     }
 
     private static bool Accepts(string section, string key, long value) =>

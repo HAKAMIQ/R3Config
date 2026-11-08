@@ -130,6 +130,16 @@ public sealed partial class WikiSvc
 
         if (CorpusValues.TryGetValue(wikiKey, out var allowed))
         {
+            // Wiki wording "Disabled" is "Null" in RPCS3's YAML (the same mapping
+            // Wiki.Convert applies through NullHandlerKeys). A synced value is a
+            // YAML value, so only "Null" is valid and "Disabled" is not.
+            if (NullHandlerKeys.Contains(wikiKey))
+            {
+                return value.Equals("Null", StringComparison.Ordinal) ||
+                       (!value.Equals("Disabled", StringComparison.Ordinal) &&
+                        allowed.Contains(value, StringComparer.Ordinal));
+            }
+
             return allowed.Contains(value, StringComparer.Ordinal);
         }
 
