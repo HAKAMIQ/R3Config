@@ -97,6 +97,27 @@ internal static class Rpcs3BuildScopeT
             "A version-only 'since' compares version numbers.");
         Assert(NoteScope.Rpcs3BuildApplies("since not-a-version", "not-a-version", Exact("0.0.35", 17000)) is null,
             "An unparseable condition is unconfirmed.");
+
+        // Round 21 (C3): "added in" is "since" for the feature it names. Real
+        // shipped wording (Kamen Rider Summonride!, Marvel Super Hero Squad,
+        // Pictionary, uDraw Studio, Starhawk); before, these notes stayed
+        // Unresolved, and so hidden, even for an exact newer build.
+        const string Added = "The game requires a uDraw GameTablet USB peripheral to be connected and configured for passthrough to RPCS3. Support for this was added in RPCS3 version 0.0.13-11475.";
+        const string AddedShort = "Without it, lit surfaces, characters, and the sky render black. Added in RPCS3 0.0.41-19440 (PR [https://github.com/RPCS3/rpcs3/pull/18644 #18644]).";
+        Assert(NoteScope.Rpcs3BuildApplies(Added, "0.0.13-11475", Exact("0.0.43", 20568)) == true &&
+               NoteScope.Rpcs3BuildApplies(Added, "0.0.13-11475", Exact("0.0.13", 11475)) == true &&
+               NoteScope.Rpcs3BuildApplies(Added, "0.0.13-11475", Exact("0.0.13", 11474)) == false,
+            "'added in RPCS3 version X' applies from build X on.");
+        Assert(NoteScope.Rpcs3BuildApplies(AddedShort, "0.0.41-19440", Exact("0.0.43", 20568)) == true &&
+               NoteScope.Rpcs3BuildApplies(AddedShort, "0.0.41-19440", Exact("0.0.41", 19439)) == false,
+            "'Added in RPCS3 X' applies from build X on.");
+        Assert(NoteScope.Rpcs3BuildApplies(Added, "0.0.13-11475", null) is null,
+            "Without an exact runtime identity an 'added in' note stays unconfirmed (no guess).");
+        Assert(NoteScope.Rpcs3BuildApplies(
+                   "The game, in its current state (build 0.0.24-14141), will have difficulty maintaining 60fps in some areas.",
+                   "0.0.24-14141",
+                   Exact("0.0.43", 20568)) is null,
+            "A build named without a direction ('in its current state (build X)') stays unconfirmed for other builds.");
     }
 
     private static void AssertOnlyExactIdentityDecidesScope()

@@ -143,8 +143,9 @@ public static partial class NoteScope
         @"\b(?:past|above|after|newer|later|higher|beyond|over)" + Rpcs3Lead,
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
+    // "added in" names the build a feature arrived in, so it reads like "since".
     private static readonly Regex Rpcs3AtLeast = new(
-        @"\b(?:since|from)" + Rpcs3Lead,
+        @"\b(?:since|from|added in)" + Rpcs3Lead,
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     private static readonly Regex Rpcs3Older = new(
