@@ -79,7 +79,18 @@ Status.Success
 Status.Warning
 Status.Danger
 Status.Info
+
+Compat.Playable
+Compat.Ingame
+Compat.Intro
+Compat.Loadable
+Compat.Nothing
 ```
+
+`Compat.*` تلوّن اسم حالة التوافق الرسمية من RPCS3 في صف اللعبة فقط، بألوان
+rpcs3.net/compatibility (أخضر، أصفر، برتقالي، أحمر، رمادي) وبتباين WCAG AA
+(4.5:1) على كل خلفيات الصف في الثيمين (`GameCompatLineUiT`). الحالة تظهر
+باسمها، فاللون ليس الدليل الوحيد عليها.
 
 توجد القيم الفعلية تحت `Fluent.Dark.*.Color` و`Fluent.Light.*.Color`. تغيير
 الثيم يبدل الألوان خلف العقد نفسه؛ View لا يعرف اسم الوضع أو قيمة اللون.

@@ -31,6 +31,13 @@
     <Color x:Key="Fluent.Dark.Status.Danger.Color">#FFFF9F9A</Color>
     <Color x:Key="Fluent.Dark.Status.Info.Color">#FF75B6E7</Color>
 
+    <!-- Official RPCS3 compatibility status names (rpcs3.net hues; WCAG AA on every game-row background). -->
+    <Color x:Key="Fluent.Dark.Compat.Playable.Color">#FF6CCB8E</Color>
+    <Color x:Key="Fluent.Dark.Compat.Ingame.Color">#FFF5D271</Color>
+    <Color x:Key="Fluent.Dark.Compat.Intro.Color">#FFF7A35C</Color>
+    <Color x:Key="Fluent.Dark.Compat.Loadable.Color">#FFFF9F9A</Color>
+    <Color x:Key="Fluent.Dark.Compat.Nothing.Color">#FFA6A6A6</Color>
+
     <Color x:Key="Fluent.Dark.Status.SuccessSurface.Color">#FF183626</Color>
     <Color x:Key="Fluent.Dark.Status.WarningSurface.Color">#FF3B321D</Color>
     <Color x:Key="Fluent.Dark.Status.DangerSurface.Color">#FF3D2424</Color>
@@ -73,6 +80,13 @@
     <Color x:Key="Fluent.Light.Status.Warning.Color">#FF835C00</Color>
     <Color x:Key="Fluent.Light.Status.Danger.Color">#FFC50F1F</Color>
     <Color x:Key="Fluent.Light.Status.Info.Color">#FF0F6CBD</Color>
+
+    <!-- Official RPCS3 compatibility status names (rpcs3.net hues; WCAG AA on every game-row background). -->
+    <Color x:Key="Fluent.Light.Compat.Playable.Color">#FF107C41</Color>
+    <Color x:Key="Fluent.Light.Compat.Ingame.Color">#FF7A6000</Color>
+    <Color x:Key="Fluent.Light.Compat.Intro.Color">#FFA34A00</Color>
+    <Color x:Key="Fluent.Light.Compat.Loadable.Color">#FFC50F1F</Color>
+    <Color x:Key="Fluent.Light.Compat.Nothing.Color">#FF4D4D4D</Color>
 
     <Color x:Key="Fluent.Light.Status.SuccessSurface.Color">#FFE7F6EC</Color>
     <Color x:Key="Fluent.Light.Status.WarningSurface.Color">#FFFFF4CE</Color>
@@ -185,6 +199,26 @@
     <SolidColorBrush x:Key="Status.Info"
                      po:Freeze="False"
                      Color="{StaticResource Fluent.Dark.Status.Info.Color}" />
+
+    <SolidColorBrush x:Key="Compat.Playable"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Compat.Playable.Color}" />
+
+    <SolidColorBrush x:Key="Compat.Ingame"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Compat.Ingame.Color}" />
+
+    <SolidColorBrush x:Key="Compat.Intro"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Compat.Intro.Color}" />
+
+    <SolidColorBrush x:Key="Compat.Loadable"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Compat.Loadable.Color}" />
+
+    <SolidColorBrush x:Key="Compat.Nothing"
+                     po:Freeze="False"
+                     Color="{StaticResource Fluent.Dark.Compat.Nothing.Color}" />
 
     <SolidColorBrush x:Key="Status.SuccessSurface"
                      po:Freeze="False"

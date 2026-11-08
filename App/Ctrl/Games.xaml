@@ -102,10 +102,59 @@
                TargetType="{x:Type TextBlock}"
                BasedOn="{StaticResource GameListTechnicalSerialText}">
             <Style.Triggers>
-                <DataTrigger Binding="{Binding CompatibilityLine}"
+                <DataTrigger Binding="{Binding OtherCompatibilityLine}"
                              Value="">
                     <Setter Property="Visibility"
                             Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- An official RPCS3 status: its name in its status color, then the
+             date; the full localized line is the automation name. -->
+        <Style x:Key="GameListCompatibilityStatusText"
+               TargetType="{x:Type TextBlock}"
+               BasedOn="{StaticResource GameListTechnicalSerialText}">
+            <Setter Property="AutomationProperties.Name"
+                    Value="{Binding CompatibilityLine}" />
+            <Setter Property="ToolTip"
+                    Value="{Binding CompatibilityLine}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasOfficialStatus}"
+                             Value="False">
+                    <Setter Property="Visibility"
+                            Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="GameListCompatibilityStatusRun"
+               TargetType="{x:Type Run}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CompatibilityStatus}"
+                             Value="Playable">
+                    <Setter Property="Foreground"
+                            Value="{DynamicResource Compat.Playable}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding CompatibilityStatus}"
+                             Value="Ingame">
+                    <Setter Property="Foreground"
+                            Value="{DynamicResource Compat.Ingame}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding CompatibilityStatus}"
+                             Value="Intro">
+                    <Setter Property="Foreground"
+                            Value="{DynamicResource Compat.Intro}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding CompatibilityStatus}"
+                             Value="Loadable">
+                    <Setter Property="Foreground"
+                            Value="{DynamicResource Compat.Loadable}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding CompatibilityStatus}"
+                             Value="Nothing">
+                    <Setter Property="Foreground"
+                            Value="{DynamicResource Compat.Nothing}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -263,7 +312,11 @@
                                                Style="{StaticResource GameListTechnicalSerialText}"
                                                Margin="0,2,0,0" />
 
-                                    <TextBlock Text="{Binding CompatibilityLine}"
+                                    <TextBlock Style="{StaticResource GameListCompatibilityStatusText}"
+                                               Margin="0,2,0,0"><Run Text="{Binding CompatibilityStatus, Mode=OneWay}"
+                                                                     Style="{StaticResource GameListCompatibilityStatusRun}" /><Run Text="{Binding CompatibilityDateSuffix, Mode=OneWay}" /></TextBlock>
+
+                                    <TextBlock Text="{Binding OtherCompatibilityLine}"
                                                Style="{StaticResource GameListCompatibilityLineText}"
                                                Margin="0,2,0,0" />
                                 </StackPanel>

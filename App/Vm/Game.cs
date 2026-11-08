@@ -95,5 +95,29 @@ public sealed class GameVm : VmBase
                     "yyyy-MM-dd",
                     System.Globalization.CultureInfo.InvariantCulture));
 
+    // The official RPCS3 statuses (rpcs3.net/compatibility). The game row
+    // shows such a status by its name in its own color, without the
+    // "Compatibility:" prefix; CompatibilityLine stays its automation name.
+    // Any other value keeps CompatibilityLine as the visible text.
+    public bool HasOfficialStatus =>
+        Compatibility is not null &&
+        OfficialStatuses.Contains(Compatibility.Status, StringComparer.Ordinal);
+
+    public string CompatibilityStatus =>
+        HasOfficialStatus ? Compatibility!.Status : string.Empty;
+
+    public string CompatibilityDateSuffix =>
+        HasOfficialStatus
+            ? string.Create(
+                System.Globalization.CultureInfo.InvariantCulture,
+                $" ({Compatibility!.Date:yyyy-MM-dd})")
+            : string.Empty;
+
+    public string OtherCompatibilityLine =>
+        HasOfficialStatus ? string.Empty : CompatibilityLine;
+
+    private static readonly string[] OfficialStatuses =
+        ["Playable", "Ingame", "Intro", "Loadable", "Nothing"];
+
     public int Pending => RecState.Pending;
 }
