@@ -281,14 +281,15 @@ public sealed partial class WikiSvc
                        NumberStyles.Float,
                        CultureInfo.InvariantCulture,
                        out var lodBias) &&
-                   lodBias is >= -32m and <= 32m
+                   lodBias >= NumericBounds["lod bias offset"].Min &&
+                   lodBias <= NumericBounds["lod bias offset"].Max
                 ? lodBias.ToString(CultureInfo.InvariantCulture)
                 : null;
         }
 
         if (wikiKey.Equals("resolution scale threshold", StringComparison.OrdinalIgnoreCase))
         {
-            if (TryParse(value, 1, 1024, out var directDimension))
+            if (TryParse(value, "resolution scale threshold", out var directDimension))
             {
                 return directDimension.ToString(CultureInfo.InvariantCulture);
             }
@@ -298,7 +299,7 @@ public sealed partial class WikiSvc
                 !int.TryParse(dimensionMatch.Groups["width"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var width) ||
                 !int.TryParse(dimensionMatch.Groups["height"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var height) ||
                 width != height ||
-                width is < 1 or > 1024)
+                !InBounds("resolution scale threshold", width))
             {
                 return null;
             }
@@ -318,7 +319,7 @@ public sealed partial class WikiSvc
                 ? anisotropicMatch.Groups["value"].Value
                 : value;
 
-            return TryParse(numericValue, 0, 16, out var anisotropic)
+            return TryParse(numericValue, "anisotropic filter", out var anisotropic)
                 ? anisotropic.ToString(CultureInfo.InvariantCulture)
                 : null;
         }
@@ -330,7 +331,7 @@ public sealed partial class WikiSvc
                 return null;
             }
 
-            return TryParse(value, 0, 6, out var preferredThreads)
+            return TryParse(value, "preferred spu threads", out var preferredThreads)
                 ? preferredThreads.ToString(CultureInfo.InvariantCulture)
                 : null;
         }
@@ -380,10 +381,15 @@ public sealed partial class WikiSvc
             : null;
     }
 
-    private static bool TryParse(string value, int minimum, int maximum, out int result)
+    private static bool TryParse(string value, string wikiKey, out int result)
     {
         return int.TryParse(value.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out result) &&
-               result >= minimum &&
-               result <= maximum;
+               InBounds(wikiKey, result);
+    }
+
+    private static bool InBounds(string wikiKey, decimal value)
+    {
+        var bound = NumericBounds[wikiKey];
+        return value >= bound.Min && value <= bound.Max;
     }
 }

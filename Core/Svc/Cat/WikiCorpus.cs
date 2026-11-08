@@ -231,6 +231,39 @@ public sealed partial class WikiSvc
             ["psn status"] = Values("Disconnected", "Simulated", "RPCN")
         };
 
+    // The one numeric-limit table, taken from system_config.h of the RPCS3 source
+    // (commit 54014a7de4b2ccec98c9c0cb7dbebec0606c5cd6, cfg::_int/uint/_float
+    // template bounds). The Wiki converters and the RecSync value gate
+    // (IsSyncValue) must both read their limits from here.
+    internal readonly record struct NumericBound(decimal Min, decimal Max, bool Fractional = false);
+
+    internal static readonly IReadOnlyDictionary<string, NumericBound> NumericBounds =
+        new Dictionary<string, NumericBound>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["ppu thread count"] = new(1, 8),
+            ["preferred spu threads"] = new(0, 6),
+            ["accurate ppu 128 reservations"] = new(-1, 14),
+            ["maximum spurs threads"] = new(1, 6),
+            ["clocks scale"] = new(10, 3000),
+            ["resolution scale"] = new(25, 800),
+            ["resolution scale threshold"] = new(1, 1024),
+            ["anisotropic filter"] = new(0, 16),
+            ["lod bias offset"] = new(-32, 32, Fractional: true),
+            ["volume"] = new(0, 200),
+            ["audio buffer duration"] = new(4, 250),
+            ["time stretching threshold"] = new(0, 100),
+            ["driver wake-up delay"] = new(0, 16667),
+            ["vblank rate"] = new(1, 6000)
+        };
+
+    // Integer keys range-checked by ConvertCorpusValue itself; the remaining
+    // NumericBounds keys are parsed from their Wiki wording by Convert.
+    private static readonly string[] CorpusIntegerKeys =
+    [
+        "resolution scale", "volume", "audio buffer duration", "time stretching threshold",
+        "driver wake-up delay", "vblank rate", "clocks scale", "maximum spurs threads", "ppu thread count"
+    ];
+
     public static IReadOnlyList<string> CanonicalConfigSettingNames =>
     [
         .. CfgMap.Values
@@ -1125,56 +1158,8 @@ public sealed partial class WikiSvc
             return null;
         }
 
-        if (wikiKey.Equals("resolution scale", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 25, 800))
-        {
-            return null;
-        }
-
-        if (wikiKey.Equals("volume", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 0, 200))
-        {
-            return null;
-        }
-
-        if (wikiKey.Equals("audio buffer duration", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 4, 250))
-        {
-            return null;
-        }
-
-        if (wikiKey.Equals("time stretching threshold", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 0, 100))
-        {
-            return null;
-        }
-
-        if (wikiKey.Equals("driver wake-up delay", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 0, 16667))
-        {
-            return null;
-        }
-
-        if (wikiKey.Equals("vblank rate", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 1, 6000))
-        {
-            return null;
-        }
-
-        if (wikiKey.Equals("clocks scale", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 10, 3000))
-        {
-            return null;
-        }
-
-        if (wikiKey.Equals("maximum spurs threads", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 1, 6))
-        {
-            return null;
-        }
-
-        if (wikiKey.Equals("ppu thread count", StringComparison.OrdinalIgnoreCase) &&
-            !TryNumeric(value, 1, 8))
+        if (CorpusIntegerKeys.Contains(wikiKey, StringComparer.OrdinalIgnoreCase) &&
+            !TryNumeric(value, wikiKey))
         {
             return null;
         }
@@ -1184,13 +1169,13 @@ public sealed partial class WikiSvc
 
     private static bool TryNumeric(
         string value,
-        int minimum,
-        int maximum)
+        string wikiKey)
     {
+        var bound = NumericBounds[wikiKey];
         var normalized = value.Trim().TrimEnd('%');
         return int.TryParse(normalized, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) &&
-               parsed >= minimum &&
-               parsed <= maximum;
+               parsed >= bound.Min &&
+               parsed <= bound.Max;
     }
 
     private static HashSet<string> Values(params string[] values)

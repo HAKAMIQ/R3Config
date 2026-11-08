@@ -22,6 +22,9 @@ internal static class NoteCases
             case "--wiki-label-link-only":
                 runner.RunCase(nameof(WikiLabelLinkT), WikiLabelLinkT.Run);
                 return true;
+            case "--sync-bounds-only":
+                runner.RunCase(nameof(SyncBoundsT), SyncBoundsT.Run);
+                return true;
             default:
                 return false;
         }
@@ -33,5 +36,6 @@ internal static class NoteCases
         runner.RunCase(nameof(RecSyncStaleT), RecSyncStaleT.Run);
         runner.RunCase(nameof(ReviewedNotesImportT), ReviewedNotesImportT.Run);
         runner.RunCase(nameof(WikiLabelLinkT), WikiLabelLinkT.Run);
+        runner.RunCase(nameof(SyncBoundsT), SyncBoundsT.Run);
     }
 }

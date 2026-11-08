@@ -148,9 +148,22 @@ public sealed partial class WikiSvc
             return value is "true" or "false";
         }
 
-        return int.TryParse(builtIn, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _) &&
-               int.TryParse(value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var number) &&
-               number is >= -1_000_000 and <= 1_000_000;
+        // Numeric settings: the limits are the same table the Wiki converters use.
+        // A numeric built-in with no table entry has no verified limit, so it fails closed.
+        if (!NumericBounds.TryGetValue(wikiKey, out var bound))
+        {
+            return false;
+        }
+
+        return bound.Fractional
+            ? decimal.TryParse(
+                  value,
+                  NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint,
+                  CultureInfo.InvariantCulture,
+                  out var fraction) &&
+              fraction >= bound.Min && fraction <= bound.Max
+            : int.TryParse(value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var number) &&
+              number >= bound.Min && number <= bound.Max;
     }
 
     private static Dictionary<string, string> BuildSyncTargets()
