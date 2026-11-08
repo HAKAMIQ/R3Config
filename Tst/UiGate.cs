@@ -3163,6 +3163,7 @@ internal static class UiGate
         Check(
             Walk<TextBlock>(sync).Any(text => text.Text == "BLUS31465" && text.FlowDirection == FlowDirection.LeftToRight),
             "Recommendation update serials must render left-to-right.");
+        R3Config.Tests.SyncLinkUiT.Verify(window, sync, $"{UiText.CurLang} 1100x760");
 
         foreach (var size in new[] { new Size(960, 640), new Size(1280, 800) })
         {
@@ -3170,6 +3171,7 @@ internal static class UiGate
             VerifySurface(window, size, [96d]);
             details.IsExpanded = true;
             VerifySurface(window, size, [96d]);
+            R3Config.Tests.SyncLinkUiT.Verify(window, sync, $"{UiText.CurLang} {size.Width}x{size.Height}");
         }
         details.IsExpanded = false;
     }

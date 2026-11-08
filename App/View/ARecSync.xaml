@@ -321,10 +321,12 @@
                                         MinWidth="104"
                                         ElementStyle="{StaticResource SyncLocalizedCellText}" />
 
+                    <!-- The language's minimum keeps the widest source name and
+                         its Show link button untrimmed (App/Svc/Layout.cs). -->
                     <DataGridTemplateColumn Header="{lang:TextExt Key=Sync.Column.Source}"
                                             HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
                                             Width="1.1*"
-                                            MinWidth="72">
+                                            MinWidth="{DynamicResource Sync.SourceColumnMinWidth}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Style="{StaticResource SyncLinkCellText}"

@@ -182,6 +182,16 @@ public static class UiLaySvc
                 ? new Thickness(4, 0, 0, 0)
                 : new Thickness(0, 0, 4, 0);
 
+        // Recommendation updates > Changes: in Arabic the Source column never
+        // gets narrower than the Arabic RPCS3 Config API name with its Show
+        // link button (232, SyncLinkUiT), or the name is trimmed under the button. English
+        // keeps the original 72: any other minimum changes how the DataGrid
+        // shares its star width, even at sizes where the English name fits.
+        app.Resources["Sync.SourceColumnMinWidth"] =
+            layout.IsRtl
+                ? 232d
+                : 72d;
+
         app.Resources["App.XmlLanguage"] =
             layout.XmlLang;
 
