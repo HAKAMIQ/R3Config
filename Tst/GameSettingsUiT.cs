@@ -348,6 +348,8 @@ internal static class GameSettingsUiT
                        .All(block => block.FlowDirection == FlowDirection.LeftToRight),
                 "English Wiki note text must render left-to-right in the Arabic UI.");
 
+            AssertNotesCardLinks(view, vm);
+
             Assert(listener.Errors.Count == 0,
                 "Settings view produced data-binding errors: " + string.Join(" | ", listener.Errors));
             Console.WriteLine("Game Settings view render (EN + AR: sections, notes, online/RPCN, LTR technical values) PASS.");
@@ -360,6 +362,49 @@ internal static class GameSettingsUiT
             PresentationTraceSources.DataBindingSource.Listeners.Remove(listener);
             UiText.SetLang(originalLanguage);
             UiLaySvc.Apply();
+        }
+    }
+
+    // Round-7b: the real Settings.Notes card for Demon's Souls must show the
+    // [url label] note as its label only, with the url on a Hyperlink, in both
+    // languages (the shipped wiki-notes.json note, not a fixture).
+    private static void AssertNotesCardLinks(R3Config.Ctrl.RecView view, PlanVm vm)
+    {
+        const string modUrl = "https://www.nexusmods.com/demonssouls/mods/8";
+        const string demonSerial = "BLUS30443";
+        var evidence = WikiEvidenceCatalog
+            .Load(Path.Combine(RepoRoot(), "App", "Data", WikiEvidenceCatalog.FileName))
+            .Find(demonSerial, "Demon's Souls")
+            ?? throw new InvalidOperationException("Shipped wiki-notes.json must contain Demon's Souls.");
+        var plan = PlanOf(demonSerial, "Demon's Souls", []);
+        var model = GameSettingsProjector.Project(plan, evidence, new GameSettingsContext(demonSerial, "1.00"));
+        var window = Window.GetWindow(view)!;
+
+        foreach (var language in new[] { UiText.ArabLang, UiText.EnLang })
+        {
+            UiText.SetLang(language);
+            UiLaySvc.Apply();
+            vm.Load(plan, model);
+            vm.SetLang();
+            Settle(window);
+
+            var card = All<Border>(view).Single(item =>
+                AutomationProperties.GetAutomationId(item) == "Settings.Notes");
+            foreach (var expander in All<Expander>(card))
+            {
+                expander.IsExpanded = true;
+            }
+
+            Settle(window);
+            var visible = string.Join(" / ", Texts(card));
+            Assert(!visible.Contains('[') && !visible.Contains("nexusmods", StringComparison.Ordinal),
+                $"[{language}] Settings.Notes must not show a raw [url label] or the url as text. Rendered: {visible}");
+            var links = All<TextBlock>(card)
+                .SelectMany(block => block.Inlines.OfType<Hyperlink>())
+                .Where(item => item.NavigateUri?.AbsoluteUri == modUrl)
+                .ToList();
+            Assert(links.Count >= 1 && links.All(item => Flatten(item.Inlines) == "this mod"),
+                $"[{language}] Settings.Notes must carry the mod label as a Hyperlink to {modUrl}.");
         }
     }
 

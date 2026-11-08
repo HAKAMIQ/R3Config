@@ -47,6 +47,11 @@ internal static partial class Program
                 ReviewFixesT.Run(runner, context.CreateTempRoot("ReviewFixes"), args.Length == 2 ? args[1] : null);
                 return;
             }
+            if (args.Length == 1 && args[0].Equals("--ui-gate-only", StringComparison.OrdinalIgnoreCase))
+            {
+                runner.RunCase(nameof(UiGate), UiGate.Run);
+                return;
+            }
             if (args.Length == 1 && args[0] == "--game-settings-evidence-only")
             {
                 var evidenceRoot = context.CreateTempRoot("GameSettingsEvidence");

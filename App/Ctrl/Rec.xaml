@@ -24,7 +24,7 @@
                                Style="{StaticResource RecToolTipSectionLabelText}"
                                TextAlignment="{DynamicResource App.TextAlignment}" />
 
-                    <TextBlock Text="{Binding DisplayText}"
+                    <TextBlock ctrl:LinkText.Text="{Binding DisplayText}"
                                Style="{StaticResource RecLocalizedBodyText}"
                                FlowDirection="{DynamicResource App.TextFlowDirection}"
                                Margin="0,2,0,0" />
@@ -36,7 +36,7 @@
                                        Style="{StaticResource RecDetailsHeaderText}" />
                         </Expander.Header>
                         <StackPanel Margin="0,4,0,0">
-                            <TextBlock Text="{Binding OriginalText}"
+                            <TextBlock ctrl:LinkText.Text="{Binding OriginalText}"
                                        Style="{StaticResource RecLocalizedBodyText}"
                                        FlowDirection="LeftToRight"
                                        Language="en-US" />
@@ -173,7 +173,7 @@
                                                Visibility="{Binding HasNote,
                                                                     Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                                    <TextBlock Text="{Binding LocBody}"
+                                    <TextBlock ctrl:LinkText.Text="{Binding LocBody}"
                                                Style="{StaticResource RecLocalizedBodyText}"
                                                FlowDirection="{Binding NoteFlow}"
                                                TextAlignment="{Binding NoteText}"
