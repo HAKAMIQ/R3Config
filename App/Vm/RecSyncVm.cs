@@ -23,8 +23,11 @@ public sealed class RecSyncSourceRowVm(
     public string Detail { get; } = detail;
 }
 
-public sealed class RecSyncChangeRowVm(RecSyncChange change)
+public sealed class RecSyncChangeRowVm(RecSyncChange change) : VmBase
 {
+    private bool _isLinkRevealed;
+    private RelayCmd? _toggleLinkCmd;
+
     public string Serial { get; } = change.Serial;
 
     public string Title { get; } = change.Title ?? string.Empty;
@@ -50,6 +53,24 @@ public sealed class RecSyncChangeRowVm(RecSyncChange change)
     public string SourceUrl { get; } = change.SourceUrl;
 
     public string Observed { get; } = UiDate.Text(change.ObservedAtUtc);
+
+    // The source address shows under the row (row details), never inside the
+    // narrow Source cell.
+    public bool IsLinkRevealed
+    {
+        get => _isLinkRevealed;
+        set
+        {
+            if (Set(ref _isLinkRevealed, value))
+            {
+                OnChange(nameof(LinkAction));
+            }
+        }
+    }
+
+    public string LinkAction => UiText.GetText(IsLinkRevealed ? "Link.Hide" : "Link.Show");
+
+    public RelayCmd ToggleLinkCmd => _toggleLinkCmd ??= new RelayCmd(() => IsLinkRevealed = !IsLinkRevealed);
 }
 
 // Presentation state for Advanced > Recommendation updates. It holds no

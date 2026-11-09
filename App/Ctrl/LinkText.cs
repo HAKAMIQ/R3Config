@@ -67,6 +67,37 @@ public static class LinkText
             typeof(LinkText),
             new PropertyMetadata(true, Changed));
 
+    // Set (bound to the owner's state) where the address cannot show inside
+    // the block, such as a narrow DataGrid cell: the link's Show/Hide button
+    // reads this value and runs RevealCommand, and the owner shows the
+    // address elsewhere with Address. Null (the default) reveals inside the
+    // block. Only for a block with one link (Text plus Target). A command,
+    // not a two-way binding: inside a DataGrid row a two-way binding joins
+    // the row's BindingGroup and never reaches its source in a read-only grid.
+    public static readonly DependencyProperty RevealedOutsideProperty =
+        DependencyProperty.RegisterAttached(
+            "RevealedOutside",
+            typeof(bool?),
+            typeof(LinkText),
+            new PropertyMetadata(null, Changed));
+
+    public static readonly DependencyProperty RevealCommandProperty =
+        DependencyProperty.RegisterAttached(
+            "RevealCommand",
+            typeof(ICommand),
+            typeof(LinkText),
+            new PropertyMetadata(null));
+
+    // A block that shows only a revealed address with its Copy and Open
+    // buttons, the counterpart of RevealedOutside. Anything but an absolute
+    // http/https address shows nothing.
+    public static readonly DependencyProperty AddressProperty =
+        DependencyProperty.RegisterAttached(
+            "Address",
+            typeof(string),
+            typeof(LinkText),
+            new PropertyMetadata(null, Changed));
+
     // Which links/IP-Host parts of one block the user has revealed.
     private static readonly DependencyProperty RevealedProperty =
         DependencyProperty.RegisterAttached(
@@ -114,6 +145,24 @@ public static class LinkText
     public static void SetInteractive(DependencyObject element, bool value) =>
         element.SetValue(InteractiveProperty, value);
 
+    public static bool? GetRevealedOutside(DependencyObject element) =>
+        (bool?)element.GetValue(RevealedOutsideProperty);
+
+    public static void SetRevealedOutside(DependencyObject element, bool? value) =>
+        element.SetValue(RevealedOutsideProperty, value);
+
+    public static ICommand? GetRevealCommand(DependencyObject element) =>
+        (ICommand?)element.GetValue(RevealCommandProperty);
+
+    public static void SetRevealCommand(DependencyObject element, ICommand? value) =>
+        element.SetValue(RevealCommandProperty, value);
+
+    public static string? GetAddress(DependencyObject element) =>
+        (string?)element.GetValue(AddressProperty);
+
+    public static void SetAddress(DependencyObject element, string? value) =>
+        element.SetValue(AddressProperty, value);
+
     // Replaceable for tests only, so no test touches the real clipboard or
     // starts a browser.
     public static Action<string> CopyText { get; set; } = CopyToClipboard;
@@ -133,8 +182,19 @@ public static class LinkText
     {
         var text = GetText(block) ?? string.Empty;
         var target = GetTarget(block);
+        var address = GetAddress(block);
 
         block.Inlines.Clear();
+        if (address is not null)
+        {
+            if (WikiLinks.IsSafeUrl(address))
+            {
+                block.Inlines.Add(RevealedContainer(block, Decoded(address), LinkActions(address)));
+            }
+
+            return;
+        }
+
         if (text.Length == 0)
         {
             return;
@@ -145,7 +205,7 @@ public static class LinkText
         if (WikiLinks.IsSafeUrl(target))
         {
             // A value that is itself an address is named with a word.
-            AddLink(block, WikiLinks.IsSafeUrl(text.Trim()) ? null : text, target!, slot, arabic);
+            AddLink(block, WikiLinks.IsSafeUrl(text.Trim()) ? null : text, target!, slot, arabic, GetRevealedOutside(block));
             TrimTrailingBreak(block);
             return;
         }
@@ -158,10 +218,10 @@ public static class LinkText
                     block.Inlines.AddRange(TextRuns(part.Text, arabic));
                     break;
                 case NoteParts.PartKind.Link:
-                    AddLink(block, part.Text, part.Value!, slot++, arabic);
+                    AddLink(block, part.Text, part.Value!, slot++, arabic, null);
                     break;
                 case NoteParts.PartKind.BareLink:
-                    AddLink(block, null, part.Value!, slot++, arabic);
+                    AddLink(block, null, part.Value!, slot++, arabic, null);
                     break;
                 case NoteParts.PartKind.IpHost:
                     AddIpHost(block, part.Value!, slot++);
@@ -312,7 +372,7 @@ public static class LinkText
         return false;
     }
 
-    private static void AddLink(TextBlock block, string? label, string url, int slot, bool arabic)
+    private static void AddLink(TextBlock block, string? label, string url, int slot, bool arabic, bool? revealedOutside)
     {
         IReadOnlyList<Run> display;
         if (label is null)
@@ -349,6 +409,20 @@ public static class LinkText
         };
         block.Inlines.Add(link);
 
+        if (revealedOutside is bool outside)
+        {
+            // The owner's state comes back through RevealedOutside.
+            AddButton(block, outside ? "Link.Hide" : "Link.Show", "LinkText.Link.Show", () =>
+            {
+                var command = GetRevealCommand(block);
+                if (command?.CanExecute(null) == true)
+                {
+                    command.Execute(null);
+                }
+            });
+            return;
+        }
+
         var revealed = IsRevealed(block, slot);
         AddButton(block, revealed ? "Link.Hide" : "Link.Show", "LinkText.Link.Show", () => Toggle(block, slot));
         if (!revealed)
@@ -356,6 +430,11 @@ public static class LinkText
             return;
         }
 
+        AddRevealed(block, Decoded(url), LinkActions(url));
+    }
+
+    private static StackPanel LinkActions(string url)
+    {
         var actions = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -364,7 +443,7 @@ public static class LinkText
         actions.SetResourceReference(FrameworkElement.FlowDirectionProperty, "App.TextFlowDirection");
         actions.Children.Add(Button("Link.Copy", "LinkText.Link.Copy", () => CopyText(url), new Thickness(0)));
         actions.Children.Add(Button("Link.Open", "LinkText.Link.Open", () => OpenUrl(url), new Thickness(4, 0, 0, 0)));
-        AddRevealed(block, Decoded(url), actions);
+        return actions;
     }
 
     private static void AddIpHost(TextBlock block, string value, int slot)
@@ -387,6 +466,13 @@ public static class LinkText
     // The revealed value on its own line: LTR, monospace, wrapped inside the
     // host block's width.
     private static void AddRevealed(TextBlock block, string value, UIElement? actions)
+    {
+        block.Inlines.Add(new LineBreak());
+        block.Inlines.Add(RevealedContainer(block, value, actions));
+        block.Inlines.Add(new LineBreak());
+    }
+
+    private static InlineUIContainer RevealedContainer(TextBlock block, string value, UIElement? actions)
     {
         var text = new TextBlock
         {
@@ -428,9 +514,7 @@ public static class LinkText
         });
         AutomationProperties.SetAutomationId(border, "LinkText.Revealed");
 
-        block.Inlines.Add(new LineBreak());
-        block.Inlines.Add(new InlineUIContainer(border) { BaselineAlignment = BaselineAlignment.Top });
-        block.Inlines.Add(new LineBreak());
+        return new InlineUIContainer(border) { BaselineAlignment = BaselineAlignment.Top };
     }
 
     private static void AddButton(TextBlock block, string key, string id, Action click)

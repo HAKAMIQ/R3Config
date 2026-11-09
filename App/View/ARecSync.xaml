@@ -69,6 +69,49 @@
             <Style x:Key="SyncLinkCellText"
                    TargetType="{x:Type TextBlock}"
                    BasedOn="{StaticResource SyncLocalizedCellText}" />
+
+            <!-- The Source cell's compact form: the link icon alone, at the
+                 cell's start edge with the same inset as the text. -->
+            <Style x:Key="SyncSourceIconButton"
+                   TargetType="{x:Type Button}"
+                   BasedOn="{StaticResource FluentButton.Icon}">
+                <Setter Property="Height"
+                        Value="28" />
+                <Setter Property="MinHeight"
+                        Value="28" />
+                <Setter Property="Margin"
+                        Value="8,0" />
+                <Setter Property="HorizontalAlignment"
+                        Value="Left" />
+                <Setter Property="VerticalAlignment"
+                        Value="Center" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsLinkRevealed}"
+                                 Value="True">
+                        <Setter Property="Background"
+                                Value="{DynamicResource Surface.CardPressed}" />
+                        <Setter Property="BorderBrush"
+                                Value="{DynamicResource Stroke.Default}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- The address shows under its row, across the whole row. The
+                 grid must not set RowDetailsVisibilityMode: a local value
+                 there outranks this Style binding on every row. -->
+            <Style x:Key="SyncChangeRow"
+                   TargetType="{x:Type DataGridRow}"
+                   BasedOn="{StaticResource FluentDataGridRow}">
+                <!-- The star columns fill the viewport exactly; the shared
+                     row's (transparent) side borders would add 2 px and
+                     scroll the grid sideways. Top and bottom stay, so the row
+                     keeps its height. -->
+                <Setter Property="BorderThickness"
+                        Value="0,1" />
+                <Setter Property="DetailsVisibility"
+                        Value="{Binding IsLinkRevealed,
+                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -243,6 +286,7 @@
                       EnableColumnVirtualization="True"
                       RowHeight="36"
                       MinRowHeight="36"
+                      RowStyle="{StaticResource SyncChangeRow}"
                       ColumnHeaderHeight="32"
                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                       ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -286,11 +330,14 @@
                                         MinWidth="64"
                                         ElementStyle="{StaticResource DataGridCellTextLeft}" />
 
+                    <!-- 100, not 104: at 960x640 its share is 100.2 px, and a
+                         star column that reaches its minimum only after the
+                         others did makes the DataGrid overshoot the viewport. -->
                     <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Setting}"
                                         HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
                                         Binding="{Binding Setting}"
                                         Width="1.8*"
-                                        MinWidth="104"
+                                        MinWidth="100"
                                         ElementStyle="{StaticResource DataGridCellTextLeft}" />
 
                     <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Old}"
@@ -307,11 +354,14 @@
                                         MinWidth="52"
                                         ElementStyle="{StaticResource DataGridCellTextLeft}" />
 
+                    <!-- 74 is the English "Change" header: an Auto column that
+                         grows after the star columns are shared pushes the
+                         grid 4 px past the default window (960x640). -->
                     <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Kind}"
                                         HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
                                         Binding="{Binding Kind}"
                                         Width="Auto"
-                                        MinWidth="60"
+                                        MinWidth="74"
                                         ElementStyle="{StaticResource SyncLocalizedCellText}" />
 
                     <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Status}"
@@ -321,22 +371,50 @@
                                         MinWidth="104"
                                         ElementStyle="{StaticResource SyncLocalizedCellText}" />
 
-                    <!-- The language's minimum keeps the widest source name and
-                         its Show link button untrimmed (App/Svc/Layout.cs). -->
+                    <!-- The source name with its Show link button where it
+                         fits; otherwise the link icon alone, named in its
+                         ToolTip. Either one shows the address under the row
+                         (App/Svc/Layout.cs has the minimum). -->
                     <DataGridTemplateColumn Header="{lang:TextExt Key=Sync.Column.Source}"
                                             HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
                                             Width="1.1*"
                                             MinWidth="{DynamicResource Sync.SourceColumnMinWidth}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Style="{StaticResource SyncLinkCellText}"
-                                           ToolTip="{Binding SourceUrl}"
-                                           ctrl:LinkText.Text="{Binding Source}"
-                                           ctrl:LinkText.Target="{Binding SourceUrl}" />
+                                <ctrl:CompactSwapPanel AutomationProperties.AutomationId="Sync.SourceCell">
+                                    <TextBlock AutomationProperties.AutomationId="Sync.SourceLink"
+                                               Style="{StaticResource SyncLinkCellText}"
+                                               ToolTip="{Binding Source}"
+                                               ctrl:LinkText.Text="{Binding Source}"
+                                               ctrl:LinkText.Target="{Binding SourceUrl}"
+                                               ctrl:LinkText.RevealedOutside="{Binding IsLinkRevealed}"
+                                               ctrl:LinkText.RevealCommand="{Binding ToggleLinkCmd}" />
+
+                                    <Button AutomationProperties.AutomationId="Sync.SourceIcon"
+                                            AutomationProperties.Name="{Binding LinkAction}"
+                                            Style="{StaticResource SyncSourceIconButton}"
+                                            ToolTip="{Binding Source}"
+                                            Command="{Binding ToggleLinkCmd}">
+                                        <TextBlock Style="{StaticResource IconGlyphText}"
+                                                   Text="&#xE71B;"
+                                                   Foreground="{DynamicResource Accent.Default}" />
+                                    </Button>
+                                </ctrl:CompactSwapPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
+
+                <DataGrid.RowDetailsTemplate>
+                    <DataTemplate>
+                        <!-- No ToolTip: the cell style's own-text ToolTip
+                             would open empty over the address block. -->
+                        <TextBlock AutomationProperties.AutomationId="Sync.SourceAddress"
+                                   Style="{StaticResource SyncLinkCellText}"
+                                   ToolTip="{x:Null}"
+                                   ctrl:LinkText.Address="{Binding SourceUrl}" />
+                    </DataTemplate>
+                </DataGrid.RowDetailsTemplate>
             </DataGrid>
 
             <Border Grid.Row="2"

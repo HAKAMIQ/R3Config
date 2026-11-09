@@ -50,6 +50,10 @@ Wiki XML (audit فقط)
   يعرض «صفحة الويكي» إذا كان على wiki.rpcs3.net وإلا «رابط»، وقيمة مربوطة بـ`LinkText.TargetProperty` نصها عنوان تعرض الكلمة نفسها.
   الضغط على الكلمة يفتح الموقع. بجانبها زر صغير «إظهار الرابط» يكشف العنوان مفكوك الترميز في كتلة LTR بخط ثابت مع «نسخ» (العنوان
   الأصلي) و«فتح». `WikiLinks.IsSafeUrl` لم يتغير: مخطط غير http/https أو صيغة مكسورة تبقى نصًا عاديًا. الاختبار `R3Test.exe --wiki-label-link-only`.
+- عمود «المصدر» في سجل تغييرات تحديث التوصيات ضيق، فلا يُكشف العنوان داخل الخلية: `CompactSwapPanel` يعرض اسم المصدر مع «إظهار الرابط»
+  إذا اتسع له، وإلا زر أيقونة الرابط وحده واسم المصدر في ToolTip. الزران يقلبان `RecSyncChangeRowVm.IsLinkRevealed`، والعنوان يظهر تحت
+  الصف بعرضه كاملًا (Row Details) عبر `LinkText.AddressProperty` مع «نسخ» و«فتح»، و`LinkText.RevealedOutsideProperty` يجعل زر الخلية
+  يقرأ الحالة ويشغّل `LinkText.RevealCommandProperty` بدل الكشف داخلها. الاختبار `SyncLinkUiT` و`SyncRevealUiT` داخل `UiGate`.
 - نص RPCS3 IP/Host Switches (host=IPv4 مكرر بفاصل &&، نمط صارم في `NoteParts.Split`) لا يظهر داخل الملاحظة في أي موضع
   يعرض ملاحظة (ملاحظات الويكي وأصلها الإنجليزي، ملاحظات RPCN، ملاحظات cat.json في ToolTip الصف). مكانه زران: «إظهار IP/Host» (كتلة
   LTR بخط ثابت) و«نسخ IP/Host» (النص الأصلي بالضبط من المصدر الإنجليزي عبر `LinkText.SourceProperty`، بلا LRM ولا فواصل أسطر). و«Category:...»
