@@ -137,11 +137,11 @@ internal static partial class Program
             "Expected the bundled Artemis catalog to satisfy strict executable-hash validation: " +
             bundledCheatStrictRead.Error);
         Assert(
-            bundledCheatStrictRead.Catalog.Entries.Count == 1471 &&
+            bundledCheatStrictRead.Catalog.Entries.Count == 1922 &&
             bundledCheatStrictRead.Catalog.Entries.All(entry =>
                 entry.Source == PatSrc.Artemis &&
                 entry.Risk == PatRisk.Cheat),
-            "Expected the retained Artemis patch collection to produce exactly 1471 source-identified cheat-risk entries.");
+            "Expected the retained Artemis patch collection to produce exactly 1922 source-identified cheat-risk entries.");
         PatSafetyT.Run(repoRoot);
         Assert(!bundledCheatText.Contains("Anchors:", StringComparison.Ordinal) &&
                !bundledCheatText.Contains("&WOFreedom", StringComparison.Ordinal),

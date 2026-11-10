@@ -407,6 +407,7 @@
   "Patch.Direct.Disabled": "Present in RPCS3 but disabled.",
   "Patch.Direct.MergedDisabled": "Merged into imported_patch.yml but disabled.",
   "Patch.Direct.PreparedDisabled": "Prepared in the game's patch file but disabled.",
+  "Patch.Artemis.BundledChanged": "The cheat library has an updated version of this cheat. Remove the installed copy, then enable the cheat again to use the update.",
   "Patch.Direct.Ready": "Compatible and ready.",
   "Patch.Direct.RuntimeGuarded": "Ready to enable. RPCS3 will verify the PPU or SPU key when the game starts.",
   "Patch.Direct.InvalidRuntimeKey": "Unavailable: the patch key is not a runtime key RPCS3 can execute.",

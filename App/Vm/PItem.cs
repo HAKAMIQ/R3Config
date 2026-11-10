@@ -594,6 +594,11 @@ public sealed class PatItVm : VmBase
         get
         {
             var parts = new List<string>();
+            if (Match.Patch.BundledChanged)
+            {
+                parts.Add(UiText.GetText("Patch.Artemis.BundledChanged"));
+            }
+
             if (!string.IsNullOrWhiteSpace(CompatibilityTip))
             {
                 parts.Add(CompatibilityTip);

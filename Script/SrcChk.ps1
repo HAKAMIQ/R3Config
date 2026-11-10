@@ -370,7 +370,7 @@ function Test-SourceTree {
         $artemisDependencyRules = @($artemisDependency.rules)
         if ($artemisDependency.schemaVersion -ne '1' -or
             $artemisDependency.sourceIdentity -ne 'Artemis-Patch-Collection-RPCS3' -or
-            $artemisDependency.sourceRevision -ne 'acfd45b61f8295298523548a9ff3406488736d68' -or
+            $artemisDependency.sourceRevision -ne 'fd267a65759a2f1dcae31e362d318de7a6e16594' -or
             $artemisDependency.artemisSha256 -ne $artemisHash -or
             $artemisDependencyRules.Count -ne 23) {
             throw 'App/Data/art_dep.json provenance, corpus hash, schema, or reviewed rule count is invalid.'
@@ -393,19 +393,19 @@ function Test-SourceTree {
         $requiredArtemisNoticeLines = @(
             'Canonical cheat source: Artemis Patch Collection for RPCS3 by ChiDreams',
             'Source URL: https://github.com/chidreams/Artemis-Patch-Collection-RPCS3',
-            'Source artifact: Artemis-Patch-Collection-RPCS3-acfd45b-r3fix2.zip',
-            'Source reference: pinned ChiDreams commit acfd45b61f8295298523548a9ff3406488736d68 via Artemis-Patch-Collection-RPCS3-acfd45b-r3fix2.zip; 13 reviewed source corrections',
-            'Source archive SHA-256: 26a72f769fb1f7cb51daa8502fbc39b817a904fa1073dfa2c602a8c5f2d76ac9',
-            'Source patch files: 178',
-            'Candidate entries: 1496',
-            'Accepted entries: 1471',
-            'Rejected records: 25',
+            'Source artifact: Artemis-Patch-Collection-RPCS3-fd267a6-r3fix1.zip',
+            'Source reference: pinned ChiDreams commit fd267a65759a2f1dcae31e362d318de7a6e16594 via Artemis-Patch-Collection-RPCS3-fd267a6-r3fix1.zip; 2 reviewed source corrections',
+            'Source archive SHA-256: cefd5b7475a67d3c36f165935c60f611b8ac6e10a095f4524e53c86fe7b430de',
+            'Source patch files: 237',
+            'Candidate entries: 1956',
+            'Accepted entries: 1922',
+            'Rejected records: 34',
             "Generated art.yml SHA-256: $artemisHash",
             'Dependency metadata rules: 23',
-            'Dependency source revision: acfd45b61f8295298523548a9ff3406488736d68',
+            'Dependency source revision: fd267a65759a2f1dcae31e362d318de7a6e16594',
             "Generated art_dep.json SHA-256: $artemisDependencyHash",
-            'Manager reference artifact: ARTEMIS-RPCS3-Cheat-Manager-1.0.1-RC4(1).zip',
-            'Manager reference archive SHA-256: 372a033655d9c40bbf306a1d56dc5e6749f63400522a577bd15eeadfe175780f',
+            'Manager reference artifact: ARTEMIS-RPCS3-Cheat-Manager-2.00.zip',
+            'Manager reference archive SHA-256: caaab46ad39c671470f1d2593958da8c2b9111348660cbd3f0f5a53e93c41604',
             'License: MIT'
         )
         foreach ($requiredLine in $requiredArtemisNoticeLines) {
@@ -414,8 +414,8 @@ function Test-SourceTree {
             }
         }
 
-        if ($acceptedEntries -ne 1471) {
-            throw "App/Data/art.yml expected 1471 accepted Artemis definitions but found $acceptedEntries."
+        if ($acceptedEntries -ne 1922) {
+            throw "App/Data/art.yml expected 1922 accepted Artemis definitions but found $acceptedEntries."
         }
         if (-not $artemisText.StartsWith("Version: 1.2`n", [StringComparison]::Ordinal)) {
             throw 'App/Data/art.yml must begin with Version: 1.2.'

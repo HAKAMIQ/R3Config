@@ -511,6 +511,125 @@ public static partial class NoteSvc
                 "لا يزال من الممكن الإمساك بك، لكن الإفلات أصبح أسهل بكثير، ولن يتمكنوا من خفض صحتك.",
             ["so only 1 can be active at a time"] =
                 "لذلك يمكن تفعيل خيار واحد (1) فقط في الوقت نفسه.",
+            // ChiDreams collection fd267a6 (2026-10-28): notes new to art.yml.
+            ["Activate code, go in-game, upgrade with Gift Exp and save. DO NOT play with this enabled."] =
+                "فعل الشفرة، ثم ادخل اللعبة، وقم بالترقية باستخدام Gift Exp واحفظ. لا تلعب والشفرة مفعلة.",
+            ["Affects enemies too"] =
+                "يؤثر على الأعداء أيضا.",
+            ["Allows you to select custom camera following distances from the UI menu."] =
+                "تتيح لك اختيار مسافات مخصصة لتتبع الكاميرا من قائمة UI.",
+            ["Allows you to select custom game speeds from the UI menu."] =
+                "تتيح لك اختيار سرعات لعب مخصصة من قائمة UI.",
+            ["Allows you to select custom score/kill increment multipliers from the UI menu."] =
+                "تتيح لك اختيار مضاعفات مخصصة لزيادة النقاط/القتل من قائمة UI.",
+            ["Because of infinite health, some cars and some people can't be killed, it is one way out, change your weapon to a revolver-shotgun-rifle, the machine gun do not kill people and cars"] =
+                "بسبب الصحة اللانهائية لا يمكن قتل بعض السيارات وبعض الأشخاص. الحل هو تغيير سلاحك إلى revolver أو shotgun أو rifle، لأن machine gun لا يقتل الأشخاص ولا السيارات.",
+            ["Better Combine With Infinite Health"] =
+                "يفضل استخدامها مع Infinite Health.",
+            ["Beware, enemies will not drop key items with this."] =
+                "تنبيه: لن يسقط الأعداء العناصر المهمة (key items) مع هذه الشفرة.",
+            ["Characters can still be KO'ed if the damage is higher than their real base HP, so make sure to have reviving items."] =
+                "قد تسقط الشخصيات (KO) إذا كان الضرر أعلى من HP الأساسية الحقيقية، لذا تأكد من امتلاك عناصر إحياء.",
+            ["Check Albhed guy into Rin agency in Thunder Plains"] =
+                "تحدث مع شخص Albhed داخل Rin agency في Thunder Plains.",
+            ["Choose multiplier amount before launching"] =
+                "اختر قيمة المضاعف قبل تشغيل اللعبة.",
+            ["Combined code cave for Orbs, Powers, and Blade"] =
+                "منطقة code cave مشتركة لشفرات Orbs وPowers وBlade.",
+            ["Do not use outside of timed minigames."] =
+                "لا تستخدمها خارج الألعاب المصغرة المؤقتة (timed minigames).",
+            ["Do not use this code if you used Max CP Use Then Exit Crystarum or HP or Mag. You will have the Stats until you change your weapons"] =
+                "لا تستخدم هذه الشفرة إذا استخدمت Max CP Use Then Exit Crystarum أو HP أو Mag. ستبقى الإحصاءات معك حتى تغير أسلحتك.",
+            ["Do not use this code if you used Max CP Use Then Exit Crystarum or HP or STR. You will have the Stats until you change your weapons"] =
+                "لا تستخدم هذه الشفرة إذا استخدمت Max CP Use Then Exit Crystarum أو HP أو STR. ستبقى الإحصاءات معك حتى تغير أسلحتك.",
+            ["Do not use this code if you used Max CP Use Then Exit Crystarum or STR or Mag. You will have the Stats until you change your weapons"] =
+                "لا تستخدم هذه الشفرة إذا استخدمت Max CP Use Then Exit Crystarum أو STR أو Mag. ستبقى الإحصاءات معك حتى تغير أسلحتك.",
+            ["Dodge 1 Thunder for 150, hold L1 and then dodge again for 200."] =
+                "تفاد 1 Thunder لتحصل على 150، ثم اضغط مع الاستمرار على L1 وتفاد مرة أخرى لتحصل على 200.",
+            ["Doest Not Affects To Enemies"] =
+                "لا يؤثر على الأعداء.",
+            ["Get One of the Albhed Primer."] =
+                "احصل على واحد من Albhed Primer.",
+            ["Gift Debuffs Never Lost Effect On Enemy"] =
+                "لا تفقد Gift Debuffs تأثيرها على العدو أبدا.",
+            ["Hold Select While Damaging A Vehicle Or Object To Mark It For Invincibility, Select + L3 To Unmark"] =
+                "اضغط مع الاستمرار على Select أثناء إلحاق الضرر بمركبة أو جسم لتمييزه بعدم القابلية للتدمير، واضغط Select + L3 لإزالة التمييز.",
+            ["Infinite Health"] =
+                "صحة لا نهائية.",
+            ["Infinite Magic"] =
+                "سحر لا نهائي.",
+            ["Kill enemies holding R1 for Common drops."] =
+                "اقتل الأعداء وأنت تضغط مع الاستمرار على R1 لتحصل على Common drops.",
+            ["L1+R2 To Turn Enemies into Stone (TOC Pointer Fix)"] =
+                "L1+R2 لتحويل الأعداء إلى حجر (نسخة مصححة لـ TOC Pointer).",
+            ["Little Bit Buggy At Missions 1"] =
+                "فيها بعض الأخطاء في Missions 1.",
+            ["Master code cave. Relocated to safe executable block at 0x0075FA3C."] =
+                "منطقة code cave الخاصة بـ Master code. نقلت إلى كتلة تنفيذية آمنة عند 0x0075FA3C.",
+            ["Modifies AI movement speed."] =
+                "يعدل سرعة حركة AI.",
+            ["Modifies player jump height."] =
+                "يعدل ارتفاع قفزة اللاعب.",
+            ["Multiplies XP gained. Shifted for v1.04."] =
+                "يضاعف XP المكتسبة. عدلت العناوين لتناسب v1.04.",
+            ["NA"] =
+                "غير متاح (NA).",
+            ["Never go berserk in battle."] =
+                "لا تدخل حالة berserk في المعركة أبدا.",
+            ["Never use it in the car level."] =
+                "لا تستخدمها أبدا في مرحلة السيارة.",
+            ["Obtain the power to activate the code. It does infinite execution, wraith flash, combat drain, wraith burn, and fire arrow."] =
+                "احصل على القدرة لتفعيل الشفرة. تمنح execution وwraith flash وcombat drain وwraith burn وfire arrow بلا حدود.",
+            ["Only use at lvl 50 because this causes you to get 0 Sp on lvl up"] =
+                "استخدمها فقط عند المستوى (lvl) 50 لأنها تسبب حصولك على 0 Sp عند رفع المستوى.",
+            ["Only use the code after obtaining the powers or it will cause you problem. It gives max and infinite Storm Of Urfael, Flame Of Azkard, and Shadow Of Acharn."] =
+                "استخدم الشفرة فقط بعد الحصول على القدرات، وإلا فستسبب لك مشاكل. تمنح Storm Of Urfael وFlame Of Azkard وShadow Of Acharn بأقصى قيمة وبلا حدود.",
+            ["Only works if you have this power"] =
+                "تعمل فقط إذا كانت لديك هذه القدرة.",
+            ["Press L3 to end the counter if needed."] =
+                "اضغط L3 لإنهاء العداد عند الحاجة.",
+            ["Rage Of The Gods Instantly Refills"] =
+                "يمتلئ Rage Of The Gods فورا.",
+            ["Randomly Affects For Certain Enemies"] =
+                "يؤثر بشكل عشوائي على بعض الأعداء.",
+            ["Requires Button Enable Code to be ON. Hook branches to 0x0075FAB4."] =
+                "يتطلب تفعيل Button Enable Code. يتفرع الـ hook إلى 0x0075FAB4.",
+            ["Select + R1 = Item foward, Select + L1 = Item backward, Select + R2 = Set Ammo to 10, Select + L2 = Erase"] =
+                "Select + R1 = العنصر التالي، Select + L1 = العنصر السابق، Select + R2 = ضبط الذخيرة على 10، Select + L2 = مسح.",
+            ["Select your desired EXP multiplier from the configuration menu."] =
+                "اختر مضاعف EXP الذي تريده من قائمة الإعدادات.",
+            ["Sets money to 999,999,999 whenever a transaction occurs."] =
+                "يضبط المال على 999,999,999 عند كل عملية شراء أو بيع.",
+            ["Shoot one time to be invisible, does not work together with shield"] =
+                "أطلق النار مرة واحدة لتصبح مخفيا، ولا تعمل مع الدرع (shield).",
+            ["Tested On Boss Only"] =
+                "جربت على الزعيم (Boss) فقط.",
+            ["The AP Shown is not multiplied, but it will be as soon it gets added to your current EXP."] =
+                "قيمة AP المعروضة لا تظهر مضاعفة، لكنها تتضاعف بمجرد إضافتها إلى EXP الحالية.",
+            ["This code will only work for the first 10 slots in the Equipment list, put the cursor over the item, hold SELECT and press START = 4 slots and clear the abilities R3 = Maximum Weapon Power [] = Modify 1st ability /\\ = Modify 2nd ability R1 = Modify 3rd ability L1 = Modify 4th ability"] =
+                "تعمل هذه الشفرة فقط مع أول 10 خانات في قائمة Equipment. ضع المؤشر فوق العنصر، واضغط مع الاستمرار على SELECT ثم اضغط START = 4 خانات ومسح القدرات، R3 = أقصى Weapon Power، [] = تعديل القدرة 1، /\\ = تعديل القدرة 2، R1 = تعديل القدرة 3، L1 = تعديل القدرة 4.",
+            ["To max out in battle, you need to use an equipment for that (use all equipment code for Enterprise) I changed that because the original Max HP in battle was causing bugs."] =
+                "للوصول إلى الحد الأقصى في المعركة تحتاج إلى استخدام معدات لذلك (استخدم شفرة all equipment الخاصة بـ Enterprise). غيرت ذلك لأن Max HP الأصلية في المعركة كانت تسبب أخطاء.",
+            ["Turn code on, load game, save game, quit, and reload."] =
+                "فعل الشفرة، ثم حمل اللعبة، واحفظها، واخرج، ثم أعد التحميل.",
+            ["Turn number stays the same after player and enemy phase."] =
+                "يبقى رقم الدور كما هو بعد مرحلة اللاعب ومرحلة العدو.",
+            ["Use with infinite items so no item gets removed when saving."] =
+                "استخدمها مع شفرة العناصر اللانهائية حتى لا يحذف أي عنصر عند الحفظ.",
+            ["Used Hiei-YYH code for partner health to create a marker to separate your AI partner from enemies otherwise they would die from any damage too."] =
+                "استخدمت شفرة صحة الشريك من Hiei-YYH لإنشاء Marker يفصل شريك AI عن الأعداء؛ وإلا فسيموت شريكك من أي ضرر مثلهم.",
+            ["Vision Points Never Decrease Or Increase"] =
+                "لا تنقص Vision Points ولا تزيد أبدا.",
+            ["When in the Crystarum it will go down but just leave and it goes back to max"] =
+                "داخل Crystarum ستنخفض القيمة، لكن بمجرد الخروج تعود إلى الحد الأقصى.",
+            ["Will Not Work In 1 Hit Kill Mode"] =
+                "لا تعمل في وضع 1 Hit Kill.",
+            ["You will still see the bleeding effect, use it with the code to disable bleeding if needed."] =
+                "سيظل تأثير النزيف ظاهرا، استخدمها مع شفرة تعطيل النزيف عند الحاجة.",
+            ["does not Work place holder"] =
+                "لا تعمل، وهي مجرد عنصر مؤقت (place holder).",
+            ["not working next update"] =
+                "لا تعمل حاليا، ومنتظر إصلاحها في التحديث القادم.",
 
         };
 }

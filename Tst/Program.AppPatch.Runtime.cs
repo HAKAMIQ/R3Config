@@ -152,8 +152,8 @@ internal static partial class Program
             PatSrc.Artemis);
         Assert(bundledCheatRead.IsOk,
             "Expected the bundled converted cheat library to be readable: " + bundledCheatRead.Error);
-        Assert(bundledCheatRead.Catalog.Entries.Count == 1471,
-            "Expected the retained Artemis patch collection to expose its complete 1471-entry accepted inventory.");
+        Assert(bundledCheatRead.Catalog.Entries.Count == 1922,
+            "Expected the retained Artemis patch collection to expose its complete 1922-entry accepted inventory.");
         Assert(bundledCheatRead.Catalog.Entries.All(entry => entry.Risk == PatRisk.Cheat),
             "Expected every bundled expansion entry to be handled as a user-selected cheat.");
     }

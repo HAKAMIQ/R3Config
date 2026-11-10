@@ -12,9 +12,9 @@ public sealed class ArtDepSvc
     public const string FileName = "art_dep.json";
     public const string SchemaVersion = "1";
     public const string SourceIdentity = "Artemis-Patch-Collection-RPCS3";
-    public const string SourceRevision = "acfd45b61f8295298523548a9ff3406488736d68";
+    public const string SourceRevision = "fd267a65759a2f1dcae31e362d318de7a6e16594";
     public const string ArtemisSha256 =
-        "b09ecd731e2808967dfd32cb9b112db3bf5aa81fe0ee89a827f7a85d99e7adf5";
+        "68c1f43daef16b3f05514227d8e63346c56dee9f9e63fda273c8cd5acb630bf2";
     public const int ReviewedRuleCount = 23;
 
     private const int MaxRules = 256;

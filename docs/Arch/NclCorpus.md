@@ -15,18 +15,20 @@ Pinned provenance is documented in repository-root `NCL.md` and embedded in the 
 
 Current corpus contract:
 
-- NCL entries: `2910`;
+- NCL entries: `2910`, of which 362 are same-name alternates stored under `codes/variants/`;
 - total ZIP entries: `2912`;
-- bundled ZIP SHA-256: `FFACA88EFB748D490B51C46A814041A60935DCC19B25E57CF6E8C4C60B292475`;
+- bundled ZIP SHA-256: `C4C70C6E73A225F1E15096A3AEA06DD05461F7EF0CBB4BE8B106577ABC22D8B8`;
 - dialect: `ArtemisPs3`;
 - provenance schema: `2`;
-- source lineages: `BUCANERO_CURRENT`, `ALDOSTOOLS_CODELIST`, `DNAWRKSHP_HISTORICAL`, and the historical `R3CONFIG_CURRENT` carry-forward lineage.
+- source lineages (5): `BUCANERO_CURRENT`, `ALDOSTOOLS_CODELIST`, `DNAWRKSHP_HISTORICAL`, `AR_SITE_CODELIST_2026`, and the historical `R3CONFIG_CURRENT` carry-forward lineage.
+
+Repository-root `NCL.md` records the per-lineage SHA-256 and NCL counts.
 
 Schema 2 records each lineage independently with its pinned SHA-256 and NCL count. `R3CONFIG_CURRENT` is explicitly historical carry-forward lineage rather than independent upstream evidence, so rebuilding from the currently adopted corpus does not create self-referential provenance. The bundled ZIP SHA is intentionally not stored inside `PROVENANCE.json`.
 
 `LICENSE-ArtemisPS3.txt` reproduces the proven upstream ArtemisPS3 license notice. It does not assert that every independently sourced cheat definition is covered by that license.
 
-`SrcChk.ps1` and the portable release gate require the exact pinned ZIP, exactly 2910 safe `codes/` NCL entries, both root metadata records, schema 2, and the exact four source-lineage records. Hash, count, lineage, license-notice, or schema drift fails closed.
+`SrcChk.ps1` and the portable release gate require the exact pinned ZIP, exactly 2910 safe `codes/` NCL entries, both root metadata records, schema 2, and the exact five source-lineage records. Hash, count, lineage, license-notice, or schema drift fails closed.
 
 ## Bounds and untrusted-input rules
 
@@ -66,27 +68,28 @@ A bundled candidate requires exact `Serial + effective application version`. Mis
 
 Filename identity is used to narrow the bundled ZIP first. Only exact files are then decoded, parsed and semantically verified.
 
-Only cheats that are both:
+Discovery and convertibility are separate. Every cheat parsed from an exact `Serial + effective application version` source is listed with its verifier status, so the user can see what the source contains. `NclCorpusCheatCandidate.CanConvert` is true only for:
 
-- `OfflineStaticCandidate`, and
-- successfully lowered by `NclStaticLowerer`
+- `OfflineStaticCandidate` cheats successfully lowered by `NclStaticLowerer`; and
+- `OptionSelectionRequired` cheats whose option tags resolve to declared option sets. The user must choose every option value explicitly; `NclOptionSubstitution` reproduces the Artemis text substitution and the resolved text then goes through the same parser, verifier, lowerer, binder and emitter.
 
-become discovery candidates.
+`RuntimeEvidenceRequired`, `ConstantRuntimeRequired`, `NonExecutableMetadata`, `Unsupported`, and `Invalid` entries stay discoverable with `CanConvert` false. Preview and Apply reject any candidate whose `CanConvert` is false.
 
-`RuntimeEvidenceRequired`, `ConstantRuntimeRequired`, `OptionSelectionRequired`, `NonExecutableMetadata`, `Unsupported`, and `Invalid` entries are not exposed as apply-able bundled cheats.
+Cheats from a source declaring the same Serial but a different application version are listed separately through `NclCorpusLookupResult.OtherVersionCheats`. They always carry `NclCorpusCheatCandidate.VersionProven` false and `CanConvert` false, and `NclCorpusReader.ReadZipCandidate` rejects them.
 
-`OfflineStaticCandidate` still does **not** authorize an RPCS3 patch. Preview must subsequently prove the requirements in `NclConversion.md`, including exact PPU identity and address-domain binding.
+`CanConvert` still does **not** authorize an RPCS3 patch. Preview must subsequently prove the requirements in `NclConversion.md`, including exact PPU identity and address-domain binding.
 
 ## Duplicate and conflict behavior
 
 The corpus never uses last-write-wins.
 
-For the same exact game and cheat name:
+For the same exact game and cheat name, cheats are grouped by variant identity, never by name alone:
 
-- identical lowered byte semantics collapse deterministically while retaining all source references;
-- divergent lowered semantics are reported as a conflict and the cheat is excluded from the selectable list.
+- a cheat with a proven effective-write projection is keyed by those writes, so definitions with identical byte effects collapse deterministically while retaining all source references;
+- any other cheat is keyed by its verifier status and semantic SHA-256, so it is only ever distinguished, never merged;
+- when one name has more than one variant, each variant is listed under the source name plus a stable 8-hex suffix derived from its variant key. Read-back validation compares the source against the original name, not the displayed one.
 
-A candidate keeps corpus SHA-256, entry SHA-256, source path, cheat index, dialect and lowered semantic SHA-256 so Preview can revalidate the exact source state.
+No variant is chosen by source order. A candidate keeps corpus SHA-256, entry SHA-256, source path, cheat index, dialect and semantic SHA-256 so Preview can revalidate the exact source state.
 
 ## Audit report
 

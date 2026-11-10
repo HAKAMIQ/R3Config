@@ -4,21 +4,37 @@ R3Config has one Artemis integration surface: the ChiDreams **Artemis Patch Coll
 
 ## Retained source contract
 
-- Canonical source: `Artemis-Patch-Collection-RPCS3-acfd45b-r3fix2.zip`
+- Canonical source: `Artemis-Patch-Collection-RPCS3-fd267a6-r3fix1.zip`
 - Repository: `https://github.com/chidreams/Artemis-Patch-Collection-RPCS3`
-- Source SHA-256: `26a72f769fb1f7cb51daa8502fbc39b817a904fa1073dfa2c602a8c5f2d76ac9`
-- Source patch files: `132`
-- Candidate definitions before duplicate/dependency resolution: `1028`
-- Accepted definitions in the current generated catalog: `1023`
-- Rejected source/duplicate records: `19`
+- Upstream commit: `fd267a65759a2f1dcae31e362d318de7a6e16594` (2026-10-28)
+- Source SHA-256: `cefd5b7475a67d3c36f165935c60f611b8ac6e10a095f4524e53c86fe7b430de`
+- Source patch files: `237`
+- Candidate definitions before duplicate/dependency resolution: `1956`
+- Accepted definitions in the current generated catalog: `1922`
+- Rejected source/duplicate records: `34`
 - Generated artifact: `App/Data/art.yml`
-- Generated artifact SHA-256: `b09ecd731e2808967dfd32cb9b112db3bf5aa81fe0ee89a827f7a85d99e7adf5`
+- Generated artifact SHA-256: `68c1f43daef16b3f05514227d8e63346c56dee9f9e63fda273c8cd5acb630bf2`
 - Reviewed dependency metadata: `App/Data/art_dep.json` (`23` exact-entry rules)
-- Dependency source revision: `acfd45b61f8295298523548a9ff3406488736d68`
-- Dependency artifact SHA-256: `ab0eab975a9217e1e91c406c5600fae1291f56498b89f3c28ea2a8d197844d68`
+- Dependency source revision: `fd267a65759a2f1dcae31e362d318de7a6e16594`
+- Dependency artifact SHA-256: `0d60bee207edeec0155b2e7c7010fcbaad70868478237dffe99d29131c55c87e`
 - License: MIT
 
-The second user-supplied archive, `ARTEMIS-RPCS3-Cheat-Manager-1.0.1-RC4(1).zip`, has SHA-256 `372a033655d9c40bbf306a1d56dc5e6749f63400522a577bd15eeadfe175780f`. It is an external manager/editor/downloader for RPCS3 patch files and the same ChiDreams collection. It provides format/provenance reference only; it is not copied into the application and does not add a second cheat catalog.
+The second user-supplied archive, `ARTEMIS-RPCS3-Cheat-Manager-2.00.zip`, has SHA-256 `caaab46ad39c671470f1d2593958da8c2b9111348660cbd3f0f5a53e93c41604`. It is an external manager/editor/downloader for RPCS3 patch files and the same ChiDreams collection. It provides format/provenance reference only; it is not copied into the application and does not add a second cheat catalog.
+
+### Source archive construction
+
+The source archive is the upstream commit ZIP reduced to the per-game patch files plus `LICENSE`. It omits `README.md`, the `.github` folder and the CI-compiled aggregate `imported_patch.yml`, which repeats every per-game definition. Two reviewed corrections are applied, nothing else:
+
+1. `God of War Ascension [BCUS98232] v1.12` declares its 10 definitions under `PPU-03a0b43e4a5f4bfea64f53612ee7c5d990f88129c`, a 41-hex key RPCS3 cannot generate. The key is replaced with `PPU-3a0b43e4a5f4bfea64f53612ee7c5d990f88129c`. This is the same correction the previous `acfd45b` archive carried, and the corrected hash matches a locally captured RPCS3 `PPU executable hash` for BCUS98232.
+2. `The House Of The Dead 4 [NPUB30603] v1.00` is byte-identical to `THE HOUSE OF THE DEAD 4 [NPUB30603] v1.00`. The importer rejects file identities that differ only by case, so the second copy is omitted.
+
+Every other upstream conflict stays fail-closed. For example, two Puppeteer files declare different `Invincible` definitions under the same key, and both are rejected.
+
+Compared with the previous `acfd45b` catalog: 462 definitions were added, 11 were dropped (10 renamed or merged upstream, plus the conflicting Puppeteer `Invincible`), and 59 kept their identity but changed definition, notes or author upstream. All 23 dependency rules still resolve to exactly one entry, with definitions and notes unchanged.
+
+### Catalog updates and installed cheats
+
+A cheat the user already enabled lives in the managed `<SERIAL>_patch.yml` as a `ManagedArtemis` entry with the same run key and title as its `art.yml` source. `PatchCatalogMergeService` always keeps that resident copy over the bundled one, because the resident copy is what RPCS3 applies. A changed bundled definition at an equal or unordered Patch Version used to reject both copies. That hid an entry that stayed enabled in `patch_config.yml`, and a hidden resident could block a sibling enable through a write overlap the user could not clear. The pair is now resolved to the resident with the `PATCH_MANAGED_RESIDENT_KEPT` diagnostic, so the row stays visible and can be disabled or removed. Removing it exposes the updated bundled definition. Every other same-version conflict, including two bundled or two managed copies, still rejects all variants.
 
 ## Data flow
 
@@ -61,14 +77,16 @@ Regeneration from the repository root uses the build-time importer. The source-r
 
 ```powershell
 dotnet run --project .\Script\ArtImport\R3ArtImport.csproj -c Release -- `
-  <Artemis-Patch-Collection-RPCS3-acfd45b-r3fix2.zip> `
+  <Artemis-Patch-Collection-RPCS3-fd267a6-r3fix1.zip> `
   .\App\Data\art.yml `
   .\CHEATS.md `
-  26a72f769fb1f7cb51daa8502fbc39b817a904fa1073dfa2c602a8c5f2d76ac9 `
-  "user-supplied archive Artemis-Patch-Collection-RPCS3-acfd45b-r3fix2.zip" `
-  <ARTEMIS-RPCS3-Cheat-Manager-1.0.1-RC4(1).zip> `
-  372a033655d9c40bbf306a1d56dc5e6749f63400522a577bd15eeadfe175780f
+  cefd5b7475a67d3c36f165935c60f611b8ac6e10a095f4524e53c86fe7b430de `
+  "pinned ChiDreams commit fd267a65759a2f1dcae31e362d318de7a6e16594 via Artemis-Patch-Collection-RPCS3-fd267a6-r3fix1.zip; 2 reviewed source corrections" `
+  <ARTEMIS-RPCS3-Cheat-Manager-2.00.zip> `
+  caaab46ad39c671470f1d2593958da8c2b9111348660cbd3f0f5a53e93c41604
 ```
+
+`art_dep.json` must already carry the new catalog SHA-256 and the `ArtDepSvc` constants must match it, because the importer validates the dependency overlay against the catalog it generates before it writes anything.
 
 ## Deliberately absent Artemis systems
 

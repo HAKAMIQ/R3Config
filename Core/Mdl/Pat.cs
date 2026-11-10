@@ -245,7 +245,11 @@ public sealed record Rpcs3PatchEntry(
     // The bytes this definition actually writes, canonicalized by
     // PatchWriteSemantics. Null when the source carried no Patch node; the
     // incomplete marker when an operation's effect cannot be proven.
-    string? WritePrint = null)
+    string? WritePrint = null,
+    // Set by PatchCatalogMergeService on a ManagedArtemis resident kept over
+    // a bundled art.yml definition with the same identity but different
+    // content. Presentation only: it never changes what is written.
+    bool BundledChanged = false)
 {
     public IReadOnlyList<string> Patches =>
         DepList ?? [];

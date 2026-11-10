@@ -674,7 +674,7 @@ public static class ArtemisImportTool
         builder.AppendLine();
         builder.AppendLine("The second user-supplied archive is retained as a provenance/format reference for the same RPCS3 patch collection. It is not a second bundled cheat corpus and none of its Python/Tkinter application code is embedded in R3Config.");
         builder.AppendLine();
-        builder.AppendLine("Manager reference: ARTEMIS RPCS3 Cheat Manager 1.0.1 RC4");
+        builder.AppendLine("Manager reference: ARTEMIS RPCS3 Cheat Manager 2.00");
         builder.AppendLine(CultureInfo.InvariantCulture, $"Manager reference artifact: {managerArtifact}");
         builder.AppendLine(CultureInfo.InvariantCulture, $"Manager reference archive SHA-256: {managerReferenceHash}");
         builder.AppendLine("Manager role: external editor/downloader/validator reference for RPCS3 imported_patch.yml v1.2 and the ChiDreams collection; not a bundled cheat database");

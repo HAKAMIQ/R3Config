@@ -7,8 +7,8 @@ NCL remains part of the existing Cheat section. It does not create a new product
 1. Select the target RPCS3 game.
 2. Open **NCL cheats** from the Cheat section.
 3. R3Config uses the selected game's exact Serial and effective application version to query the pinned bundled NCL corpus.
-4. Only unambiguous verified offline-static cheats for that exact game/version are listed.
-5. Choose one cheat. A single unambiguous cheat may auto-select; multiple cheats are never guessed.
+4. Every cheat parsed for that exact game/version is listed with its verifier status. Only cheats with `NclCorpusCheatCandidate.CanConvert` true (verified offline-static cheats and resolvable option cheats) can continue to Preview. Same-serial cheats from other application versions are listed as information only.
+5. Choose one cheat. A single unambiguous cheat may auto-select; multiple cheats are never guessed. An option cheat requires an explicit value for every option set before Preview.
 6. Choose the exact PPU run key when more than one authoritative PPU executable hash exists. A single authoritative run key may auto-select.
 7. Build a read-only conversion preview.
 8. Apply only after confirmation.
@@ -46,8 +46,8 @@ The bundled database has a known dialect from pinned provenance. That is not dia
 - `VERSION` and `APP_VER` tokens are not treated as interchangeable alternatives.
 - Regional serial/version groups remain paired; no Cartesian matching is allowed.
 - External declared Serial/version mismatches are rejected. Missing external identity remains an explicit selected-target limitation; it is not used to infer another target.
-- Same-name bundled definitions with different static semantics are hidden and reported as conflicts; no last-write-wins behavior exists.
-- Only cheats that pass semantic verification and static lowering are selectable.
+- Same-name bundled definitions with different semantics are listed as separate variants with a stable suffix; no last-write-wins behavior exists.
+- Only cheats that pass semantic verification and static lowering, directly or after explicit option substitution, can reach Preview.
 - The bundled ZIP, selected entry and lowered semantic fingerprint are revalidated at Preview to detect source drift.
 - The PPU run key comes only from authoritative game hash evidence already exposed by the selected game descriptor.
 - `RPCS3.log` must exist and `NclPpuAddressDomainEvidenceCollector` must prove the matching PPU PT_LOAD address domains.

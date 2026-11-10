@@ -407,6 +407,7 @@
   "Patch.Direct.Disabled": "موجود في RPCS3 لكنه غير مفعل.",
   "Patch.Direct.MergedDisabled": "مدمج في imported_patch.yml لكنه غير مفعل.",
   "Patch.Direct.PreparedDisabled": "مجهز في ملف باتش اللعبة لكنه غير مفعل.",
+  "Patch.Artemis.BundledChanged": "توجد نسخة محدثة من هذه الشفرة في مكتبة الشفرات. احذف النسخة المثبتة ثم فعل الشفرة من جديد لاستخدام التحديث.",
   "Patch.Direct.Ready": "متوافق وجاهز.",
   "Patch.Direct.RuntimeGuarded": "جاهز للتفعيل وسيتحقق RPCS3 من مفتاح PPU أو SPU عند تشغيل اللعبة.",
   "Patch.Direct.InvalidRuntimeKey": "غير متاح: مفتاح الباتش ليس بصيغة ينفذها RPCS3.",

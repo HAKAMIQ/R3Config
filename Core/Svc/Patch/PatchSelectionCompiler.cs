@@ -403,7 +403,8 @@ public sealed partial class PatchSelectionCompiler
                     {
                         continue;
                     }
-                    return $"Selected patches '{left.Title}' and '{right.Title}' have conflicting overlapping writes for '{target.Key}'.";
+                    return $"Selected patches '{left.Title}' and '{right.Title}' have conflicting overlapping writes for '{target.Key}'. " +
+                           "Use only one of them: remove the installed one from the game's cheats first, or select just one.";
                 }
             }
         }

@@ -90,7 +90,7 @@ internal static partial class Program
         var artRead = reader.Read(artPath, PatSrc.Artemis);
         var canRead = reader.Read(canPath, PatSrc.Can);
 
-        Assert(artRead.IsOk && artRead.Catalog.Entries.Count == 1471,
+        Assert(artRead.IsOk && artRead.Catalog.Entries.Count == 1922,
             "Expected the complete bundled Artemis corpus before localization audit.");
         Assert(canRead.IsOk && canRead.Catalog.Entries.Count > 0,
             "Expected the complete bundled Canary corpus before localization audit.");
@@ -157,10 +157,14 @@ internal static partial class Program
                "48C8E569A50FD68B8C77ACB3F0542977022E808CFAE09E8EA4B02B4CB94799DD",
             "Localization accounting requires the reviewed September catalog bytes; re-audit source deltas before changing this baseline.");
 
-        Assert(totalNoteSlots == 9393 &&
-               notes.Count == 8047 &&
-               emptySourceNotes == 1346 &&
-               uniqueNotes.Length == 925,
+        // Artemis fd267a6 (art.yml 1471 -> 1922 entries) added 451 note slots,
+        // 67 non-empty occurrences and 60 unique notes, and dropped 8 unique
+        // notes (925 + 60 - 8 = 977). Each new note has a reviewed Arabic
+        // entry in PNote.Ar.cs.
+        Assert(totalNoteSlots == 9844 &&
+               notes.Count == 8114 &&
+               emptySourceNotes == 1730 &&
+               uniqueNotes.Length == 977,
             $"Unexpected Note accounting. Total={totalNoteSlots}, NonEmpty={notes.Count}, Empty={emptySourceNotes}, Unique={uniqueNotes.Length}.");
 
         PatchText_WithLang(
@@ -329,7 +333,7 @@ internal static partial class Program
                 Assert(actualTranslations == notes.Count &&
                        fallback == 0 &&
                        omitted == 0 &&
-                       exactUnique.Count == 924 &&
+                       exactUnique.Count == 976 &&
                        structuredUnique.Count == 1 &&
                        NoteSvc.ReviewedWikiArabicTranslationCount == 1591 &&
                        NoteSvc.ReviewedOfficialPatchArabicTranslationCount == 367,

@@ -45,6 +45,26 @@ public sealed class PatchCatalogMergeService
                 continue;
             }
 
+            if (HasSame(existing, entry) &&
+                ResidentOf(existing, entry) is { } resident)
+            {
+                // The R3Config-managed <SERIAL>_patch.yml copy is what RPCS3
+                // actually applies. When an updated bundled art.yml changes the
+                // same identity at an equal or unordered Patch Version, keep the
+                // resident row visible so the user can still disable or remove
+                // it. Rejecting both would hide an entry that stays enabled.
+                var bundled = ReferenceEquals(resident, existing)
+                    ? entry
+                    : existing;
+                selected[key] = resident with { BundledChanged = true };
+                diagnostics.Add(new PatDiag(
+                    Code: "PATCH_MANAGED_RESIDENT_KEPT",
+                    Message: BuildMs4(resident, bundled),
+                    KeepSrc: resident.Source,
+                    DropSrc: bundled.Source));
+                continue;
+            }
+
             if (HasSame(existing, entry))
             {
                 selected.Remove(key);
@@ -60,6 +80,13 @@ public sealed class PatchCatalogMergeService
             var keepCandidate = Should(existing, entry);
             var kept = keepCandidate ? entry : existing;
             var dropped = keepCandidate ? existing : entry;
+            if (kept.Source == PatSrc.ManagedArtemis &&
+                dropped.Source == PatSrc.Artemis &&
+                !string.Equals(kept.DefPrint, dropped.DefPrint, StringComparison.OrdinalIgnoreCase))
+            {
+                kept = kept with { BundledChanged = true };
+            }
+
             selected[key] = kept;
 
             diagnostics.Add(new PatDiag(
@@ -95,6 +122,27 @@ public sealed class PatchCatalogMergeService
         // otherwise be settled by load order or by treating "missing" as older.
         return AreEqual(existing.PatVer, candidate.PatVer) ||
                !IsOrdered(existing.PatVer, candidate.PatVer);
+    }
+
+    // Returns the managed resident entry only for a ManagedArtemis/Artemis
+    // pair. Every other source pairing keeps the fail-closed conflict rule.
+    private static Rpcs3PatchEntry? ResidentOf(
+        Rpcs3PatchEntry existing,
+        Rpcs3PatchEntry candidate)
+    {
+        if (existing.Source == PatSrc.ManagedArtemis &&
+            candidate.Source == PatSrc.Artemis)
+        {
+            return existing;
+        }
+
+        if (existing.Source == PatSrc.Artemis &&
+            candidate.Source == PatSrc.ManagedArtemis)
+        {
+            return candidate;
+        }
+
+        return null;
     }
 
     private static bool IsOrdered(string? left, string? right)
@@ -249,6 +297,15 @@ public sealed class PatchCatalogMergeService
         return $"Patch '{existing.Title}' for {existing.HashKind}-{existing.Hash} has conflicting " +
                $"definitions at equivalent Patch Version '{version}' from {Describe(existing)} and " +
                $"{Describe(candidate)}. Every conflicting variant was rejected.";
+    }
+
+    private static string BuildMs4(
+        Rpcs3PatchEntry resident,
+        Rpcs3PatchEntry bundled)
+    {
+        return $"Patch '{resident.Title}' for {resident.HashKind}-{resident.Hash} in {Describe(resident)} " +
+               $"differs from the bundled definition in {Describe(bundled)}. The installed copy was kept; " +
+               "remove it to use the bundled definition.";
     }
 
     private static string BuildMs3(Rpcs3PatchEntry entry)

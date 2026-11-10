@@ -273,6 +273,7 @@ internal static partial class Program
             runner.RunCase(nameof(Arch_Svc), Arch_Svc);
             runner.RunCase(nameof(PatchWriteSemanticsT), PatchWriteSemanticsT.Run);
             runner.RunCase(nameof(PatchMergeOrderT), PatchMergeOrderT.Run);
+            runner.RunCase(nameof(ArtemisCatalogUpdateT), () => ArtemisCatalogUpdateT.Run(smokeRoot));
             runner.RunCase(nameof(PlanReasonT), PlanReasonT.Run);
             runner.RunCase(
                 nameof(CanaryArtemisConflictT),

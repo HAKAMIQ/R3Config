@@ -31,10 +31,10 @@ it is not a blanket license claim for every independently sourced cheat definiti
 
 R3Config does not treat every entry as compatible or applicable. Discovery requires
 exact Serial + application version identity; conversion still requires a verified
-static cheat, an exact PPU run key, RPCS3 PT_LOAD address-domain evidence,
+static cheat (or an option cheat whose values the user chose explicitly), an exact PPU run key, RPCS3 PT_LOAD address-domain evidence,
 byte-equivalent Patch 1.2 emission, and the existing guarded patch transaction.
 
-Conflicting same-name definitions with different static semantics are hidden and
-reported rather than selected by source order. Missing or ambiguous identity is not
+Same-name definitions with different semantics are listed as separate variants
+with a stable suffix rather than selected by source order. Missing or ambiguous identity is not
 promoted into the bundled compatible-cheat list. External `.ncl` import remains a
 separate advanced workflow and is not allowed to overwrite this pinned corpus.
