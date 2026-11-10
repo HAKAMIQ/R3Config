@@ -185,6 +185,8 @@ internal static class RuntimeViewUiT
 
             Console.WriteLine($"Runtime view RPCN evidence rows rendered in {evidenceTimer.ElapsedMilliseconds} ms (EN + AR).");
 
+            RenderPpuHashes(window, view, vm);
+
             // Narrow window: the content scrolls vertically only.
             window.Width = 560;
             window.Height = 460;
@@ -207,6 +209,72 @@ internal static class RuntimeViewUiT
             UiText.SetLang(originalLanguage);
             UiLaySvc.Apply();
         }
+    }
+
+    // The selected game's trusted PPU hash: an LTR technical value with a
+    // Copy button in both languages; untrusted cache-only evidence renders no
+    // hash and no Copy button, only the HashUnknown guidance. Leaves the
+    // trusted snapshot loaded so the narrow-width check covers the row.
+    private static void RenderPpuHashes(Window window, R3Config.Ctrl.RuntimeView view, RuntimeVm vm)
+    {
+        var original = RuntimeVm.CopyText;
+        var copied = new List<string>();
+        RuntimeVm.CopyText = copied.Add;
+        try
+        {
+            var trusted = RuntimeContextBuilder.Build(null, null, null, RuntimePpuHashT.TrustedLogGame(), null, null);
+            var cacheOnly = RuntimeContextBuilder.Build(null, null, null, RuntimePpuHashT.CacheOnlyGame(), null, null);
+            foreach (var language in new[] { UiText.EnLang, UiText.ArabLang })
+            {
+                UiText.SetLang(language);
+                UiLaySvc.Apply();
+                vm.SetLang();
+                vm.Load(trusted);
+                Settle(window);
+                var hash = Blocks(view).FirstOrDefault(block => block.Text == RuntimePpuHashT.Hash);
+                Assert(hash is not null && hash.FlowDirection == FlowDirection.LeftToRight,
+                    $"The trusted PPU hash must render left-to-right under {language}.");
+                var copy = CopyButtons(view);
+                Assert(copy.Count == 1 && copy[0].Command is not null,
+                    $"Exactly one visible Copy button accompanies the trusted PPU hash under {language}.");
+                var rendered = Texts(view);
+                foreach (var expected in new[] { UiText.GetText("Runtime.PpuHash.Label"), UiText.GetText("Runtime.PpuHash.Source.Rpcs3Runtime"), UiText.GetText("Link.Copy") })
+                {
+                    Assert(rendered.Any(text => text.Contains(expected, StringComparison.Ordinal)),
+                        $"The PPU hash row must render '{expected}' under {language}. Rendered: " + string.Join(" / ", rendered));
+                }
+
+                Assert(!rendered.Contains(UiText.GetText("Setup.Warning.HashUnknown")),
+                    $"A trusted hash shows no HashUnknown guidance under {language}.");
+                copy[0].Command.Execute(copy[0].CommandParameter);
+                Assert(copied.LastOrDefault() == RuntimePpuHashT.Hash,
+                    "The rendered Copy button copies the trusted PPU hash.");
+
+                vm.Load(cacheOnly);
+                Settle(window);
+                rendered = Texts(view);
+                Assert(CopyButtons(view).Count == 0 &&
+                       !rendered.Any(text => text.Contains(RuntimePpuHashT.UntrustedHash, StringComparison.Ordinal)) &&
+                       rendered.Contains(UiText.GetText("Setup.Warning.HashUnknown")),
+                    $"Cache-only evidence renders no hash and no Copy button, only the HashUnknown guidance, under {language}.");
+            }
+
+            UiText.SetLang(UiText.EnLang);
+            UiLaySvc.Apply();
+            vm.SetLang();
+            vm.Load(trusted);
+            Settle(window);
+        }
+        finally
+        {
+            RuntimeVm.CopyText = original;
+        }
+
+        List<Button> CopyButtons(DependencyObject root) =>
+            All<Button>(root)
+                .Where(button => button.IsVisible &&
+                                 System.Windows.Automation.AutomationProperties.GetAutomationId(button) == "Runtime.PpuHash.Copy")
+                .ToList();
     }
 
     private static void Settle(Window window)

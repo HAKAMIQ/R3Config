@@ -107,7 +107,8 @@ public sealed class AppFlow
         WikiRec? rec,
         HwInfo? hw,
         Rpcs3BuildIdentity? build = null,
-        RecSyncApiGame? databaseConfig = null)
+        RecSyncApiGame? databaseConfig = null,
+        bool databaseLoaded = false)
     {
         return _cases.Config.Build(
             install,
@@ -115,7 +116,8 @@ public sealed class AppFlow
             rec,
             hw,
             Rpcs3RuntimeBuild.From(build),
-            databaseConfig);
+            databaseConfig,
+            databaseLoaded);
     }
 
     public CfgRes ApplyCfg(

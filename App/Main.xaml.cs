@@ -24,6 +24,7 @@ public partial class MainWin : Window
 
         _vm.AdvReq += (_, _) => ShowAdv();
         _vm.LangChg += (_, _) => BuildPat();
+        _vm.DiagReq += (_, _) => Tabs.SelectedItem = RtmTab;
         Activated += (_, _) =>
             _vm.LoadR3Ui();
         Loaded += (_, _) => _vm.StartRecSync();

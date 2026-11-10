@@ -52,15 +52,41 @@ public sealed record RuntimeFact(
     EvidenceState State,
     string? Code = null);
 
+// Where a trusted PPU executable hash of the selected game came from, as far
+// as the descriptor proves it. Rpcs3Runtime is the RPCS3 log or the per-game
+// cache module proven current for the installed EBOOT (the probe merges both,
+// so neither is claimed alone); Analysis is a probe hash whose evidence kind
+// and time were replaced by a saved H-Canary binding; Unknown is a hash whose
+// descriptor records no evidence kind (HashEvi.None), never claimed as metadata.
+public enum RuntimePpuHashSource
+{
+    Rpcs3Runtime,
+    HCanBinding,
+    Metadata,
+    Analysis,
+    Unknown
+}
+
+// One trusted PPU executable hash (40-hex, as RPCS3 prints "PPU executable
+// hash") with its source and the UTC time of that evidence when it is known.
+public sealed record RuntimePpuHash(
+    string Hash,
+    RuntimePpuHashSource Source,
+    DateTime? TimeUtc);
+
 // Evidence snapshot of the actual machine, RPCS3 installation and selected
 // game. It carries facts only: it owns no mutation, patch, Canary or Artemis
 // policy, and it recommends nothing.
 public sealed record RuntimeContextSnapshot(
     IReadOnlyList<RuntimeFact> Facts,
     EvidenceState BuildIdentityState,
-    EvidenceState GameIdentityState)
+    EvidenceState GameIdentityState,
+    IReadOnlyList<RuntimePpuHash>? TrustedPpu = null)
 {
     public static RuntimeContextSnapshot Empty { get; } = new([], EvidenceState.Unavailable, EvidenceState.NotApplicable);
+
+    // Trusted hashes only, in evidence order; several are listed, none picked.
+    public IReadOnlyList<RuntimePpuHash> PpuHashes => TrustedPpu ?? [];
 
     public IReadOnlyList<RuntimeFact> InGroup(RuntimeFactGroup group) =>
         [.. Facts.Where(fact => fact.Group == group)];

@@ -32,7 +32,12 @@
     </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
-        <ResourceDictionary Source="Ctrl/GameIdentityTemplate.xaml" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Ctrl/GameIdentityTemplate.xaml" />
+                <ResourceDictionary Source="Ctrl/LogCrashNotice.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Border Style="{StaticResource FluentSurface.Dialog}"
@@ -402,6 +407,7 @@
 
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
@@ -413,8 +419,15 @@
                                             HorizontalContentAlignment="Stretch"
                                             Margin="0,0,0,8" />
 
+                            <!-- Shown only for an unseen crash in the selected game's latest RPCS3
+                                 log session; Open diagnosis selects the Runtime tab (code-behind). -->
+                            <ContentPresenter x:Name="CrashNoticeHost"
+                                              Grid.Row="1"
+                                              Content="{Binding CrashNotice}"
+                                              ContentTemplate="{StaticResource LogCrashNotice}" />
+
                             <TabControl x:Name="Tabs"
-                                        Grid.Row="1"
+                                        Grid.Row="2"
                                         Style="{StaticResource FluentTabControl.Fit}"
                                         ItemContainerStyle="{StaticResource FluentTabItem.Fit}"
                                         Margin="0"

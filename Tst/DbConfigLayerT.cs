@@ -21,7 +21,7 @@ internal static class DbConfigLayerT
     //          Write Color Buffers: true, Accurate ZCULL stats: false,
     //          Relaxed ZCULL Sync: true
     //   Core:  Sleep Timers Accuracy: As Host
-    private static RecSyncApiGame Database() =>
+    internal static RecSyncApiGame Database() =>
         Rpcs3GameDatabase.Load(Path.Combine(AppContext.BaseDirectory, "Data")).FindConfig(Serial)
         ?? throw new InvalidDataException($"The shipped game-configs.json has no entry for {Serial}.");
 
@@ -42,6 +42,8 @@ internal static class DbConfigLayerT
         runner.RunCase(nameof(Resolve), () => Resolve(tempRoot));
         runner.RunCase(nameof(Warning), () => Warning(tempRoot));
         runner.RunCase(nameof(WarningGroups), () => WarningGroups(tempRoot));
+        runner.RunCase(nameof(CfgSourceT), () => CfgSourceT.Run(tempRoot));
+        runner.RunCase(nameof(CfgPlanSourceT), () => CfgPlanSourceT.Run(tempRoot));
     }
 
     // Round 12: the lost list splits into (a) settings a recommendation above
@@ -280,7 +282,7 @@ internal static class DbConfigLayerT
     private static string? Base(CfgPlan plan, string section, string key) =>
         plan.DbCfg.Single(item => item.Section == section && item.Key == key).BaseVal;
 
-    private static WikiRec Rec() =>
+    internal static WikiRec Rec() =>
         new(
             Serial,
             "Midnight Club: Los Angeles",
@@ -289,7 +291,7 @@ internal static class DbConfigLayerT
                 new CfgChg("Video", "Read Depth Buffer", "true", "read depth buffer", null, RecRisk.Rec)
             ]);
 
-    private static (Rpcs3InstallDescriptor Install, Rpcs3GameDescriptor Game, string Target, string Global, string Root) Env(string tempRoot, string name)
+    internal static (Rpcs3InstallDescriptor Install, Rpcs3GameDescriptor Game, string Target, string Global, string Root) Env(string tempRoot, string name)
     {
         var root = Path.Combine(tempRoot, "DbConfigLayer", name);
         var configPath = Path.Combine(root, "config");

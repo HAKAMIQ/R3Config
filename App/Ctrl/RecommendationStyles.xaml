@@ -149,6 +149,17 @@
                 Value="Stretch" />
     </Style>
 
+    <!-- Small secondary line under a ToolTip value (where it comes from).
+         Direction and alignment come from RecLocalizedLabelText. -->
+    <Style x:Key="RecToolTipSourceText"
+           TargetType="{x:Type TextBlock}"
+           BasedOn="{StaticResource RecLocalizedLabelText}">
+        <Setter Property="FontSize"
+                Value="12" />
+        <Setter Property="Foreground"
+                Value="{DynamicResource Text.Secondary}" />
+    </Style>
+
     <Style x:Key="RecToolTipWikiHeadingText"
            TargetType="{x:Type TextBlock}"
            BasedOn="{StaticResource RecLocalizedLabelText}">

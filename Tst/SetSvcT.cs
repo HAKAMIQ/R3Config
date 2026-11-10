@@ -17,6 +17,7 @@ internal static class SetSvcT
         CorruptAndOversizedInput(root);
         RoamingMigration(root);
         ConcurrentWriters(root);
+        UpdateOnLoadFailure(root);
 
         Console.WriteLine("Settings persistence hardening PASS.");
     }
@@ -176,5 +177,46 @@ internal static class SetSvcT
         Assert(
             leftovers.Length == 0,
             "Concurrent settings writes should not leave temporary files behind.");
+    }
+
+    // SetSvc.Update falls back to defaults only for unreadable content. A
+    // transient IO failure (here a sharing violation that ends before the
+    // save) aborts the update without writing, so the RPCS3 path and crash
+    // acknowledgements already saved are never replaced by defaults.
+    private static void UpdateOnLoadFailure(string root)
+    {
+        var path = Path.Combine(root, "update", "settings.json");
+        var exe = Path.GetFullPath(Path.Combine(root, "rpc-update", "rpcs3.exe"));
+        var service = new SetSvc(path);
+        service.Save(new AppSet(exe).WithSeenLogCrash("BLUS90061", "sha256:AA"));
+        var saved = File.ReadAllBytes(path);
+
+        var called = false;
+        var held = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
+        try
+        {
+            service.Update(current =>
+            {
+                called = true;
+                held.Dispose();
+                return current.WithSeenLogCrash("BLUS90062", "sha256:BB");
+            });
+        }
+        finally
+        {
+            held.Dispose();
+        }
+
+        var loaded = service.Load();
+        Assert(
+            !called && File.ReadAllBytes(path).SequenceEqual(saved) &&
+            loaded.LastExe == exe && loaded.SeenLogCrash("BLUS90061") == "sha256:AA" && loaded.SeenLogCrash("BLUS90062") is null,
+            "An IO failure while reading settings must abort the update without writing defaults over the saved RPCS3 path and acknowledgements.");
+
+        File.WriteAllText(path, "{not-json", new UTF8Encoding(false));
+        service.Update(current => current with { LastExe = exe });
+        Assert(
+            service.Load().LastExe == exe,
+            "Unreadable settings content still starts the update from defaults.");
     }
 }

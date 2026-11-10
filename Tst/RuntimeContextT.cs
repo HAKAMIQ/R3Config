@@ -30,6 +30,7 @@ internal static class RuntimeContextT
         AssertCompatibilityAndBuildResolution();
         AssertViewModelAndLocalization();
         AssertSingleScannerAndNoDevelopmentDependency();
+        RuntimePpuHashT.Run();
 
         Console.WriteLine("Runtime Context (hardware evidence, states, applicability flow, build resolution, presentation, single scanner) PASS.");
     }

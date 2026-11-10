@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Input;
 using R3Config.Lang;
 using R3Config.Mdl;
+using R3Config.Svc;
 
 namespace R3Config.Vm;
 
@@ -64,15 +66,30 @@ public sealed class RuntimeGroupVm
         "BuildArchitectureMatch", "Rpcs3SpuDecoders", "Rpcs3SpuDecodersLlvm", "Rpcs3AccurateDfmaUi",
         "DataBesideExecutable", "PatchesFolder", "PatchConfig",
         "BuildVersion", "BuildNumber", "BuildCommit", "BuildBranch", "BuildStage", "BuildArchitecture",
-        "GameCategory", "GamePpuHash"
+        "GameCategory"
     };
 
-    public RuntimeGroupVm(RuntimeFactGroup group, IReadOnlyList<RuntimeFact> facts)
+    // The copyable PPU hash rows below replace the plain joined fact.
+    private const string PpuHashKey = "GamePpuHash";
+
+    public RuntimeGroupVm(
+        RuntimeFactGroup group,
+        IReadOnlyList<RuntimeFact> facts,
+        IReadOnlyList<RuntimePpuHash>? ppuHashes = null,
+        bool gameSelected = false)
     {
         Group = group;
-        var rows = facts.Select(fact => new RuntimeFactVm(fact)).ToArray();
+        var rows = facts
+            .Where(fact => fact.Key != PpuHashKey)
+            .Select(fact => new RuntimeFactVm(fact))
+            .ToArray();
         SummaryRows = [.. rows.Where(row => !DetailKeys.Contains(row.Id))];
         DetailRows = [.. rows.Where(row => DetailKeys.Contains(row.Id))];
+        var isGame = group == RuntimeFactGroup.Game;
+        PpuHashes = isGame && ppuHashes is not null
+            ? [.. ppuHashes.Select(hash => new RuntimePpuHashVm(hash))]
+            : [];
+        HasPpuHashGuidance = isGame && gameSelected && PpuHashes.Count == 0;
     }
 
     public RuntimeFactGroup Group { get; }
@@ -88,6 +105,50 @@ public sealed class RuntimeGroupVm
     public bool HasDetails => DetailRows.Count > 0;
 
     public string DetailsLabel => UiText.GetText("Ui.Details");
+
+    // Game group only: one row per trusted PPU executable hash (none is
+    // picked), or the HashUnknown guidance when a game is selected without one.
+    public IReadOnlyList<RuntimePpuHashVm> PpuHashes { get; }
+
+    public bool HasPpuHashes => PpuHashes.Count > 0;
+
+    public string PpuHashLabel => UiText.GetText("Runtime.PpuHash.Label");
+
+    public bool HasPpuHashGuidance { get; }
+
+    public string PpuHashGuidance => HasPpuHashGuidance
+        ? UiText.GetText("Setup.Warning.HashUnknown")
+        : string.Empty;
+}
+
+// One trusted PPU executable hash: the raw 40-hex value (LTR, never
+// translated), its localized source, the evidence time and a Copy action.
+public sealed class RuntimePpuHashVm
+{
+    public RuntimePpuHashVm(RuntimePpuHash hash)
+    {
+        Item = hash;
+        CopyCmd = new RelayCmd(() => RuntimeVm.CopyText(hash.Hash));
+    }
+
+    public RuntimePpuHash Item { get; }
+
+    public string Label => UiText.GetText("Runtime.PpuHash.Label");
+
+    public string Hash => Item.Hash;
+
+    public string SourceText => UiText.GetText($"Runtime.PpuHash.Source.{Item.Source}");
+
+    public bool HasTime => Item.TimeUtc is not null;
+
+    public string TimeText => Item.TimeUtc is { } time
+        ? UiDate.Text(new DateTimeOffset(
+            time.Kind == DateTimeKind.Local ? time.ToUniversalTime() : DateTime.SpecifyKind(time, DateTimeKind.Utc)))
+        : string.Empty;
+
+    public string CopyLabel => UiText.GetText("Link.Copy");
+
+    public ICommand CopyCmd { get; }
 }
 
 // Domain 5. It presents the Runtime Context snapshot and nothing else: it
@@ -101,6 +162,10 @@ public sealed class RuntimeVm : VmBase
     {
         LogDiag = logDiagnostics ?? new LogDiagVm();
     }
+
+    // Replaceable for tests only, so no test touches the real clipboard; a
+    // busy clipboard copies nothing instead of crashing.
+    public static Action<string> CopyText { get; set; } = text => UiDlg.TryCopyText(text);
 
     // Log Diagnostics is part of this domain, not a sixth one.
     public LogDiagVm LogDiag { get; }
@@ -129,7 +194,11 @@ public sealed class RuntimeVm : VmBase
     {
         _snapshot = snapshot ?? RuntimeContextSnapshot.Empty;
         Groups = [.. Enum.GetValues<RuntimeFactGroup>()
-            .Select(group => new RuntimeGroupVm(group, _snapshot.InGroup(group)))
+            .Select(group => new RuntimeGroupVm(
+                group,
+                _snapshot.InGroup(group),
+                _snapshot.PpuHashes,
+                _snapshot.GameIdentityState != EvidenceState.NotApplicable))
             .Where(group => group.SummaryRows.Count + group.DetailRows.Count > 0)];
         OnChange(nameof(HasGroups));
         OnChange(nameof(EmptyText));

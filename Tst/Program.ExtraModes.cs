@@ -20,6 +20,13 @@ internal static partial class Program
             return true;
         }
 
+        if (args.Length == 1 && args[0] == "--settings-store-only")
+        {
+            var tempRoot = context.CreateTempRoot("R3ConfigSettingsStore");
+            runner.RunCase(nameof(SetSvcT), () => SetSvcT.Run(tempRoot));
+            return true;
+        }
+
         if (args.Length == 1 && args[0] == "--rec-sync-only")
         {
             var tempRoot = context.CreateTempRoot("R3ConfigRecSync");
@@ -47,6 +54,12 @@ internal static partial class Program
             runner.RunCase(nameof(Rpcs3GameLibraryT),
                 () => Rpcs3GameLibraryT.RunAsync(tempRoot).GetAwaiter().GetResult());
             Console.WriteLine("Game library/icon focused suite passed. Passed: 1, Failed: 0, Skipped: 0");
+            return true;
+        }
+
+        if (args.Length == 1 && args[0].Equals("--runtime-context-only", StringComparison.OrdinalIgnoreCase))
+        {
+            runner.RunCase(nameof(RuntimeContextT), RuntimeContextT.Run);
             return true;
         }
 

@@ -181,7 +181,8 @@ public sealed partial class MainVm : VmBase
             GameList.SelGame.Rec,
             _hwInfo,
             _buildIdentity,
-            GameList.SelGame.Config);
+            GameList.SelGame.Config,
+            databaseLoaded: _gameDatabase.ConfigEntries > 0);
 
         GameList.SelGame.RecState = _curPlan.RecState;
         Plan.Load(

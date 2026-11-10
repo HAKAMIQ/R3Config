@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using R3Config.Application;
 using R3Config.Lang;
 using R3Config.Mdl;
 using R3Config.Svc;
@@ -18,6 +19,13 @@ public sealed partial class MainVm
     private CancellationTokenSource? _logDiagCancellation;
     private long _logDiagVersion;
     private string? _logDiagKey;
+    private LogCrashNoticeVm? _crashNotice;
+
+    // Raised only by the crash notice's Open diagnosis action; the window then
+    // selects the Runtime tab. Nothing switches tabs on its own.
+    public event EventHandler? DiagReq;
+
+    public LogCrashNoticeVm CrashNotice => _crashNotice ??= new LogCrashNoticeVm(OpenCrashDiag, AckCrashNotice);
 
     // Domain 5: Runtime Environment & Compatibility (evidence only).
     public RuntimeVm Runtime => _runtime ??= new RuntimeVm(
@@ -33,6 +41,7 @@ public sealed partial class MainVm
             CancelLogDiag();
             _logDiagKey = null;
             Runtime.LogDiag.Clear();
+            CrashNotice.Hide();
             return;
         }
 
@@ -43,6 +52,7 @@ public sealed partial class MainVm
         }
 
         _logDiagKey = key;
+        CrashNotice.Hide();
         _ = RunLogDiagAsync();
     }
 
@@ -79,8 +89,12 @@ public sealed partial class MainVm
 
         try
         {
-            var result = await Task.Run(
-                () => _flow.AnalyzeLogs(install, serial, hardware, build, knowledge, knowledgeError, token),
+            var (result, crash) = await Task.Run(
+                () =>
+                {
+                    var analysis = _flow.AnalyzeLogs(install, serial, hardware, build, knowledge, knowledgeError, token);
+                    return (analysis, UnseenCrash(analysis, serial));
+                },
                 token);
 
             if (_disposed ||
@@ -89,6 +103,17 @@ public sealed partial class MainVm
                 !string.Equals(serial, GameList.SelGame?.Game.Serial, StringComparison.Ordinal))
             {
                 return;
+            }
+
+            // The notice is decided before the report is published, so a ready
+            // diagnosis never shows a stale notice state.
+            if (serial is not null && crash is not null)
+            {
+                CrashNotice.Show(serial, crash);
+            }
+            else
+            {
+                CrashNotice.Hide();
             }
 
             Runtime.LogDiag.SetContext(Runtime.Snapshot, _rpcs3Builds, Rpcs3BuildCatalog.WindowsPlatform);
@@ -102,8 +127,38 @@ public sealed partial class MainVm
             if (!_disposed && version == Interlocked.Read(ref _logDiagVersion))
             {
                 Runtime.LogDiag.Clear();
+                CrashNotice.Hide();
                 Log(UiText.Fmt("Msg.LogDiagFailed", ex.Message));
             }
         }
+    }
+
+    // The session identity of a rule-backed crash in the selected game's own
+    // session that the user has not opened or dismissed yet; otherwise null.
+    private string? UnseenCrash(LogDiagnosticsResult result, string? serial)
+    {
+        var session = LogCrashNotice.Identify(result.Report, serial);
+        return serial is null || session is null ||
+               string.Equals(_setSvc.Load().SeenLogCrash(serial), session, StringComparison.Ordinal)
+            ? null
+            : session;
+    }
+
+    private void OpenCrashDiag()
+    {
+        AckCrashNotice();
+        Runtime.LogDiag.SelectedTab = LogDiagVm.TabOverview;
+        DiagReq?.Invoke(this, EventArgs.Empty);
+    }
+
+    // "Seen" is stored only here, on Open diagnosis or Dismiss.
+    private void AckCrashNotice()
+    {
+        if (CrashNotice is { Serial: { } serial, Session: { } session })
+        {
+            _setSvc.Update(current => current.WithSeenLogCrash(serial, session));
+        }
+
+        CrashNotice.Hide();
     }
 }

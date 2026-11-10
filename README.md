@@ -45,6 +45,7 @@ workload manifests cannot affect this workload-free WPF/.NET 8 repository.
     .\Script\PortPub.cmd -Rpcs3Path "C:\path\to\rpcs3"
 
 The local packaging script builds and verifies the project, then creates the portable package and SHA-256 checksums under `artifacts`. It does not upload the package or create a GitHub Release.
+The portable package is self-contained: it bundles the .NET 8 runtime, so no separate .NET installation is needed to run it.
 
 ## Project structure
 

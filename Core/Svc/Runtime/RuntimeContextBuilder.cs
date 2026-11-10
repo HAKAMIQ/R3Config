@@ -44,9 +44,10 @@ public static class RuntimeContextBuilder
         AddHardware(facts, hardware);
         AddInstallation(facts, install);
         var buildState = AddBuild(facts, build, hardware?.Cpu);
-        var gameState = AddGame(facts, game);
+        var trusted = TrustedPpu(game);
+        var gameState = AddGame(facts, game, trusted);
         AddCompatibility(facts, game, settings, builds, build, hostPlatform, evidence);
-        return new RuntimeContextSnapshot(facts, buildState, gameState);
+        return new RuntimeContextSnapshot(facts, buildState, gameState, trusted);
     }
 
     private static void AddHardware(List<RuntimeFact> facts, HwInfo? hardware)
@@ -395,7 +396,40 @@ public static class RuntimeContextBuilder
                 : state == Rpcs3BuildIdentityState.Conflict ? EvidenceState.Conflict : EvidenceState.Known));
     }
 
-    private static EvidenceState AddGame(List<RuntimeFact> facts, Rpcs3GameDescriptor? game)
+    // The selected game's trusted PPU hashes: PpuList (the probe's
+    // authoritative set, empty for cache-only evidence) plus a saved H-Canary
+    // binding. Each carries only the source and time the descriptor proves.
+    private static IReadOnlyList<RuntimePpuHash> TrustedPpu(Rpcs3GameDescriptor? game)
+    {
+        if (game is null)
+        {
+            return [];
+        }
+
+        var binding = new HashSet<string>(game.HCanPpuList, StringComparer.OrdinalIgnoreCase);
+        var bound = game.HCanPpu is not null;
+        // HashEvi.None records no evidence kind, so no source is claimed for it.
+        var probeSource = game.HashEvi switch
+        {
+            HashEvi.PlainLog or HashEvi.ZipLog or HashEvi.Cache => RuntimePpuHashSource.Rpcs3Runtime,
+            HashEvi.Meta => RuntimePpuHashSource.Metadata,
+            _ => RuntimePpuHashSource.Unknown
+        };
+
+        return
+        [
+            .. game.PpuList
+                .Concat(game.HCanPpuList)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(hash => binding.Contains(hash)
+                    ? new RuntimePpuHash(hash, RuntimePpuHashSource.HCanBinding, game.HashTime)
+                    : bound
+                        ? new RuntimePpuHash(hash, RuntimePpuHashSource.Analysis, null)
+                        : new RuntimePpuHash(hash, probeSource, game.HashTime))
+        ];
+    }
+
+    private static EvidenceState AddGame(List<RuntimeFact> facts, Rpcs3GameDescriptor? game, IReadOnlyList<RuntimePpuHash> trusted)
     {
         const RuntimeFactGroup group = RuntimeFactGroup.Game;
         if (game is null)
@@ -408,7 +442,10 @@ public static class RuntimeContextBuilder
         var version = string.IsNullOrWhiteSpace(game.Version) ? null : game.Version.Trim();
         var category = string.IsNullOrWhiteSpace(game.Category) ? null : game.Category.Trim();
         var edition = serial is null ? null : NoteScope.EditionOf(serial);
-        var ppu = game.Hashes.Count > 0 ? string.Join(", ", game.Hashes) : null;
+
+        // Only trusted hashes are the game's hash; an untrusted per-game cache
+        // hash (game.Hashes minus PpuList) is never presented as a fact.
+        var ppu = trusted.Count > 0 ? string.Join(", ", trusted.Select(item => item.Hash)) : null;
 
         facts.Add(Fact(group, "GameSerial", serial));
         facts.Add(Fact(group, "GameTitle", string.IsNullOrWhiteSpace(game.Title) ? null : game.Title.Trim()));

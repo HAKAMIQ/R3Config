@@ -161,7 +161,24 @@
 
                                         <TextBlock Text="{Binding CurDsp}"
                                                    Style="{StaticResource RecToolTipTechnicalValueText}"
-                                                   Margin="0,3,0,10" />
+                                                   Margin="0,3,0,0" />
+
+                                        <TextBlock Text="{Binding SrcDsp}"
+                                                   Style="{StaticResource RecToolTipSourceText}"
+                                                   Margin="0,2,0,10" />
+
+                                        <!-- Only when R3Config's copy of the RPCS3 database makes RPCS3 boot
+                                             another value; direction from the styles only. -->
+                                        <StackPanel Margin="0,0,0,10"
+                                                    Visibility="{Binding HasDbBoot,
+                                                                         Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <TextBlock Text="{lang:TextExt Key=Plan.DbBoot}"
+                                                       Style="{StaticResource RecToolTipSourceText}" />
+
+                                            <TextBlock Text="{Binding DbBootDsp}"
+                                                       Style="{StaticResource RecToolTipTechnicalValueText}"
+                                                       Margin="0,3,0,0" />
+                                        </StackPanel>
 
                                         <TextBlock Text="{lang:TextExt Key=Plan.Proposed}"
                                                    Style="{StaticResource RecToolTipSectionLabelText}"
@@ -170,6 +187,27 @@
                                         <TextBlock Text="{Binding Val}"
                                                    Style="{StaticResource RecToolTipTechnicalValueText}"
                                                    Margin="0,3,0,0" />
+
+                                        <TextBlock Text="{Binding OrigDsp}"
+                                                   Style="{StaticResource RecToolTipSourceText}"
+                                                   Margin="0,2,0,10" />
+
+                                        <!-- Direction comes from the styles only, so the frozen
+                                             UiGate direction/alignment contract is unchanged. -->
+                                        <TextBlock Text="{lang:TextExt Key=Plan.Default}"
+                                                   Style="{StaticResource RecToolTipSectionLabelText}" />
+
+                                        <TextBlock Text="{Binding DefDsp}"
+                                                   Style="{StaticResource RecToolTipTechnicalValueText}"
+                                                   Margin="0,3,0,0"
+                                                   Visibility="{Binding HasDef,
+                                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                        <TextBlock Text="{lang:TextExt Key=Ui.Unknown}"
+                                                   Style="{StaticResource RecToolTipSourceText}"
+                                                   Margin="0,3,0,0"
+                                                   Visibility="{Binding NoDef,
+                                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
                                     </StackPanel>
 
                                     <Border Height="1"
@@ -353,6 +391,25 @@
                     <StackPanel Orientation="Vertical"
                                 FlowDirection="{DynamicResource App.FlowDirection}"
                                 HorizontalAlignment="Stretch">
+
+                        <!-- Effective configuration source: one quiet line in the UI direction. A database
+                             source lists its RPCS3 keys/values in the tip (technical text, LTR). -->
+                        <TextBlock Text="{Binding Plan.BootSrcText}"
+                                   AutomationProperties.AutomationId="Settings.BootSource"
+                                   Style="{StaticResource RecLocalizedSubtitleText}"
+                                   Margin="0,0,0,10"
+                                   ToolTipService.IsEnabled="{Binding Plan.HasBootSrcTip}"
+                                   Visibility="{Binding Plan.HasBootSrc,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock.ToolTip>
+                                <ToolTip Style="{StaticResource ChecklistDetailToolTip}"
+                                         DataContext="{Binding PlacementTarget.DataContext,
+                                                              RelativeSource={RelativeSource Self}}">
+                                    <TextBlock Text="{Binding Plan.BootSrcTip}"
+                                               Style="{StaticResource RecToolTipTechnicalValueText}" />
+                                </ToolTip>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
 
                         <!-- 0. G1: the selected writes would create config_SERIAL.yml, and RPCS3 then
                              ignores its database config for the game. Lines are RPCS3 keys/values (LTR). -->

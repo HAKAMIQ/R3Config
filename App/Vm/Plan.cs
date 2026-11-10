@@ -147,6 +147,33 @@ public sealed class PlanVm : VmBase
                     .Where(item => item.IsSel && item.IsDiff && item.IsAction)
                     .Select(item => item.Change));
 
+    // One quiet line: the layer RPCS3 boots the selected game with on top of
+    // config.yml (PlanService.ResolveBootSource). Database is worded as R3Config's
+    // copy of the RPCS3 database; the tip lists its keys verbatim (LTR).
+    public bool HasBootSrc => _plan is not null;
+
+    public string BootSrcText =>
+        _plan?.BootSource switch
+        {
+            null => string.Empty,
+            CfgBootSrc.Custom => UiText.GetText("Plan.BootSrcCustom"),
+            CfgBootSrc.Database => UiText.Fmt("Plan.BootSrcDatabase", _plan.DbCfg.Count),
+            CfgBootSrc.Global => UiText.GetText("Plan.BootSrcGlobal"),
+            _ => UiText.GetText("Plan.BootSrcUnknown")
+        };
+
+    public bool HasBootSrcTip => _plan is { BootSource: CfgBootSrc.Database, DbCfg.Count: > 0 };
+
+    public string BootSrcTip =>
+        HasBootSrcTip
+            ? string.Join(
+                "\n",
+                _plan!.DbCfg
+                    .OrderBy(setting => setting.Section, StringComparer.Ordinal)
+                    .ThenBy(setting => setting.Key, StringComparer.Ordinal)
+                    .Select(setting => $"{setting.Section}/{setting.Key}: {setting.Value}"))
+            : string.Empty;
+
     public bool CanDel => _plan?.Items.Any(item => item.HasCustomOverride) == true;
 
     public bool IsEmpty => Items.Count == 0;
@@ -189,6 +216,7 @@ public sealed class PlanVm : VmBase
         OnChange(nameof(DbWarnTitle));
         OnChange(nameof(DbKeepTitle));
         OnChange(nameof(DbLostTitle));
+        RaiseSrc();
 
         foreach (var item in Items)
         {
@@ -218,6 +246,7 @@ public sealed class PlanVm : VmBase
         EmptyTxt = UiText.GetText("Plan.Empty");
         TgtCfg = "-";
         _plan = null;
+        RaiseSrc();
 
         OnChange(nameof(IsEmpty));
         OnChange(nameof(ShowEmpty));
@@ -238,6 +267,7 @@ public sealed class PlanVm : VmBase
         Title = plan.GameName;
         Serial = plan.GameSer;
         TgtCfg = plan.CfgPath;
+        RaiseSrc();
 
         Reload(preserveSelection: false);
     }
@@ -475,6 +505,14 @@ public sealed class PlanVm : VmBase
         }
 
         return string.Empty;
+    }
+
+    private void RaiseSrc()
+    {
+        OnChange(nameof(HasBootSrc));
+        OnChange(nameof(BootSrcText));
+        OnChange(nameof(HasBootSrcTip));
+        OnChange(nameof(BootSrcTip));
     }
 
     private void RaiseSel()

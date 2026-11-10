@@ -351,6 +351,7 @@ internal static class GameSettingsUiT
 
             AssertNotesCardLinks(view, vm);
             AssertPlanRowTooltipLink(view, vm);
+            AssertPlanRowTooltipSource(view, vm);
 
             Assert(listener.Errors.Count == 0,
                 "Settings view produced data-binding errors: " + string.Join(" | ", listener.Errors));
@@ -456,6 +457,104 @@ internal static class GameSettingsUiT
             finally
             {
                 tip.IsOpen = false;
+            }
+        }
+    }
+
+    // The row ToolTip also shows where the row's current value comes from, the
+    // value R3Config's copy of the RPCS3 database boots when it differs, where
+    // the recommendation comes from, and the RPCS3 default from
+    // R3Config's table ("Unknown" when the table has none). Values stay LTR;
+    // labels and source lines follow the UI language.
+    private static void AssertPlanRowTooltipSource(R3Config.Ctrl.RecView view, PlanVm vm)
+    {
+        const string serial = "BLUS30442";
+        Assert(PlanService.TryReadBuiltIn("Video", "Shader Mode", out var shaderDefault) && shaderDefault is { Length: > 0 },
+            "The built-in table must hold the Shader Mode default this test renders.");
+        var changes = new[]
+        {
+            new CfgChg("Video", "Shader Mode", "Async Shader Recompiler", "shader mode", null, RecRisk.Rec),
+            new CfgChg("Video", "Write Color Buffers", "true", "write color buffers", null, RecRisk.Rec) { Origin = RecOrigin.Sync }
+        };
+        var plan = PlanOf(serial, "Midnight Club: Los Angeles", changes);
+        plan = plan with
+        {
+            Items =
+            [
+                plan.Items[0] with { CurVal = "Shader Interpreter only", RunVal = "Shader Interpreter only", CurSrc = CfgValSrc.Global, DefVal = shaderDefault },
+                plan.Items[1] with { CurVal = "false", RunVal = "true", CurSrc = CfgValSrc.Global, DefVal = null }
+            ]
+        };
+        var model = GameSettingsProjector.Project(plan, null, new GameSettingsContext(serial, "01.06"));
+        var window = Window.GetWindow(view)!;
+
+        foreach (var language in new[] { UiText.EnLang, UiText.ArabLang })
+        {
+            UiText.SetLang(language);
+            UiLaySvc.Apply();
+            vm.Load(plan, model);
+            vm.SetLang();
+            Settle(window);
+            var textFlow = UiLaySvc.Current.TextFlow;
+            Assert(language == UiText.EnLang || textFlow == FlowDirection.RightToLeft,
+                "Arabic natural text must flow right to left.");
+
+            Check("Shader Mode", "Shader Interpreter only", "Plan.CurSrc.Global", "Plan.RecSrc.Baseline", shaderDefault, null);
+            Check("Write Color Buffers", "false", "Plan.CurSrc.Global", "Plan.RecSrc.Sync", null, "true");
+
+            // "Current" is the row's current value (CurDsp, here "false") with its
+            // own source; the database boot value ("true", equal to the proposed
+            // value) is a separate line, so every check reads exact positions.
+            void Check(string key, string current, string sourceKey, string originKey, string? defaultValue, string? dbBoot)
+            {
+                var row = All<Border>(view).Single(item => item.ToolTip is ToolTip &&
+                                                           (item.DataContext as PlanItVm)?.Key == key);
+                var tip = (ToolTip)row.ToolTip;
+                tip.PlacementTarget = row;
+                tip.IsOpen = true;
+                try
+                {
+                    tip.UpdateLayout();
+                    var blocks = Blocks(tip);
+                    var shown = string.Join(" / ", blocks.Select(Plain));
+                    TextBlock One(string text) =>
+                        blocks.SingleOrDefault(block => Plain(block) == text)
+                        ?? throw new InvalidOperationException($"[{language}] {key} ToolTip must show '{text}'. Rendered: {shown}");
+
+                    foreach (var textKey in new[] { "Plan.Default", sourceKey, originKey })
+                    {
+                        var text = UiText.GetText(textKey);
+                        Assert(One(text).FlowDirection == textFlow && NoteSvc.ContainsArabic(text) == (language == UiText.ArabLang),
+                            $"[{language}] {key} ToolTip line {textKey} must be localized natural text in the UI direction. Rendered: {shown}");
+                    }
+
+                    var at = blocks.IndexOf(One(UiText.GetText("Plan.Current")));
+                    Assert(at >= 0 && at + 2 < blocks.Count && Plain(blocks[at + 1]) == current &&
+                           blocks[at + 1].FlowDirection == FlowDirection.LeftToRight &&
+                           Plain(blocks[at + 2]) == UiText.GetText(sourceKey),
+                        $"[{language}] {key} ToolTip must show the row's current value ({current}) left to right right after the Current label, then its source. Rendered: {shown}");
+                    var bootLabel = UiText.GetText("Plan.DbBoot");
+                    Assert(dbBoot is null
+                            ? blocks.All(block => Plain(block) != bootLabel)
+                            : at + 4 < blocks.Count && blocks[at + 3] == One(bootLabel) && blocks[at + 3].FlowDirection == textFlow &&
+                              Plain(blocks[at + 4]) == dbBoot && blocks[at + 4].FlowDirection == FlowDirection.LeftToRight,
+                        $"[{language}] {key} ToolTip must show the boot value from R3Config's database copy ({dbBoot ?? "none"}) only as its own line after the source. Rendered: {shown}");
+                    var unknown = UiText.GetText("Ui.Unknown");
+                    if (defaultValue is null)
+                    {
+                        Assert(One(unknown).FlowDirection == textFlow,
+                            $"[{language}] {key} ToolTip must show Unknown, never a guess, when the table has no default. Rendered: {shown}");
+                    }
+                    else
+                    {
+                        Assert(One(defaultValue).FlowDirection == FlowDirection.LeftToRight && blocks.All(block => Plain(block) != unknown),
+                            $"[{language}] {key} ToolTip must show the table default {defaultValue} left to right. Rendered: {shown}");
+                    }
+                }
+                finally
+                {
+                    tip.IsOpen = false;
+                }
             }
         }
     }

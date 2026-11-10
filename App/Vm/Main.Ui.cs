@@ -373,7 +373,10 @@ public sealed partial class MainVm : VmBase
 
     private void SaveSet()
     {
-        _setSvc.Save(new AppSet(string.IsNullOrWhiteSpace(ExePath) ? null : ExePath));
+        // Update, not Save: the RPCS3 path must not drop other stored settings
+        // such as acknowledged crash notices.
+        var exePath = string.IsNullOrWhiteSpace(ExePath) ? null : ExePath;
+        _setSvc.Update(current => current with { LastExe = exePath });
     }
 
     private void LoadCan()

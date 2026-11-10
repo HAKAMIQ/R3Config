@@ -3,7 +3,8 @@
 R3Config redistributes the third-party components and content below in its
 release package. Each license text is reproduced verbatim from the component's
 NuGet package or, when the package carries none, from the source commit the
-package was built from.
+package was built from; the bundled .NET runtime license is quoted from its
+source repository branch.
 
 Bundled patch and cheat collections keep their own notices in `CANARY.md`,
 `CHEATS.md` and `NCL.md`.
@@ -215,6 +216,50 @@ the Software without restriction, including without limitation the rights to
 use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
 of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## .NET 8 runtime and Windows Desktop runtime (bundled)
+
+- Components: .NET 8 runtime (Microsoft.NETCore.App) and the WPF part of the
+  Windows Desktop runtime (Microsoft.WindowsDesktop.App), win-x64
+- License: MIT
+- Project: https://github.com/dotnet/runtime
+- Project: https://github.com/dotnet/wpf
+- Shipped files: bundled inside the single-file R3Config.exe, because
+  `Script/PortPub.ps1` publishes the portable release self-contained
+- Further notices: the third-party notices of the runtime itself apply, see
+  https://github.com/dotnet/runtime/blob/release/8.0/THIRD-PARTY-NOTICES.TXT
+  and https://github.com/dotnet/wpf/blob/release/8.0/THIRD-PARTY-NOTICES.TXT
+
+### LICENSE.TXT (verbatim from dotnet/runtime release/8.0)
+
+Source: https://github.com/dotnet/runtime/blob/release/8.0/LICENSE.TXT. The
+LICENSE.TXT of dotnet/wpf release/8.0 carries the same text.
+
+```text
+The MIT License (MIT)
+
+Copyright (c) .NET Foundation and Contributors
+
+All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.

@@ -311,6 +311,11 @@ foreach ($requiredLine in @(
         '## YamlDotNet 18.1.0',
         'Copyright (c) 2008, 2009, 2010, 2011, 2012, 2013, 2014 Antoine Aubry and contributors',
         'Copyright (c) 2006 Kirill Simonov',
+        '## .NET 8 runtime and Windows Desktop runtime (bundled)',
+        '- Project: https://github.com/dotnet/runtime',
+        '- Project: https://github.com/dotnet/wpf',
+        'Copyright (c) .NET Foundation and Contributors',
+        'https://github.com/dotnet/runtime/blob/release/8.0/THIRD-PARTY-NOTICES.TXT',
         '## RPCS3 Wiki content',
         'Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)')) {
     if ($thirdPartyNotice.IndexOf($requiredLine, [StringComparison]::Ordinal) -lt 0) {

@@ -1,0 +1,72 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:lang="clr-namespace:R3Config.Lang">
+
+    <!-- Quiet inline notice under the game identity row (Fluent MessageBar
+         equivalent, like AdvInlineNotice): the selected game's latest RPCS3
+         log session recorded a rule-backed crash the user has not opened or
+         dismissed yet. It takes layout space only while visible, never floats,
+         and states its intent as glyph + text + color. Direction is inherited
+         from the shell; localized text uses Type.Body. -->
+    <Style x:Key="LogCrashNoticeSurface"
+           TargetType="{x:Type Border}">
+        <Setter Property="Background"
+                Value="{DynamicResource Status.WarningSurface}" />
+        <Setter Property="BorderBrush"
+                Value="{DynamicResource Stroke.Subtle}" />
+        <Setter Property="BorderThickness"
+                Value="{StaticResource Stroke.Thickness.Default}" />
+        <Setter Property="CornerRadius"
+                Value="{StaticResource Radius.Medium}" />
+        <Setter Property="Padding"
+                Value="12,8" />
+        <Setter Property="Margin"
+                Value="0,0,0,8" />
+        <Setter Property="HorizontalAlignment"
+                Value="Stretch" />
+    </Style>
+
+    <DataTemplate x:Key="LogCrashNotice">
+        <Border Style="{StaticResource LogCrashNoticeSurface}"
+                AutomationProperties.AutomationId="Shell.LogCrashNotice"
+                AutomationProperties.Name="{lang:TextExt Key=Diag.CrashNotice.Text}"
+                Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+
+            <Grid VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="&#xE7BA;"
+                           Style="{StaticResource IconGlyphText}"
+                           Foreground="{DynamicResource Status.Warning}" />
+
+                <TextBlock Grid.Column="2"
+                           Text="{lang:TextExt Key=Diag.CrashNotice.Text}"
+                           Style="{StaticResource Type.Body}"
+                           VerticalAlignment="Center" />
+
+                <StackPanel Grid.Column="4"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+
+                    <Button Content="{lang:TextExt Key=Diag.CrashNotice.Open}"
+                            Command="{Binding OpenCmd}"
+                            Style="{StaticResource FluentButton.Secondary}"
+                            AutomationProperties.AutomationId="Shell.LogCrashNotice.Open"
+                            Margin="0,0,8,0" />
+
+                    <Button Content="{lang:TextExt Key=Diag.CrashNotice.Dismiss}"
+                            Command="{Binding DismissCmd}"
+                            Style="{StaticResource FluentButton.Subtle}"
+                            AutomationProperties.AutomationId="Shell.LogCrashNotice.Dismiss" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </DataTemplate>
+</ResourceDictionary>

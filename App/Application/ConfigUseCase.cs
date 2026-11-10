@@ -15,7 +15,8 @@ public sealed class ConfigUseCase(
         WikiRec? recommendation,
         HwInfo? hardware,
         Rpcs3RuntimeBuild? build = null,
-        RecSyncApiGame? databaseConfig = null)
+        RecSyncApiGame? databaseConfig = null,
+        bool databaseLoaded = false)
     {
         return planService.BuildCfg(
             install,
@@ -23,7 +24,8 @@ public sealed class ConfigUseCase(
             recommendation,
             hardware,
             build,
-            databaseConfig: databaseConfig);
+            databaseConfig: databaseConfig,
+            databaseLoaded: databaseLoaded);
     }
 
     public CfgRes Apply(

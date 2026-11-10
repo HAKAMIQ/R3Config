@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using Microsoft.Win32;
 using R3Config.Lang;
@@ -137,6 +138,27 @@ public static class UiDlg
     public static void CopyText(string text)
     {
         Clipboard.SetText(text);
+    }
+
+    public static bool TryCopyText(string text)
+    {
+        return TryCopyText(Clipboard.SetText, text);
+    }
+
+    // A clipboard held by another process throws ExternalException (COM
+    // CLIPBRD_E_CANT_OPEN); nothing is copied and the caller is not crashed.
+    public static bool TryCopyText(Action<string> setText, string text)
+    {
+        ArgumentNullException.ThrowIfNull(setText);
+        try
+        {
+            setText(text);
+            return true;
+        }
+        catch (ExternalException)
+        {
+            return false;
+        }
     }
 
     private static bool Show(

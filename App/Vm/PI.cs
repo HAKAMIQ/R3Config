@@ -45,6 +45,39 @@ public sealed class PlanItVm : VmBase
 
     public string TransDsp => $"{CurDsp} -> {Val}";
 
+    // Row ToolTip: "Current" is always CurDsp with its own source (SrcDsp).
+    // RunVal differs from CurVal only while R3Config's copy of the RPCS3
+    // database makes RPCS3 boot the key with another value (PlanService), and
+    // only then does the ToolTip add that boot value as its own line.
+    public bool HasDbBoot => !string.Equals(Entry.RunVal, Entry.CurVal, StringComparison.Ordinal);
+
+    public string DbBootDsp => HasDbBoot ? Entry.RunVal ?? string.Empty : string.Empty;
+
+    public string SrcDsp => UiText.GetText(Entry.CurSrc switch
+    {
+        CfgValSrc.Custom => "Plan.CurSrc.Custom",
+        CfgValSrc.Database => "Plan.CurSrc.Database",
+        CfgValSrc.Global => "Plan.CurSrc.Global",
+        CfgValSrc.BuiltIn => "Plan.CurSrc.BuiltIn",
+        _ => "Plan.CurSrc.Unknown"
+    });
+
+    // Only the coarse origin R3Config stores: the shipped catalog (built from
+    // the RPCS3 Wiki) or a local recommendation update.
+    public string OrigDsp => UiText.GetText(Entry.Change.Origin == RecOrigin.Sync
+        ? "Plan.RecSrc.Sync"
+        : "Plan.RecSrc.Baseline");
+
+    // RPCS3's default from R3Config's verified table; the ToolTip shows the
+    // localized "Unknown" instead when the table has no entry.
+    public bool HasDef => Entry.DefVal is not null;
+
+    public bool NoDef => !HasDef;
+
+    public string DefDsp => Entry.DefVal is { Length: 0 }
+        ? "\"\""
+        : Entry.DefVal ?? string.Empty;
+
     public string? Notes => Entry.Notes;
 
     public string NoteTag => string.IsNullOrWhiteSpace(Entry.Notes)
@@ -187,6 +220,8 @@ public sealed class PlanItVm : VmBase
         OnChange(nameof(BadgeTip));
         OnChange(nameof(MainTone));
         OnChange(nameof(TransDsp));
+        OnChange(nameof(SrcDsp));
+        OnChange(nameof(OrigDsp));
         OnChange(nameof(TagKey));
         OnChange(nameof(NoteName));
         OnChange(nameof(TypeLine));

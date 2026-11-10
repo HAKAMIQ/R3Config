@@ -27,7 +27,8 @@ does not replace their parsers, compatibility policy, or transaction hardening.
    so the state and `CfgEntry.CurVal` keep the chain above: it is the value that
    holds after any write, and Apply re-resolves it before writing.
    `CfgEntry.RunVal` carries the value RPCS3 boots with now, including the
-   database layer, and `CfgPlan.DbCfg` lists the active database settings with
+   database layer only while `CfgPlan.BootSource` is Database (otherwise it
+   equals `CfgEntry.CurVal`), and `CfgPlan.DbCfg` lists the active database settings with
    the value that replaces each one. When selected changes would create the
    file, the settings panel warns and lists the database settings that stop
    applying (`PlanService.DatabaseLoss`). Copying database settings into the
@@ -39,6 +40,35 @@ does not replace their parsers, compatibility policy, or transaction hardening.
    when pressed; automatic selection never does. (b+d) R3Config cannot write the
    value (another recommended value, no recommendation, or a key outside the
    map): it is lost. Nothing else in the write path changes.
+
+   The settings panel opens with one quiet line naming the layer RPCS3 boots
+   the game with on top of `config.yml` (`CfgPlan.BootSource`, computed by
+   `PlanService.ResolveBootSource`, display only). `Custom`: a readable custom
+   config exists, so RPCS3 ignores its database config. `Database`: no custom
+   config and R3Config's copy of the RPCS3 database has an entry; the line
+   gives the setting count, says the entry is per Serial and not per game
+   version, and its tip lists the keys and values LTR. `Global`: neither, and
+   only when that copy loaded. `Unknown`: no Serial, an unreadable custom
+   config or `config.yml` (RPCS3 does not skip the database for a custom config
+   it fails to parse), a config named after a likely boot path (RPCS3 tries
+   `<boot path>.yml` first, System.cpp:1813, and R3Config does not resolve that
+   path: `<game folder>.yml`, `<game folder>/.yml` and the `EBOOT.BIN.yml` next to
+   the executable), a game path that `RuntimePathPolicy.RequireLocal` rejects
+   (not local or not fully qualified; a game at a drive root such as `E:\` never
+   reads the drive-relative `E:.yml`), a database entry with no parsed setting,
+   a config that cannot be decoded as UTF-8 (display only: the plan is still
+   built, and the apply path is unchanged), or no loaded database copy. The
+   user's own `GuiConfigs/config_database.dat` is not read here and may differ.
+
+   The row ToolTip sources come from that one boot source
+   (`PlanService.BuildCfg` computes it once): `CfgEntry.CurSrc` is the layer of
+   the row's current value `CfgEntry.CurVal` (custom config, `config.yml`,
+   RPCS3 default, or Database when R3Config's copy of the RPCS3 database boots
+   that same value). When the boot source is Unknown every row source is
+   Unknown, as is a row the state could not read. When the boot source is
+   Database and R3Config's copy boots another value, `CfgEntry.RunVal` holds
+   it and the ToolTip adds it as its own line (`PlanItVm.HasDbBoot`); "Current"
+   always shows `PlanItVm.CurDsp`, the value the row itself shows.
 
    `WikiRecommendationClass` remains attached to each `CfgChg` through state and
    planning. Only `MandatoryGameConfig` and `GeneralRecommendation` may enter

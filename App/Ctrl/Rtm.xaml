@@ -59,6 +59,47 @@
                 </Grid>
             </DataTemplate>
 
+            <!-- One trusted PPU executable hash: the raw hash (LTR technical text),
+                 its localized source, the evidence time and a Copy button. -->
+            <DataTemplate x:Key="RuntimePpuHashTemplate">
+                <Grid Margin="0,3,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Label}"
+                               Style="{StaticResource RecToolTipSectionLabelText}" />
+
+                    <StackPanel Grid.Column="1"
+                                Orientation="Vertical"
+                                HorizontalAlignment="Stretch">
+
+                        <TextBlock Text="{Binding Hash}"
+                                   AutomationProperties.AutomationId="Runtime.PpuHash.Value"
+                                   Style="{StaticResource RecToolTipTechnicalValueText}" />
+
+                        <TextBlock Text="{Binding SourceText}"
+                                   Style="{StaticResource RecLocalizedSubtitleText}" />
+
+                        <TextBlock Text="{Binding TimeText}"
+                                   Style="{StaticResource RecToolTipTechnicalValueText}"
+                                   Visibility="{Binding HasTime,
+                                                        Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="2"
+                            AutomationProperties.AutomationId="Runtime.PpuHash.Copy"
+                            Content="{Binding CopyLabel}"
+                            Command="{Binding CopyCmd}"
+                            Style="{StaticResource RecSecondaryActionButton}"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Top" />
+                </Grid>
+            </DataTemplate>
+
             <DataTemplate x:Key="RuntimeGroupTemplate">
                 <Border Style="{StaticResource RecEvidenceCard}">
 
@@ -72,6 +113,32 @@
                         <ItemsControl ItemsSource="{Binding SummaryRows}"
                                       ItemTemplate="{StaticResource RuntimeFactTemplate}"
                                       HorizontalContentAlignment="Stretch" />
+
+                        <!-- Game group only: trusted PPU hashes (several are all
+                             listed, none picked), else the HashUnknown guidance. -->
+                        <ItemsControl ItemsSource="{Binding PpuHashes}"
+                                      AutomationProperties.AutomationId="Runtime.PpuHashes"
+                                      ItemTemplate="{StaticResource RuntimePpuHashTemplate}"
+                                      Visibility="{Binding HasPpuHashes,
+                                                           Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <Grid Margin="0,3,0,0"
+                              Visibility="{Binding HasPpuHashGuidance,
+                                                   Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding PpuHashLabel}"
+                                       Style="{StaticResource RecToolTipSectionLabelText}" />
+
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding PpuHashGuidance}"
+                                       AutomationProperties.AutomationId="Runtime.PpuHash.Guidance"
+                                       Style="{StaticResource RecLocalizedBodyText}" />
+                        </Grid>
 
                         <Expander Style="{StaticResource RecDetailsExpander}"
                                   Margin="0,8,0,0"

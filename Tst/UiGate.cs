@@ -2330,6 +2330,7 @@ internal static class UiGate
             GameSettingsUiT.RenderSettingsView();
             RuntimeViewUiT.Render();
             LogDiagViewUiT.Render();
+            R3Config.Tests.LogCrashNoticeUiT.Render();
 
             var themes = new[] { true, false };
             var langs = new[]
@@ -2385,6 +2386,7 @@ internal static class UiGate
                     VerifyGameIconPresentation();
                     R3Config.Tests.GameCompatLineUiT.VerifyRuntime(lang, isDark, shotDir);
                     R3Config.Tests.DbWarnUiT.VerifyRuntime(lang, isDark, shotDir);
+                    R3Config.Tests.CfgPlanSourceUiT.VerifyRuntime(lang, isDark);
                     R3Config.Tests.NoteRevealUiT.VerifyRuntime(lang, isDark, shotDir);
                     R3Config.Tests.NoteBidiUiT.VerifyRuntime(lang, isDark, shotDir);
                     R3Config.Tests.TechnicalTextT.VerifyRuntime(lang, isDark, shotDir);

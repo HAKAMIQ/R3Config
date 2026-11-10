@@ -60,7 +60,14 @@ internal static partial class ThirdPartyNoticeT
                      "## RPCS3 Wiki content",
                      "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)",
                      "`Data/cat.json`",
-                     "`Data/wiki-notes.json`"
+                     "`Data/wiki-notes.json`",
+                     // PortPub.ps1 publishes self-contained, so the .NET 8
+                     // runtime and the WPF Windows Desktop runtime ship too.
+                     "## .NET 8 runtime and Windows Desktop runtime (bundled)",
+                     "- Project: https://github.com/dotnet/runtime",
+                     "- Project: https://github.com/dotnet/wpf",
+                     "Copyright (c) .NET Foundation and Contributors",
+                     "https://github.com/dotnet/runtime/blob/release/8.0/THIRD-PARTY-NOTICES.TXT"
                  })
         {
             Check(notice.Contains(line, StringComparison.Ordinal),
@@ -70,7 +77,7 @@ internal static partial class ThirdPartyNoticeT
         Check(!project.Contains("All rights reserved", StringComparison.OrdinalIgnoreCase),
             "App/R3App.csproj copyright must not contradict GPL-3.0-or-later.");
 
-        Console.WriteLine($"Third-party notice (WPF-UI {version}, YamlDotNet {yamlVersion}, RPCS3 Wiki CC BY-SA 4.0, verbatim licenses, shipped) PASS.");
+        Console.WriteLine($"Third-party notice (WPF-UI {version}, YamlDotNet {yamlVersion}, RPCS3 Wiki CC BY-SA 4.0, bundled .NET 8 runtime, verbatim licenses, shipped) PASS.");
     }
 
     private static void Check(bool ok, string message)

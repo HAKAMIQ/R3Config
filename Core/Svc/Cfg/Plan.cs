@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Text;
 using R3Config.Mdl;
 
 #pragma warning disable IDE0130
@@ -105,7 +107,8 @@ public sealed class PlanService
         HwInfo? hw = null,
         Rpcs3RuntimeBuild? build = null,
         string hostPlatform = "Windows",
-        RecSyncApiGame? databaseConfig = null)
+        RecSyncApiGame? databaseConfig = null,
+        bool databaseLoaded = false)
     {
         // hw is never used as a tier: the state of a documented change never depends on
         // Low/Mid/High. Only proven vendor/host/build facts feed the change's own scope.
@@ -150,18 +153,25 @@ public sealed class PlanService
                 key),
             facts);
 
+        // The Settings line and every row source come from this one boot source.
+        var bootSource = ResolveBootSource(game, targetPath, globalPath, databaseConfig, databaseLoaded);
         var items = changes
             .Zip(
                 state.Items,
                 (change, stateItem) =>
-                    new CfgEntry(
+                {
+                    var (runVal, source) = RowSource(bootSource, targetPath, globalPath, database, change, stateItem);
+                    return new CfgEntry(
                         change,
                         stateItem.Current,
                         stateItem)
                     {
                         HasCustomOverride = R3Yaml.HasKey(targetPath, change.Section, change.Key),
-                        RunVal = RunValue(targetPath, globalPath, database, change, stateItem.Current)
-                    })
+                        RunVal = runVal,
+                        CurSrc = source,
+                        DefVal = TryReadBuiltIn(change.Section, change.Key, out var builtIn) ? builtIn : null
+                    };
+                })
             .ToArray();
 
         return new CfgPlan(
@@ -174,8 +184,96 @@ public sealed class PlanService
             NeedBkp: items.Any(
                 item => item.IsAction && item.IsDiff))
         {
-            DbCfg = ActiveDatabase(targetPath, globalPath, database)
+            DbCfg = DisplayRead(() => ActiveDatabase(targetPath, globalPath, database), []),
+            BootSource = bootSource
         };
+    }
+
+    // The layer RPCS3 boots this game with on top of config.yml, in the order of
+    // rpcs3/Emu/System.cpp:1808-1850: "<boot path>.yml", then config_<SERIAL>.yml;
+    // the first that loads disables the database config, which otherwise applies
+    // when its entry is not empty. A custom config RPCS3 fails to parse does not
+    // disable it, so an unreadable one is Unknown. The database side is only what
+    // R3Config's shipped copy says: databaseLoaded tells whether that copy loaded,
+    // so a missing entry is evidence only then. The user's own
+    // GuiConfigs/config_database.dat is not read and may differ. Display only:
+    // a config that cannot be read or decoded is Unknown, never an exception.
+    internal static CfgBootSrc ResolveBootSource(
+        Rpcs3GameDescriptor game,
+        string targetPath,
+        string globalPath,
+        RecSyncApiGame? databaseConfig,
+        bool databaseLoaded)
+    {
+        ArgumentNullException.ThrowIfNull(game);
+
+        return DisplayRead(
+            () =>
+            {
+                if (string.IsNullOrWhiteSpace(game.Serial) ||
+                    Directory.Exists(targetPath) ||
+                    BootConfigExists(game.InstPath) != false)
+                {
+                    return CfgBootSrc.Unknown;
+                }
+
+                if (File.Exists(targetPath))
+                {
+                    return R3Yaml.CanRead(targetPath) ? CfgBootSrc.Custom : CfgBootSrc.Unknown;
+                }
+
+                if (Directory.Exists(globalPath) || !R3Yaml.CanRead(globalPath))
+                {
+                    return CfgBootSrc.Unknown;
+                }
+
+                if (databaseConfig is not null)
+                {
+                    // An entry with no parsed setting cannot be shown as a layer.
+                    return databaseConfig.Settings.Count > 0 ? CfgBootSrc.Database : CfgBootSrc.Unknown;
+                }
+
+                return databaseLoaded ? CfgBootSrc.Global : CfgBootSrc.Unknown;
+            },
+            CfgBootSrc.Unknown);
+    }
+
+    // R3Config does not resolve RPCS3's boot path (the game folder or its
+    // EBOOT.BIN), so any config named after a likely boot path makes the source
+    // unprovable rather than ignored. The game path follows the local-path
+    // policy of the other game-path consumers: null (unknown) when it is not a
+    // local, fully qualified path.
+    private static bool? BootConfigExists(string? gamePath)
+    {
+        string root;
+        try
+        {
+            root = RuntimePathPolicy.RequireLocal(gamePath ?? string.Empty, "Game");
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidDataException or IOException or
+                                       UnauthorizedAccessException or NotSupportedException or
+                                       System.Security.SecurityException)
+        {
+            return null;
+        }
+
+        var folder = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var candidates = new List<string>
+        {
+            Path.Combine(root, ".yml"),
+            Path.Combine(root, "PS3_GAME", "USRDIR", "EBOOT.BIN.yml"),
+            Path.Combine(root, "USRDIR", "EBOOT.BIN.yml")
+        };
+
+        // At a drive root "E:" + ".yml" is the drive-relative "E:.yml" (the
+        // current directory of that drive), not a file next to the game.
+        var driveRoot = Path.GetPathRoot(root)?.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if (folder.Length > 0 && !string.Equals(folder, driveRoot, StringComparison.OrdinalIgnoreCase))
+        {
+            candidates.Add(folder + ".yml");
+        }
+
+        return candidates.Any(File.Exists);
     }
 
     // The chain without RPCS3's database config: the game custom config when it
@@ -203,6 +301,16 @@ public sealed class PlanService
         string globalPath,
         IReadOnlyList<RecSyncSetting>? database,
         string section,
+        string key) =>
+        Resolve(targetPath, globalPath, database, section, key).Value;
+
+    // ResolveEffective plus the layer the value came from, recorded at the
+    // point each layer answers. Throws exactly where ResolveEffective throws.
+    private static (string? Value, CfgValSrc Source) Resolve(
+        string targetPath,
+        string globalPath,
+        IReadOnlyList<RecSyncSetting>? database,
+        string section,
         string key)
     {
         if (!R3Yaml.CanRead(targetPath))
@@ -218,14 +326,14 @@ public sealed class PlanService
 
         if (current is not null)
         {
-            return current;
+            return (current, CfgValSrc.Custom);
         }
 
         if (database is not null &&
             !File.Exists(targetPath) &&
             FindSetting(database, section, key) is { } fromDatabase)
         {
-            return fromDatabase.Value;
+            return (fromDatabase.Value, CfgValSrc.Database);
         }
 
         if (!R3Yaml.CanRead(globalPath))
@@ -239,7 +347,9 @@ public sealed class PlanService
             section,
             key);
 
-        return global ?? ReadBuiltIn(section, key);
+        return global is not null
+            ? (global, CfgValSrc.Global)
+            : (ReadBuiltIn(section, key), CfgValSrc.BuiltIn);
     }
 
     // The database config settings that stop applying when the selected changes
@@ -290,26 +400,63 @@ public sealed class PlanService
             string.Equals(item.Val, setting.Value, StringComparison.Ordinal));
     }
 
-    private static string? RunValue(
+    // RunVal and CurSrc of one row, derived from the plan's boot source so the
+    // ToolTip never contradicts the Settings line. CurSrc is the layer of the
+    // row's current value (CurVal): Unknown whenever the boot source is Unknown,
+    // the state could not read the value, or the chain no longer resolves that
+    // exact value. RunVal equals CurVal unless R3Config's copy of the RPCS3
+    // database makes RPCS3 boot the key with another value; when it boots the
+    // same value, that value's layer is Database. Display only: a config that
+    // cannot be read or decoded leaves the source Unknown and never throws.
+    private static (string? Value, CfgValSrc Source) RowSource(
+        CfgBootSrc bootSource,
         string targetPath,
         string globalPath,
         IReadOnlyList<RecSyncSetting>? database,
         CfgChg change,
-        string? current)
+        RecItem stateItem)
     {
-        if (database is null)
+        var current = stateItem.Current;
+        if (bootSource == CfgBootSrc.Unknown || stateItem.State == RecState.Unknown)
         {
-            return current;
+            return (current, CfgValSrc.Unknown);
         }
 
+        return DisplayRead(
+            () =>
+            {
+                var resolved = Resolve(targetPath, globalPath, null, change.Section, change.Key);
+                if (!string.Equals(resolved.Value, current, StringComparison.Ordinal))
+                {
+                    return (current, CfgValSrc.Unknown);
+                }
+
+                if (bootSource == CfgBootSrc.Database &&
+                    database is not null &&
+                    FindSetting(database, change.Section, change.Key) is { } fromDatabase)
+                {
+                    return string.Equals(fromDatabase.Value, current, StringComparison.Ordinal)
+                        ? (current, CfgValSrc.Database)
+                        : (fromDatabase.Value, resolved.Source);
+                }
+
+                return (current, resolved.Source);
+            },
+            (current, CfgValSrc.Unknown));
+    }
+
+    // Runs a display-only read: an unreadable, undecodable or vanished config
+    // gives the fallback. The apply path never goes through here.
+    private static T DisplayRead<T>(Func<T> read, T fallback)
+    {
         try
         {
-            return ResolveEffective(targetPath, globalPath, database, change.Section, change.Key);
+            return read();
         }
-        catch (InvalidDataException)
+        catch (Exception ex) when (ex is InvalidDataException or DecoderFallbackException or IOException or
+                                       UnauthorizedAccessException or YamlDotNet.Core.YamlException)
         {
-            // Unreadable configs already leave the state Unknown.
-            return current;
+            return fallback;
         }
     }
 
@@ -345,13 +492,19 @@ public sealed class PlanService
             setting.Section.Equals(section, StringComparison.Ordinal) &&
             setting.Key.Equals(key, StringComparison.Ordinal));
 
+    // RPCS3's default for a key from the verified table above, without
+    // throwing: false (and null) when the table has no entry.
+    public static bool TryReadBuiltIn(
+        string section,
+        string key,
+        [NotNullWhen(true)] out string? value) =>
+        BuiltInDefaults.TryGetValue($"{section}/{key}", out value);
+
     internal static string? ReadBuiltIn(
         string section,
         string key)
     {
-        if (!BuiltInDefaults.TryGetValue(
-                $"{section}/{key}",
-                out var value))
+        if (!TryReadBuiltIn(section, key, out var value))
         {
             throw new InvalidDataException(
                 $"No verified RPCS3 built-in default exists for {section}/{key}.");
