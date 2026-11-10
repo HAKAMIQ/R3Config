@@ -126,6 +126,7 @@
   "Games.FilterInstalled": "Installed in RPCS3",
   "Games.ImagePreview": "Preview game image",
   "Games.ImagePreviewClose": "Close image preview",
+  "Games.ImageZoom": "Zoom",
   "Games.FilterTooltip": "Filter the game list by the catalog or locally detected RPCS3 games.",
   "Games.SearchPlaceholder": "Search by game or serial...",
   "Games.SearchTip": "Search by game name or serial.",

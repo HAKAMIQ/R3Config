@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using R3Config.Svc;
 
 namespace R3Config.Ctrl;
@@ -43,12 +44,31 @@ public partial class GameList : UserControl
 
         GameImagePreviewPopup.PlacementTarget = button;
         GameImagePreviewImage.Source = sourceImage.Source;
+        SizePreviewToPixels(sourceImage.Source as BitmapSource);
         // A list refresh can recycle the anchor row; the preview never
         // outlives the element it points at.
         button.Unloaded += GameImagePreviewAnchor_Unloaded;
         GameImagePreviewPopup.IsOpen = true;
         e.Handled = true;
     }
+
+    // Full size: one bitmap pixel per screen pixel at the current DPI, shrunk
+    // uniformly only when the work area cannot hold it with the popup chrome.
+    private void SizePreviewToPixels(BitmapSource? bitmap)
+    {
+        if (bitmap is null)
+        {
+            return;
+        }
+
+        var dpi = VisualTreeHelper.GetDpi(this);
+        GameImagePreviewImage.Width = bitmap.PixelWidth / dpi.DpiScaleX;
+        GameImagePreviewImage.Height = bitmap.PixelHeight / dpi.DpiScaleY;
+        GameImagePreviewImage.MaxWidth = Math.Max(1, SystemParameters.WorkArea.Width - PreviewChrome);
+        GameImagePreviewImage.MaxHeight = Math.Max(1, SystemParameters.WorkArea.Height - PreviewChrome);
+    }
+
+    private const double PreviewChrome = 96;
 
     private void GameImagePreviewAnchor_Unloaded(object sender, RoutedEventArgs e)
     {

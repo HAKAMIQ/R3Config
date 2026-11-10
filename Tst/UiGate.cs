@@ -2714,48 +2714,56 @@ internal static class UiGate
             var original = (BitmapSource)icon.Source;
             Check(original.IsFrozen, "Published game icons must be frozen.");
 
-            var iconHost = icon.Parent as Grid
-                ?? throw new InvalidOperationException(
-                    "The game icon loader must remain inside the fixed preview-button host.");
-            var emptyHost = empty.Parent as Grid
-                ?? throw new InvalidOperationException(
-                    "The missing game icon loader must remain inside the fixed preview-button host.");
             var iconButton = buttons.Single(button => ReferenceEquals(button.Tag, icon));
             var emptyButton = buttons.Single(button => ReferenceEquals(button.Tag, empty));
 
             Check(iconButton.IsEnabled && !emptyButton.IsEnabled,
                 "Only rows with a loaded game image may enable the image preview button.");
-            Check(!ToolTipService.GetIsEnabled(emptyButton),
-                "A missing image must suppress the disabled preview-button tooltip.");
 
             foreach (var image in images)
             {
-                var host = image.Parent as Grid
+                var button = buttons.Single(item => ReferenceEquals(item.Tag, image));
+                var host = button.Parent as Grid
                     ?? throw new InvalidOperationException(
-                        "The game icon loader must remain inside the preview-button host.");
-                var button = host.Children
-                    .OfType<Button>()
-                    .Single(item => item.Name == "GameImagePreviewButton");
+                        "The thumbnail button must stay inside its fixed row host.");
                 var rowGrid = host.Parent as Grid
                     ?? throw new InvalidOperationException(
-                        "The preview-button host must remain inside the game-row grid.");
+                        "The thumbnail host must remain inside the game-row grid.");
+                var placeholder = Walk<TextBlock>(button).Single(text => text.Name == "GameIconPlaceholder");
+                var cue = Walk<Grid>(button).Single(grid => grid.Name == "GameImageZoomCue");
+                var cueText = Walk<TextBlock>(cue).Single(text => text.Name == "GameImageZoomText");
 
-                Check(host.ActualWidth == 36 && host.ActualHeight == 36 &&
-                      button.ActualWidth == 36 && button.ActualHeight == 36 &&
-                      button.MinWidth == 36 && button.MinHeight == 36,
-                    "The image action must preserve the existing 36x36 row footprint.");
-                Check(image.Width == 0 && image.Height == 0 && image.Opacity == 0 &&
-                      !image.IsHitTestVisible && !image.Focusable,
-                    "The lazy game image must load without rendering a thumbnail in the list.");
-                Check(ReferenceEquals(button.Tag, image) &&
+                Check(host.ActualWidth == 64 && host.ActualHeight == 36 &&
+                      button.ActualWidth == 64 && button.ActualHeight == 36 &&
+                      button.MinWidth == 64 && button.MinHeight == 36,
+                    "The thumbnail must keep a fixed 64x36 (ICON0 16:9) row footprint.");
+                Check(Walk<Image>(button).Contains(image) &&
+                      image.Stretch == Stretch.Uniform &&
+                      RenderOptions.GetBitmapScalingMode(image) == BitmapScalingMode.HighQuality &&
+                      !image.IsHitTestVisible && !image.Focusable &&
+                      image.FlowDirection == FlowDirection.LeftToRight &&
                       button.FlowDirection == FlowDirection.LeftToRight,
-                    "The preview button must target its row image source without changing physical layout direction.");
+                    "The game image must render inside its button as an unmirrored, high-quality, non-interactive thumbnail.");
+                Check(ToolTipService.GetToolTip(button) is null &&
+                      !string.IsNullOrWhiteSpace(AutomationProperties.GetName(button)),
+                    "The thumbnail button keeps a localized automation name; the Zoom cue replaces its ToolTip.");
+                Check(cue.Visibility == Visibility.Collapsed && cueText.Text == UiText.GetText("Games.ImageZoom"),
+                    "The Zoom cue stays hidden until hover or keyboard focus and reads the localized Zoom text.");
 
-                var glyph = Walk<TextBlock>(button).Single();
-                Check(glyph.Text == "\uE91B" &&
-                      glyph.FontFamily.Source.Contains("Segoe Fluent Icons", StringComparison.Ordinal) &&
-                      glyph.FlowDirection == FlowDirection.LeftToRight,
-                    "The row action must use the Fluent Photo glyph instead of a scaled game thumbnail.");
+                if (ReferenceEquals(button, iconButton))
+                {
+                    Check(image.IsVisible && image.ActualWidth > 40 && image.ActualWidth <= 62 &&
+                          image.ActualHeight > 0 && image.ActualHeight <= 34 &&
+                          placeholder.Visibility == Visibility.Collapsed,
+                        $"A row with an image must show the image itself as its thumbnail ({image.ActualWidth:0.#}x{image.ActualHeight:0.#}), not a placeholder.");
+                }
+                else
+                {
+                    Check(image.Source is null && placeholder.Visibility == Visibility.Visible &&
+                          placeholder.Text == "" &&
+                          placeholder.FontFamily.Source.Contains("Segoe Fluent Icons", StringComparison.Ordinal),
+                        "A row without an image shows the game glyph and no image.");
+                }
 
                 var game = GameIcon.GetGame(image)!;
                 var title = Walk<TextBlock>(view).Single(text => text.Text == game.Title);
@@ -2767,51 +2775,26 @@ internal static class UiGate
                       title.ActualWidth > 0 && serial.ActualWidth > 0 &&
                       title.TranslatePoint(new Point(), rowGrid).X >= hostRight &&
                       serial.TranslatePoint(new Point(), rowGrid).X >= hostRight,
-                    "Game title and serial must keep their current alignment beside the fixed image action.");
-
-                if (ReferenceEquals(button, iconButton))
-                {
-                    var initialDelay = ToolTipService.GetInitialShowDelay(button);
-                    var betweenDelay = ToolTipService.GetBetweenShowDelay(button);
-                    var showDuration = ToolTipService.GetShowDuration(button);
-                    var showOnDisabled = ToolTipService.GetShowOnDisabled(button);
-                    var tooltipValue = ToolTipService.GetToolTip(button);
-                    var initialLocal = button.ReadLocalValue(
-                        ToolTipService.InitialShowDelayProperty);
-                    var betweenLocal = button.ReadLocalValue(
-                        ToolTipService.BetweenShowDelayProperty);
-                    var durationLocal = button.ReadLocalValue(
-                        ToolTipService.ShowDurationProperty);
-                    var disabledLocal = button.ReadLocalValue(
-                        ToolTipService.ShowOnDisabledProperty);
-                    var initialSource = DependencyPropertyHelper.GetValueSource(
-                        button,
-                        ToolTipService.InitialShowDelayProperty);
-                    var betweenSource = DependencyPropertyHelper.GetValueSource(
-                        button,
-                        ToolTipService.BetweenShowDelayProperty);
-                    var durationSource = DependencyPropertyHelper.GetValueSource(
-                        button,
-                        ToolTipService.ShowDurationProperty);
-                    var disabledSource = DependencyPropertyHelper.GetValueSource(
-                        button,
-                        ToolTipService.ShowOnDisabledProperty);
-
-                    Check(
-                        initialDelay == ToolTipPolicy.InitialShowDelayMs &&
-                        betweenDelay == ToolTipPolicy.BetweenShowDelayMs &&
-                        showDuration == ToolTipPolicy.ShowDurationMs &&
-                        showOnDisabled,
-                        $"The game image action must use the centralized ToolTip timing policy. " +
-                        $"Actual=Initial:{initialDelay},Between:{betweenDelay},Duration:{showDuration},ShowOnDisabled:{showOnDisabled}; " +
-                        $"Expected=Initial:{ToolTipPolicy.InitialShowDelayMs},Between:{ToolTipPolicy.BetweenShowDelayMs},Duration:{ToolTipPolicy.ShowDurationMs},ShowOnDisabled:true; " +
-                        $"IsLoaded={button.IsLoaded}; IsEnabled={button.IsEnabled}; ToolTipNull={tooltipValue is null}; ToolTipType={tooltipValue?.GetType().FullName ?? "<null>"}; " +
-                        $"Local=Initial:{FormatLocalValue(initialLocal)},Between:{FormatLocalValue(betweenLocal)},Duration:{FormatLocalValue(durationLocal)},ShowOnDisabled:{FormatLocalValue(disabledLocal)}; " +
-                        $"Source=Initial:{FormatValueSource(initialSource)},Between:{FormatValueSource(betweenSource)},Duration:{FormatValueSource(durationSource)},ShowOnDisabled:{FormatValueSource(disabledSource)}.");
-                    Check(!string.IsNullOrWhiteSpace(AutomationProperties.GetName(button)),
-                        "The game image action must expose a localized automation name.");
-                }
+                    "Game title and serial must keep their current alignment beside the fixed thumbnail.");
             }
+
+            // Keyboard focus (the same trigger path as hover) shows the Zoom
+            // cue over a row with an image; the disabled row never shows it.
+            window.ShowActivated = true;
+            R3Config.Tests.WindowCapture.Foreground(new System.Windows.Interop.WindowInteropHelper(window).Handle);
+            window.Activate();
+            DrainDispatcher(window.Dispatcher);
+            var iconCue = Walk<Grid>(iconButton).Single(grid => grid.Name == "GameImageZoomCue");
+            var emptyCue = Walk<Grid>(emptyButton).Single(grid => grid.Name == "GameImageZoomCue");
+            Check(iconButton.Focus() && iconButton.IsKeyboardFocused,
+                "TEST_ENV: the thumbnail button could not take keyboard focus (window not active).");
+            DrainDispatcher(window.Dispatcher);
+            Check(iconCue.Visibility == Visibility.Visible && emptyCue.Visibility == Visibility.Collapsed,
+                "Keyboard focus on a thumbnail with an image must show its Zoom cue, and only there.");
+            System.Windows.Input.Keyboard.ClearFocus();
+            DrainDispatcher(window.Dispatcher);
+            Check(iconCue.Visibility == Visibility.Collapsed,
+                "The Zoom cue hides again when the thumbnail loses focus.");
 
             var popup = view.FindName("GameImagePreviewPopup") as Popup
                 ?? throw new InvalidOperationException("The shared game image preview popup was not found.");
@@ -2832,11 +2815,16 @@ internal static class UiGate
             Check(popup.IsOpen && ReferenceEquals(popup.PlacementTarget, iconButton) &&
                   ReferenceEquals(preview.Source, original),
                 "Clicking the image action must open the shared preview for exactly that row bitmap.");
-            Check(preview.Width == 480 && preview.Height == 270 &&
+            var previewDpi = VisualTreeHelper.GetDpi(view);
+            Check(Math.Abs(preview.Width - (original.PixelWidth / previewDpi.DpiScaleX)) < 0.01 &&
+                  Math.Abs(preview.Height - (original.PixelHeight / previewDpi.DpiScaleY)) < 0.01 &&
+                  preview.MaxWidth < SystemParameters.WorkArea.Width &&
+                  preview.MaxHeight < SystemParameters.WorkArea.Height &&
                   preview.Stretch == Stretch.Uniform &&
                   preview.FlowDirection == FlowDirection.LeftToRight &&
                   RenderOptions.GetBitmapScalingMode(preview) == BitmapScalingMode.HighQuality,
-                "The shared preview must present the bitmap as a bounded, unmirrored high-quality image.");
+                $"The shared preview must show the bitmap at full size (one bitmap pixel per screen pixel), bounded by the work area, unmirrored and high quality. " +
+                $"Actual={preview.Width}x{preview.Height}; Pixels={original.PixelWidth}x{original.PixelHeight}; Dpi={previewDpi.DpiScaleX}.");
 
             WaitForIconPresentation(
                 window.Dispatcher,

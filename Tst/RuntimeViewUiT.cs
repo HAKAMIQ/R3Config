@@ -259,6 +259,9 @@ internal static class RuntimeViewUiT
                     $"Cache-only evidence renders no hash and no Copy button, only the HashUnknown guidance, under {language}.");
             }
 
+            vm.Load(trusted);
+            RuntimeA11yUiT.Verify(window, view, vm, RuntimePpuHashT.Hash, copied);
+
             UiText.SetLang(UiText.EnLang);
             UiLaySvc.Apply();
             vm.SetLang();

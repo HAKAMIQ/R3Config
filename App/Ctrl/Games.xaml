@@ -239,36 +239,31 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
-                                <Grid Width="36" Height="36" Margin="0,0,8,0"
+                                <!-- The game's own ICON0.PNG (320x176) as a 64x36 thumbnail. Hover or
+                                     keyboard focus shows the Zoom cue; a click opens it at full size.
+                                     A game without an image shows the game glyph and offers no zoom.
+                                     The host is LeftToRight, so nothing inside is mirrored. -->
+                                <Grid Width="64" Height="36" Margin="0,0,8,0"
                                       VerticalAlignment="Center"
                                       FlowDirection="LeftToRight">
-                                    <Image x:Name="GameIconImage"
-                                           svc:GameIcon.Game="{Binding Game}"
-                                           Width="0"
-                                           Height="0"
-                                           Opacity="0"
-                                           IsHitTestVisible="False"
-                                           Focusable="False"
-                                           FlowDirection="LeftToRight" />
-
                                     <Button x:Name="GameImagePreviewButton"
                                             Margin="0"
                                             Tag="{Binding ElementName=GameIconImage}"
-                                            ToolTip="{lang:TextExt Key=Games.ImagePreview}"
                                             AutomationProperties.Name="{lang:TextExt Key=Games.ImagePreview}"
-                                            Loaded="ToolTipOwner_Loaded"
                                             Click="GameImagePreview_Click">
                                         <Button.Style>
                                             <Style TargetType="Button"
                                                    BasedOn="{StaticResource FluentButton.Icon}">
                                                 <Setter Property="Width"
-                                                        Value="36" />
+                                                        Value="64" />
                                                 <Setter Property="Height"
                                                         Value="36" />
                                                 <Setter Property="MinWidth"
-                                                        Value="36" />
+                                                        Value="64" />
                                                 <Setter Property="MinHeight"
                                                         Value="36" />
+                                                <Setter Property="Padding"
+                                                        Value="0" />
                                                 <Setter Property="Background"
                                                         Value="{DynamicResource Surface.Card}" />
                                                 <Setter Property="BorderBrush"
@@ -280,22 +275,87 @@
                                                                  Value="{x:Null}">
                                                         <Setter Property="IsEnabled"
                                                                 Value="False" />
-                                                        <Setter Property="ToolTipService.IsEnabled"
-                                                                Value="False" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Button.Style>
 
-                                        <TextBlock Text="&#xE91B;"
-                                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                   FontSize="16"
-                                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   TextAlignment="Center"
-                                                   FlowDirection="LeftToRight"
-                                                   IsHitTestVisible="False" />
+                                        <Grid Width="62"
+                                              Height="34"
+                                              ClipToBounds="True">
+                                            <Image x:Name="GameIconImage"
+                                                   svc:GameIcon.Game="{Binding Game}"
+                                                   Stretch="Uniform"
+                                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                                   IsHitTestVisible="False"
+                                                   Focusable="False"
+                                                   FlowDirection="LeftToRight" />
+
+                                            <TextBlock x:Name="GameIconPlaceholder"
+                                                       Text="&#xE7FC;"
+                                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                       FontSize="16"
+                                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       FlowDirection="LeftToRight"
+                                                       IsHitTestVisible="False">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Source, ElementName=GameIconImage}"
+                                                                         Value="{x:Null}">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+
+                                            <Grid x:Name="GameImageZoomCue"
+                                                  IsHitTestVisible="False">
+                                                <Grid.Style>
+                                                    <Style TargetType="Grid">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsKeyboardFocused, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                                                                         Value="True">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Visible" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Source, ElementName=GameIconImage}"
+                                                                         Value="{x:Null}">
+                                                                <Setter Property="Visibility"
+                                                                        Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Grid.Style>
+
+                                                <!-- A translucent scrim keeps the image visible under the cue. -->
+                                                <Border Background="{DynamicResource Surface.Overlay}"
+                                                        Opacity="0.75" />
+
+                                                <!-- One centered word; it needs no direction of its own. -->
+                                                <TextBlock x:Name="GameImageZoomText"
+                                                           Text="{lang:TextExt Key=Games.ImageZoom}"
+                                                           FontSize="12"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource Text.Primary}"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Grid>
                                     </Button>
                                 </Grid>
 
@@ -350,9 +410,9 @@
                                     CornerRadius="{DynamicResource Radius.Large}"
                                     Padding="{StaticResource Space.8.All}"
                                     FlowDirection="LeftToRight">
+                                <!-- Sized in code to the bitmap's own pixels (1:1 on screen),
+                                     shrunk only if the screen is smaller. -->
                                 <Image x:Name="GameImagePreviewImage"
-                                       Width="480"
-                                       Height="270"
                                        Stretch="Uniform"
                                        FlowDirection="LeftToRight"
                                        RenderOptions.BitmapScalingMode="HighQuality" />

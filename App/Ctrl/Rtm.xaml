@@ -15,6 +15,15 @@
                 <ResourceDictionary Source="RecommendationStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- Every ItemsControl here only lays out rows. WPF makes an
+                 ItemsControl a Tab stop by default, an unnamed stop a screen
+                 reader cannot announce; the buttons and Details toggles inside
+                 stay reachable. -->
+            <Style TargetType="{x:Type ItemsControl}">
+                <Setter Property="Focusable"
+                        Value="False" />
+            </Style>
+
             <!-- One evidence fact: label, technical value or localized text, weaker-than-known state. -->
             <DataTemplate x:Key="RuntimeFactTemplate">
                 <Grid Margin="0,3,0,0"
@@ -299,7 +308,8 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <TabControl AutomationProperties.AutomationId="Runtime.Tabs"
+    <TabControl x:Name="Tabs"
+                AutomationProperties.AutomationId="Runtime.Tabs"
                 Style="{StaticResource FluentTabControl}"
                 ItemContainerStyle="{StaticResource FluentTabItem}"
                 SelectedIndex="{Binding Runtime.LogDiag.SelectedTab, Mode=TwoWay}"
@@ -307,6 +317,17 @@
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 FlowDirection="{DynamicResource App.FlowDirection}">
+
+        <!-- The headers are one Tab stop (the selected tab), and the arrow keys
+             move between them, as WPF's TabPanel does; otherwise Tab selects the
+             next header and never reaches the selected tab's content. -->
+        <TabControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal"
+                            KeyboardNavigation.TabNavigation="Once"
+                            KeyboardNavigation.DirectionalNavigation="Cycle" />
+            </ItemsPanelTemplate>
+        </TabControl.ItemsPanel>
 
         <!-- 1. Overview: the concise diagnostic result. -->
         <TabItem Header="{Binding Runtime.TabOverview}"

@@ -126,6 +126,7 @@
   "Games.FilterInstalled": "المثبتة حاليا",
   "Games.ImagePreview": "عرض صورة اللعبة",
   "Games.ImagePreviewClose": "إغلاق معاينة الصورة",
+  "Games.ImageZoom": "تكبير",
   "Games.FilterTooltip": "تصفية الألعاب (الكل أو المثبتة فقط).",
   "Games.SearchPlaceholder": "بحث باسم اللعبة أو السيريال...",
   "Games.SearchTip": "اكتب جزءا من الاسم أو السيريال للبحث.",
