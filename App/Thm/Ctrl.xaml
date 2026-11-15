@@ -589,7 +589,7 @@
         <Setter Property="VerticalContentAlignment"
                 Value="Center" />
         <Setter Property="FocusVisualStyle"
-                Value="{x:Null}" />
+                Value="{StaticResource Stroke.FocusVisualStyle}" />
 
         <Setter Property="Template">
             <Setter.Value>
@@ -752,7 +752,7 @@
         <Setter Property="FlowDirection"
                 Value="LeftToRight" />
         <Setter Property="FocusVisualStyle"
-                Value="{x:Null}" />
+                Value="{StaticResource Stroke.FocusVisualStyle}" />
 
         <Setter Property="Template">
             <Setter.Value>

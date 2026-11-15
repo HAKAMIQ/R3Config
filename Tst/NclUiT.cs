@@ -65,6 +65,7 @@ internal static class NclUiT
         var main = Read(root, "App", "Vm", "Main.cs");
         var mainNcl = Read(root, "App", "Vm", "Main.Ncl.cs");
         var mainUi = Read(root, "App", "Vm", "Main.Ui.cs");
+        var dlg = Read(root, "App", "Svc", "Dlg.cs");
         var nclVm = Read(root, "App", "Vm", "NclImportVm.cs");
         var uiGate = Read(root, "Tst", "UiGate.cs");
         var view = Read(root, "App", "Ctrl", "CheatPatchView.xaml");
@@ -150,14 +151,24 @@ internal static class NclUiT
                 StringComparison.Ordinal),
             "MainVm must expose and refresh the NCL import command.");
 
+        // The ViewModel hands the live enabled-patch snapshot to NclImportVm and
+        // asks UiDlg to host the dialog; UiDlg is the only place that constructs
+        // NclImportDlg and it owns the dialog with the active window. Both halves
+        // are pinned, so neither the snapshot nor the hosting can be bypassed.
         Assert(
             mainNcl.Contains(
                 "Preview.Enabled()",
                 StringComparison.Ordinal) &&
             mainNcl.Contains(
-                "new NclImportDlg(",
+                "UiDlg.ShowNclImport(viewModel)",
+                StringComparison.Ordinal) &&
+            dlg.Contains(
+                "ShowNclImport(NclImportVm viewModel)",
+                StringComparison.Ordinal) &&
+            dlg.Contains(
+                "new NclImportDlg(Owner(), viewModel)",
                 StringComparison.Ordinal),
-            "NCL dialog must receive the live enabled-patch snapshot and use the existing cheat workflow.");
+            "NCL dialog must receive the live enabled-patch snapshot and use the existing cheat workflow, hosted by UiDlg so the ViewModel never constructs the window.");
 
         Assert(
             view.Contains(

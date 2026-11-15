@@ -106,13 +106,14 @@ public sealed partial class MainVm
                 if (RecommendationSyncUseCase.IsAutoSyncAllowed(_sync.Preferences) &&
                     RecommendationSyncUseCase.IsDue(_sync.Data, DateTimeOffset.UtcNow))
                 {
-                    var dispatcher = System.Windows.Application.Current?.Dispatcher;
-                    if (dispatcher is null)
+                    // No UI thread means the window is gone and there is no
+                    // bound state left to refresh, so the loop ends.
+                    if (!await UiThread.InvokeAsync(
+                            () => RunRecSyncAsync(manual: false))
+                        .ConfigureAwait(false))
                     {
                         return;
                     }
-
-                    await dispatcher.InvokeAsync(() => RunRecSyncAsync(manual: false)).Task.Unwrap().ConfigureAwait(false);
                 }
 
                 await Task.Delay(SyncCheckEvery, token).ConfigureAwait(false);

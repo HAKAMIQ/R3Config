@@ -348,6 +348,63 @@ public sealed partial class RecSvc
             });
         }
 
+        // Ambiguous Wiki guidance is text, not a setting: it keeps no value, it
+        // never shares a Section/Key with a change, and a duplicate target is
+        // dropped rather than merged. Nothing downstream can apply it.
+        List<CfgHint> hints = [];
+
+        foreach (var hint in recommendation.Guidance)
+        {
+            if (hint is null)
+            {
+                throw new InvalidDataException(
+                    $"Recommendation '{serial}' contains a null guidance entry.");
+            }
+
+            var section = Require(
+                hint.Section,
+                $"Guidance Section for {serial}");
+
+            var key = Require(
+                hint.Key,
+                $"Guidance Key for {serial}");
+
+            var wikiKey = Require(
+                hint.WikiKey,
+                $"Guidance WikiKey for {serial} / {section} / {key}");
+
+            // A catalog is not always one R3Config generated: the published data
+            // bundle comes in through this same loader. So the range is re-checked
+            // against the one rule the generator used, instead of being trusted
+            // because it parsed. A hint naming a setting R3Config does not map, or
+            // bounds outside RPCS3's own limit for that key, would put a range on
+            // screen that no RPCS3 version stands behind.
+            if (!WikiSvc.IsHintRange(wikiKey, section, key, hint.Min, hint.Max))
+            {
+                throw new InvalidDataException(
+                    $"Recommendation '{serial}' guidance '{section} / {key}' is not a range RPCS3 allows for '{wikiKey}' ({hint.Min}-{hint.Max}).");
+            }
+
+            if (!paths.Add($"{section}\0{key}"))
+            {
+                throw new InvalidDataException(
+                    $"Recommendation '{serial}' guidance '{section} / {key}' collides with another setting.");
+            }
+
+            hints.Add(hint with
+            {
+                Section = section,
+                Key = key,
+                WikiKey = wikiKey,
+                RawValue = Require(
+                    hint.RawValue,
+                    $"Guidance Value for {serial} / {section} / {key}"),
+                Notes = string.IsNullOrWhiteSpace(hint.Notes)
+                    ? null
+                    : hint.Notes.Trim()
+            });
+        }
+
         return recommendation with
         {
             Serial = serial,
@@ -355,7 +412,13 @@ public sealed partial class RecSvc
             Changes =
             [
                 .. changes
-            ]
+            ],
+            Hints = hints.Count == 0
+                ? null
+                :
+                [
+                    .. hints
+                ]
         };
     }
 

@@ -90,6 +90,11 @@ public sealed record GameSettingsModel(
     // History and hardware evidence for the game's Wiki page; Inform-level only, never a setting.
     public GameKnowledge GameKnowledge => Knowledge ?? Mdl.GameKnowledge.Empty;
 
+    // Wiki guidance that named a range of values instead of one value. Shown
+    // as text beside the settings: it has no row, no checkbox and no value,
+    // and no path converts it into a setting.
+    public IReadOnlyList<CfgHint> Guidance { get; init; } = [];
+
     // Exact official download URL per tested RPCS3 build text ("X.Y.Z-BUILD"),
     // only for builds the shipped catalog resolves for the host platform. A
     // missing key means no exact download is offered.

@@ -77,6 +77,11 @@ public sealed record CfgPlan(
 
     // Which layer RPCS3 boots this game with on top of config.yml.
     public CfgBootSrc BootSource { get; init; } = CfgBootSrc.Unknown;
+
+    // Wiki guidance that named a range instead of one value. It is evidence
+    // text only: it has no CfgEntry, no selection, no current value and no
+    // write, so no apply path can ever reach it.
+    public IReadOnlyList<CfgHint> Hints { get; init; } = [];
 }
 
 // The layer RPCS3 applies on top of config.yml and its built-in defaults.

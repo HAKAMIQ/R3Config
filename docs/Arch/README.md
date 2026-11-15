@@ -36,6 +36,10 @@ WPF View
 - `Core` لا يعتمد على WPF أو الترجمة أو ViewModels.
 - `App/Application` لا يعتمد على WPF أو dialogs أو `UiText`.
 - `AppFlow` facade رقيق وليس مكانًا لمنطق جديد.
+- ViewModel لا يلمس كائن تطبيق WPF: لا `Application.Current` لا dispatcher ولا owner،
+  ولا يفتح منتقي ملفات ولا يبني نافذة حوار. `UiDlg` (`App/Svc/Dlg.cs`) يملك الحوارات
+  والمنتقيات وبحث النافذة المالكة، و`UiThread` (`App/Svc/UiThread.cs`) يملك العودة إلى
+  خيط الواجهة. هكذا يبقى الـViewModel قابلًا للبناء والتحقق بلا `Application` حية.
 - analysis/preview/plan مسارات قراءة بلا side effects.
 - كل تعديل لملفات RPCS3 يمر عبر use case و`IRpcs3MutationGuard`.
 - لا تفعيل باتش دون اختيار صريح. تعريفات Canary المضمنة تتطلب التقاط PPU

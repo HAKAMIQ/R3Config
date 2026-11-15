@@ -34,6 +34,12 @@ public sealed class PlanSectionVm : VmBase
 
 // A Wiki note shown beside the settings. Only notes confirmed for the detected
 // game context reach the view; the rest stay in the model as evidence.
+// One ambiguous Wiki range as the Settings screen shows it: the RPCS3 setting
+// it is about (technical, LTR) and the Wiki's own advice as a sentence. There
+// is no value, no checkbox and no apply: R3Config never picks a number from a
+// range.
+public sealed record PlanRangeVm(string Path, string Text);
+
 public sealed class GameNoteVm
 {
     // The Wiki's default text for a page with no known issues carries no

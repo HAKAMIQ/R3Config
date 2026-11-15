@@ -151,6 +151,21 @@ internal static partial class Program
                !viewModelSource.Contains("File.Delete", StringComparison.Ordinal),
             "ViewModels must route file mutations through use cases instead of writing directly.");
 
+        // The ViewModel layer owns state and commands, not the WPF application
+        // object. Reaching Application.Current for a dispatcher or a dialog
+        // owner, opening a Win32 file dialog, or constructing a Window couples
+        // a ViewModel to a live WPF Application and makes it unverifiable
+        // outside one. Those belong to the presentation adapters UiDlg
+        // (App/Svc/Dlg.cs) and UiThread (App/Svc/UiThread.cs). Binding-facing
+        // WPF value types such as TextAlignment stay allowed.
+        Assert(!viewModelSource.Contains("System.Windows.Application", StringComparison.Ordinal) &&
+               !viewModelSource.Contains("Microsoft.Win32", StringComparison.Ordinal) &&
+               !viewModelSource.Contains("OpenFileDialog", StringComparison.Ordinal) &&
+               !viewModelSource.Contains("SaveFileDialog", StringComparison.Ordinal) &&
+               !viewModelSource.Contains("new NclImportDlg", StringComparison.Ordinal) &&
+               !viewModelSource.Contains("new CanDlg", StringComparison.Ordinal),
+            "ViewModels must reach the WPF application, file pickers, and dialog windows through the UiDlg and UiThread presentation adapters instead of Application.Current, Microsoft.Win32, or a Window constructor.");
+
         var mainViewModelSource = string.Join(
             Environment.NewLine,
             Directory.EnumerateFiles(

@@ -38,13 +38,9 @@ public sealed partial class MainVm : VmBase
             _isRun,
             _confirm);
 
-        var dialog = new NclImportDlg(
-            System.Windows.Application.Current?.MainWindow,
-            viewModel);
-
         try
         {
-            if (dialog.ShowDialog() == true)
+            if (UiDlg.ShowNclImport(viewModel))
             {
                 if (!string.IsNullOrWhiteSpace(
                         viewModel.ResMsg))

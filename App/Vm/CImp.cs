@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Markup;
-using Microsoft.Win32;
 using R3Config.Svc;
 using R3Config.Lang;
 using R3Config.Mdl;
@@ -17,6 +16,7 @@ public sealed class CanImpVm : VmBase
     private readonly AppFlow _flow;
     private readonly Func<bool> _isRun;
     private readonly Func<string, string, bool> _confirm;
+    private readonly Func<string?> _pickFile;
 
     private string _impText = string.Empty;
     private string _vldMsg = UiText.GetText("Patch.ImportCanaryPasteLabel");
@@ -29,13 +29,15 @@ public sealed class CanImpVm : VmBase
         Rpcs3InstallDescriptor? install,
         AppFlow flow,
         Func<bool>? isRpcs3Running = null,
-        Func<string, string, bool>? confirm = null)
+        Func<string, string, bool>? confirm = null,
+        Func<string?>? pickFile = null)
     {
         _install = install;
         _flow = flow ?? throw new ArgumentNullException(nameof(flow));
         _isRun = isRpcs3Running ??
             Rpcs3InstallService.IsR3;
         _confirm = confirm ?? UiDlg.Confirm;
+        _pickFile = pickFile ?? UiDlg.PickCan;
 
         PickCmd = new RelayCmd(PickFile);
         MakeCmd = new RelayCmd(
@@ -131,14 +133,7 @@ public sealed class CanImpVm : VmBase
 
     private void PickFile()
     {
-        var dialog = new OpenFileDialog
-        {
-            Filter = UiText.GetText("Patch.ImportCanaryFileFilter"),
-            Title = UiText.GetText("Patch.ImportCanaryChooseFile"),
-            CheckFileExists = true
-        };
-
-        if (dialog.ShowDialog() != true)
+        if (_pickFile() is not { } path)
         {
             return;
         }
@@ -146,7 +141,7 @@ public sealed class CanImpVm : VmBase
         try
         {
             ImpText = R3Bound.ReadUtf8(
-                dialog.FileName,
+                path,
                 R3Limits.PatCatBy,
                 "Canary import patch catalog");
         }

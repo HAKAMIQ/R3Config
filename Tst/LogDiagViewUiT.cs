@@ -236,8 +236,66 @@ internal static class LogDiagViewUiT
                                              block.FlowDirection == FlowDirection.LeftToRight),
                 "Raw log text stays left-to-right under Arabic.");
 
+            // RPCS3 writes one log for its last session, not one per game. The
+            // Overview card must name the session it analysed, in Arabic too,
+            // so another game's events are never read as the selected game's.
+            var otherEnvironment = new DiagnosticEnvironment("BLES00001", "01.00", [], 19896, "macOS", "arm64", null, "Vulkan");
+            var otherGame = new LogDiagnosticsResult(
+                DiagnosticEngine.Evaluate(session, otherEnvironment, knowledge), [session], ["LogFromOtherGame"], null);
+            vm.LogDiag.Load(otherGame);
+            vm.LogDiag.SelectedTab = LogDiagVm.TabOverview;
+            Settle(window);
+
+            Assert(vm.LogDiag.SessionOwner == LogSessionOwner.OtherGame,
+                "A session that booted another game must be presented as another game's session.");
+            var sessionCard = Texts(view);
+            foreach (var expected in new[]
+                     {
+                         UiText.GetText("Diag.Session.Title"),
+                         UiText.GetText("Diag.Session.OwnerOther"),
+                         UiText.GetText("Diag.Session.Scope")
+                     })
+            {
+                Assert(sessionCard.Any(text => text.Contains(expected, StringComparison.Ordinal)),
+                    $"The Arabic Overview session card must render '{expected}'. Rendered: " + string.Join(" / ", sessionCard));
+            }
+
+            Assert(sessionCard.Any(text => text.Contains("BCUS98242", StringComparison.Ordinal) &&
+                                           text.Contains(UiText.GetText("Diag.Session.Title"), StringComparison.Ordinal) == false &&
+                                           text.Contains("شغل", StringComparison.Ordinal)),
+                "The Arabic state line must name the serial the analysed session booted and ask for the selected game to be run. Rendered: " +
+                string.Join(" / ", sessionCard));
+
+            var identityBlocks = All<TextBlock>(view)
+                .Where(block => block.IsVisible &&
+                                System.Windows.Automation.AutomationProperties.GetAutomationId(block) == "Runtime.Overview.SessionIdentity")
+                .ToList();
+            Assert(identityBlocks.Count == 1, $"The Overview must render exactly one session identity line ({identityBlocks.Count}).");
+            Assert(R3Config.Tests.NoteBidiT.Shown(identityBlocks[0]).Contains("BCUS98242  01.06", StringComparison.Ordinal),
+                "The session identity line must read 'BCUS98242  01.06' in order, not reordered. Shown: " +
+                R3Config.Tests.NoteBidiT.Shown(identityBlocks[0]));
+            var mirrored = R3Config.Tests.NoteBidiT.Reversed(identityBlocks[0]);
+            Assert(mirrored.Count == 0,
+                "The serial and version of the session identity line must not be mirrored under Arabic: " + string.Join(" | ", mirrored));
+
+            var titleIndex = Blocks(view).FindIndex(block => Plain(block).Contains(UiText.GetText("Diag.Session.Title"), StringComparison.Ordinal));
+            var stateIndex = Blocks(view).FindIndex(block => Plain(block).Contains("BCUS98242", StringComparison.Ordinal) &&
+                                                             Plain(block).Contains("شغل", StringComparison.Ordinal));
+            Assert(titleIndex >= 0 && stateIndex > titleIndex,
+                $"The session card must come before the state line ({titleIndex} / {stateIndex}).");
+
+            Shot(view, "ar-other-game");
+
+            // The same card states the selected game's own session plainly.
+            vm.LogDiag.Load(known);
+            Settle(window);
+            Assert(vm.LogDiag.SessionOwner == LogSessionOwner.SelectedGame &&
+                   Texts(view).Any(text => text.Contains(UiText.GetText("Diag.Session.OwnerSelected"), StringComparison.Ordinal)) &&
+                   Texts(view).All(text => !text.Contains(UiText.GetText("Diag.Session.OwnerOther"), StringComparison.Ordinal)),
+                "A session that booted the selected game must say so, and never also claim another game.");
+
             Assert(listener.Errors.Count == 0, "Log diagnostics view produced data-binding errors: " + string.Join(" | ", listener.Errors));
-            Console.WriteLine("Log diagnostics view render (4 inner tabs, known regression, unknown cause, EN + AR, Details, safe links) PASS.");
+            Console.WriteLine("Log diagnostics view render (4 inner tabs, known regression, unknown cause, session ownership card, EN + AR, Details, safe links) PASS.");
         }
         finally
         {
@@ -246,6 +304,35 @@ internal static class LogDiagViewUiT
             UiText.SetLang(originalLanguage);
             UiLaySvc.Apply();
         }
+    }
+
+    // Only when R3_UI_SHOTS asks for renders; RenderTargetBitmap draws the
+    // visual tree itself, so an RTL layout is not mirrored the way a Win32
+    // window capture would be.
+    private static void Shot(FrameworkElement view, string name)
+    {
+        var directory = Environment.GetEnvironmentVariable("R3_UI_SHOTS");
+        if (string.IsNullOrWhiteSpace(directory) || view.ActualWidth < 1 || view.ActualHeight < 1)
+        {
+            return;
+        }
+
+        // Settle only updates layout; the theme's entrance animations need the
+        // dispatcher to run, or the capture shows half-faded text.
+        for (var pass = 0; pass < 8; pass++)
+        {
+            view.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ContextIdle);
+            view.UpdateLayout();
+        }
+
+        Directory.CreateDirectory(directory);
+        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
+            (int)Math.Ceiling(view.ActualWidth), (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(view);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+        using var stream = File.Create(Path.Combine(directory, $"LogDiag-{name}.png"));
+        encoder.Save(stream);
     }
 
     private static LogEvent Event(int line, char level, string channel, string message) =>

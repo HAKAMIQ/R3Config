@@ -91,6 +91,25 @@ public sealed class PlanVm : VmBase
 
     public bool HasDbLost => DbLostLines.Count > 0;
 
+    // Ambiguous Wiki guidance: the Wiki named a range ("preferred spu threads
+    // = 1 - 3") instead of one value, so there is no row, no checkbox and no
+    // value to write. The range is quoted as the Wiki's own advice and R3Config
+    // picks nothing; the parser still rejects the value for application.
+    public bool HasWikiRange => WikiRanges.Count > 0;
+
+    public string WikiRangeTitle =>
+        _plan is null ? string.Empty : UiText.GetText("Plan.WikiRangeTitle");
+
+    public IReadOnlyList<PlanRangeVm> WikiRanges =>
+    [
+        .. (_plan?.Hints ?? []).Select(hint => new PlanRangeVm(
+            hint.Path,
+            UiText.Fmt(
+                "Plan.WikiRange",
+                hint.Min.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                hint.Max.ToString(System.Globalization.CultureInfo.InvariantCulture))))
+    ];
+
     public string DbKeepTitle => _plan is null ? string.Empty : UiText.GetText("Plan.DbWarnKeep");
 
     public string DbLostTitle => _plan is null ? string.Empty : UiText.GetText("Plan.DbWarnLost");
@@ -216,6 +235,8 @@ public sealed class PlanVm : VmBase
         OnChange(nameof(DbWarnTitle));
         OnChange(nameof(DbKeepTitle));
         OnChange(nameof(DbLostTitle));
+        OnChange(nameof(WikiRangeTitle));
+        OnChange(nameof(WikiRanges));
         RaiseSrc();
 
         foreach (var item in Items)
@@ -528,6 +549,9 @@ public sealed class PlanVm : VmBase
         OnChange(nameof(HasDbLost));
         OnChange(nameof(DbKeepTitle));
         OnChange(nameof(DbLostTitle));
+        OnChange(nameof(HasWikiRange));
+        OnChange(nameof(WikiRangeTitle));
+        OnChange(nameof(WikiRanges));
         _selDbKeep?.RaiseCan();
         SelState?.Invoke(this, EventArgs.Empty);
     }

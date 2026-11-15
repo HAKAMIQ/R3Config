@@ -54,7 +54,12 @@ public static class GameSettingsProjector
             applicableOnline,
             OnlineVersionUnknown: string.IsNullOrWhiteSpace(context.GameVersion),
             ExactBuildUrls: ExactBuildUrls(applicableOnline, context, builds),
-            CurrentRpcs3Build: context.CurrentRpcs3Build);
+            CurrentRpcs3Build: context.CurrentRpcs3Build)
+        {
+            // Carried straight through: a range the Wiki wrote is evidence, so
+            // it is never matched against a section, a row or a current value.
+            Guidance = plan?.Hints ?? []
+        };
     }
 
     // Exact-build downloads are resolved only for applicable RPCN evidence and

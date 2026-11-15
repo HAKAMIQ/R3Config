@@ -20,6 +20,18 @@ public enum LogDiagState
     Ready
 }
 
+// RPCS3 writes one log for its last session, not one log per game, so the
+// panel names whose session it analysed in every case instead of warning only
+// on a mismatch. Ownership follows the analysis notes, which the use case
+// recomputes against the selected game on every run.
+public enum LogSessionOwner
+{
+    Unknown,
+    SelectedGame,
+    OtherGame,
+    NoGameBoot
+}
+
 // One labeled line. A technical value (name, build, path, hash) is raw and
 // left-to-right; otherwise Value is localized text.
 public sealed record DiagLineVm(string Label, string Value, bool IsTechnical = true, string? Note = null)
@@ -227,21 +239,68 @@ public sealed class LogDiagVm : VmBase
     {
         LogDiagState.Running => UiText.GetText("Diag.State.Running"),
         LogDiagState.NoLog => UiText.GetText("Diag.State.NoLog"),
-        LogDiagState.Ready when !HasProblems => UiText.GetText(_notes.Contains("LogHasNoGameBoot") ? "Diag.State.NoBoot" : "Diag.State.NoProblem"),
+        // Ownership is decided before the problem split: an other-game session
+        // that HAS problems used to fall through to an empty state line, so
+        // nothing said its events belong to a different game.
+        LogDiagState.Ready when SessionOwner == LogSessionOwner.OtherGame =>
+            UiText.Fmt("Diag.State.OtherGame", _report.Session.GameSerial ?? string.Empty),
+        LogDiagState.Ready when SessionOwner == LogSessionOwner.NoGameBoot => UiText.GetText("Diag.State.NoBoot"),
+        LogDiagState.Ready when !HasProblems => UiText.GetText("Diag.State.NoProblem"),
         LogDiagState.Ready => string.Empty,
         _ => UiText.GetText("Diag.State.NotRun")
     };
+
+    // ------------------------------------------------------ session identity
+
+    public LogSessionOwner SessionOwner => _state != LogDiagState.Ready
+        ? LogSessionOwner.Unknown
+        : _notes.Contains("LogFromOtherGame") ? LogSessionOwner.OtherGame
+        : _notes.Contains("LogHasNoGameBoot") || _report.Session.GameSerial is null ? LogSessionOwner.NoGameBoot
+        : LogSessionOwner.SelectedGame;
+
+    public bool HasSessionIdentity => SessionOwner != LogSessionOwner.Unknown;
+
+    public string SessionTitle => UiText.GetText("Diag.Session.Title");
+
+    // Stated unconditionally, so the card never reads as the selected game's.
+    public string SessionScopeText => UiText.GetText("Diag.Session.Scope");
+
+    public bool HasSessionSerial => _report.Session.GameSerial is not null;
+
+    // The serial and version the analysed session actually booted, never the
+    // selected game's: the card names its own subject. It is a technical value
+    // and stays left to right, so it is empty rather than localized when the
+    // session booted no game; the ownership line states that case instead.
+    public string SessionIdentityText => _report.Session is { GameSerial: { } serial }
+        ? _report.Session.AppVersion is { } version ? $"{serial}  {version}" : serial
+        : string.Empty;
+
+    public string SessionOwnerText => SessionOwner switch
+    {
+        LogSessionOwner.SelectedGame => UiText.GetText("Diag.Session.OwnerSelected"),
+        LogSessionOwner.OtherGame => UiText.GetText("Diag.Session.OwnerOther"),
+        LogSessionOwner.NoGameBoot => UiText.GetText("Diag.Session.OwnerNoGame"),
+        _ => string.Empty
+    };
+
+    public bool IsSessionOwnedBySelectedGame => SessionOwner == LogSessionOwner.SelectedGame;
 
     public bool HasStateText => StateText.Length > 0;
 
     public string AnalyzeLabel => UiText.GetText(IsReady || _state == LogDiagState.NoLog ? "Diag.Reanalyze" : "Diag.Analyze");
 
-    public string NotesText => string.Join("  |  ", _notes.Select(note =>
+    // Ownership is stated by the session card and the state line, so repeating
+    // it here as a third copy is the noise this card was added to remove.
+    private static readonly string[] OwnershipNotes = ["LogFromOtherGame", "LogHasNoGameBoot"];
+
+    private IEnumerable<string> ShownNotes => _notes.Where(note => !OwnershipNotes.Contains(note, StringComparer.Ordinal));
+
+    public string NotesText => string.Join("  |  ", ShownNotes.Select(note =>
         note.StartsWith("Unreadable:", StringComparison.Ordinal)
             ? UiText.Fmt("Diag.Note.Unreadable", note["Unreadable:".Length..])
             : UiText.GetText($"Diag.Note.{note}")));
 
-    public bool HasNotes => _notes.Count > 0;
+    public bool HasNotes => ShownNotes.Any();
 
     public string EvidenceErrorText => _evidenceError is null ? string.Empty : UiText.GetText("Diag.Note.KnowledgeInvalid");
 
@@ -633,7 +692,9 @@ public sealed class LogDiagVm : VmBase
                      nameof(HasAction), nameof(EvidenceUrl), nameof(HasEvidenceUrl), nameof(DownloadUrl), nameof(HasDownloadUrl), nameof(ViewEvidenceLabel),
                      nameof(ViewEventsLabel), nameof(DownloadLabel), nameof(SourceText), nameof(SessionRows), nameof(SettingRows), nameof(Timeline),
                      nameof(TimelineText), nameof(HasTimeline), nameof(Events), nameof(MinorEvents), nameof(RawLines), nameof(HasEvents), nameof(HasMinorEvents),
-                     nameof(HasRawLines), nameof(HasSettings), nameof(DetailsLabel), nameof(Findings), nameof(HasFindings)
+                     nameof(HasRawLines), nameof(HasSettings), nameof(DetailsLabel), nameof(Findings), nameof(HasFindings),
+                     nameof(SessionOwner), nameof(HasSessionIdentity), nameof(SessionTitle), nameof(SessionScopeText),
+                     nameof(SessionIdentityText), nameof(HasSessionSerial), nameof(SessionOwnerText), nameof(IsSessionOwnedBySelectedGame)
                  })
         {
             OnChange(name);

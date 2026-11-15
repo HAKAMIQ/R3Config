@@ -69,6 +69,23 @@ public static class UiDate
         }
     }
 
+    // One fixed stamp for evidence times shown next to technical values (the
+    // PPU hash time): yyyy-MM-dd HH:mm in the local zone, Gregorian, 24-hour,
+    // digits 0-9, whatever the Windows Region calendar or interface language.
+    public static string Stamp(DateTimeOffset value)
+    {
+        return Stamp(value, TimeZoneInfo.Local);
+    }
+
+    public static string Stamp(DateTimeOffset value, TimeZoneInfo zone)
+    {
+        ArgumentNullException.ThrowIfNull(zone);
+
+        return TimeZoneInfo.ConvertTime(value, zone).ToString(
+            FallbackPattern,
+            CultureInfo.InvariantCulture);
+    }
+
     // Date only, for values that carry no real time of day (for example the
     // yyyy-MM-dd version of the embedded data), so no "12:00 AM" is shown.
     public static string DateText(DateTimeOffset value)

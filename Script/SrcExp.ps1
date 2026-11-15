@@ -12,9 +12,12 @@ function Test-IsLocalOnlySourceFile {
         [Parameter(Mandatory = $true)][string]$RelativePath
     )
 
-    $localDirectories = @()
+    # No published source file lives under a dot-directory, so every one of them
+    # is local-only: editor state, local tool settings, and anything a future tool
+    # drops beside them. Excluding the whole class is stricter than a named list
+    # and there is no list to keep up to date.
     $segments = $RelativePath -split '[\\/]'
-    if ($segments | Where-Object { $localDirectories -contains $_.ToLowerInvariant() }) {
+    if ($segments | Where-Object { $_.StartsWith('.') -and $_.Length -gt 1 }) {
         return $true
     }
 
@@ -154,13 +157,14 @@ try {
         'Working-Tree-Entry-Count: ' + $workingTreeEntryCount
         'Includes-Working-Tree: yes'
         'File-Count: ' + $sourceFiles.Count
-        'Excluded: .git, .vs, bin, obj, artifacts, publish, local user files, local user files (*.local.*), .env/.dev.vars, logs, temp files, backups, ZIP files except pinned App/Data/ncl.zip'
+        'Excluded: bin, obj, artifacts, publish, every dot-directory (.git, .vs and any local tool state), local user files (*.local.*), .env/.dev.vars, logs, temp files, backups, ZIP files except pinned App/Data/ncl.zip'
         'Start-Here: docs/ProdAr.md'
         'Developer-Guide: docs/Arch/README.md'
         'Architecture-Index: docs/Arch/README.md'
         'Contract-Gate: Script/NameChk.ps1'
         'Source-Gate: Script/SrcChk.ps1 -StrictTree runs before archive creation'
     )
+    $handoffPath = Join-Path $stagingRoot 'Handoff.md'
     $handoffText = ($manifest -join "`n") + "`n"
     [IO.File]::WriteAllText(
         $handoffPath,

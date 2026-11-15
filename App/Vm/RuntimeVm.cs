@@ -141,8 +141,9 @@ public sealed class RuntimePpuHashVm
 
     public bool HasTime => Item.TimeUtc is not null;
 
+    // A fixed stamp beside the technical hash, not the Region calendar.
     public string TimeText => Item.TimeUtc is { } time
-        ? UiDate.Text(new DateTimeOffset(
+        ? UiDate.Stamp(new DateTimeOffset(
             time.Kind == DateTimeKind.Local ? time.ToUniversalTime() : DateTime.SpecifyKind(time, DateTimeKind.Utc)))
         : string.Empty;
 

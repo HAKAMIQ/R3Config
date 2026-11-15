@@ -166,19 +166,15 @@ public sealed partial class MainVm : VmBase
             return;
         }
 
-        var owner = System.Windows.Application.Current?.Windows.OfType<Window>().FirstOrDefault(window => window.IsActive)
-            ?? System.Windows.Application.Current?.MainWindow;
-
         var viewModel = new CanImpVm(
             _install,
             _flow,
             _isRun,
             _confirm);
-        var dialog = new CanDlg(owner, viewModel);
 
         try
         {
-            if (dialog.ShowDialog() == true)
+            if (UiDlg.ShowCanImport(viewModel))
             {
                 Log(viewModel.ResMsg);
                 UiDlg.Info(viewModel.ResMsg, UiText.GetText("Patch.ImportCanaryTitle"));

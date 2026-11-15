@@ -1127,9 +1127,19 @@ internal static class UiGate
         // LinkText.Source bindings carry no direction. Restoring only the
         // pre-round-12 card and bindings reproduces 1006/c279789b...; an
         // ordinal-free diff shows that single added entry.
-        const int expectedCount = 1007;
+        //
+        // The ambiguous Wiki guidance card (Ctrl/Rec.xaml,
+        // Settings.WikiRangeGuidance) adds exactly two entries, 1007 -> 1009:
+        // HorizontalContentAlignment="Stretch" on its lines ItemsControl (as
+        // the two database-config lists) and FlowDirection="LeftToRight" on the
+        // setting path inside WikiRangeLineTemplate, because that path is an
+        // RPCS3 section/key like every other setting name. The localized
+        // sentence and the title carry no direction. Restoring only that card
+        // and its template reproduces 1007/f960e24c...; no existing entry
+        // changed or was removed.
+        const int expectedCount = 1009;
         const string expectedSha256 =
-            "f960e24ce9257f893f0456536ee19e3d8ecef1ee4743306cac5cccc66a34ae82";
+            "20f2b0e35391568fccc20fdb48de1c13ddec349d9f2ebce5bb7224640b3a5378";
         var propertyNames = new HashSet<string>(
             [
                 "FlowDirection",
@@ -2331,6 +2341,9 @@ internal static class UiGate
             RuntimeViewUiT.Render();
             LogDiagViewUiT.Render();
             R3Config.Tests.LogCrashNoticeUiT.Render();
+            R3Config.Tests.MainTabKeyboardUiT.Render();
+            R3Config.Tests.RecSyncScrollUiT.Render();
+            R3Config.Tests.WikiRangeGuidanceT.Render();
 
             var themes = new[] { true, false };
             var langs = new[]

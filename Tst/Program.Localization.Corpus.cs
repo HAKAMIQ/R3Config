@@ -153,8 +153,16 @@ internal static partial class Program
         // (8542 serials, 7794 settings). The earlier 711A3C13... baseline was
         // the superseded 2026-09-07 catalog. The promotion added 5 Wiki Notes
         // that now carry reviewed Arabic translations in PNote.Wiki.Ar.cs.
+        //
+        // 48C8E569... -> 6935DD27...: ambiguous Wiki guidance is now carried as
+        // text (WikiRangeGuidanceT). Exactly 13 serials on the 3 pages that
+        // write "preferred spu threads = 1 - 3" (Skate 3, FIFA Street, Plants
+        // vs. Zombies) gained a Hints block; no serial, setting, value or note
+        // changed, and the counts stay 8542/7794. The source snapshot, its
+        // SHA-256 and wiki-notes.json are untouched, and --wiki-verify
+        // regenerates these bytes from September with 0 differences.
         Assert(Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(catPath))) ==
-               "48C8E569A50FD68B8C77ACB3F0542977022E808CFAE09E8EA4B02B4CB94799DD",
+               "6935DD27F8AA49A30A2CE59B3E1FDF3C52E80E756197ACE985642EB3D09FA622",
             "Localization accounting requires the reviewed September catalog bytes; re-audit source deltas before changing this baseline.");
 
         // Artemis fd267a6 (art.yml 1471 -> 1922 entries) added 451 note slots,

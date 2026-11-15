@@ -48,7 +48,10 @@ MSBuild directory properties تمر حصرا عبر
 بطلب مالك المشروع بعد إثبات الفرق بالـgenerator ومطابقة توليدين بايتًا ببايت.
 `App/Data/cat.json` و`App/Data/wiki-notes.json` مولدان معًا من هذا الملف؛
 parity الحالية: 8542 سيريالًا و7794 إعدادًا و0 فروق. القيم الملتبسة الأربع وتعارضا
-السيريال مستبعدة من الإعدادات. انظر [ملاحظات الويكي](WikiEvidence.md).
+السيريال مستبعدة من الإعدادات؛ ومنذ 2026-11-10 يحمل `cat.json` مدى الويكي الملتبس نصًا في `Hints` لـ13 سيريالًا
+(3 صفحات) دون أن يتغير أي سيريال أو إعداد أو قيمة، فبصمة `cat.json` المثبتة في تدقيق الترجمة صارت
+`6935DD27F8AA49A30A2CE59B3E1FDF3C52E80E756197ACE985642EB3D09FA622` بدل `48C8E569...`، و`wiki-notes.json` لم يتغير.
+انظر [ملاحظات الويكي](WikiEvidence.md).
 أي snapshot أحدث يبقى `NEWER_EVIDENCE` فقط ولا يصبح canonical بمجرد تمريره إلى gate.
 
 `RelTest` يفصل المسارين:
@@ -137,11 +140,18 @@ RPCS3 المثبت أو الأحدث لا يصبح canonical تلقائيا ول
 
 portable release يحتاج `-Rpcs3Path` لتشغيل عقد التثبيت الحقيقي read-only.
 
-النشر النهائي يرفض الحزمة غير الموقعة ويحتاج شهادة Code Signing صالحة عبر
-`-SigningCertificateThumbprint` أو المتغير `R3CONFIG_SIGNING_CERT_THUMBPRINT`.
-يجب توفر `signtool.exe` من Windows SDK؛ يستخدم SHA-256 وRFC 3161 عبر `/tr`
-و`/td SHA256`. بعد ذلك يُوقّع `SHA256SUMS.txt` كتوقيع CMS منفصل
-`SHA256SUMS.p7s` وتتحقق بوابة الإصدار من تطابق بصمة الموقّع للملفين.
+**قرار المالك (2026-11-10):** لا شهادة Code Signing؛ الحزمة المحمولة تُوزَّع غير
+موقّعة. `PortPub.ps1` بدون شهادة يطبع
+`Signing skipped: unsigned package (AUTHENTICODE NOT PROVISIONED).` ويكمل، والحماية
+للحزمة غير الموقعة هي `SHA256SUMS.txt` داخل الحزمة وملف .sha256 بجانب الـZIP
+وفحص PortChk. لأن الحزمة غير موقعة يظهر تحذير SmartScreen عند أول تشغيل، وطريقة
+تجاوزه مشروحة في README.md.
+
+مسار التوقيع باقٍ في السكربت ولا يُستخدم إلا إذا مُرّرت شهادة عبر
+`-SigningCertificateThumbprint` أو المتغير `R3CONFIG_SIGNING_CERT_THUMBPRINT`: عندها
+يلزم `signtool.exe` من Windows SDK مع SHA-256 وRFC 3161 عبر `/tr` و`/td SHA256`،
+ثم يُوقّع `SHA256SUMS.txt` كتوقيع CMS منفصل `SHA256SUMS.p7s` وتتحقق بوابة الإصدار من
+تطابق بصمة الموقّع للملفين.
 
 ## Architecture gates الحالية
 
@@ -150,6 +160,9 @@ portable release يحتاج `-Rpcs3Path` لتشغيل عقد التثبيت ال
 - Core بلا WPF/Lang/Vm/View dependencies؛
 - App/Application بلا WPF/ViewModel/View/UiDlg/UiText؛
 - ViewModels بلا `File.WriteAllText/Move/Replace/Delete`؛
+- ViewModels بلا `System.Windows.Application` ولا `Microsoft.Win32` ولا `OpenFileDialog`/`SaveFileDialog`
+  ولا بناء نافذة حوار: كلها تمر عبر adapters العرض `UiDlg` و`UiThread`. أنواع WPF القيمية
+  التي يحتاجها الـbinding مثل `TextAlignment` تبقى مسموحة؛
 - MainVm موزع على partial files محدودة الحجم؛
 - R3Test يبقي CLI routing في `Program.cs` ويفصل runner/context/assert/fixture infrastructure في ملفات مستقلة محدودة الحجم.
 
@@ -172,7 +185,8 @@ portable release يحتاج `-Rpcs3Path` لتشغيل عقد التثبيت ال
 - single-instance gate وpath-derived writer mutex لكل data root؛
 - exclusive staging مع فحص canonical/reparse متكرر؛
 - منع XML DTD/entity expansion؛
-- إلزام release signing وRFC 3161 وsigned manifest.
+- السماح بحزمة غير موقعة (قرار المالك 2026-11-10) مع بقاء SHA-256 وفحص تسرب المصدر،
+  وعند تمرير شهادة: RFC 3161 وsigned manifest.
 
 `RunSecurityClosure` (`Tst/Program.SecurityClosure.cs`، ويمكن تشغيله منفردًا بـ
 `R3Test.exe --security-closure-only`) يثبت:

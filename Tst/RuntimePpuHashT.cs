@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using R3Config.Lang;
 using R3Config.Mdl;
 using R3Config.Svc;
@@ -134,7 +136,7 @@ internal static class RuntimePpuHashT
             var row = game.PpuHashes.Single();
             Assert(game.HasPpuHashes && !game.HasPpuHashGuidance &&
                    row.Hash == LogHash && row.SourceText == UiText.GetText("Runtime.PpuHash.Source.Rpcs3Runtime") &&
-                   row.HasTime && row.TimeText == UiDate.Text(new DateTimeOffset(EvidenceUtc)) &&
+                   row.HasTime &&
                    row.CopyLabel == UiText.GetText("Link.Copy") && game.PpuHashLabel == UiText.GetText("Runtime.PpuHash.Label"),
                 "A trusted hash row shows the hash, its localized source, its time and a Copy action.");
             Assert(game.SummaryRows.Concat(game.DetailRows).All(item => item.Id != "GamePpuHash"),
@@ -142,6 +144,8 @@ internal static class RuntimePpuHashT
             Assert(vm.Groups.Where(group => group.Group != RuntimeFactGroup.Game)
                        .All(group => !group.HasPpuHashes && !group.HasPpuHashGuidance),
                 "Only the Game group carries PPU hash rows or guidance.");
+
+            AssertFixedTime(vm);
 
             row.CopyCmd.Execute(null);
             Assert(copied.SequenceEqual([LogHash]),
@@ -181,6 +185,42 @@ internal static class RuntimePpuHashT
         {
             RuntimeVm.CopyText = original;
             UiText.SetLang(UiText.EnLang);
+        }
+    }
+
+    // The evidence time is one fixed stamp, yyyy-MM-dd HH:mm (Gregorian,
+    // 24-hour, digits 0-9, local time), whatever the Windows Region calendar
+    // (ar-SA defaults to Umm al-Qura) and whatever the interface language:
+    // never 30/05/1448 or an AM/PM designator such as "ص".
+    private static void AssertFixedTime(RuntimeVm vm)
+    {
+        var zone = TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time");
+        var evidence = new DateTimeOffset(EvidenceUtc);
+        var expectedLocal = TimeZoneInfo.ConvertTime(evidence, TimeZoneInfo.Local).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+        var previous = (CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
+        try
+        {
+            foreach (var culture in new[] { "ar-SA", "en-US", "fa-IR", "th-TH" })
+            {
+                CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = new CultureInfo(culture);
+                Assert(UiDate.Stamp(evidence, zone) == "2026-11-02 21:30",
+                    $"The PPU hash time stamp must not follow the {culture} calendar or time format. Got '{UiDate.Stamp(evidence, zone)}'.");
+                foreach (var language in new[] { UiText.EnLang, UiText.ArabLang })
+                {
+                    UiText.SetLang(language);
+                    vm.SetLang();
+                    var text = GameGroup(vm).PpuHashes.Single().TimeText;
+                    Assert(text == expectedLocal && Regex.IsMatch(text, @"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$", RegexOptions.CultureInvariant),
+                        $"The PPU hash row time must be the fixed stamp '{expectedLocal}' under {culture} with the {language} interface. Got '{text}'.");
+                }
+            }
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous.CurrentCulture;
+            CultureInfo.CurrentUICulture = previous.CurrentUICulture;
+            UiText.SetLang(UiText.EnLang);
+            vm.SetLang();
         }
     }
 

@@ -21,6 +21,8 @@ R3Config هو برنامج Windows محلي لمراجعة إعدادات ألع
 - Windows 10 or Windows 11 x64.
 - A local RPCS3 installation.
 - RPCS3 must be closed before writing configuration or patch files.
+- The portable package is not code-signed, so on first launch Windows SmartScreen may show "Windows protected your PC". Check the ZIP against its published `.sha256` file, then select **More info** and **Run anyway**.
+  الحزمة غير موقّعة، فقد يظهر تحذير SmartScreen «Windows protected your PC» عند أول تشغيل: تحقق من بصمة الـZIP مع ملف `.sha256` المنشور، ثم اضغط «More info» (مزيد من المعلومات) ثم «Run anyway» (تشغيل على أي حال).
 
 ## Safety
 

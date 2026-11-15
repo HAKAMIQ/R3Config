@@ -23392,7 +23392,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": null
+      "VariantLabel": null,
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "May help to fix choppy audio or slow motion (game speed not FPS) on weaker CPUs (see below)"
+        }
+      ]
     },
     {
       "Serial": "BLES00761",
@@ -29672,7 +29683,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": null
+      "VariantLabel": null,
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "Can help with the physics and audio thread starvation on weaker CPUs."
+        }
+      ]
     },
     {
       "Serial": "BLES01494",
@@ -40022,7 +40044,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": null
+      "VariantLabel": null,
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "May help to fix choppy audio or slow motion (game speed not FPS) on weaker CPUs (see below)"
+        }
+      ]
     },
     {
       "Serial": "BLJM60297",
@@ -55097,7 +55130,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": null
+      "VariantLabel": null,
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "May help to fix choppy audio or slow motion (game speed not FPS) on weaker CPUs (see below)"
+        }
+      ]
     },
     {
       "Serial": "BLUS30465",
@@ -59493,7 +59537,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": null
+      "VariantLabel": null,
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "Lower values can improve performance on CPUs without many cores, otherwise use Auto"
+        }
+      ]
     },
     {
       "Serial": "BLUS30853",
@@ -59678,7 +59733,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": null
+      "VariantLabel": null,
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "Can help with the physics and audio thread starvation on weaker CPUs."
+        }
+      ]
     },
     {
       "Serial": "BLUS30886",
@@ -66339,7 +66405,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": null
+      "VariantLabel": null,
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "Lower values can improve performance on CPUs without many cores, otherwise use Auto"
+        }
+      ]
     },
     {
       "Serial": "NPEA00274",
@@ -76205,7 +76282,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": null
+      "VariantLabel": null,
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "Can help with the physics and audio thread starvation on weaker CPUs."
+        }
+      ]
     },
     {
       "Serial": "NPEB00823",
@@ -86779,7 +86867,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": "Demo"
+      "VariantLabel": "Demo",
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "May help to fix choppy audio or slow motion (game speed not FPS) on weaker CPUs (see below)"
+        }
+      ]
     },
     {
       "Serial": "NPEB90227",
@@ -88190,7 +88289,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": "Demo"
+      "VariantLabel": "Demo",
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "Can help with the physics and audio thread starvation on weaker CPUs."
+        }
+      ]
     },
     {
       "Serial": "NPEB90379",
@@ -93534,7 +93644,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": "Demo"
+      "VariantLabel": "Demo",
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "May help to fix choppy audio or slow motion (game speed not FPS) on weaker CPUs (see below)"
+        }
+      ]
     },
     {
       "Serial": "NPHB00201",
@@ -106580,7 +106701,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": null
+      "VariantLabel": null,
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "Lower values can improve performance on CPUs without many cores, otherwise use Auto"
+        }
+      ]
     },
     {
       "Serial": "NPUA30060",
@@ -129514,7 +129646,18 @@
         }
       ],
       "Binding": "Primary",
-      "VariantLabel": "Demo"
+      "VariantLabel": "Demo",
+      "Hints": [
+        {
+          "Section": "Core",
+          "Key": "Preferred SPU Threads",
+          "WikiKey": "preferred spu threads",
+          "RawValue": "1 - 3",
+          "Min": 1,
+          "Max": 3,
+          "Notes": "May help to fix choppy audio or slow motion (game speed not FPS) on weaker CPUs (see below)"
+        }
+      ]
     },
     {
       "Serial": "NPUB90378",

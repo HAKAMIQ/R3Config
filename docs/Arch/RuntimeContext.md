@@ -72,7 +72,7 @@ Rpcs3BuildCatalog (كتالوج مشحون)      ─┘        v
 
 RPCS3 يكتب `PPU executable hash` في السجل فقط، فيعرض تبويب Runtime في مجموعة اللعبة صفًا لكل بصمة موثوقة مع زر نسخ
 (`Runtime.PpuHash.Copy`). البصمات الموثوقة هي `PpuList` مع ربط H-Canary المحفوظ (`HCanPpuList`)، وتصل عبر
-`RuntimeContextSnapshot.PpuHashes` (`RuntimePpuHash`): القيمة LTR، والمصدر مترجم، ووقت الدليل إن ثبت. المصدر لا يدعي أكثر مما يثبته
+`RuntimeContextSnapshot.PpuHashes` (`RuntimePpuHash`): القيمة LTR، والمصدر مترجم، ووقت الدليل إن ثبت بختم ثابت yyyy-MM-dd HH:mm (`UiDate.Stamp`: توقيت الجهاز، ميلادي، 24 ساعة) لا يتبع تقويم إعدادات المنطقة. المصدر لا يدعي أكثر مما يثبته
 الوصف: سجل RPCS3 أو الكاش معًا (`Rpcs3Runtime`) لأن الفحص يدمجهما، و`HCanBinding`، و`Metadata` فقط عند دليل بيانات اللعبة الفعلي (`HashEvi.Meta`)، و`Analysis` لبصمة فحص استبدل الربط
 نوع دليلها ووقته فلا يعرض لها وقت، و«غير مسجل» (`RuntimePpuHashSource.Unknown`) لبصمة لا يسجل وصفها نوع دليل (`HashEvi.None`). عدة بصمات تعرض كلها ولا تختار واحدة. بصمة الكاش غير المثبتة للملف التنفيذي المثبت (`Hashes` خارج
 `PpuList`) لا تعرض ولا تنسخ ولا تدخل حقيقة `GamePpuHash` ولا هوية `Exact`؛ عند غياب بصمة موثوقة يظهر إرشاد `Setup.Warning.HashUnknown`.

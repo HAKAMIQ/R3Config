@@ -346,6 +346,44 @@
                             FlowDirection="{DynamicResource App.FlowDirection}"
                             HorizontalAlignment="Stretch">
 
+                    <!-- RPCS3 writes one log for its last session, not one
+                         log per game, so this card names its own subject in
+                         every case instead of warning only on a mismatch.
+                         The serial and version are a technical value and keep
+                         the shared LTR technical style; no direction attribute
+                         is set here, so the frozen direction contract stays
+                         unchanged. -->
+                    <Border Style="{StaticResource RecEvidenceCard}"
+                            Margin="0,4,0,8"
+                            AutomationProperties.AutomationId="Runtime.Overview.Session"
+                            Visibility="{Binding Runtime.LogDiag.HasSessionIdentity,
+                                                 Converter={StaticResource BoolToVisibilityConverter}}">
+
+                        <StackPanel Orientation="Vertical">
+
+                            <TextBlock Text="{Binding Runtime.LogDiag.SessionTitle}"
+                                       AutomationProperties.AutomationId="Runtime.Overview.SessionTitle"
+                                       Style="{StaticResource RecToolTipWikiHeadingText}" />
+
+                            <TextBlock Text="{Binding Runtime.LogDiag.SessionIdentityText}"
+                                       AutomationProperties.AutomationId="Runtime.Overview.SessionIdentity"
+                                       Style="{StaticResource RecToolTipTechnicalValueText}"
+                                       Margin="0,4,0,0"
+                                       Visibility="{Binding Runtime.LogDiag.HasSessionSerial,
+                                                            Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                            <TextBlock Text="{Binding Runtime.LogDiag.SessionOwnerText}"
+                                       AutomationProperties.AutomationId="Runtime.Overview.SessionOwner"
+                                       Style="{StaticResource RecLocalizedBodyText}"
+                                       Margin="0,4,0,0" />
+
+                            <TextBlock Text="{Binding Runtime.LogDiag.SessionScopeText}"
+                                       AutomationProperties.AutomationId="Runtime.Overview.SessionScope"
+                                       Style="{StaticResource RecLocalizedSubtitleText}"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
                     <TextBlock Text="{Binding Runtime.LogDiag.StateText}"
                                AutomationProperties.AutomationId="Runtime.Overview.State"
                                Style="{StaticResource RecLocalizedBodyText}"

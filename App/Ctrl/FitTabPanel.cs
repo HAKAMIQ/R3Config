@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace R3Config.Ctrl;
 
@@ -21,6 +22,19 @@ public sealed class FitTabPanel : Panel
             new PropertyMetadata(false));
 
     private double[] _natural = [];
+
+    // As WPF's TabPanel: the headers are one Tab stop (the selected tab), and
+    // the arrow keys move between them. Otherwise every header is a Tab stop,
+    // focusing a header selects it, and Tab never reaches the tab's content.
+    static FitTabPanel()
+    {
+        KeyboardNavigation.TabNavigationProperty.OverrideMetadata(
+            typeof(FitTabPanel),
+            new FrameworkPropertyMetadata(KeyboardNavigationMode.Once));
+        KeyboardNavigation.DirectionalNavigationProperty.OverrideMetadata(
+            typeof(FitTabPanel),
+            new FrameworkPropertyMetadata(KeyboardNavigationMode.Cycle));
+    }
 
     protected override Size MeasureOverride(Size availableSize)
     {

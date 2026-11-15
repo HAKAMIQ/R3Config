@@ -29,6 +29,7 @@ internal static class LogDiagT
         AssertShippedKnowledgeBase();
         AssertNoDevelopmentDependency();
         LogCrashNoticeT.Run(root);
+        LogDiagSessionOwnerT.Run();
 
         Console.WriteLine("Log Diagnostics (parser, timeline, signatures, diagnosis rules, read-only locator, shipped knowledge base) PASS.");
     }

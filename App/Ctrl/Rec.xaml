@@ -60,6 +60,25 @@
                            Margin="0,2,0,0" />
             </DataTemplate>
 
+            <!-- One ambiguous Wiki range: the RPCS3 setting it is about (LTR,
+                 like every setting name) and the Wiki's advice as a sentence.
+                 No value and no checkbox: nothing here can be applied. -->
+            <DataTemplate x:Key="WikiRangeLineTemplate">
+                <StackPanel Orientation="Vertical"
+                            Margin="0,4,0,0">
+
+                    <TextBlock Text="{Binding Path}"
+                               AutomationProperties.AutomationId="Settings.WikiRangePath"
+                               Style="{StaticResource RecTechnicalValueText}"
+                               FlowDirection="LeftToRight"
+                               Language="en-US" />
+
+                    <TextBlock Text="{Binding Text}"
+                               AutomationProperties.AutomationId="Settings.WikiRangeText"
+                               Style="{StaticResource RecLocalizedBodyText}" />
+                </StackPanel>
+            </DataTemplate>
+
             <DataTemplate x:Key="OnlineRowTemplate">
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -471,6 +490,28 @@
                                               HorizontalContentAlignment="Stretch"
                                               Visibility="{Binding Plan.HasDbLost,
                                                                    Converter={StaticResource BoolToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 0b. Ambiguous Wiki guidance: the Wiki wrote a range
+                             ("preferred spu threads = 1 - 3"), so there is no
+                             value to apply. The range is quoted as evidence:
+                             no row, no checkbox, no value, nothing selected. -->
+                        <Border Style="{StaticResource RecEvidenceCard}"
+                                AutomationProperties.AutomationId="Settings.WikiRangeGuidance"
+                                Margin="0,0,0,10"
+                                Visibility="{Binding Plan.HasWikiRange,
+                                                     Converter={StaticResource BoolToVisibilityConverter}}">
+
+                            <StackPanel Orientation="Vertical">
+
+                                <TextBlock Text="{Binding Plan.WikiRangeTitle}"
+                                           AutomationProperties.AutomationId="Settings.WikiRangeTitle"
+                                           Style="{StaticResource RecLocalizedSubtitleText}" />
+
+                                <ItemsControl ItemsSource="{Binding Plan.WikiRanges}"
+                                              ItemTemplate="{StaticResource WikiRangeLineTemplate}"
+                                              HorizontalContentAlignment="Stretch" />
                             </StackPanel>
                         </Border>
 

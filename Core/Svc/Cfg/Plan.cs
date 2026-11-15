@@ -185,7 +185,8 @@ public sealed class PlanService
                 item => item.IsAction && item.IsDiff))
         {
             DbCfg = DisplayRead(() => ActiveDatabase(targetPath, globalPath, database), []),
-            BootSource = bootSource
+            BootSource = bootSource,
+            Hints = recommendation?.Guidance ?? []
         };
     }
 

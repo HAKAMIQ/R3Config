@@ -1424,6 +1424,40 @@ public sealed partial class WikiSvc
                     selected.Entry.Classification));
             }
 
+            // Ambiguous guidance: the Wiki wrote a range, so no value was
+            // mapped and nothing is applied (the guard in CorpusEntry keeps
+            // rejecting it). The range itself is still evidence, so it is
+            // carried as text beside the changes, never as one of them.
+            var taken = changes
+                .Select(change => $"{change.Section}\0{change.Key}")
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var hints = new List<CfgHint>();
+
+            foreach (var entry in page.Recommendations
+                         .Where(entry => entry.ParserStatus == WikiParserStatus.Ambiguous &&
+                                         entry.MappedSettings.Count == 0 &&
+                                         entry.ApplicableSerials.Contains(
+                                             group.Key,
+                                             StringComparer.OrdinalIgnoreCase))
+                         .OrderBy(entry => entry.WikiKey, StringComparer.OrdinalIgnoreCase))
+            {
+                if (!CfgMap.TryGetValue(entry.WikiKey, out var hintTarget) ||
+                    TryReadRange(entry.WikiKey, CleanVal(entry.RawWikiValue)) is not { } range ||
+                    !taken.Add($"{hintTarget.Section}\0{hintTarget.Key}"))
+                {
+                    continue;
+                }
+
+                hints.Add(new CfgHint(
+                    hintTarget.Section,
+                    hintTarget.Key,
+                    entry.WikiKey,
+                    $"{range.Min.ToString(CultureInfo.InvariantCulture)} - {range.Max.ToString(CultureInfo.InvariantCulture)}",
+                    range.Min,
+                    range.Max,
+                    entry.Notes));
+            }
+
             output.Add(new WikiRec(
                 group.Key.ToUpperInvariant(),
                 page.Title,
@@ -1432,10 +1466,61 @@ public sealed partial class WikiSvc
                     .ThenBy(change => change.Key, StringComparer.Ordinal)
                     .ToArray(),
                 changes.Count > 0 ? WikiGameIdRole.Primary : binding.Role,
-                binding.VariantLabel));
+                binding.VariantLabel,
+                hints.Count == 0 ? null : hints.ToArray()));
         }
 
         return output;
+    }
+
+    // The one rule for a range that may be quoted to the user: the Wiki key maps
+    // to exactly this setting, the setting is one RPCS3 limits as whole numbers,
+    // and the two ends are in order, distinct and inside that limit.
+    //
+    // Both sides of the catalog boundary ask here. This generator parses a range
+    // out of a Wiki page, and RecCat re-checks every hint it deserializes,
+    // because a catalog can also arrive from the published data bundle rather
+    // than from this generation. Nothing applies a hint either way; the check
+    // keeps R3Config from repeating bounds it cannot stand behind.
+    internal static bool IsHintRange(
+        string wikiKey,
+        string section,
+        string key,
+        int min,
+        int max) =>
+        CfgMap.TryGetValue(wikiKey, out var target) &&
+        target.Section.Equals(section, StringComparison.OrdinalIgnoreCase) &&
+        target.Key.Equals(key, StringComparison.OrdinalIgnoreCase) &&
+        NumericBounds.TryGetValue(wikiKey, out var bound) &&
+        !bound.Fractional &&
+        min < max &&
+        min >= bound.Min &&
+        max <= bound.Max;
+
+    // The two ends of a Wiki range such as "1 - 3", read only when both are
+    // whole numbers inside the one RPCS3 numeric limit for that key, in order,
+    // and not the same number. Anything else stays unreadable: the range is
+    // then not quoted to the user either, because R3Config would be inventing
+    // the bounds. This never selects a value; CorpusEntry still rejects the
+    // Wiki value for application.
+    private static (int Min, int Max)? TryReadRange(string wikiKey, string value)
+    {
+        if (!Range.IsMatch(value))
+        {
+            return null;
+        }
+
+        var parts = value.Split(['-', '–', '—'], 2);
+        if (parts.Length != 2 ||
+            !int.TryParse(parts[0].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var min) ||
+            !int.TryParse(parts[1].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var max) ||
+            !CfgMap.TryGetValue(wikiKey, out var target) ||
+            !IsHintRange(wikiKey, target.Section, target.Key, min, max))
+        {
+            return null;
+        }
+
+        return (min, max);
     }
 
     private static string PageIdentity(WikiCorpusPage page)

@@ -4,7 +4,9 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using Microsoft.Win32;
 using R3Config.Lang;
+using R3Config.View;
 using R3Config.View.Dlg;
+using R3Config.Vm;
 
 namespace R3Config.Svc;
 
@@ -81,6 +83,26 @@ public static class UiDlg
             ? dialog.FileName
             : null;
     }
+
+    // The Canary import pastes a catalog, and may instead read one from a
+    // file. The picker lives here with the others so every file dialog in the
+    // application is owned by the active window and cannot fall behind it.
+    public static string? PickCan()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = UiText.GetText("Patch.ImportCanaryFileFilter"),
+            Title = UiText.GetText("Patch.ImportCanaryChooseFile"),
+            CheckFileExists = true,
+            CheckPathExists = true,
+            Multiselect = false
+        };
+
+        return dialog.ShowDialog(Owner()) == true
+            ? dialog.FileName
+            : null;
+    }
+
     public static string? PickExp()
     {
         var dialog = new SaveFileDialog
@@ -133,6 +155,23 @@ public static class UiDlg
             title,
             DlgKind.Confirm,
             isConfirm: true);
+    }
+
+    // Modal windows owned by the presentation layer. A ViewModel asks for the
+    // dialog and reads the result off the ViewModel it handed in, so it never
+    // names a Window type nor repeats the owner lookup.
+    public static bool ShowCanImport(CanImpVm viewModel)
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+
+        return new CanDlg(Owner(), viewModel).ShowDialog() == true;
+    }
+
+    public static bool ShowNclImport(NclImportVm viewModel)
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+
+        return new NclImportDlg(Owner(), viewModel).ShowDialog() == true;
     }
 
     public static void CopyText(string text)
