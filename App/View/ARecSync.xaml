@@ -340,19 +340,22 @@
                                         MinWidth="64"
                                         ElementStyle="{StaticResource DataGridCellTextLeft}" />
 
-                    <!-- 98, not 100 or 104: a star column that reaches its
-                         minimum only after the others did makes the DataGrid
-                         overshoot the viewport, because WPF does not
-                         re-normalize the shares it already handed out. In its
-                         own workspace row the grid is bounded, so the vertical
-                         scrollbar is real and the viewport at 960x640 is 734
-                         px, not 740; this column's share of it is 98.1 px, so
-                         100 clamped it and pushed the grid 2 px sideways. -->
+                    <!-- 88, not 98: WPF resolves star minimums in one pass
+                         in column order and never re-checks a column that
+                         passed before a later one clamped; it then forces the
+                         early column back up to its MinWidth without taking
+                         the difference from the others. This column's final
+                         share at the default 960x640 (viewport 734 px, with
+                         the vertical scrollbar) depends on the Date column,
+                         which follows the Windows Region format: 98.1 px with
+                         ar-SA (Date 124), 93.2 px with en-US 12-hour (Date
+                         135), so 98 overshot the grid by 5 px there. 88 holds
+                         up to a 146 px Date column. -->
                     <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Setting}"
                                         HeaderStyle="{StaticResource AdvLocalizedDataGridHeader}"
                                         Binding="{Binding Setting}"
                                         Width="1.8*"
-                                        MinWidth="98"
+                                        MinWidth="88"
                                         ElementStyle="{StaticResource DataGridCellTextLeft}" />
 
                     <DataGridTextColumn Header="{lang:TextExt Key=Sync.Column.Old}"
