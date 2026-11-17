@@ -1,0 +1,37 @@
+# Runs the local release verification (Script/RelTest.cmd) on a clean
+# GitHub-hosted Windows machine, without an RPCS3 installation.
+# Manual trigger only until the WPF UI tests are proven to pass on hosted runners;
+# after that, add push and pull_request triggers for main.
+name: RelTest
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reltest-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reltest:
+    name: Release verification (no RPCS3)
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install the pinned .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      # cmd, not pwsh: RelTest.cmd starts Windows PowerShell 5.1, which breaks
+      # when it inherits PowerShell 7's PSModulePath.
+      - name: Run RelTest
+        shell: cmd
+        run: call Script\RelTest.cmd -Configuration Release
