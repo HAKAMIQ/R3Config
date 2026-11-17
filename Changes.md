@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.1
+
+### Fixes
+
+* Advanced tools → Data updates: the change table no longer scrolls sideways or hides part of the Source column in the Arabic interface at the default window size when the Windows Region uses a wider date format (for example English (United States) with AM/PM).
+
+### Documentation
+
+* README: the package is self-contained and needs no .NET installation, the SHA-256 is published on the release page and as an attached `.sha256` file, and the Arabic text matches the English.
+
+### Build
+
+* GitHub Actions now runs the release verification and a CodeQL security scan on every push and pull request.
+
 ## 0.1.0
 
 ### License

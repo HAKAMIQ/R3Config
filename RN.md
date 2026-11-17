@@ -2,7 +2,7 @@
 
 ## Status
 
-R3Config 0.1.0 is free and open source under the GNU General Public License v3 or later. Every feature is available with no license, activation, or account.
+R3Config 0.1.1 is free and open source under the GNU General Public License v3 or later. Every feature is available with no license, activation, or account.
 
 ## Current highlights
 

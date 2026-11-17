@@ -1,4 +1,4 @@
-# Known Limitations — 0.1.0
+# Known Limitations — 0.1.1
 
 - Supports Windows 10 and Windows 11 x64 only.
 - Canary data is bundled locally and does not update automatically. Recommendations

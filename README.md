@@ -26,12 +26,12 @@ R3Config is a free, open-source Windows companion for RPCS3: per-game settings r
 
 - Windows 10 or 11 (x64) and a local RPCS3 installation.
 - The package is self-contained and includes the .NET runtime, so you do not need to install .NET.
-- The ZIP's SHA-256 is published on its release page on GitHub Releases, in the release notes and as an attached file named after the ZIP plus .sha256 (for example, R3Config-0.1.0-win-x64-portable.zip.sha256).
+- The ZIP's SHA-256 is published on its release page on GitHub Releases, in the release notes and as an attached file named after the ZIP plus .sha256 (for example, R3Config-0.1.1-win-x64-portable.zip.sha256).
 - The package is not code-signed. If SmartScreen appears, verify the ZIP with its published SHA-256, then choose **More info** and **Run anyway**.
 
 - نظام Windows 10 أو 11 (x64) مع نسخة RPCS3 مثبتة على الجهاز.
 - الحزمة مستقلة (self-contained) وتتضمن بيئة تشغيل Microsoft .NET، فلا حاجة لتثبيتها بشكل منفصل.
-- بصمة SHA-256 لملف ZIP منشورة في صفحة الإصدار على GitHub Releases، ضمن ملاحظات الإصدار وفي ملف مرفق يحمل اسم ملف ZIP مع الامتداد sha256 (مثال: R3Config-0.1.0-win-x64-portable.zip.sha256).
+- بصمة SHA-256 لملف ZIP منشورة في صفحة الإصدار على GitHub Releases، ضمن ملاحظات الإصدار وفي ملف مرفق يحمل اسم ملف ZIP مع الامتداد sha256 (مثال: R3Config-0.1.1-win-x64-portable.zip.sha256).
 - الحزمة غير موقّعة رقمياً؛ إذا ظهر تحذير SmartScreen فتحقق من بصمة SHA-256 أولاً، ثم اختر **More info** ثم **Run anyway**.
 
 ## Safety
