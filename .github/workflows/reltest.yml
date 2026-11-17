@@ -1,10 +1,14 @@
 # Runs the local release verification (Script/RelTest.cmd) on a clean
 # GitHub-hosted Windows machine, without an RPCS3 installation.
-# Manual trigger only until the WPF UI tests are proven to pass on hosted runners;
-# after that, add push and pull_request triggers for main.
+# The production Wiki snapshot exists only on the owner's machine, so its
+# parity gate reports BLOCKED/SKIPPED here; every other gate runs.
 name: RelTest
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
